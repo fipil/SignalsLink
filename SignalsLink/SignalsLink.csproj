@@ -1,0 +1,32 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Folder Include="assets\" />
+    <Folder Include="src\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="Newtonsoft.Json">
+      <HintPath>..\..\..\..\..\VintageStory\1.21\Lib\Newtonsoft.Json.dll</HintPath>
+    </Reference>
+    <Reference Include="protobuf-net">
+      <HintPath>..\..\..\..\..\VintageStory\1.21\Lib\protobuf-net.dll</HintPath>
+    </Reference>
+    <Reference Include="VintagestoryAPI">
+      <HintPath>..\..\..\..\..\VintageStory\1.21\VintagestoryAPI.dll</HintPath>
+    </Reference>
+    <Reference Include="VintagestoryLib">
+      <HintPath>..\..\..\..\..\VintageStory\1.21\VintagestoryLib.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+  <Target Name="PostBuild" BeforeTargets="PostBuildEvent">
+    <Exec Command="copy &quot;$(TargetPath)&quot; &quot;c:\Develope\VintageStory\Projects\SignalsLink\Publish\&quot;" />
+    <Exec Command="copy &quot;$(TargetDir)\$(TargetName).pdb&quot; &quot;c:\Develope\VintageStory\Projects\SignalsLink\Publish\&quot;" />
+  </Target>
+</Project>
