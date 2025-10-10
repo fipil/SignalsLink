@@ -1,0 +1,16 @@
+{
+  "code": "sensor",
+  "creativeinventory": {
+    "general": [ "*" ],
+    "signalslink": [ "*" ]
+  },
+  "blockmaterial": "Stone",
+  "drawtype": "Json",
+  "shape": { "base": "block/sensor" },
+  "sidesolid": {
+    "all": false
+  },
+  "sideopaque": {
+    "all": false
+  }
+}

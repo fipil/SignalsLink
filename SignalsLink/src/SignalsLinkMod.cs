@@ -1,5 +1,4 @@
-﻿
-using Vintagestory.API.Client;
+﻿using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Server;
 
@@ -9,7 +8,7 @@ using Vintagestory.API.Server;
     Version = "0.0.1",
     Authors = new[] { "fipil" })]
 
-namespace signalslink.src
+namespace SignalsLink.src
 {
     public class SignalsLinkMod : ModSystem
     {

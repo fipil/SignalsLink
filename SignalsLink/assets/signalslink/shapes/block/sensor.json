@@ -8,13 +8,13 @@
 	"textureSizes": {
 	},
 	"textures": {
-		"aged-ceramic2": "block/clay/aged-ceramic2",
-		"filament": "block/machine/statictranslocator/rustyglow",
-		"statictranslocator_glass": "block/machine/statictranslocator/statictranslocator_glass",
-		"bismuthbronze": "block/metal/armor-generic/bismuthbronze",
-		"terminal": "block/metal/corroded/normal3",
-		"iron": "block/metal/lantern/iron",
-		"oak-dark": "block/wood/oak-dark"
+		"aged-ceramic2": "game:block/clay/aged-ceramic2",
+		"filament": "game:block/machine/statictranslocator/rustyglow",
+		"statictranslocator_glass": "game:block/machine/statictranslocator/statictranslocator_glass",
+		"bismuthbronze": "game:block/metal/armor-generic/bismuthbronze",
+		"terminal": "game:block/metal/corroded/normal3",
+		"iron": "game:block/metal/lantern/iron",
+		"oak-dark": "game:block/wood/oak-dark"
 	},
 	"elements": [
 		{
