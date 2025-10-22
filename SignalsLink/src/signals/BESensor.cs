@@ -16,22 +16,20 @@ namespace SignalsLink.src.signals
         public override void Initialize(ICoreAPI api)
         {
             base.Initialize(api);
-            BEBehaviorSignalValve valve = GetBehavior<BEBehaviorSignalValve>();
-            valve?.commute(state);
+            BEBehaviorSignalSensor sensor = GetBehavior<BEBehaviorSignalSensor>();
+            sensor?.commute(5);
         }
 
         public void OnServerGameTick(float dt)
         {
-            //BEBehaviorSignalValve valve = GetBehavior<BEBehaviorSignalValve>();
-            //valve?.commute(state);
         }
 
         public void OnValueChanged(NodePos pos, byte value)
         {
             if (pos.index != 0) return;
             state = value;
-            BEBehaviorSignalValve valve = GetBehavior<BEBehaviorSignalValve>();
-            valve?.commute(state);
+            BEBehaviorSignalSensor sensor = GetBehavior<BEBehaviorSignalSensor>();
+            sensor?.commute(5);
         }
 
         public override void FromTreeAttributes(ITreeAttribute tree, IWorldAccessor worldForResolving)
