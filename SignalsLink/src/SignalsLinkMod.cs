@@ -1,4 +1,6 @@
-﻿using Vintagestory.API.Client;
+﻿using signals.src.signalNetwork;
+using SignalsLink.src.signals;
+using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Server;
 
@@ -6,7 +8,8 @@ using Vintagestory.API.Server;
     Description = "Extends Signals mod with sensors and control elements for interacting with other mods and vanilla blocks.",
     Website = "",
     Version = "0.0.1",
-    Authors = new[] { "fipil" })]
+    Authors = new[] { "fipil" }
+)]
 
 namespace SignalsLink.src
 {
@@ -23,7 +26,9 @@ namespace SignalsLink.src
             this.api = api;
             base.Start(api);
 
+            api.RegisterBlockEntityClass("BlockEntitySensor", typeof(BESensor));
 
+            api.RegisterBlockEntityBehaviorClass("BEBehaviorSignalSensor", typeof(BEBehaviorSignalSensor));
 
         }
 

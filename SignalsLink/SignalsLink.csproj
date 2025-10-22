@@ -12,6 +12,9 @@
     <Reference Include="protobuf-net">
       <HintPath>..\..\..\..\..\VintageStory\1.21\Lib\protobuf-net.dll</HintPath>
     </Reference>
+    <Reference Include="signals">
+      <HintPath>..\..\..\ProjectsOthers\Signals\bin\Debug\net8\signals.dll</HintPath>
+    </Reference>
     <Reference Include="VintagestoryAPI">
       <HintPath>..\..\..\..\..\VintageStory\1.21\VintagestoryAPI.dll</HintPath>
     </Reference>
