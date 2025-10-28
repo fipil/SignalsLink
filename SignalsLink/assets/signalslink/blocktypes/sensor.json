@@ -93,6 +93,17 @@
       ]
     },
     {
+      "code": "scanning",
+      "states": [
+        "fwd",
+        "fwdup",
+        "fwddown",
+        "fwdright",
+        "fwdrightup",
+        "fwdrightdown"
+      ]
+    },
+    {
       "code": "orientation",
       "states": [
         "north",
@@ -117,16 +128,16 @@
   ],
   "creativeinventory": {
     "general": [
-      "*-off-north-down"
+      "*-off-fwd-north-down"
     ],
     "signalslink": [
-      "*-off-north-down"
+      "*-off-fwd-north-down"
     ]
   },
   "drops": [
     {
       "type": "block",
-      "code": "sensor-off-north-down"
+      "code": "sensor-off-fwd-north-down"
     }
   ],
   "blockmaterial": "Stone",
@@ -142,7 +153,7 @@
     "*-west-west"
   ],
   "shape": {
-    "base": "block/sensor",
+    "base": "block/sensor_{scanning}_{powered}",
     "rotateXbytype": {
       "*-*-north": 90,
       "*-*-south": 270,
