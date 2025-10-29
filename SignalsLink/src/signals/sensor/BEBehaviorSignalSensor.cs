@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 using Vintagestory.API.Common;
 using Vintagestory.API.Datastructures;
 
-namespace SignalsLink.src.signals
+namespace SignalsLink.src.signals.sensor
 {
     public class BEBehaviorSignalSensor : BEBehaviorSignalConnector
     {
@@ -31,8 +31,8 @@ namespace SignalsLink.src.signals
             signalMod = api.ModLoader.GetModSystem<SignalNetworkMod>();
             base.Initialize(api, properties);
 
-            NodePos pos1 = new NodePos(this.Pos, 0);
-            NodePos pos2 = new NodePos(this.Pos, 1);
+            NodePos pos1 = new NodePos(Pos, 0);
+            NodePos pos2 = new NodePos(Pos, 1);
 
             ISignalNode node1 = GetNodeAt(pos1);
             ISignalNode node2 = GetNodeAt(pos2);

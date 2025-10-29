@@ -1,6 +1,6 @@
 {
   "code": "sensor",
-  "class": "BlockSignalConnection",
+  "class": "BlockSensor",
   "entityclass": "BlockEntitySensor",
   "entityBehaviors": [
     {
