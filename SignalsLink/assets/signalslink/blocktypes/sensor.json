@@ -4,7 +4,7 @@
   "entityclass": "BlockEntitySensor",
   "entityBehaviors": [
     {
-      "name": "BEBehaviorSignalSensor",
+      "name": "BEBehaviorSignalConnector",
       "properties": {
         "signalNodes": [
           {
@@ -13,7 +13,8 @@
           },
           {
             "index": 1,
-            "isSource": false
+            "isSource": true,
+            "output": 0
           }
         ]
       }
@@ -26,10 +27,10 @@
         "name": "con-cathode",
         "x1": 0.75,
         "y1": 0.0625,
-        "z1": 0.125,
+        "z1": 0.75,
         "x2": 0.875,
         "y2": 0.25,
-        "z2": 0.25,
+        "z2": 0.875,
         "rotateXbytype": {
           "*-*-north": 90,
           "*-*-south": 270,
@@ -52,12 +53,12 @@
       {
         "index": 1,
         "name": "con-anode",
-        "x1": 0.4375,
+        "x1": 0.75,
         "y1": 0.0625,
-        "z1": 0.125,
-        "x2": 0.5625,
+        "z1": 0.4375,
+        "x2": 0.875,
         "y2": 0.25,
-        "z2": 0.25,
+        "z2": 0.5625,
         "rotateXbytype": {
           "*-*-north": 90,
           "*-*-south": 270,

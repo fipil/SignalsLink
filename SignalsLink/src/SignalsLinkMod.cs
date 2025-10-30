@@ -30,8 +30,6 @@ namespace SignalsLink.src
 
             api.RegisterBlockEntityClass("BlockEntitySensor", typeof(BESensor));
 
-            api.RegisterBlockEntityBehaviorClass("BEBehaviorSignalSensor", typeof(BEBehaviorSignalSensor));
-
         }
 
         public override void StartClientSide(ICoreClientAPI api)
