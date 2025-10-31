@@ -255,7 +255,7 @@ namespace SignalsLink.src.signals.sensor
 
         public void PlayTimeswitchSound()
         {
-            Api.World.PlaySoundAt(new AssetLocation("game:sounds/effect/timeswitch"), Pos.X, Pos.Y, Pos.Z);
+            Api.World.PlaySoundAt(new AssetLocation("signalslink:sounds/effect/metalslide"), Pos.X, Pos.Y, Pos.Z);
         }
     }
 }
