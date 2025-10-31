@@ -142,17 +142,15 @@ namespace SignalsLink.src.signals.sensor
         {
             Block currentBlock = Api.World.BlockAccessor.GetBlock(Pos);
 
-            // Sestav nový kód varianty
             string newCode = currentBlock.Code.Domain + ":sensor-" +
                              (IsPowered ? "on" : "off") + "-" +
                              ScanningDirection + "-" +
                              currentBlock.Variant["orientation"] + "-" +
                              currentBlock.Variant["side"];
 
-            // Zkontroluj, jestli už není správná varianta
             if (currentBlock.Code.Path == newCode.Split(':')[1])
             {
-                return; // Už je správný blok, nic nedělej
+                return; 
             }
 
             Block newBlock = Api.World.GetBlock(new AssetLocation(newCode));
@@ -176,7 +174,6 @@ namespace SignalsLink.src.signals.sensor
                 return Pos;
             }
 
-            // Lokální jednotkové vektory podle orientation/side
             Vec3i forward = DirectionFromFacing(orientation);
             Vec3i down = DirectionFromFacing(side);
             Vec3i up = new Vec3i(-down.X, -down.Y, -down.Z);
@@ -216,7 +213,6 @@ namespace SignalsLink.src.signals.sensor
 
         private Vec3i Cross(Vec3i a, Vec3i b)
         {
-            // Křížový součin (pravotočivý systém)
             return new Vec3i(
                 a.Y * b.Z - a.Z * b.Y,
                 a.Z * b.X - a.X * b.Z,
@@ -226,30 +222,28 @@ namespace SignalsLink.src.signals.sensor
 
         public void SpawnTestParticles(BlockPos pos)
         {
-            // Vytvoř particle effect
             SimpleParticleProperties particles = new SimpleParticleProperties(
                 minQuantity: 5,
                 maxQuantity: 10,
-               ColorUtil.ToRgba(200, 0, 255, 255), // Cyan/azurová
-                new Vec3d(pos.X + 0.5, pos.Y + 0.5, pos.Z + 0.5), // Pozice (střed bloku)
+                ColorUtil.ToRgba(200, 0, 255, 255),
                 new Vec3d(pos.X + 0.5, pos.Y + 0.5, pos.Z + 0.5),
-                new Vec3f(-0.1f, -0.05f, -0.1f), // Min velocity (lehké vlnění)
-                new Vec3f(0.1f, 0.05f, 0.1f)     // Max velocity
+                new Vec3d(pos.X + 0.5, pos.Y + 0.5, pos.Z + 0.5),
+                new Vec3f(-0.1f, -0.05f, -0.1f),
+                new Vec3f(0.1f, 0.05f, 0.1f)
             );
 
             particles.MinSize = 0.1f;
             particles.MaxSize = 0.3f;
-            particles.LifeLength = 1.5f; // Jak dlouho particle žijí (sekundy)
-            particles.GravityEffect = 0.0f; // Žádná gravitace = vznášení
+            particles.LifeLength = 1.5f;
+            particles.GravityEffect = 0.0f;
             particles.WithTerrainCollision = false;
-            particles.ParticleModel = EnumParticleModel.Quad; // Čtvercové particles
+            particles.ParticleModel = EnumParticleModel.Quad;
             particles.SelfPropelled = false;
             particles.OpacityEvolve = EvolvingNatFloat.create(
                 EnumTransformFunction.LINEAR,
-                -255 / particles.LifeLength // Postupné mizení
+                -255 / particles.LifeLength
             );
 
-            // Spusť particles
             Api.World.SpawnParticles(particles);
         }
 
