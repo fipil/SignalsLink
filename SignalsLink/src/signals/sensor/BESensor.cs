@@ -2,6 +2,7 @@
 using signals.src;
 using signals.src.signalNetwork;
 using signals.src.transmission;
+using SignalsLink.src.signals.sensor.scanners;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -26,6 +27,18 @@ namespace SignalsLink.src.signals.sensor
         BlockFacing Side = BlockFacing.DOWN;
 
         SignalNetworkMod signalMod;
+
+        private static SensorScannerFactory scannerFactory;
+        BlockPos scannedPosition;
+        IBlockSensorScanner activeScanner;
+
+        public BESensor()
+        {
+            if (scannerFactory == null)
+            {
+                scannerFactory = new SensorScannerFactory();
+            }
+        }
 
         public override void Initialize(ICoreAPI api)
         {
@@ -59,7 +72,38 @@ namespace SignalsLink.src.signals.sensor
 
         private void OnSlowServerTick(float dt)
         {
-        }        
+            outputState = CalculateOutputSignal(state);
+        }
+
+        private byte CalculateOutputSignal(byte inputSignal)
+        {
+            if(inputSignal == 0 || !IsPowered)
+            {
+                return 0;
+            }
+
+            Block block = Api.World.BlockAccessor.GetBlock(ScannedPosition);
+            BlockEntity blockEntity = Api.World.BlockAccessor.GetBlockEntity(ScannedPosition);
+
+            if(activeScanner?.CanScan(block, blockEntity) != true)
+            {
+                activeScanner = scannerFactory.GetScanner(block, blockEntity);
+            }
+
+            // Vypočti signál
+            return activeScanner.CalculateSignal(block, blockEntity, inputSignal);
+        }
+
+        BlockPos ScannedPosition {
+            get
+            {
+                if (scannedPosition == null)
+                {
+                    scannedPosition = GetScannedBlockPosition();
+                }
+                return scannedPosition;
+            }
+        }
 
         public override void OnBlockUnloaded()
         {
@@ -133,8 +177,11 @@ namespace SignalsLink.src.signals.sensor
                 MarkDirty(true);
 
                 BlockPos scannedPos = GetScannedBlockPosition();
-                SpawnTestParticles(scannedPos);
+                scannedPosition = scannedPos;
+                activeScanner = null;
                 PlayTimeswitchSound();
+                if(state != 0)
+                    SpawnTemporalParticles(scannedPos);
             }
         }
 
@@ -220,7 +267,7 @@ namespace SignalsLink.src.signals.sensor
             );
         }
 
-        public void SpawnTestParticles(BlockPos pos)
+        public void SpawnTemporalParticles(BlockPos pos)
         {
             SimpleParticleProperties particles = new SimpleParticleProperties(
                 minQuantity: 5,
