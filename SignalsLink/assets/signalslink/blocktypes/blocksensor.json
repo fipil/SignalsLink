@@ -1,7 +1,7 @@
 {
-  "code": "sensor",
+  "code": "blocksensor",
   "class": "BlockSensor",
-  "entityclass": "BlockEntitySensor",
+  "entityclass": "BlockEntityBlockSensor",
   "entityBehaviors": [
     {
       "name": "BEBehaviorSignalConnector",
@@ -138,7 +138,7 @@
   "drops": [
     {
       "type": "block",
-      "code": "sensor-off-fwd-north-down"
+      "code": "blocksensor-off-fwd-north-down"
     }
   ],
   "blockmaterial": "Stone",
@@ -154,7 +154,7 @@
     "*-west-west"
   ],
   "shape": {
-    "base": "block/sensor_{scanning}_{powered}",
+    "base": "block/blocksensor_{scanning}_{powered}",
     "rotateXbytype": {
       "*-*-north": 90,
       "*-*-south": 270,

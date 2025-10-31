@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Vintagestory.API.Common;
 
-namespace SignalsLink.src.signals.sensor.scanners
+namespace SignalsLink.src.signals.blocksensor.scanners
 {
     public class DefaultScanner : IBlockSensorScanner
     {

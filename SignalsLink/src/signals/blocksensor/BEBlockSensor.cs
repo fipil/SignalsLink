@@ -2,7 +2,7 @@
 using signals.src;
 using signals.src.signalNetwork;
 using signals.src.transmission;
-using SignalsLink.src.signals.sensor.scanners;
+using SignalsLink.src.signals.blocksensor.scanners;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,9 +13,9 @@ using Vintagestory.API.Common;
 using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
 
-namespace SignalsLink.src.signals.sensor
+namespace SignalsLink.src.signals.blocksensor
 {
-    class BESensor : BlockEntity, IBESignalReceptor
+    class BEBlockSensor : BlockEntity, IBESignalReceptor
     {
         public byte state;
         public byte outputState = 3;
@@ -32,7 +32,7 @@ namespace SignalsLink.src.signals.sensor
         BlockPos scannedPosition;
         IBlockSensorScanner activeScanner;
 
-        public BESensor()
+        public BEBlockSensor()
         {
             if (scannerFactory == null)
             {
@@ -189,7 +189,7 @@ namespace SignalsLink.src.signals.sensor
         {
             Block currentBlock = Api.World.BlockAccessor.GetBlock(Pos);
 
-            string newCode = currentBlock.Code.Domain + ":sensor-" +
+            string newCode = currentBlock.Code.Domain + ":blocksensor-" +
                              (IsPowered ? "on" : "off") + "-" +
                              ScanningDirection + "-" +
                              currentBlock.Variant["orientation"] + "-" +
@@ -217,7 +217,7 @@ namespace SignalsLink.src.signals.sensor
 
             if (orientation == null || side == null)
             {
-                Api.World.Logger.Warning("Sensor at {0} has missing variants", Pos);
+                Api.World.Logger.Warning("BlockSensor at {0} has missing variants", Pos);
                 return Pos;
             }
 

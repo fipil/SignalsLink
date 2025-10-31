@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Vintagestory.API.Common;
 
-namespace SignalsLink.src.signals.sensor
+namespace SignalsLink.src.signals.blocksensor
 {
     public class BlockSensor : BlockConnection
     {
@@ -14,7 +14,7 @@ namespace SignalsLink.src.signals.sensor
         {
             if (!base.OnBlockInteractStart(world, byPlayer, blockSel)) return false;
 
-            BESensor be = world.BlockAccessor.GetBlockEntity(blockSel.Position) as BESensor;
+            BEBlockSensor be = world.BlockAccessor.GetBlockEntity(blockSel.Position) as BEBlockSensor;
 
             if (be != null)
             {
