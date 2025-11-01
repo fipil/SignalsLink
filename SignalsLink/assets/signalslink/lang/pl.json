@@ -1,0 +1,8 @@
+{
+  "game:tabname-signalslink": "Signals Link",
+  "signalslink:block-blocksensor-*": "Czujnik bloku",
+  "signals:con-input": "Wejście",
+  "signals:con-output": "Wyjście",
+  "signalslink:usageinfo-signalslink-title": "SignalsLink - rozszerzenie moda Signals",
+  "signalslink:usageinfo-signalslink-text": "<strong>SignalsLink<\/strong><br>  Mod rozszerzający świetny mod <a href=\"handbook://signals:craftinginfo-signals\">Signals<\/a> o dodatkowe komponenty i możliwości współpracy z innymi modami.<br><br><strong>Block Sensor<\/strong><br>Umożliwia wykrywanie obecności bloku w wybranej sąsiedniej pozycji i na podstawie sygnału wejściowego określanie, jak bardzo zapełnione są jego sloty.<br>Sygnał wejściowy określa, który slot ma być skanowany.<br>Sygnały 1–14 odpowiadają slotom 0–13. Wynikiem jest informacja o stopniu zapełnienia slotu w stosunku do maksymalnej pojemności stosu przedmiotu w danym slocie, przekształcona na sygnał 0–15.<br>Sygnał 15 wskazuje, że czujnik powinien wykrywać stan bloku w zależności od jego rodzaju.<br>Aktualnie obsługiwane bloki:<br>Skrzynia lub ogólny kontener – sygnał wyjściowy odpowiada całkowitemu zapełnieniu kontenera."
+}

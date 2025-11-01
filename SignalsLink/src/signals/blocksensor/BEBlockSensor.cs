@@ -61,13 +61,14 @@ namespace SignalsLink.src.signals.blocksensor
                 }
             }
 
-            Console.WriteLine("BESensor initialized at " + Pos + " with orientation " + Orientation.Code + " and side " + Side.Code);   
-
             signalMod = api.ModLoader.GetModSystem<SignalNetworkMod>();
             signalMod.RegisterSignalTickListener(OnSignalNetworkTick);
 
             SetPowered(state != 0);
-            RegisterGameTickListener(OnSlowServerTick, 300);
+            if (Api.Side == EnumAppSide.Server)
+            {
+                RegisterGameTickListener(OnSlowServerTick, 300);
+            }
         }
 
         private void OnSlowServerTick(float dt)
@@ -90,7 +91,7 @@ namespace SignalsLink.src.signals.blocksensor
                 activeScanner = scannerFactory.GetScanner(block, blockEntity);
             }
 
-            // Vypočti signál
+            // Calculate signal
             return activeScanner.CalculateSignal(block, blockEntity, inputSignal);
         }
 
@@ -125,11 +126,6 @@ namespace SignalsLink.src.signals.blocksensor
             ISignalNode nodeSource = beb.GetNodeAt(new NodePos(this.Pos, 1));
             signalMod.netManager.UpdateSource(nodeSource, outputState);
             MarkDirty();
-        }
-
-
-        public void OnServerGameTick(float dt)
-        {
         }
 
         public void OnValueChanged(NodePos pos, byte value)
@@ -269,7 +265,9 @@ namespace SignalsLink.src.signals.blocksensor
 
         public void SpawnTemporalParticles(BlockPos pos)
         {
-            SimpleParticleProperties particles = new SimpleParticleProperties(
+            if (Api.Side == EnumAppSide.Client)
+            {
+                SimpleParticleProperties particles = new SimpleParticleProperties(
                 minQuantity: 5,
                 maxQuantity: 10,
                 ColorUtil.ToRgba(200, 0, 255, 255),
@@ -279,24 +277,28 @@ namespace SignalsLink.src.signals.blocksensor
                 new Vec3f(0.1f, 0.05f, 0.1f)
             );
 
-            particles.MinSize = 0.1f;
-            particles.MaxSize = 0.3f;
-            particles.LifeLength = 1.5f;
-            particles.GravityEffect = 0.0f;
-            particles.WithTerrainCollision = false;
-            particles.ParticleModel = EnumParticleModel.Quad;
-            particles.SelfPropelled = false;
-            particles.OpacityEvolve = EvolvingNatFloat.create(
-                EnumTransformFunction.LINEAR,
-                -255 / particles.LifeLength
-            );
+                particles.MinSize = 0.1f;
+                particles.MaxSize = 0.3f;
+                particles.LifeLength = 1.5f;
+                particles.GravityEffect = 0.0f;
+                particles.WithTerrainCollision = false;
+                particles.ParticleModel = EnumParticleModel.Quad;
+                particles.SelfPropelled = false;
+                particles.OpacityEvolve = EvolvingNatFloat.create(
+                    EnumTransformFunction.LINEAR,
+                    -255 / particles.LifeLength
+                );
 
-            Api.World.SpawnParticles(particles);
+                Api.World.SpawnParticles(particles);
+            }
         }
 
         public void PlayTimeswitchSound()
         {
-            Api.World.PlaySoundAt(new AssetLocation("signalslink:sounds/effect/metalslide"), Pos.X, Pos.Y, Pos.Z);
+            if (Api.Side == EnumAppSide.Client)
+            {
+                Api.World.PlaySoundAt(new AssetLocation("signalslink:sounds/effect/metalslide"), Pos.X, Pos.Y, Pos.Z);
+            }
         }
     }
 }

@@ -1,0 +1,8 @@
+{
+  "game:tabname-signalslink": "Signals Link",
+  "signalslink:block-blocksensor-*": "Capteur de bloc",
+  "signals:con-input": "Entrée",
+  "signals:con-output": "Sortie",
+  "signalslink:usageinfo-signalslink-title": "SignalsLink - extension du mod Signals",
+  "signalslink:usageinfo-signalslink-text": "<strong>SignalsLink<\/strong><br>  Mod étendant l’excellent mod <a href=\"handbook://signals:craftinginfo-signals\">Signals<\/a> avec des composants supplémentaires et des possibilités de coopération avec d’autres mods.<br><br><strong>Block Sensor<\/strong><br>Permet de détecter la présence d’un bloc à une position adjacente sélectionnée et, selon le signal d’entrée, de déterminer à quel point ses emplacements sont remplis.<br>Le signal d’entrée détermine quel emplacement doit être analysé.<br>Les signaux 1-14 correspondent aux emplacements 0-13. La sortie fournit des informations sur le niveau de remplissage de l’emplacement par rapport à la capacité maximale de la pile de l’objet dans cet emplacement, converties en un signal de 0 à 15.<br>Le signal 15 indique que le capteur doit détecter l’état du bloc selon son type.<br>Blocs actuellement pris en charge :<br>Coffre ou tout autre conteneur – le signal de sortie correspond au taux de remplissage total du conteneur."
+}

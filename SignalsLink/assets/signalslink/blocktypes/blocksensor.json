@@ -24,7 +24,7 @@
     "signalNodes": [
       {
         "index": 0,
-        "name": "con-cathode",
+        "name": "con-input",
         "x1": 0.75,
         "y1": 0.0625,
         "z1": 0.75,
@@ -52,7 +52,7 @@
       },
       {
         "index": 1,
-        "name": "con-anode",
+        "name": "con-output",
         "x1": 0.75,
         "y1": 0.0625,
         "z1": 0.4375,

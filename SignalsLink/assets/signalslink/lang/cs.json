@@ -1,0 +1,8 @@
+{
+  "game:tabname-signalslink": "Signals Link",
+  "signalslink:block-blocksensor-*": "Blokový senzor",
+  "signals:con-input": "Vstup",
+  "signals:con-output": "Výstup",
+  "signalslink:usageinfo-signalslink-title": "SignalsLink - rozšíření modu Signals",
+  "signalslink:usageinfo-signalslink-text": "<strong>SignalsLink<\/strong><br>  Mod rozšiřující skvělý mod <a href=\"handbook://signals:craftinginfo-signals\">Signals<\/a> o další komponenty a možnosti spolupracovat s jinými mody.<br><br><strong>Block Sensor<\/strong><br>Umožňuje detekovat přítomnost bloku na vybrané sousední pozici a na základě vstupního signálu detekovat zaplnění jeho slotů.<br>Vstupní signál určuje, který slot má být skenován.<br>Signál 1-14 určuje sloty 0-13. Výstupem je informace o zaplnění slotu vzhledem k maximální kapacitě stacku položky v daném slotu, převedená na signál 0-15.<br>Signál 15 určuje, že má sensor detekovat stav bloku na základě toho, o jaký blok se jedná.<br>Prozatím podporované bloky jsou:<br>Truhla nebo obecně kontejner - výstupní signál odpovídá celkovému zaplnění kontejneru."
+}

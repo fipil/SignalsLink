@@ -7,7 +7,7 @@ using Vintagestory.API.Server;
 [assembly: ModInfo("Signals Link", "signalslink",
     Description = "Extends Signals mod with sensors and control elements for interacting with other mods and vanilla blocks.",
     Website = "",
-    Version = "0.0.1",
+    Version = "0.1.0",
     Authors = new[] { "fipil" }
 )]
 

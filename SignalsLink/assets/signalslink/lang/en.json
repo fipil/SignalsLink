@@ -1,3 +1,8 @@
 {
-  "game:tabname-signalslink": "Signals Link"
+  "game:tabname-signalslink": "Signals Link",
+  "signalslink:block-blocksensor-*": "Block sensor",
+  "signals:con-input": "Input",
+  "signals:con-output": "Output",
+  "signalslink:usageinfo-signalslink-title": "SignalsLink - extending Signals mod",
+  "signalslink:usageinfo-signalslink-text":"<strong>SignalsLink<\/strong><br>  Mod extending the great <a href=\"handbook:\/\/signals:craftinginfo-signals\">Signals<\/a> mod with additional components and possibilities to cooperate with other mods.<br><br><strong>Block Sensor<\/strong><br>Allows detection of the presence of a block at a selected adjacent position and, based on the input signal, detects how full its slots are.<br>The input signal determines which slot should be scanned.<br>Signal 1-14 correspond to slots 0-13. The output is information about the slot's fill level relative to the maximum stack capacity of the item in that slot, converted to a signal 0-15.<br>Signal 15 indicates that the sensor should detect the block state based on what kind of block it is.<br>Currently supported blocks are:<br>Chest or any container in general - the output signal corresponds to the total fullness of the container."
 }

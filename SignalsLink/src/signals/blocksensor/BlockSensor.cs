@@ -24,7 +24,7 @@ namespace SignalsLink.src.signals.blocksensor
 
                 be.SetScanningDirection(scanningModes[nextIndex]);
 
-                return true; 
+                return true;
             }
 
             return false;

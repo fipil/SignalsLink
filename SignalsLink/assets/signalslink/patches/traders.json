@@ -1,0 +1,42 @@
+[
+  {
+    "side": "server",
+    "file": "game:config/tradelists/trader-commodities.json",
+    "op": "add",
+    "path": "/selling/list/-",
+    "value": {
+      "code": "signalslink:blocksensor",
+      "type": "block",
+      "stacksize": 1,
+      "stock": {
+        "avg": 3,
+        "var": 1
+      },
+      "price": {
+        "avg": 15,
+        "var": 2
+      }
+
+    }
+  },
+  {
+    "side": "server",
+    "file": "game:config/tradelists/trader-treasurehunter.json",
+    "op": "add",
+    "path": "/selling/list/-",
+    "value": {
+      "code": "signalslink:blocksensor",
+      "type": "block",
+      "stacksize": 1,
+      "stock": {
+        "avg": 3,
+        "var": 1
+      },
+      "price": {
+        "avg": 15,
+        "var": 2
+      }
+
+    }
+  }
+]
