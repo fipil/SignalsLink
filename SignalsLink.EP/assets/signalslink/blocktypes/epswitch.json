@@ -1,0 +1,222 @@
+{
+  "code": "epswitch",
+  "class": "EPSwitch",
+  "entityclass": "BlockEntityEPSwitch",
+  "entityBehaviors": [
+    {
+      "name": "BEBehaviorSignalConnector",
+      "properties": {
+        "signalNodes": [
+          {
+            "index": 0,
+            "isSource": false
+          }
+        ]
+      }
+    }
+  ],
+  "attributes": {
+    "signalNodes": [
+      {
+        "index": 0,
+        "name": "con-input",
+        "x1": 0.75,
+        "y1": 0.0625,
+        "z1": 0.75,
+        "x2": 0.875,
+        "y2": 0.25,
+        "z2": 0.875,
+        "rotateXbytype": {
+          "*-*-north": 90,
+          "*-*-south": 270,
+          "@*-up-(east|west)": 90,
+          "@*-down-(east|west)": 270,
+          "@*-south-(east|west)": 180
+        },
+        "rotateYbytype": {
+          "@*-east-(up|down|north|south)": 270,
+          "@*-south-(up|down)": 180,
+          "@*-west-(up|down|north|south)": 90,
+          "@*-(down-north|up-south)": 180
+        },
+        "rotateZbyType": {
+          "*-*-up": 180,
+          "*-*-east": 90,
+          "*-*-west": 270
+        }
+      }
+    ]
+  },
+  "behaviors": [
+    {
+      "name": "BlockBehaviorCoverWithDirection"
+    }
+  ],
+  "variantgroups": [
+    {
+      "code": "powered",
+      "states": [
+        "on",
+        "off"
+      ]
+    },
+    {
+      "code": "orientation",
+      "states": [
+        "north",
+        "east",
+        "south",
+        "west",
+        "up",
+        "down"
+      ]
+    },
+    {
+      "code": "side",
+      "states": [
+        "north",
+        "east",
+        "south",
+        "west",
+        "up",
+        "down"
+      ]
+    }
+  ],
+  "creativeinventory": {
+    "general": [
+      "*-off-north-down"
+    ],
+    "signalslink": [
+      "*-off-north-down"
+    ]
+  },
+  "drops": [
+    {
+      "type": "block",
+      "code": "epswitch-off-north-down"
+    }
+  ],
+  "blockmaterial": "Stone",
+  "drawtype": "Json",
+  "skipVariants": [
+    "*-north-north",
+    "*-south-north",
+    "*-north-south",
+    "*-south-south",
+    "*-east-east",
+    "*-east-west",
+    "*-west-east",
+    "*-west-west"
+  ],
+  "shape": {
+    "base": "block/epswitch_{powered}",
+    "rotateXbytype": {
+      "*-*-north": 90,
+      "*-*-south": 270,
+      "@*-up-(east|west)": 90,
+      "@*-down-(east|west)": 270,
+      "@*-south-(east|west)": 180
+    },
+    "rotateYbytype": {
+      "@*-east-(up|down|north|south)": 270,
+      "@*-south-(up|down)": 180,
+      "@*-west-(up|down|north|south)": 90,
+      "@*-(down-north|up-south)": 180
+    },
+    "rotateZbyType": {
+      "*-*-up": 180,
+      "*-*-east": 90,
+      "*-*-west": 270
+    }
+
+  },
+  "sidesolidByType": {
+    "*-down": {
+      "all": false,
+      "down": true
+    },
+    "*-up": {
+      "all": false,
+      "up": true
+    },
+    "*-north": {
+      "all": false,
+      "north": true
+    },
+    "*-east": {
+      "all": false,
+      "east": true
+    },
+    "*-west": {
+      "all": false,
+      "west": true
+    },
+    "*-south": {
+      "all": false,
+      "south": true
+    }
+  },
+  "sideopaque": {
+    "all": false
+  },
+  "selectionbox": {
+    "x1": 0,
+    "y1": 0,
+    "z1": 0,
+    "x2": 1,
+    "y2": 0.0625,
+    "z2": 1,
+    "rotateXbytype": {
+      "*-*-north": 90,
+      "*-*-south": 270,
+      "@*-up-(east|west)": 90,
+      "@*-down-(east|west)": 270,
+      "@*-south-(east|west)": 180
+    },
+    "rotateYbytype": {
+      "@*-east-(up|down|north|south)": 270,
+      "@*-south-(up|down)": 180,
+      "@*-west-(up|down|north|south)": 90,
+      "@*-(down-north|up-south)": 180
+    },
+    "rotateZbyType": {
+      "*-*-up": 180,
+      "*-*-east": 90,
+      "*-*-west": 270
+    }
+  },
+  "collisionbox": {
+    "x1": 0,
+    "y1": 0,
+    "z1": 0,
+    "x2": 1,
+    "y2": 0.0625,
+    "z2": 1,
+    "rotateXbytype": {
+      "*-*-north": 90,
+      "*-*-south": 270,
+      "@*-up-(east|west)": 90,
+      "@*-down-(east|west)": 270,
+      "@*-south-(east|west)": 180
+    },
+    "rotateYbytype": {
+      "@*-east-(up|down|north|south)": 270,
+      "@*-south-(up|down)": 180,
+      "@*-west-(up|down|north|south)": 90,
+      "@*-(down-north|up-south)": 180
+    },
+    "rotateZbyType": {
+      "*-*-up": 180,
+      "*-*-east": 90,
+      "*-*-west": 270
+    }
+  },
+  "guiTransform": {
+    "origin": {
+      "x": 0.5,
+      "y": 0.0625,
+      "z": 0.5
+    }
+  }
+}
