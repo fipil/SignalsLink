@@ -13,19 +13,26 @@
           }
         ]
       }
+    },
+    {
+      "name": "BEBehaviorEConnector"
+    },
+    {
+      "name": "BEBehaviorECable"
     }
+
   ],
   "attributes": {
     "signalNodes": [
       {
         "index": 0,
         "name": "con-input",
-        "x1": 0.75,
-        "y1": 0.0625,
-        "z1": 0.75,
-        "x2": 0.875,
-        "y2": 0.25,
-        "z2": 0.875,
+        "x1": 0.4375,
+        "y1": 0.125,
+        "z1": 0.78125,
+        "x2": 0.5625,
+        "y2": 0.3125,
+        "z2": 0.90625,
         "rotateXbytype": {
           "*-*-north": 90,
           "*-*-south": 270,
@@ -45,7 +52,13 @@
           "*-*-west": 270
         }
       }
-    ]
+    ],
+    "blockEProperties": "main",
+    "facesEProperties": [ "north", "east", "south", "west", "up", "down" ],
+    "voltage": 128,
+    "maxCurrent": 1024.0,
+    "isolated": true,
+    "isolatedEnvironment": true
   },
   "behaviors": [
     {
