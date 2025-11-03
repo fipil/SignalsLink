@@ -18,6 +18,7 @@ namespace SignalsLink.src.signals.blocksensor.scanners
             defaultScanner = new DefaultScanner();
 
             // Register scanners in order of priority (specific ones first)
+            RegisterScanner(new AnvilScanner());
             RegisterScanner(new InventoryScanner());
         }
 

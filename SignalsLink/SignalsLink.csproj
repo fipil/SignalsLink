@@ -21,6 +21,9 @@
     <Reference Include="VintagestoryLib">
       <HintPath>..\..\..\..\..\VintageStory\1.21\VintagestoryLib.dll</HintPath>
     </Reference>
+    <Reference Include="VSSurvivalMod">
+      <HintPath>..\..\..\..\..\VintageStory\1.21\Mods\VSSurvivalMod.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
   <Target Name="PostBuild" BeforeTargets="PostBuildEvent">

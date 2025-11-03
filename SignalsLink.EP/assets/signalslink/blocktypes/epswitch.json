@@ -15,10 +15,10 @@
       }
     },
     {
-      "name": "BEBehaviorEConnector"
+      "name": "BEBehaviorECable"
     },
     {
-      "name": "BEBehaviorECable"
+      "name": "ElectricalProgressive"
     }
 
   ],

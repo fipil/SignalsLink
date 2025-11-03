@@ -5,6 +5,7 @@ using Newtonsoft.Json.Linq;
 using signals.src;
 using signals.src.signalNetwork;
 using signals.src.transmission;
+using SignalsLink.EP.src.messages;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -12,8 +13,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Vintagestory.API.Common;
+using Vintagestory.API.Config;
 using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
+using Vintagestory.API.Server;
 
 namespace SignalsLink.EP.src.epswitch
 {
@@ -21,14 +24,24 @@ namespace SignalsLink.EP.src.epswitch
     {
         public byte state;
 
+        private IServerNetworkChannel serverChannel;
+        private ICoreAPI serverApi;
+
         BlockFacing SignalOrientation = BlockFacing.NORTH;
         BlockFacing SignalSide = BlockFacing.DOWN;
 
-        public bool HasSignal;
+        public bool? HasSignal;
 
         public override void Initialize(ICoreAPI api)
         {
             base.Initialize(api);
+
+            if (api.Side == EnumAppSide.Server)
+            {
+                serverChannel = ((ICoreServerAPI)api).Network
+                    .GetChannel(SignalsLinkEPMod.MODID);
+                serverApi = api;
+            }
 
             if (this.Block.Variant["orientation"] != null)
             {
@@ -47,6 +60,11 @@ namespace SignalsLink.EP.src.epswitch
                 }
             }
 
+            if (ElectricalProgressive != null)
+                ElectricalProgressive.Connection = Facing.None;
+
+            SetPowered(state != 0);
+
         }
 
         public void OnValueChanged(NodePos pos, byte value)
@@ -57,7 +75,26 @@ namespace SignalsLink.EP.src.epswitch
             state = value;
 
             SetPowered(state != 0);
+        }
 
+        private void NotifyClients()
+        {
+            if (serverApi == null) return;
+
+            const double range= 32;
+
+            foreach(IServerPlayer player in serverApi.World.AllOnlinePlayers)
+        {
+                // Kontrola vzdálenosti
+                if (player.Entity.Pos.SquareDistanceTo(Pos.ToVec3d()) < range * range)
+                {
+                    serverChannel.SendPacket(new EpSwitchSwitchedMessage()
+                    {
+                        Pos = this.Pos,
+                        IsOn = state != 0
+                    }, player);
+                }
+            }
         }
 
         public void SetPowered(bool signal)
@@ -68,8 +105,9 @@ namespace SignalsLink.EP.src.epswitch
                 UpdateBlockState();
                 MarkDirty(true);
 
+                NotifyClients();
                 SetEPSwitchConduction(signal);
-            }
+             }
         }
 
         private void SetEPSwitchConduction(bool powered)
@@ -85,7 +123,7 @@ namespace SignalsLink.EP.src.epswitch
             Block currentBlock = Api.World.BlockAccessor.GetBlock(Pos);
 
             string newCode = currentBlock.Code.Domain + ":epswitch-" +
-                             (HasSignal ? "on" : "off") + "-" +
+                             ((HasSignal ?? false) ? "on" : "off") + "-" +
                              currentBlock.Variant["orientation"] + "-" +
                              currentBlock.Variant["side"];
 
@@ -107,7 +145,6 @@ namespace SignalsLink.EP.src.epswitch
         {
             base.FromTreeAttributes(tree, worldForResolving);
             state = tree.GetBytes("state", new byte[1] { 0 })[0];
-            HasSignal = state != 0;
         }
 
         public override void ToTreeAttributes(ITreeAttribute tree)
@@ -116,5 +153,13 @@ namespace SignalsLink.EP.src.epswitch
             tree.SetBytes("state", new byte[1] { state });
         }
 
+        public override void OnBlockPlaced(ItemStack? byItemStack = null)
+        {
+            base.OnBlockPlaced(byItemStack);
+
+            if (ElectricalProgressive != null)
+                ElectricalProgressive.Connection = Facing.None;
+        }
+        
     }
 }
