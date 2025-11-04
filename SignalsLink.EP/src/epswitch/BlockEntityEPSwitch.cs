@@ -112,7 +112,7 @@ namespace SignalsLink.EP.src.epswitch
 
         private void SetEPSwitchConduction(bool powered)
         {
-            var elPowered = powered ? Facing.AllAll : Facing.None;
+            var elPowered = powered ? ContactsFacing : Facing.None;
 
             if (ElectricalProgressive != null)
                 ElectricalProgressive.Connection = elPowered;
@@ -160,6 +160,67 @@ namespace SignalsLink.EP.src.epswitch
             if (ElectricalProgressive != null)
                 ElectricalProgressive.Connection = Facing.None;
         }
-        
+
+        private Facing? contactsFacing;
+
+        public Facing ContactsFacing
+        {
+            get
+            {
+                if (contactsFacing == null)
+                {
+                    contactsFacing = GetContactFacing();
+                }
+                return contactsFacing.Value;
+            }
+        }
+
+        protected Facing GetContactFacing()
+        {
+            Block currentBlock = Api.World.BlockAccessor.GetBlock(Pos);
+            string orientation = currentBlock.Variant?["orientation"];
+            string side = currentBlock.Variant?["side"];
+
+            if (orientation == null || side == null)
+            {
+                Api.World.Logger.Warning("epSwitch at {0} has missing variants (orientation/side).", Pos);
+                return Facing.None;
+            }
+
+            BlockFacing sideFace = BlockFacing.FromCode(side);
+            BlockFacing forwardFace = BlockFacing.FromCode(orientation);
+
+            // Lokální báze
+            BlockFacing upFace = sideFace.Opposite;
+            BlockFacing rightFace = GetRightFace(forwardFace, upFace);
+            BlockFacing leftFace = rightFace.Opposite;
+
+            // 3 kontakty na základně
+            Facing contactFacing =
+                FacingHelper.From(sideFace, forwardFace) |    // přední kontakt
+                FacingHelper.From(sideFace, rightFace) |    // pravý kontakt
+                FacingHelper.From(sideFace, leftFace);        // levý kontakt
+
+            return contactFacing;
+        }
+
+        private BlockFacing GetRightFace(BlockFacing forward, BlockFacing up)
+        {
+            // Vytvoří pravotočivý systém (forward × up)
+            Vec3i f = forward.Normali;
+            Vec3i u = up.Normali;
+            Vec3i r = Cross(f, u);
+
+            return BlockFacing.FromNormal( new Vec3i(r.X, r.Y, r.Z));
+        }
+
+        private Vec3i Cross(Vec3i a, Vec3i b)
+        {
+            return new Vec3i(
+                a.Y * b.Z - a.Z * b.Y,
+                a.Z * b.X - a.X * b.Z,
+                a.X * b.Y - a.Y * b.X
+            );
+        }
     }
 }

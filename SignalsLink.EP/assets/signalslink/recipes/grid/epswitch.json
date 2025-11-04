@@ -1,0 +1,14 @@
+{
+	"ingredientPattern": "_G_,FSF,_M_",
+	"ingredients": {
+		"F": { "type": "item", "code": "signals:solenoid"},
+		"S": { "type": "block", "code": "electricalprogressivebasics:switch-enabled"},
+		"M": {"type": "item", "code": "game:plank-*"},
+		"G": {"type": "item", "code": "game:gear-temporal"}
+	},
+
+	"width": 3,
+	"height": 3,
+	"shapeless": false,
+	"output": { "type": "block", "code": "signalslink:epswitch-off-north-down", "quantity": 1 }
+}
