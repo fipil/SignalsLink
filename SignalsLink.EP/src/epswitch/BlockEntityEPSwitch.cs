@@ -60,11 +60,6 @@ namespace SignalsLink.EP.src.epswitch
                 }
             }
 
-            if (ElectricalProgressive != null)
-                ElectricalProgressive.Connection = Facing.None;
-
-            SetPowered(state != 0);
-
         }
 
         public void OnValueChanged(NodePos pos, byte value)
