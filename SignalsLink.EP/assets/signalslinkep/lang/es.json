@@ -1,0 +1,7 @@
+{
+  "game:tabname-signalslink": "Signals Link",
+  "signalslinkep:block-epswitch-*": "Interruptor EP",
+  "signals:con-input": "Entrada",
+  "signalslinkep:usageinfo-signalslinkep-title": "SignalsLink.EP - Colaboración de los mods Signals y Electrical Progressive",
+  "signalslinkep:usageinfo-signalslinkep-text": "<font size=\"25\"><strong>SignalsLink.EP<\/strong><\/font><br>Amplía el mod <a href=\\\"handbook://signals:craftinginfo-signals\\\">Signals<\/a> con componentes que cooperan con el mod <a href=\\\"handbook://game:gamemechanicinfo-electricalprogressive\\\">Electrical Progressive<\/a>.<br><br><font size=\"21\"><strong>Electrical Progressive<\/strong><\/font><br><strong>Interruptor EP<\/strong><br>Un interruptor controlado por una señal. Permite activar o desactivar la transmisión de corriente eléctrica.<br>Si hay una señal en la entrada, el interruptor está ENCENDIDO. Si no hay señal, está APAGADO."
+}

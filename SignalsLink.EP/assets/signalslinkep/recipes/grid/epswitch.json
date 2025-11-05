@@ -10,5 +10,5 @@
 	"width": 3,
 	"height": 3,
 	"shapeless": false,
-	"output": { "type": "block", "code": "signalslink:epswitch-off-north-down", "quantity": 1 }
+	"output": { "type": "block", "code": "signalslinkep:epswitch-off-north-down", "quantity": 1 }
 }

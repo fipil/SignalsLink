@@ -1,0 +1,7 @@
+{
+  "game:tabname-signalslink": "Signals Link",
+  "signalslinkep:block-epswitch-*": "EP vypínač",
+  "signals:con-input": "Vstup",
+  "signalslinkep:usageinfo-signalslinkep-title": "SignalsLink.EP - Spolupráca modov Signals a Electrical Progressive",
+  "signalslinkep:usageinfo-signalslinkep-text": "<font size=\"25\"><strong>SignalsLink.EP<\/strong><\/font><br>Rozširuje mod <a href=\\\"handbook://signals:craftinginfo-signals\\\">Signals<\/a> o komponenty, ktoré spolupracujú s modom <a href=\\\"handbook://game:gamemechanicinfo-electricalprogressive\\\">Electrical Progressive<\/a>.<br><br><font size=\"21\"><strong>Electrical Progressive<\/strong><\/font><br><strong>EP vypínač<\/strong><br>Vypínač riadený signálom. Umožňuje zapínať alebo vypínať prenos elektrického prúdu.<br>Ak je na vstupe signál, vypínač je zapnutý. Ak nie je signál, je vypnutý."
+}

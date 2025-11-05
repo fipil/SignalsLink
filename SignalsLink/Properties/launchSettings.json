@@ -3,7 +3,7 @@
     "Debug SignalsLink": {
       "commandName": "Executable",
       "executablePath": "c:\\VintageStory\\1.21\\Vintagestory.exe",
-      "commandLineArgs": "--openWorld=\"signalsLink playground\" -pcreativebuilding --addModPath=\"c:\\Develope\\VintageStory\\Projects\\SignalsLink\\Publish\" --addOrigin=\"c:\\Develope\\VintageStory\\Projects\\SignalsLink\\Publish\\assets\" --dataPath C:\\VintageStory\\1.21Data --tracelog",
+      "commandLineArgs": "--openWorld=\"signalsLink playground\" -pcreativebuilding --addModPath=\"c:\\Develope\\VintageStory\\Projects\\SignalsLink\\Publish\" --addOrigin=\"c:\\Develope\\VintageStory\\Projects\\SignalsLink\\SignalsLink\\assets\" --dataPath C:\\VintageStory\\1.21Data --tracelog",
       "workingDirectory": "c:\\VintageStory\\1.21\\"
     }
   }

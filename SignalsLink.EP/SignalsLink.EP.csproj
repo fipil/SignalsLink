@@ -29,14 +29,9 @@
     </Reference>
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="assets\signalslink\shapes\block\" />
-  </ItemGroup>
-
   <Target Name="PostBuild" BeforeTargets="PostBuildEvent">
     <Exec Command="copy &quot;$(TargetPath)&quot; &quot;c:\Develope\VintageStory\Projects\SignalsLink\Publish\&quot;" />
     <Exec Command="copy &quot;$(TargetDir)\$(TargetName).pdb&quot; &quot;c:\Develope\VintageStory\Projects\SignalsLink\Publish\&quot;" />
-    <Exec Command="xcopy &quot;$(ProjectDir)assets&quot; &quot;c:\Develope\VintageStory\Projects\SignalsLink\Publish\assets\&quot; /E /I /Y" />
   </Target>
 
 </Project>

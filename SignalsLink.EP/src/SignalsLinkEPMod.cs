@@ -8,7 +8,6 @@ using Vintagestory.Client.NoObf;
 
 [assembly: ModDependency("game", "1.21.0")]
 [assembly: ModDependency("signals", "0.2.6")]
-[assembly: ModDependency("signalslink", "0.1.0")]
 [assembly: ModDependency("electricalprogressivebasics", "2.5.0")]
 [assembly: ModInfo("Signals Link EP", "signalslinkep",
     Description = "Extends Signals mod with control elements for interacting with the Electrical Progressive mod.",
