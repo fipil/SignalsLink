@@ -60,7 +60,7 @@ namespace SignalsLink.EP.src
 
         private void OnEpSwitchedMessage(EpSwitchSwitchedMessage packet)
         {
-            clientApi.World.PlaySoundAt(new AssetLocation($"signalslink:sounds/effect/epswitch{(packet.IsOn?"on":"off")}"), packet.Pos.X, packet.Pos.Y, packet.Pos.Z);
+            clientApi.World.PlaySoundAt(new AssetLocation($"signalslinkep:sounds/effect/epswitch{(packet.IsOn?"on":"off")}"), packet.Pos.X, packet.Pos.Y, packet.Pos.Z);
         }
 
         private void OnClientLogEntry(EnumLogType logType, string message, params object[] args)
