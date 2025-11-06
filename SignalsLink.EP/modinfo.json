@@ -8,6 +8,6 @@
   "dependencies": {
     "game": "1.21.0", 
     "signals": "0.2.6",
-    "electricalprogressivecore": "2.5.0"
+    "electricalprogressivebasics": "2.6.0"
   }
 }
