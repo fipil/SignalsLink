@@ -12,7 +12,7 @@ using Vintagestory.Client.NoObf;
 [assembly: ModInfo("Signals Link EP", "signalslinkep",
     Description = "Extends Signals mod with control elements for interacting with the Electrical Progressive mod.",
     Website = "",
-    Version = "0.1.0",
+    Version = "0.1.1",
     Authors = new[] { "fipil" }
 )]
 
@@ -26,6 +26,8 @@ namespace SignalsLink.EP.src
 
         IServerNetworkChannel serverChannel;
         IClientNetworkChannel clientChannel;
+
+        bool assetsLoaded = false;
 
         public override void Start(ICoreAPI api)
         {
@@ -58,9 +60,18 @@ namespace SignalsLink.EP.src
                 .RegisterMessageType<EpSwitchSwitchedMessage>();
         }
 
+        public override void AssetsLoaded(ICoreAPI api)
+        {
+            if (api.Side == EnumAppSide.Client)
+            {
+                assetsLoaded = true;
+            }
+        }
+
         private void OnEpSwitchedMessage(EpSwitchSwitchedMessage packet)
         {
-            clientApi.World.PlaySoundAt(new AssetLocation($"signalslinkep:sounds/effect/epswitch{(packet.IsOn?"on":"off")}"), packet.Pos.X, packet.Pos.Y, packet.Pos.Z);
+            if(assetsLoaded)
+                api.World.PlaySoundAt(new AssetLocation($"signalslinkep:sounds/effect/epswitch{(packet.IsOn?"on":"off")}"), packet.Pos.X, packet.Pos.Y, packet.Pos.Z);
         }
 
         private void OnClientLogEntry(EnumLogType logType, string message, params object[] args)
