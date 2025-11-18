@@ -12,7 +12,7 @@ using Vintagestory.Client.NoObf;
 [assembly: ModInfo("Signals Link EP", "signalslinkep",
     Description = "Extends Signals mod with control elements for interacting with the Electrical Progressive mod.",
     Website = "",
-    Version = "0.1.1",
+    Version = "0.1.3",
     Authors = new[] { "fipil" }
 )]
 
@@ -71,7 +71,16 @@ namespace SignalsLink.EP.src
         private void OnEpSwitchedMessage(EpSwitchSwitchedMessage packet)
         {
             if(assetsLoaded)
-                api.World.PlaySoundAt(new AssetLocation($"signalslinkep:sounds/effect/epswitch{(packet.IsOn?"on":"off")}"), packet.Pos.X, packet.Pos.Y, packet.Pos.Z);
+            {
+                try
+                {
+                    api.World.PlaySoundAt(new AssetLocation($"signalslinkep:sounds/effect/epswitch{(packet.IsOn?"on":"off")}"), packet.Pos.X, packet.Pos.Y, packet.Pos.Z);
+                }
+                catch (Exception)
+                {
+                    api.World.Logger.Warning("Error playing EPSwitch sound, ignored.");
+                }
+            }
         }
 
         private void OnClientLogEntry(EnumLogType logType, string message, params object[] args)

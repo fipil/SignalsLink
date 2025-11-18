@@ -79,7 +79,7 @@ namespace SignalsLink.EP.src.epswitch
             const double range= 32;
 
             foreach(IServerPlayer player in serverApi.World.AllOnlinePlayers)
-        {
+            {
                 // Kontrola vzdálenosti
                 if (player.Entity.Pos.SquareDistanceTo(Pos.ToVec3d()) < range * range)
                 {
