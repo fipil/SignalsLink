@@ -1,7 +1,7 @@
 {
-  "code": "epswitch",
-  "class": "EPSwitch",
-  "entityclass": "BlockEntityEPSwitch",
+  "code": "epmeter",
+  "class": "EPMeter",
+  "entityclass": "BlockEntityEPMeter",
   "entityBehaviors": [
     {
       "name": "BEBehaviorSignalConnector",
@@ -10,6 +10,11 @@
           {
             "index": 0,
             "isSource": false
+          },
+          {
+            "index": 1,
+            "isSource": true,
+            "output": 0
           }
         ]
       }
@@ -27,12 +32,40 @@
       {
         "index": 0,
         "name": "con-input",
-        "x1": 0.4375,
-        "y1": 0.4375,
-        "z1": 0.75,
-        "x2": 0.5625,
-        "y2": 0.625,
-        "z2": 0.875,
+        "x1": 0.125,
+        "y1": 0.0625,
+        "z1": 0.6875,
+        "x2": 0.25,
+        "y2": 0.25,
+        "z2": 0.8125,
+        "rotateXbytype": {
+          "*-*-north": 90,
+          "*-*-south": 270,
+          "@*-up-(east|west)": 90,
+          "@*-down-(east|west)": 270,
+          "@*-south-(east|west)": 180
+        },
+        "rotateYbytype": {
+          "@*-east-(up|down|north|south)": 270,
+          "@*-south-(up|down)": 180,
+          "@*-west-(up|down|north|south)": 90,
+          "@*-(down-north|up-south)": 180
+        },
+        "rotateZbyType": {
+          "*-*-up": 180,
+          "*-*-east": 90,
+          "*-*-west": 270
+        }
+      },
+      {
+        "index": 1,
+        "name": "con-output",
+        "x1": 0.75,
+        "y1": 0.0625,
+        "z1": 0.6875,
+        "x2": 0.875,
+        "y2": 0.25,
+        "z2": 0.8125,
         "rotateXbytype": {
           "*-*-north": 90,
           "*-*-south": 270,
@@ -107,7 +140,7 @@
   "drops": [
     {
       "type": "block",
-      "code": "epswitch-off-north-down"
+      "code": "epmeter-off-north-down"
     }
   ],
   "blockmaterial": "Stone",
@@ -123,7 +156,7 @@
     "*-west-west"
   ],
   "shape": {
-    "base": "block/epswitch_{powered}",
+    "base": "block/epmeter_{powered}",
     "rotateXbytype": {
       "*-*-north": 90,
       "*-*-south": 270,
@@ -174,12 +207,12 @@
     "all": false
   },
   "selectionbox": {
-    "x1": 0.13125,
+    "x1": 0.125,
     "y1": 0.0,
-    "z1": 0.13125,
-    "x2": 0.86875,
+    "z1": 0.125,
+    "x2": 0.875,
     "y2": 0.0625,
-    "z2": 0.93125,
+    "z2": 0.9375,
     "rotateXbytype": {
       "*-*-north": 90,
       "*-*-south": 270,
@@ -200,12 +233,12 @@
     }
   },
   "collisionbox": {
-    "x1": 0.13125,
+    "x1": 0.125,
     "y1": 0.0,
-    "z1": 0.13125,
-    "x2": 0.86875,
+    "z1": 0.125,
+    "x2": 0.875,
     "y2": 0.0625,
-    "z2": 0.93125,
+    "z2": 0.9375,
     "rotateXbytype": {
       "*-*-north": 90,
       "*-*-south": 270,

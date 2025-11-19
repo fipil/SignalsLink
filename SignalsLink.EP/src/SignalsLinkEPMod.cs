@@ -1,4 +1,5 @@
-﻿using SignalsLink.EP.src.epswitch;
+﻿using SignalsLink.EP.src.epmeter;
+using SignalsLink.EP.src.epswitch;
 using SignalsLink.EP.src.messages;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
@@ -35,8 +36,10 @@ namespace SignalsLink.EP.src
             base.Start(api);
 
             api.RegisterBlockClass("EPSwitch", typeof(EPSwitch));
+            api.RegisterBlockClass("EPMeter", typeof(EPMeter));
 
             api.RegisterBlockEntityClass("BlockEntityEPSwitch", typeof(BlockEntityEPSwitch));
+            api.RegisterBlockEntityClass("BlockEntityEPMeter", typeof(BlockEntityEPMeter));
 
         }
 
