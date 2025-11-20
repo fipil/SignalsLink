@@ -13,6 +13,7 @@ Tvým úkolem při každém spuštění je:
    - nesmíš normalizovat HTML.
 5. HTML escapuj tak, aby bylo možné vložit celé escapované HTML do JSON hodnoty. Zejména:
    - `</` → `<\/`
+   - nesmíš escapovat zpětná lomítka!!
    - uvozovky a apostrofy escapuj podle JSON standardu,
 6. Tento jednořádkový escapovaný HTML string vlož nebo aktualizuj v souboru `cs.json` pod klíčem:
    - `signalslinkep:usageinfo-signalslinkep-text`
@@ -21,7 +22,9 @@ Tvým úkolem při každém spuštění je:
 
 Poté:
 
-8. Vygeneruj nebo aktualizuj jazykové JSON soubory tak, že přeložíš soubor `cs.json` do příslušného jazyka:
+8. Do českého souboru `cs.json` přidej nebo aktualizuj klíč `signalslinkep:usageinfo-signalslinkep-text` s obsahem získaným z HTML souboru podle předchozích kroků.
+
+9. Vygeneruj nebo aktualizuj jazykové JSON soubory tak, že přeložíš soubor `cs.json` do příslušného jazyka:
    - `de.json`
    - `en.json`
    - `es.json`
@@ -44,6 +47,7 @@ Pravidla pro generování překladů:
   - překládej pouze viditelný text mezi tagy,
   - výsledek musí být opět na jednom řádku,
   - escapuj `</` jako `<\/`,
+  - NEESCAPUJ zpětná lomítka!!!
   - nikdy nepřidávej `\n` nebo `\r`,
   - nikdy nepřidávej nějaké další tagy,
   - nikdy nezaměňuj znaky `\n` nebo `\r` za <br> tag.
@@ -58,7 +62,7 @@ Požadavky na formát JSON:
 Rozsah povolených změn:
 
 - smíš měnit pouze:
-- `cs.json` zde pouze hodnotu klíče `signalslinkep:usageinfo-signalslinkep-text`,
+- `cs.json` zde měníš pouze hodnotu klíče `signalslinkep:usageinfo-signalslinkep-text`, kam zapisuješ jednořádkový HTML string z `signalslinkep.html`,
 - `de.json`
 - `en.json`
 - `es.json`
@@ -75,6 +79,8 @@ Před dokončením:
 
 - ověř, že všechny změněné JSON soubory jsou syntakticky platné,
 - ověř, že klíč `signalslinkep:usageinfo-signalslinkep-text` je přítomen ve všech jazykových souborech,
-- ověř, že obsahuje jednovláknový (single-line) escapovaný HTML text v příslušném jazyce,
+- ověř, že `cs.json` obsahuje jednovláknový (single-line) escapovaný HTML text v češtině,
+- ověř, že všechny JSON soubory obsahují jednovláknový (single-line) escapovaný HTML text v příslušném jazyce,
 - ověř, že žádný z JSON souborů neobsahuje `\n` ani `\r` v hodnotě HTML klíče.
+- ověř, že žádný z JSON souborů neobsahuje escapovaná zpětná lomítka`\\` v hodnotě HTML klíče - ty NEESCAPUJ, ale uveď je tak jak jsou.
 - ověř, že všechny soubory s přeloženými jazyky mají stejnou strukturu klíčů jako `cs.json` a obsahují text přeložený do příslušného jazyka.
