@@ -6,7 +6,6 @@ on:
       - main
       - master
     paths:
-      - "SignalsLink.EP/assets/signalslinkep/lang/cs.json"
       - "SignalsLink.EP/assets/signalslinkep/lang/signalslinkep.html"
       - ".github/prompts/localize-signalslinkep.md"
       - ".github/scripts/localize-signalslinkep.mjs"

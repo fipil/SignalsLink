@@ -12,6 +12,30 @@ const promptPath = path.resolve(".github/prompts/localize-signalslinkep.md");
 // Jazyky
 const targetLangs = ["de", "en", "es", "fr", "it", "pl", "pt", "ru", "sk"];
 
+// Odstranìní BOM (U+FEFF) ze stringu
+function stripBOM(str) {
+    if (typeof str !== "string") return str;
+    return str.replace(/^\uFEFF/, "");
+}
+
+// Rekurzivní odstranìní BOM ze všech stringù v objektu/array
+function stripBOMDeep(value) {
+    if (typeof value === "string") {
+        return stripBOM(value);
+    }
+    if (Array.isArray(value)) {
+        return value.map(stripBOMDeep);
+    }
+    if (value && typeof value === "object") {
+        const out = {};
+        for (const [k, v] of Object.entries(value)) {
+            out[k] = stripBOMDeep(v);
+        }
+        return out;
+    }
+    return value;
+}
+
 async function callOpenAI({ systemPrompt, payload }) {
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) {
@@ -43,11 +67,14 @@ async function callOpenAI({ systemPrompt, payload }) {
 
     const data = await response.json();
 
-    const content =
+    const rawContent =
         data.choices?.[0]?.message?.content ??
         (() => {
             throw new Error("OpenAI nevrátilo žádný obsah v message.content");
         })();
+
+    // Pro jistotu odstraníme BOM i z contentu
+    const content = stripBOM(rawContent);
 
     let result;
     try {
@@ -57,16 +84,21 @@ async function callOpenAI({ systemPrompt, payload }) {
         throw e;
     }
 
-    return result;
+    // Rekurzivnì odstraníme BOM ze všech stringù
+    return stripBOMDeep(result);
 }
 
 async function main() {
-    // naèteme vstupy
-    const [html, csText, systemPrompt] = await Promise.all([
+    // naèteme vstupy a rovnou z nich odstraníme pøípadný BOM
+    const [rawHtml, rawCsText, rawPrompt] = await Promise.all([
         fs.readFile(htmlPath, "utf8"),
         fs.readFile(csPath, "utf8"),
         fs.readFile(promptPath, "utf8"),
     ]);
+
+    const html = stripBOM(rawHtml);
+    const csText = stripBOM(rawCsText);
+    const systemPrompt = stripBOM(rawPrompt);
 
     const cs = JSON.parse(csText);
 
@@ -83,10 +115,11 @@ async function main() {
         throw new Error("Výsledek neobsahuje platný objekt 'cs'");
     }
 
-    // cs.json
+    // cs.json – ještì jednou projistotu projedeme stripBOMDeep
+    const cleanedCs = stripBOMDeep(result.cs);
     await fs.writeFile(
         csPath,
-        JSON.stringify(result.cs, null, 2) + "\n",
+        JSON.stringify(cleanedCs, null, 2) + "\n",
         "utf8",
     );
 
@@ -100,15 +133,16 @@ async function main() {
             continue;
         }
 
+        const cleanedLang = stripBOMDeep(data);
         const langPath = path.join(langDir, `${lang}.json`);
         await fs.writeFile(
             langPath,
-            JSON.stringify(data, null, 2) + "\n",
+            JSON.stringify(cleanedLang, null, 2) + "\n",
             "utf8",
         );
     }
 
-    console.log("Lokalizace úspìšnì aktualizována.");
+    console.log("Lokalizace úspìšnì aktualizována (BOM odstranìn).");
 }
 
 main().catch((err) => {
