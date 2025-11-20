@@ -34,7 +34,7 @@ jobs:
           # Chceme, aby mohl mìnit soubory v pracovním adresáøi
           sandbox: workspace-write
           # volitelnì mùžeš pøidat:
-          model: "gpt-5.1"
+          model: "gpt-4.1"
           # effort: "medium"
 
       - name: Detect changes made by Codex
