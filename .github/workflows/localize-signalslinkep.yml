@@ -1,8 +1,7 @@
-name: Localize help and JSON
+name: Localize SignalsLink.EP
 
 on:
   push:
-    # Pøípadnì uprav jen na main nebo jinou branch
     branches:
       - main
       - master
@@ -19,25 +18,25 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
-      - name: Run Codex localization
-        id: codex_localize
-        uses: openai/codex-action@v1
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
-          openai-api-key: ${{ secrets.OPENAI_API_KEY }}
-          # Prompt je v samostatném souboru v repu (viz níže)
-          prompt-file: .github/codex/prompts/localize-signalslinkep.md
-          # Chceme, aby mohl mìnit soubory v pracovním adresáøi
-          sandbox: workspace-write
-          # volitelnì mùžeš pøidat:
-          model: "gpt-5-mini"
-          # effort: "medium"
+          node-version: 20
 
-      - name: Detect changes made by Codex
+      - name: Install OpenAI SDK
+        run: npm install openai
+
+      - name: Run localization script
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: node .github/scripts/localize-signalslinkep.mjs
+
+      - name: Detect changes
         id: detect_changes
         run: |
           if git diff --quiet; then
@@ -50,14 +49,9 @@ jobs:
         if: steps.detect_changes.outputs.changes == 'true'
         uses: peter-evans/create-pull-request@v6
         with:
-          commit-message: "chore: update localized signalslinkep help and translations"
+          commit-message: "chore: update SignalsLink.EP localizations"
           branch: codex/localize-${{ github.run_id }}
-          # base = vìtev, do které jsi pushnul (typicky main)
           base: ${{ github.ref_name }}
-          title: "Update localized help and signalslinkep translations"
+          title: "Update SignalsLink.EP localizations"
           body: |
-            This PR was generated automatically by Codex.
-
-            It updates:
-            - cs.json (HTML help key + Czech source texts)
-            - localized JSON files for other languages.
+            This PR was generated automatically by a localization script using gpt-5-mini.
