@@ -3,28 +3,35 @@
 Tvým úkolem při každém spuštění je:
 
 1. Zpracovat vybrané soubory v adresáři `SignalsLink.EP/assets/signalslinkep/lang/` podle níže uvedených instrukcí. Budeš pracovat jen se soubory v tomto adresáři!!!
-2. Přečíst HTML soubor `signalslinkep.html`.  
-3. Převést jeho obsah na jeden řádek, bez znaků nového řádku (`\n` nebo `\r`).  
-4. Zachovat HTML naprosto beze změny:
+2. Přečíst HTML soubor `signalslinkep.html`.
+3. Převést jeho obsah na jeden řádek, bez znaků nového řádku (`\n` nebo `\r`).
+
+Pravidla pro HTML:
+
+4. HTML strukturu, tagy a text musíš zachovat:
    - nesmíš měnit strukturu, tagy ani atributy,
-   - nesmíš přidávat ani mazat mezery,  
-   - nesmíš přidávat nějaké <br> nebo jiné tagy,
-   - nesmíš zaměňovat znaky `\n` nebo `\r` za <br> tag,
-   - nesmíš normalizovat HTML.
-5. HTML escapuj tak, aby bylo možné vložit celé escapované HTML do JSON hodnoty. Zejména:
-   - `</` → `<\/`
-   - nesmíš escapovat zpětná lomítka!!
-   - uvozovky a apostrofy escapuj podle JSON standardu,
+   - nesmíš přidávat ani mazat mezery,
+   - nesmíš přidávat žádné nové `<br>` ani jiné tagy,
+   - nesmíš zaměňovat znaky `\n` nebo `\r` za `<br>` tag,
+   - nesmíš normalizovat HTML (žádné přeformátování, žádné změny pořadí atributů).
+
+5. Po převodu na jeden řádek HTML vlož do JSON hodnoty tak, aby JSON byl validní:
+   - uvozovky v HTML atributech escapuj jako `\"` (standardní JSON escapování),
+   - žádné jiné znaky nesmíš escapovat,
+   - nesmíš přidávat zpětná lomítka navíc – výsledná hodnota nesmí obsahovat sekvence `\\` ani `\\\"`,
+   - ponech `</` tak jak je, NEESCAPUJ ho na `<\/`,
+   - výsledná hodnota musí být na jednom řádku (bez `\n` a `\r`).
+
+Zápis do cs.json:
+
 6. Tento jednořádkový escapovaný HTML string vlož nebo aktualizuj v souboru `cs.json` pod klíčem:
    - `signalslinkep:usageinfo-signalslinkep-text`
-7. `cs.json` je český zdrojový soubor. Všechny hodnoty v něm musí být česky a z nich se překládají ostatní jazyky. 
-   Jediné co v něm smíš měnit, je hodnota klíče `signalslinkep:usageinfo-signalslinkep-text`, který aktualizuješ podle kroků 1-8.
 
-Poté:
+7. `cs.json` je český zdrojový soubor. Všechny hodnoty v něm musí být česky. Můžeš měnit pouze hodnotu klíče `signalslinkep:usageinfo-signalslinkep-text` kam zapíšeš to jednořádkové HTML, popsané v předchozích bodech.
 
-8. Do českého souboru `cs.json` přidej nebo aktualizuj klíč `signalslinkep:usageinfo-signalslinkep-text` s obsahem získaným z HTML souboru podle předchozích kroků.
+Překlady:
 
-9. Vygeneruj nebo aktualizuj jazykové JSON soubory tak, že přeložíš soubor `cs.json` do příslušného jazyka:
+8. Vygeneruj nebo aktualizuj jazykové JSON soubory tak, že přeložíš soubor `cs.json` do příslušného jazyka:
    - `de.json`
    - `en.json`
    - `es.json`
@@ -38,49 +45,49 @@ Poté:
 Pravidla pro generování překladů:
 
 - Klíče se **nikdy nepřekládají**, překládají se pouze hodnoty.
-- Struktura a pořadí klíčů musí odpovídat `cs.json`.  
-  - Pokud jazykový soubor nemá nějaký klíč, přidej ho.  
+- Struktura a pořadí klíčů musí odpovídat `cs.json`.
+  - Pokud jazykový soubor nemá nějaký klíč, přidej ho.
   - Pokud má nějaký navíc, odstraň ho.
 - Překládej pouze text. Nepřekládej HTML tagy, atributy ani nic v závorkách `<>`.
-- U klíče `signalslinkep:usageinfo-signalslinkep-text`:
-  - ponech HTML beze změny,
-  - překládej pouze viditelný text mezi tagy,
-  - výsledek musí být opět na jednom řádku,
-  - escapuj `</` jako `<\/`,
-  - NEESCAPUJ zpětná lomítka!!!
-  - nikdy nepřidávej `\n` nebo `\r`,
-  - nikdy nepřidávej nějaké další tagy,
-  - nikdy nezaměňuj znaky `\n` nebo `\r` za <br> tag.
+
+Speciální pravidla pro klíč `signalslinkep:usageinfo-signalslinkep-text`:
+
+- Použij HTML, které jsi připravil v krocích 2–5.
+- Ponech HTML strukturu beze změny (tagy, atributy, pořadí `<br>` atd.).
+- Překládej pouze viditelný text mezi tagy do daného jazyka.
+- Výsledek musí být opět na jednom řádku.
+- Uvozovky v atributech escapuj jako `\"`.
+- Nesmíš produkovat žádnou sekvenci `\\` ani `\\\"` v hodnotě tohoto klíče.
+- Nikdy nepřidávej `\n` nebo `\r`.
+- Nikdy nepřidávej žádné nové tagy ani je nemaž.
 
 Požadavky na formát JSON:
 
 - soubory musí být uloženy jako UTF-8 bez BOM,
 - odsazení 2 mezery,
-- bez koncových čárek,
-- hezky zformátované.
+- bez koncových čárek.
 
 Rozsah povolených změn:
 
 - smíš měnit pouze:
-- `cs.json` zde měníš pouze hodnotu klíče `signalslinkep:usageinfo-signalslinkep-text`, kam zapisuješ jednořádkový HTML string z `signalslinkep.html`,
-- `de.json`
-- `en.json`
-- `es.json`
-- `fr.json`
-- `it.json`
-- `pl.json`
-- `pt.json`
-- `ru.json`
-- `sk.json`
+  - `cs.json`
+  - `de.json`
+  - `en.json`
+  - `es.json`
+  - `fr.json`
+  - `it.json`
+  - `pl.json`
+  - `pt.json`
+  - `ru.json`
+  - `sk.json`
 
-- `signalslinkep.html` se používá jen jako vstupní soubor — nemáš ho měnit.
 
 Před dokončením:
 
 - ověř, že všechny změněné JSON soubory jsou syntakticky platné,
 - ověř, že klíč `signalslinkep:usageinfo-signalslinkep-text` je přítomen ve všech jazykových souborech,
-- ověř, že `cs.json` obsahuje jednovláknový (single-line) escapovaný HTML text v češtině,
-- ověř, že všechny JSON soubory obsahují jednovláknový (single-line) escapovaný HTML text v příslušném jazyce,
-- ověř, že žádný z JSON souborů neobsahuje `\n` ani `\r` v hodnotě HTML klíče.
-- ověř, že žádný z JSON souborů neobsahuje escapovaná zpětná lomítka`\\` v hodnotě HTML klíče - ty NEESCAPUJ, ale uveď je tak jak jsou.
+- ověř, že `cs.json` obsahuje jednovláknový (single-line) HTML text v češtině,
+- ověř, že všechny JSON soubory obsahují jednovláknový HTML text v příslušném jazyce,
+- ověř, že žádný z JSON souborů neobsahuje `\n` ani `\r` v hodnotě HTML klíče,
+- ověř, že hodnoty klíče `signalslinkep:usageinfo-signalslinkep-text` **neobsahují žádnou sekvenci `\\` ani `\\\"`**,
 - ověř, že všechny soubory s přeloženými jazyky mají stejnou strukturu klíčů jako `cs.json` a obsahují text přeložený do příslušného jazyka.
