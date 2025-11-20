@@ -23,6 +23,17 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Debug – show repo structure
+        run: |
+          pwd
+          ls
+          echo "--- .github ---"
+          ls .github || echo ".github not found"
+          echo "--- .github/scripts ---"
+          ls .github/scripts || echo ".github/scripts not found"
+          echo "--- .github/prompts ---"
+          ls .github/prompts || echo ".github/prompts not found"
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
