@@ -97,8 +97,9 @@ namespace SignalsLink.EP.src.epmeter
         private void calculateBatteryCapacity()
         {
             var networks = ElectricalProgressive?.System.GetNetworks(Pos, ContactsFacing);
-            var percentage = networks.MaxCapacity > 0 ? networks.Capacity / networks.MaxCapacity * 100f : 0f;
-            outputState = (byte)Math.Clamp((int)(percentage / 100f * 15f), 0, 15);
+            float ratio = networks.MaxCapacity > 0 ? networks.Capacity / networks.MaxCapacity : 0f;
+            outputState = (byte)Math.Clamp((int)Math.Round(ratio * 15f), 0, 15);
+
         }
 
         private void calculatePowerBallance()
