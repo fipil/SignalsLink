@@ -8,6 +8,8 @@ on:
     paths:
       - "SignalsLink.EP/assets/signalslinkep/lang/cs.json"
       - "SignalsLink.EP/assets/signalslinkep/lang/signalslinkep.html"
+      - ".github/prompts/localize-signalslinkep.md"
+      - ".github/scripts/localize-signalslinkep.mjs"
 
 permissions:
   contents: write
@@ -19,28 +21,27 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
+      # Debug je volitelný, ale doporuèuju ho tam prvních pár bìhù nechat
       - name: Debug – show repo structure
         run: |
           pwd
-          ls
+          echo "--- root ---"
+          ls -la
           echo "--- .github ---"
-          ls .github || echo ".github not found"
+          ls -la .github
           echo "--- .github/scripts ---"
-          ls .github/scripts || echo ".github/scripts not found"
+          ls -la .github/scripts
           echo "--- .github/prompts ---"
-          ls .github/prompts || echo ".github/prompts not found"
+          ls -la .github/prompts
 
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 20
-
-      - name: Install OpenAI SDK
-        run: npm install openai
 
       - name: Run localization script
         env:
@@ -65,4 +66,4 @@ jobs:
           base: ${{ github.ref_name }}
           title: "Update SignalsLink.EP localizations"
           body: |
-            This PR was generated automatically by a localization script using gpt-5-mini.
+            This PR was generated automatically by a localization script using OpenAI gpt-5-mini.
