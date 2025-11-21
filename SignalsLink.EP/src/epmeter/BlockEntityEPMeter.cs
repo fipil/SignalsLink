@@ -27,6 +27,7 @@ namespace SignalsLink.EP.src.epmeter
 
         private const byte BATTERY_CAPACITY_METER = 1;
         private const byte POWER_BALLANCE_METER = 2;
+        private const byte CURRENT_FLOW_METER = 3;
 
         private IServerNetworkChannel serverChannel;
         private ICoreAPI serverApi;
@@ -88,10 +89,37 @@ namespace SignalsLink.EP.src.epmeter
                 case POWER_BALLANCE_METER:
                     calculatePowerBallance();
                     break;
+                case CURRENT_FLOW_METER:
+                    calculateCurrentFlow();
+                    break;
                 default:
                     outputState = 0;
                     break;
             }
+        }
+
+        private void calculateCurrentFlow()
+        {
+            var neighborFacings = new List<BlockFacing>();
+            neighborFacings.AddRange(FacingHelper.Directions(ContactsFacing));
+            neighborFacings.AddRange(FacingHelper.Faces(ContactsFacing));
+
+            var pos = Pos.Copy();
+
+            foreach (var blockFacing in neighborFacings)
+            {
+                pos = pos.AddCopy(blockFacing);
+                var networks = ElectricalProgressive?.System.GetNetworks(pos, Facing.AllAll, "currentFace");
+                var maxCurrent = networks.eParamsInNetwork.maxCurrent * networks.eParamsInNetwork.lines;
+                if (maxCurrent > 0)
+                {
+                    var current = Math.Abs(networks.current);
+                    float ratio = current / maxCurrent;
+                    outputState = (byte)Math.Clamp((int)Math.Ceiling(ratio * 14f), 0, 15);
+                    return;
+                }
+            }
+            outputState = 0;
         }
 
         private void calculateBatteryCapacity()
