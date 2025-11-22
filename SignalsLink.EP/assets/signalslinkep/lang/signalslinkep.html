@@ -17,9 +17,11 @@ Pokud je na vstupu signál, vypínač je zapnutý. Pokud není na vstupu signál
 <br>
 Umožňuje získat informace o stavu elektrické sítě, ke které je měřič připojený.
 <br>
-Pokud je na vstupu signál 1, signál na výstupu ukazuje stav nabití baterií v síti.
+Pokud je na vstupu signál 1, signál na výstupu ukazuje stav nabití baterií v síti. 0 - baterie jsou prázdné, 15 - baterie jsou plně nabité.
 <br>
 Pokud je na vstupu signál 2, signál na výstupu ukazuje bilanci výroba/spotřeba elektřiny. Hodnoty 1-7: více se spotřebovává než vyrábí, 8: spotřeba=výroba, 9-15: výroba elektřiny převyšuje spotřebu.
 <br>
-Pokud je na vstupu jiný signál, na výstupu je signál 0. 
+Pokud je na vstupu signál 3, signál na výstupu ukazuje aktuální proud v kabelech na bloku, ke kterému je měřič připojený. Hodnoty 0-12 představují proud od 0 do maximální kapacity kabelu. 13-15 představují přetížení kabelu (patrně již doutná a brzy shoří)
+<br>
+Pokud je na vstupu jiný signál, na výstupu je signál 0.
 

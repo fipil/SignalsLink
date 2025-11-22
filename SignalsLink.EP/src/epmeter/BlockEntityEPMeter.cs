@@ -28,12 +28,10 @@ namespace SignalsLink.EP.src.epmeter
         private const byte BATTERY_CAPACITY_METER = 1;
         private const byte POWER_BALLANCE_METER = 2;
         private const byte CURRENT_FLOW_METER = 3;
+        private const string CURRENT_FACE = "currentFace";
 
         private IServerNetworkChannel serverChannel;
         private ICoreAPI serverApi;
-
-        BlockFacing SignalOrientation = BlockFacing.NORTH;
-        BlockFacing SignalSide = BlockFacing.DOWN;
 
         public bool? HasSignal;
 
@@ -50,23 +48,6 @@ namespace SignalsLink.EP.src.epmeter
                 serverApi = api;
             }
 
-            if (this.Block.Variant["orientation"] != null)
-            {
-                BlockFacing facing = BlockFacing.FromCode(this.Block.Variant["orientation"]);
-                if (facing != null)
-                {
-                    SignalOrientation = facing;
-                }
-            }
-            if (this.Block.Variant["side"] != null)
-            {
-                BlockFacing facing = BlockFacing.FromCode(this.Block.Variant["side"]);
-                if (facing != null)
-                {
-                    SignalSide = facing;
-                }
-            }
-
             signalMod = api.ModLoader.GetModSystem<SignalNetworkMod>();
             signalMod.RegisterSignalTickListener(OnSignalNetworkTick);
 
@@ -75,8 +56,6 @@ namespace SignalsLink.EP.src.epmeter
             {
                 RegisterGameTickListener(OnSlowServerTick, 1000);
             }
-
-
         }
 
         private void OnSlowServerTick(float dt)
@@ -109,13 +88,13 @@ namespace SignalsLink.EP.src.epmeter
             foreach (var blockFacing in neighborFacings)
             {
                 pos = pos.AddCopy(blockFacing);
-                var networks = ElectricalProgressive?.System.GetNetworks(pos, Facing.AllAll, "currentFace");
+                var networks = ElectricalProgressive?.System.GetNetworks(pos, Facing.AllAll, CURRENT_FACE);
                 var maxCurrent = networks.eParamsInNetwork.maxCurrent * networks.eParamsInNetwork.lines;
                 if (maxCurrent > 0)
                 {
                     var current = Math.Abs(networks.current);
                     float ratio = current / maxCurrent;
-                    outputState = (byte)Math.Clamp((int)Math.Ceiling(ratio * 14f), 0, 15);
+                    outputState = (byte)Math.Clamp((int)Math.Ceiling(ratio * 12f), 0, 15);
                     return;
                 }
             }
