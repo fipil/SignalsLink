@@ -76,6 +76,20 @@ namespace SignalsLink.src.signals.blocksensor
             outputState = CalculateOutputSignal(state);
         }
 
+        public void OnNeighbourBlockChange(BlockPos neibpos)
+        {
+            if (Api.Side == EnumAppSide.Client)
+                return;
+
+            if (neibpos.Equals(ScannedPosition))
+            {
+                scannedPosition = null;
+                activeScanner = null;
+                outputState = CalculateOutputSignal(state);
+                MarkDirty();
+            }
+        }
+
         private byte CalculateOutputSignal(byte inputSignal)
         {
             if(inputSignal == 0 || !IsPowered)
@@ -86,13 +100,13 @@ namespace SignalsLink.src.signals.blocksensor
             Block block = Api.World.BlockAccessor.GetBlock(ScannedPosition);
             BlockEntity blockEntity = Api.World.BlockAccessor.GetBlockEntity(ScannedPosition);
 
-            if(activeScanner?.CanScan(block, blockEntity) != true)
+            if(activeScanner?.CanScan(block, blockEntity, inputSignal) != true)
             {
-                activeScanner = scannerFactory.GetScanner(block, blockEntity);
+                activeScanner = scannerFactory.GetScanner(block, blockEntity, inputSignal);
             }
 
             // Calculate signal
-            return activeScanner.CalculateSignal(block, blockEntity, inputSignal);
+            return activeScanner.CalculateSignal(Api.World, ScannedPosition, block, blockEntity, inputSignal);
         }
 
         BlockPos ScannedPosition {

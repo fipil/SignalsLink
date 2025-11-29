@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Vintagestory.API.Common;
+using Vintagestory.API.MathTools;
 
 namespace SignalsLink.src.signals.blocksensor
 {
@@ -28,6 +29,13 @@ namespace SignalsLink.src.signals.blocksensor
             }
 
             return false;
+        }
+
+        public override void OnNeighbourBlockChange(IWorldAccessor world, BlockPos pos, BlockPos neibpos)
+        {
+            base.OnNeighbourBlockChange(world, pos, neibpos);
+
+            (world.BlockAccessor.GetBlockEntity(pos) as BEBlockSensor)?.OnNeighbourBlockChange(neibpos);
         }
 
     }

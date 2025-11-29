@@ -20,6 +20,7 @@ namespace SignalsLink.src.signals.blocksensor.scanners
             // Register scanners in order of priority (specific ones first)
             RegisterScanner(new AnvilScanner());
             RegisterScanner(new InventoryScanner());
+            RegisterScanner(new EntityScanner());
         }
 
         public void RegisterScanner(IBlockSensorScanner scanner)
@@ -27,12 +28,12 @@ namespace SignalsLink.src.signals.blocksensor.scanners
             scanners.Add(scanner);
         }
 
-        public IBlockSensorScanner GetScanner(Block block, BlockEntity blockEntity)
+        public IBlockSensorScanner GetScanner(Block block, BlockEntity blockEntity, byte inputSignal)
         {
             // Find the first scanner that can process this block
             foreach (var scanner in scanners)
             {
-                if (scanner.CanScan(block, blockEntity))
+                if (scanner.CanScan(block, blockEntity, inputSignal))
                     return scanner;
             }
 

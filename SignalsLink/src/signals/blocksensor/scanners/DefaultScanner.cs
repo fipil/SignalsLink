@@ -4,17 +4,18 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Vintagestory.API.Common;
+using Vintagestory.API.MathTools;
 
 namespace SignalsLink.src.signals.blocksensor.scanners
 {
     public class DefaultScanner : IBlockSensorScanner
     {
-        public bool CanScan(Block block, BlockEntity blockEntity)
+        public bool CanScan(Block block, BlockEntity blockEntity, byte inputSignal)
         {
             return true; // Fallback pro všechno
         }
 
-        public byte CalculateSignal(Block block, BlockEntity blockEntity, byte inputSignal)
+        public byte CalculateSignal(IWorldAccessor world, BlockPos position, Block block, BlockEntity blockEntity, byte inputSignal)
         {
             // 0 = vzduch
             if (block == null || block.Id == 0)

@@ -4,12 +4,13 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Vintagestory.API.Common;
+using Vintagestory.API.MathTools;
 
 namespace SignalsLink.src.signals.blocksensor.scanners
 {
     public class SlotScanner : IBlockSensorScanner
     {
-        public virtual bool CanScan(Block block, BlockEntity blockEntity)
+        public virtual bool CanScan(Block block, BlockEntity blockEntity, byte inputSignal)
         {
             if (blockEntity == null)
                 return false;
@@ -17,7 +18,7 @@ namespace SignalsLink.src.signals.blocksensor.scanners
             return GetInventory(blockEntity) != null;
         }
 
-        public virtual byte CalculateSignal(Block block, BlockEntity blockEntity, byte inputSignal)
+        public virtual byte CalculateSignal(IWorldAccessor world, BlockPos position, Block block, BlockEntity blockEntity, byte inputSignal)
         {
             IInventory inventory = GetInventory(blockEntity);
 

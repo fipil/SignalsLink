@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Vintagestory.API.Common;
+using Vintagestory.API.MathTools;
 
 namespace SignalsLink.src.signals.blocksensor.scanners
 {
@@ -12,12 +13,12 @@ namespace SignalsLink.src.signals.blocksensor.scanners
         /// <summary>
         /// Returns true if this scanner can process the given block/BlockEntity
         /// </summary>
-        bool CanScan(Block block, BlockEntity blockEntity);
+        bool CanScan(Block block, BlockEntity blockEntity, byte inputSignal);
 
         /// <summary>
         /// Calculates the output signal (0-15) based on the input and the scanned block
         /// </summary>
-        byte CalculateSignal(Block block, BlockEntity blockEntity, byte inputSignal);
+        byte CalculateSignal(IWorldAccessor world, BlockPos position, Block block, BlockEntity blockEntity, byte inputSignal);
     }
 
 }

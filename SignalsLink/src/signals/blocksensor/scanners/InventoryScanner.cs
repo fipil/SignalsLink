@@ -4,12 +4,13 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Vintagestory.API.Common;
+using Vintagestory.API.MathTools;
 
 namespace SignalsLink.src.signals.blocksensor.scanners
 {
     public class InventoryScanner : SlotScanner
     {
-        public override byte CalculateSignal(Block block, BlockEntity blockEntity, byte inputSignal)
+        public override byte CalculateSignal(IWorldAccessor world, BlockPos position, Block block, BlockEntity blockEntity, byte inputSignal)
         {
             IInventory inventory = GetInventory(blockEntity);
 
