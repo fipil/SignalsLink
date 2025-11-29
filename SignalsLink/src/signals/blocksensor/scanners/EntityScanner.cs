@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Vintagestory.API.Common;
 using Vintagestory.API.MathTools;
+using Vintagestory.API.Server;
 
 namespace SignalsLink.src.signals.blocksensor.scanners
 {
@@ -15,10 +16,11 @@ namespace SignalsLink.src.signals.blocksensor.scanners
         const byte IS_WILDANIMAL = 4;
         const byte IS_CREATURE = 5;
         const byte DETECT_ENTITY_TYPE = 6;
+        const byte IS_BABY_ANIMAL = 7;
 
         public bool CanScan(Block block, BlockEntity blockEntity, byte inputSignal)
         {
-            return inputSignal >= IS_PLAYER && inputSignal <= DETECT_ENTITY_TYPE;
+            return inputSignal >= IS_PLAYER && inputSignal <= IS_BABY_ANIMAL;
         }
 
         public byte CalculateSignal(IWorldAccessor world, BlockPos pos, Block block, BlockEntity blockEntity, byte inputSignal)
@@ -30,26 +32,37 @@ namespace SignalsLink.src.signals.blocksensor.scanners
             if (entities == null || entities.Length == 0)
                 return 0;
 
+            List<byte> results = new List<byte>();
+            int detectedEntities = 0;
+
             foreach (var ent in entities)
             {
+                IEnumerable<string> tags = (IEnumerable<string>)ent.Tags.ToArray().Select<ushort, string>(new System.Func<ushort, string>(world.Api.TagRegistry.EntityTagIdToTag));
                 BlockPos entBlockPos = ent.ServerPos.AsBlockPos;
 
                 if (!entBlockPos.Equals(pos))
                     continue;
 
+                detectedEntities++;
+
                 if (inputSignal == DETECT_ENTITY_TYPE)
                 {
                     if (ent is EntityPlayer)
-                        return IS_PLAYER;
+                        results.Add(IS_PLAYER);
 
                     if (EntityClassifier.IsCreature(ent))
-                        return IS_CREATURE;
+                        results.Add(IS_CREATURE);
 
                     if (EntityClassifier.IsWildAnimal(ent))
-                        return IS_WILDANIMAL;
+                        results.Add(IS_WILDANIMAL);
 
                     if (EntityClassifier.IsAnimal(ent))
-                        return IS_ANIMAL;
+                    {
+                        //IEnumerable<string> source = (IEnumerable<string>)ent.Tags.ToArray().Select<ushort, string>(new System.Func<ushort, string>(world.Api.TagRegistry.EntityTagIdToTag)).Order<string>();
+                        //var tags=source.Aggregate<string>((System.Func<string, string, string>)((first, second) => $"{first}, {second}"));
+                        //(world.Api as ICoreServerAPI)?.BroadcastMessageToAllGroups($"Tagy: {tags}", EnumChatType.Notification);
+                        results.Add(IS_ANIMAL)  ;
+                    }
                 }
                 else
                 {
@@ -57,24 +70,31 @@ namespace SignalsLink.src.signals.blocksensor.scanners
                     {
                         case IS_PLAYER:
                             if (ent is EntityPlayer)
-                                return 1;
+                                results.Add(1);
                             break;
                         case IS_CREATURE:
                             if (EntityClassifier.IsCreature(ent))
-                                return 1;
+                                results.Add(1);
                             break;
                         case IS_WILDANIMAL:
                             if (EntityClassifier.IsWildAnimal(ent))
-                                return 1;
+                                results.Add(1);
                             break;
                         case IS_ANIMAL:
                             if (EntityClassifier.IsAnimal(ent))
-                                return 1;
+                                results.Add(1);
+                            break;
+                        case IS_BABY_ANIMAL:
+                            if (EntityClassifier.IsAnimal(ent) && !tags.Contains("adult"))
+                                results.Add(1);
                             break;
                     }
                 }
 
             }
+
+            if(detectedEntities>0 && results.Count == detectedEntities && results.All(r => r == results.First()))
+                return results.First();
 
             return 0;
         }

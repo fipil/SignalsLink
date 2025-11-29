@@ -19,6 +19,7 @@ namespace SignalsLink.src.signals.blocksensor.scanners
 
             // Register scanners in order of priority (specific ones first)
             RegisterScanner(new AnvilScanner());
+            RegisterScanner(new DoorScanner());
             RegisterScanner(new InventoryScanner());
             RegisterScanner(new EntityScanner());
         }

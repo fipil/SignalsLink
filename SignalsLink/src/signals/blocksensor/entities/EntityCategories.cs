@@ -36,6 +36,7 @@ public static class EntityClassifier
         "deer-",
         "raccoon-",
         "boar-",
+        "goat-",
         "crab-",
         "salmon",
         "grub"
@@ -53,6 +54,7 @@ public static class EntityClassifier
         "deer-",
         "raccoon-",
         "boar-",
+        "goat-",
         "crab-",
         "salmon",
         "grub",
