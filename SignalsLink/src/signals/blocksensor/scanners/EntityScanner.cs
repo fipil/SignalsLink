@@ -57,12 +57,7 @@ namespace SignalsLink.src.signals.blocksensor.scanners
                         results.Add(IS_WILDANIMAL);
 
                     if (EntityClassifier.IsAnimal(ent))
-                    {
-                        //IEnumerable<string> source = (IEnumerable<string>)ent.Tags.ToArray().Select<ushort, string>(new System.Func<ushort, string>(world.Api.TagRegistry.EntityTagIdToTag)).Order<string>();
-                        //var tags=source.Aggregate<string>((System.Func<string, string, string>)((first, second) => $"{first}, {second}"));
-                        //(world.Api as ICoreServerAPI)?.BroadcastMessageToAllGroups($"Tagy: {tags}", EnumChatType.Notification);
                         results.Add(IS_ANIMAL)  ;
-                    }
                 }
                 else
                 {
@@ -93,8 +88,13 @@ namespace SignalsLink.src.signals.blocksensor.scanners
 
             }
 
-            if(detectedEntities>0 && results.Count == detectedEntities && results.All(r => r == results.First()))
-                return results.First();
+            if(detectedEntities>0)
+            {
+                if (results.Count == detectedEntities && results.All(r => r == results.First()))
+                    return results.First();
+                else
+                    return inputSignal == DETECT_ENTITY_TYPE ? DETECT_ENTITY_TYPE : (byte)2;
+            }
 
             return 0;
         }
