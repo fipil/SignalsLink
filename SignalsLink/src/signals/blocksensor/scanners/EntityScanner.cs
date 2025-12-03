@@ -98,8 +98,5 @@ namespace SignalsLink.src.signals.blocksensor.scanners
 
             return 0;
         }
-
-
     }
-
 }
