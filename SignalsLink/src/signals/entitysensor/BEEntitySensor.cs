@@ -60,12 +60,14 @@ namespace SignalsLink.src.signals.entitysensor
 
         private void CalculateOutputSignal()
         {
-            if (Powered != PoweredMode.Active)
+            if (Powered == PoweredMode.Off)
             {
                 return;
             }
 
             var entities = GetEntitiesInScanRegion(x, y, z);
+
+            SetPowered(entities.Count()>0 ? PoweredMode.Active : PoweredMode.On); 
             numbers = (byte)entities.Count();
         }
 
@@ -120,7 +122,7 @@ namespace SignalsLink.src.signals.entitysensor
         private PoweredMode DeterminePoweredFromInputs()
         {
             return (x > 0 && y > 0 && z > 0)
-                            ? (input > 0 ? PoweredMode.Active : PoweredMode.On)
+                            ? PoweredMode.On
                             : PoweredMode.Off;
         }
 
