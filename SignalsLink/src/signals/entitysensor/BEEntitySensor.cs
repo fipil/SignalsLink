@@ -20,10 +20,30 @@ namespace SignalsLink.src.signals.entitysensor
         Off = 0, On = 1, Active = 2
     }
 
+    public enum EntitySensorOutputConfig : byte
+    {
+        Category = 1, //entity category boolean flags: player, creature, animal, wild animal
+        LifeState = 2, //all detected entities are: 1-dead, 2-alive or 15-mixed
+        Gender = 3, //all detected entities are: 1-male, 2-female or 15-mixed
+        Age = 4, //all detected entities are: 1-baby, 2-adult or 15-mixed
+        Species = 5, //all detected entities are: 1-player, 2-animal, 3-wild animal, 4-creature or 15-mixed
+        ReproductiveState = 6, //all detected entities are: 1-readyToMate, 2-pregnant, 3-lactating or 15-mixed
+        MinGeneration = 7, //minimal detected generation is: 0–15
+        MaxGeneration = 8, //maximal detected generation is: 0–15
+        MinWeight = 9, //minimal detected weight is: 1-starving, 2-low, 3-decent, 4-good
+        MaxWeight = 10 //maximal detected weight is: 1-starving, 2-low, 3-decent, 4-good
+    }
+
     public class BEEntitySensor : BlockEntity, IBESignalReceptor
     {
-        public byte x,y,z,input;
-        public byte kind,tags,entity,numbers;
+        const int COUNT_INDEX = 3;
+        const int OUTPUT1_CONFIG_INDEX = 4;
+        const int OUTPUT2_CONFIG_INDEX = 5;
+        const int OUTPUT1_INDEX = 6;
+        const int OUTPUT2_INDEX = 7;
+
+        public byte x,y,z,output1config, output2config;
+        public byte count,output1,output2;
 
         public PoweredMode Powered = PoweredMode.Off;
 
@@ -67,8 +87,111 @@ namespace SignalsLink.src.signals.entitysensor
 
             var entities = GetEntitiesInScanRegion(x, y, z);
 
+            var results1 = new List<byte>();
+            var results2 = new List<byte>();
+
+            foreach (var ent in entities)
+            {
+                IEnumerable<string> tags = (IEnumerable<string>)ent.Tags.ToArray().Select<ushort, string>(new System.Func<ushort, string>(Api.TagRegistry.EntityTagIdToTag));
+                BlockPos entBlockPos = ent.ServerPos.AsBlockPos;
+                
+                if(output1config>0)
+                {
+                    PrepareOutputSignal(results1, ent, output1config, tags, entBlockPos);
+                }
+                if(output2config>0)
+                {
+                    PrepareOutputSignal(results2, ent, output2config, tags, entBlockPos);
+                }
+            }
+
+            if (output1config > 0)
+            {
+                ProcessResults(results1, output1config, out output1);
+            }
+            if (output2config > 0)
+            {
+                ProcessResults(results2, output2config, out output2);
+            }
+
             SetPowered(entities.Count()>0 ? PoweredMode.Active : PoweredMode.On); 
-            numbers = (byte)entities.Count();
+            count = (byte)entities.Count();
+        }
+
+        private void ProcessResults(List<byte> results, byte config, out byte output)
+        {
+            if (results.Count == 0)
+            {
+                output = 0;
+                return;
+            }
+
+            switch(config)
+            {
+                case (byte)EntitySensorOutputConfig.MinGeneration:
+                    output = results.Min();
+                    return;
+                case (byte)EntitySensorOutputConfig.MaxGeneration:
+                    output = results.Max();
+                    return;
+                case (byte)EntitySensorOutputConfig.MinWeight:
+                    output = results.Min();
+                    return;
+                case (byte)EntitySensorOutputConfig.MaxWeight:
+                    output = results.Max();
+                    return;
+                case (byte)EntitySensorOutputConfig.Category:
+                    {
+                        byte combined = 0;
+                        foreach (var r in results)
+                        {
+                            combined |= r;
+                        }
+                        output = combined;
+                        return;
+                    }
+                case (byte)EntitySensorOutputConfig.LifeState:
+                case (byte)EntitySensorOutputConfig.Gender:
+                case (byte)EntitySensorOutputConfig.Age:
+                case (byte)EntitySensorOutputConfig.Species:
+                case (byte)EntitySensorOutputConfig.ReproductiveState:
+                    bool allSame = results.All(r => r == results[0]);
+                    if (allSame)
+                    {
+                        output = results[0];
+                    }
+                    else
+                    {
+                        output = 15; //mixed
+                    }
+                    return;
+            }
+            output = 0;
+        }
+
+        private void PrepareOutputSignal(List<byte> results, Entity ent, byte config, IEnumerable<string> tags, BlockPos entBlockPos)
+        {
+
+            byte? result = config switch
+            {
+                (byte)EntitySensorOutputConfig.Species or (byte)EntitySensorOutputConfig.Category => ent switch
+                {
+                    _ when ent is EntityPlayer => 1,
+                    _ when EntityClassifier.IsAnimal(ent) => 2,
+                    _ when EntityClassifier.IsWildAnimal(ent) => 3,
+                    _ when EntityClassifier.IsCreature(ent) => 4,
+                    _ => null
+                },
+                (byte)EntitySensorOutputConfig.LifeState => ent.Alive ? (byte)2 : (byte)1,
+                (byte)EntitySensorOutputConfig.Age => tags.Contains("adult") || !(EntityClassifier.IsAnimal(ent) || EntityClassifier.IsWildAnimal(ent)) ? (byte)2 : (byte)1,
+                _ => null
+            };
+
+            if(result.HasValue)
+            {
+                results.Add(result.Value);
+            }
+
         }
 
         public override void OnBlockUnloaded()
@@ -87,8 +210,12 @@ namespace SignalsLink.src.signals.entitysensor
         {
             BEBehaviorSignalConnector beb = GetBehavior<BEBehaviorSignalConnector>();
             if (beb == null) return;
-            ISignalNode nodeSource = beb.GetNodeAt(new NodePos(this.Pos, 7));
-            signalMod.netManager.UpdateSource(nodeSource, numbers);
+            ISignalNode countSource = beb.GetNodeAt(new NodePos(this.Pos, COUNT_INDEX));
+            ISignalNode output1Source = beb.GetNodeAt(new NodePos(this.Pos, OUTPUT1_INDEX));
+            ISignalNode output2Source = beb.GetNodeAt(new NodePos(this.Pos, OUTPUT2_INDEX));
+            signalMod.netManager.UpdateSource(countSource, count);
+            signalMod.netManager.UpdateSource(output1Source, output1);
+            signalMod.netManager.UpdateSource(output2Source, output2);
             MarkDirty();
         }
 
@@ -108,9 +235,13 @@ namespace SignalsLink.src.signals.entitysensor
                     if (z == value) return;
                     z = value;
                     break;
-                case 3:
-                    if (input == value) return;
-                    input = value;
+                case OUTPUT1_CONFIG_INDEX:
+                    if (output1config == value) return;
+                    output1config = value;
+                    break;
+                case OUTPUT2_CONFIG_INDEX:
+                    if (output2config == value) return;
+                    output2config = value;
                     break;
                 default:
                     return;
@@ -129,11 +260,12 @@ namespace SignalsLink.src.signals.entitysensor
         public override void FromTreeAttributes(ITreeAttribute tree, IWorldAccessor worldForResolving)
         {
             base.FromTreeAttributes(tree, worldForResolving);
-            byte[] xyzi = tree.GetBytes("xyzinput", new byte[] { 0, 0, 0, 0 }); 
-            x = xyzi[0];
-            y = xyzi[1];
-            z = xyzi[2];
-            input = xyzi[3];
+            byte[] inputs = tree.GetBytes("xyzcfg1cfg2", new byte[] { 0, 0, 0, 0, 0 }); 
+            x = inputs[0];
+            y = inputs[1];
+            z = inputs[2];
+            output1config = inputs[3];
+            output2config = inputs[4];
 
             Powered = DeterminePoweredFromInputs();
         }
@@ -141,7 +273,7 @@ namespace SignalsLink.src.signals.entitysensor
         public override void ToTreeAttributes(ITreeAttribute tree)
         {
             base.ToTreeAttributes(tree);
-            tree.SetBytes("xyzinput", new byte[4] { x, y, z, input });
+            tree.SetBytes("xyzcfg1cfg2", new byte[5] { x, y, z, output1config, output2config });
         }
 
         public void SetPowered(PoweredMode mode)
@@ -300,9 +432,7 @@ namespace SignalsLink.src.signals.entitysensor
         {
             GetScanSphere(x, y, z, out Vec3d center, out double radius);
 
-            // TODO: uprav podle skutečné VS API signatury
-            // Příklad pro něco jako: GetEntitiesAround(center, horRadius, vertRadius)
-            var entities = Api.World.GetEntitiesAround(center, (float)radius, (float)radius, (e) => e.Alive);
+            var entities = Api.World.GetEntitiesAround(center, (float)radius, (float)radius, null);
 
             foreach (var entity in entities)
             {

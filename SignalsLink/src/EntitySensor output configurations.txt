@@ -1,0 +1,11 @@
+1 (default output 1) entity category boolean flags: player, creature, animal, wild animal
+2 all detected entities are: 1-dead, 2-alive or 15-mixed
+3 all detected entities are: 1-male, 2-female or 15-mixed
+4 all detected entities are: 1-baby, 2-adult or 15-mixed
+5 all detected entities are: 1-player, 2-animal, 3-wild animal, 4-creature or 15-mixed
+6 all detected entities are: 1-readyToMate, 2-pregnant, 3-lactating or 15-mixed
+7 minimal detected generation is: 0–15
+8 maximal detected generation is: 0–15
+9 minimal detected weight is: 1-starving, 2-low, 3-decent, 4-good
+10 maximal detected weight is: 1-starving, 2-low, 3-decent, 4-good
+

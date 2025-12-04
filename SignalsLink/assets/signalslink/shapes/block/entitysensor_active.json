@@ -14,13 +14,13 @@
 	},
 	"textures": {
 		"aged": "block/aged",
+		"aged-ceramic2": "block/aged-ceramic2",
 		"bismuthbronze2": "block/bismuthbronze",
+		"iron": "block/iron",
+		"terminal": "block/normal3",
 		"reflexholes": "block/reflexholes",
 		"rustycolored": "block/rustycolored",
 		"rustyglow": "block/rustyglow",
-		"aged-ceramic2": "block/aged-ceramic2",
-		"iron": "block/iron",
-		"terminal": "block/normal3",
 		"tech-powergenerator": "block/tech-powergenerator"
 	},
 	"elements": [
@@ -643,7 +643,7 @@
 						"east": { "texture": "#terminal", "uv": [ 2.0, 1.0, 3.0, 2.0 ] },
 						"south": { "texture": "#terminal", "uv": [ 2.0, 1.0, 3.0, 2.0 ] },
 						"west": { "texture": "#terminal", "uv": [ 2.0, 1.0, 3.0, 2.0 ] },
-						"up": { "texture": "#rustycolored", "uv": [ 3.5, 1.5, 4.5, 2.5 ] },
+						"up": { "texture": "#rustycolored", "uv": [ 2.5, 12.0, 3.5, 13.0 ] },
 						"down": { "texture": "#terminal", "uv": [ 0.5, 0.5, 1.5, 1.5 ] }
 					}
 				},
@@ -775,7 +775,7 @@
 						"east": { "texture": "#terminal", "uv": [ 2.0, 1.0, 3.0, 2.0 ] },
 						"south": { "texture": "#terminal", "uv": [ 2.0, 1.0, 3.0, 2.0 ] },
 						"west": { "texture": "#terminal", "uv": [ 2.0, 1.0, 3.0, 2.0 ] },
-						"up": { "texture": "#rustycolored", "uv": [ 4.0, 9.5, 5.0, 10.5 ] },
+						"up": { "texture": "#rustycolored", "uv": [ 2.0, 3.0, 3.0, 4.0 ] },
 						"down": { "texture": "#terminal", "uv": [ 0.5, 0.5, 1.5, 1.5 ] }
 					}
 				},
@@ -819,7 +819,7 @@
 						"east": { "texture": "#terminal", "uv": [ 2.0, 1.0, 3.0, 2.0 ] },
 						"south": { "texture": "#terminal", "uv": [ 2.0, 1.0, 3.0, 2.0 ] },
 						"west": { "texture": "#terminal", "uv": [ 2.0, 1.0, 3.0, 2.0 ] },
-						"up": { "texture": "#rustycolored", "uv": [ 4.0, 12.5, 5.0, 13.5 ] },
+						"up": { "texture": "#rustycolored", "uv": [ 3.0, 1.0, 4.0, 2.0 ] },
 						"down": { "texture": "#terminal", "uv": [ 0.5, 0.5, 1.5, 1.5 ] }
 					}
 				},

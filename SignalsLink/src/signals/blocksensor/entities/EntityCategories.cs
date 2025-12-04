@@ -25,21 +25,6 @@ public static class EntityClassifier
         "bison-",
         "yak-",
         "goat-",
-
-        // divoká
-        "wolf-",
-        "fox-",
-        "hyena-",
-        "bear-",
-        "hare-",
-        "gazelle-",
-        "deer-",
-        "raccoon-",
-        "boar-",
-        "goat-",
-        "crab-",
-        "salmon",
-        "grub"
     };
 
     // Divoká zvířata (podmnožina animals, jen „wild“)

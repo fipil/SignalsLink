@@ -21,17 +21,16 @@
           },
           {
             "index": 3,
-            "isSource": false
+            "isSource": true,
+            "output": 0
           },
           {
             "index": 4,
-            "isSource": true,
-            "output": 0
+            "isSource": false
           },
           {
             "index": 5,
-            "isSource": true,
-            "output": 0
+            "isSource": false
           },
           {
             "index": 6,
@@ -135,7 +134,7 @@
       },
       {
         "index": 3,
-        "name": "con-input",
+        "name": "con-detected-count",
         "x1": 0.25,
         "y1": 0.0625,
         "z1": 0.8125,
@@ -163,7 +162,7 @@
       },
       {
         "index": 4,
-        "name": "con-kind",
+        "name": "con-output1-config",
         "x1": 0.0625,
         "y1": 0.0625,
         "z1": 0.6875,
@@ -191,7 +190,7 @@
       },
       {
         "index": 5,
-        "name": "con-tags",
+        "name": "con-output2-config",
         "x1": 0.0625,
         "y1": 0.0625,
         "z1": 0.5,
@@ -219,7 +218,7 @@
       },
       {
         "index": 6,
-        "name": "con-entity",
+        "name": "con-output1",
         "x1": 0.0625,
         "y1": 0.0625,
         "z1": 0.3125,
@@ -247,7 +246,7 @@
       },
       {
         "index": 7,
-        "name": "con-numbers",
+        "name": "con-output2",
         "x1": 0.0625,
         "y1": 0.0625,
         "z1": 0.125,
@@ -390,12 +389,12 @@
     "all": false
   },
   "selectionbox": {
-    "x1": 0.125,
+    "x1": 0.0625,
     "y1": 0.0,
-    "z1": 0.125,
-    "x2": 0.875,
+    "z1": 0.0625,
+    "x2": 0.9375,
     "y2": 0.0625,
-    "z2": 0.875,
+    "z2": 0.9375,
     "rotateXbytype": {
       "*-*-north": 90,
       "*-*-south": 270,
@@ -416,12 +415,12 @@
     }
   },
   "collisionbox": {
-    "x1": 0.125,
+    "x1": 0.0625,
     "y1": 0.0,
-    "z1": 0.125,
-    "x2": 0.875,
+    "z1": 0.0625,
+    "x2": 0.9375,
     "y2": 0.0625,
-    "z2": 0.875,
+    "z2": 0.9375,
     "rotateXbytype": {
       "*-*-north": 90,
       "*-*-south": 270,
