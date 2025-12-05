@@ -53,10 +53,15 @@ namespace SignalsLink.src.signals.entitysensor
 
         private float currentCharge = 0f;
         private float consumptionPerTick = 0f;
-        private long lastUpdateTick = 0;
+        private double lastGameHours = 0;
         private BlockBehaviorTemporalCharge chargeBehavior;
 
         private static SensorScannerFactory scannerFactory;
+
+        // Cachované hodnoty z behavioru (synchronizované na klienta)
+        private float maxCharge = 0f;
+        private float baseConsumptionFactor = 1.0f;
+        private float referenceVolume = 100f;
 
         public BEEntitySensor()
         {
@@ -79,11 +84,15 @@ namespace SignalsLink.src.signals.entitysensor
 
             if (Api.Side == EnumAppSide.Server)
             {
-                lastUpdateTick = api.World.ElapsedMilliseconds / 50;
+                lastGameHours = Api.World.Calendar.TotalHours;
 
                 if (chargeBehavior != null)
                 {
                     UpdateConsumption();
+
+                    maxCharge = chargeBehavior.GetMaxCharge();
+                    baseConsumptionFactor = chargeBehavior.BaseConsumptionFactor;
+                    referenceVolume = chargeBehavior.ReferenceVolume;
                 }
 
                 RegisterGameTickListener(OnSlowServerTick, 300);
@@ -110,27 +119,33 @@ namespace SignalsLink.src.signals.entitysensor
                 error = 0;
                 SetPowered(DeterminePoweredFromInputs());
             }
+            double currentGameHours = Api.World.Calendar.TotalHours;
+            double hoursElapsed = currentGameHours - lastGameHours;
 
-            long currentTick = Api.World.ElapsedMilliseconds / 50;
-            long ticksElapsed = currentTick - lastUpdateTick;
-
-            // Ochrana: Pokud je ticksElapsed podezřele velký, ignoruj to
-            // (může nastat při prvním ticku po načtení chunku, nebo při nějakém glitchi)
-            if (ticksElapsed > 1000) // Cca 50 sekund
+            if (hoursElapsed < 0 || hoursElapsed > 24) // max 1 herní den najednou
             {
-                lastUpdateTick = currentTick;
-                CalculateOutputSignal(); // Běž normálně, ale nic neodečítej
+                lastGameHours = currentGameHours;
+                CalculateOutputSignal();
                 return;
             }
 
-            lastUpdateTick = currentTick;
+            lastGameHours = currentGameHours; ;
 
-            // Odečti spotřebu
-            float consumption = consumptionPerTick * ticksElapsed;
+            // Spotřeba: při volume 100 bloků se 1 gear spotřebuje za 100 dnů
+            // 1 gear = GearTotalCharge = 100 * 24000 = 2,400,000
+            // Za 100 dnů = 2400 hodin se má spotřebovat 2,400,000
+            // Za 1 hodinu se má spotřebovat 1000 (při volume 100)
+
+            float volumeRatio = GetOperationalVolume() / chargeBehavior.ReferenceVolume;
+            float consumptionPerHour = (chargeBehavior.GearTotalCharge / (100f * 24f)) * volumeRatio * chargeBehavior.BaseConsumptionFactor;
+
+            float consumption = consumptionPerHour * (float)hoursElapsed;
             currentCharge -= consumption;
 
             if (currentCharge < 0)
                 currentCharge = 0;
+
+            MarkDirty(true);
 
             CalculateOutputSignal();
         }
@@ -264,6 +279,7 @@ namespace SignalsLink.src.signals.entitysensor
                     _ when EntityClassifier.IsCreature(ent) => 4,
                     _ => null
                 },
+                (byte)EntitySensorOutputConfig.Gender => tags.Contains("male") || !(EntityClassifier.IsAnimal(ent) || EntityClassifier.IsWildAnimal(ent)) ? (byte)1 : (byte)2,
                 (byte)EntitySensorOutputConfig.LifeState => ent.Alive ? (byte)2 : (byte)1,
                 (byte)EntitySensorOutputConfig.Age => tags.Contains("adult") || !(EntityClassifier.IsAnimal(ent) || EntityClassifier.IsWildAnimal(ent)) ? (byte)2 : (byte)1,
                 _ => null
@@ -286,6 +302,14 @@ namespace SignalsLink.src.signals.entitysensor
         {
             base.OnBlockRemoved();
             signalMod.DisposeSignalTickListener(OnSignalNetworkTick);
+        }
+
+        public override void OnBlockBroken(IPlayer byPlayer = null)
+        {
+            output1 = output2 = error = 0;
+            SetPowered(PoweredMode.Off);
+
+            base.OnBlockBroken(byPlayer);
         }
 
         public void OnSignalNetworkTick()
@@ -361,6 +385,10 @@ namespace SignalsLink.src.signals.entitysensor
             output1config = inputs[3];
             output2config = inputs[4];
 
+            maxCharge = tree.GetFloat("maxCharge", 0f);
+            baseConsumptionFactor = tree.GetFloat("baseConsumptionFactor", 1.0f);
+            referenceVolume = tree.GetFloat("referenceVolume", 100f);
+
             currentCharge = tree.GetFloat("currentCharge", 0f);
 
             Powered = DeterminePoweredFromInputs();
@@ -371,6 +399,10 @@ namespace SignalsLink.src.signals.entitysensor
             base.ToTreeAttributes(tree);
             tree.SetBytes("xyzcfg1cfg2", new byte[5] { x, y, z, output1config, output2config });
             tree.SetFloat("currentCharge", currentCharge);
+
+            tree.SetFloat("maxCharge", maxCharge);
+            tree.SetFloat("baseConsumptionFactor", baseConsumptionFactor);
+            tree.SetFloat("referenceVolume", referenceVolume);
         }
 
         public void SetPowered(PoweredMode mode)
@@ -395,7 +427,7 @@ namespace SignalsLink.src.signals.entitysensor
             {
                 currentCharge = charge;
             }
-            MarkDirty();
+            MarkDirty(true);
         }
 
         public float GetOperationalVolume()
@@ -562,6 +594,51 @@ namespace SignalsLink.src.signals.entitysensor
                     yield return entity;
                 }
             }
+        }
+
+        public override void GetBlockInfo(IPlayer forPlayer, StringBuilder dsc)
+        {
+            // Používej cachované hodnoty (funguje na obou stranách)
+            if (maxCharge > 0 && baseConsumptionFactor > 0)
+            {
+                if (currentCharge > 0)
+                {
+                    float daysRemaining = currentCharge / (24000f * baseConsumptionFactor);
+                    float maxDays = maxCharge / (24000f * baseConsumptionFactor);
+                    float chargePercent = (currentCharge / maxCharge) * 100f;
+
+                    dsc.AppendLine(Lang.Get("signalslink:blockinfo-charge",
+                        daysRemaining.ToString("F1"),
+                        maxDays.ToString("F0"),
+                        chargePercent.ToString("F0")));
+
+                    float operationalVolume = GetOperationalVolume();
+
+                    // OPRAVENÝ výpočet - stejný jako v behavioru
+                    const float REFERENCE_DAYS = 100f;
+                    float volumeRatio = operationalVolume / referenceVolume;
+                    float actualConsumptionPerTick = volumeRatio * baseConsumptionFactor / REFERENCE_DAYS / 24000f;
+
+                    // Ochrana proti dělení nulou
+                    if (actualConsumptionPerTick > 0)
+                    {
+                        float referenceDaysRemaining = currentCharge / (24000f * baseConsumptionFactor);
+                        float actualDaysRemaining = referenceDaysRemaining / volumeRatio;
+
+                        dsc.AppendLine(Lang.Get("signalslink:blockinfo-charge-at-volume",
+                            operationalVolume.ToString("F0"),
+                            actualDaysRemaining.ToString("F1")));
+                    }
+                }
+                else
+                {
+                    dsc.AppendLine(Lang.Get("signalslink:blockinfo-charge-empty"));
+                }
+            }
+
+            base.GetBlockInfo(forPlayer, dsc);
+
+
         }
     }
 }

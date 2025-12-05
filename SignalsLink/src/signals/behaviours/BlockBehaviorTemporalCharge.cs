@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
@@ -130,5 +131,38 @@ namespace SignalsLink.src.signals.behaviours
 
             dsc.AppendLine($"Max capacity: {MaxChargeMultiplier} temporal gears");
         }
+
+        public void AppendPlacedBlockInfo(IWorldAccessor world, BlockPos pos, StringBuilder dsc)
+        {
+            if (world.BlockAccessor.GetBlockEntity(pos) is ITemporalChargeHolder holder)
+            {
+                float currentCharge = holder.GetCurrentCharge();
+                float maxCharge = GetMaxCharge();
+
+                if (currentCharge > 0)
+                {
+                    float daysRemaining = currentCharge / (24000f * BaseConsumptionFactor);
+                    float maxDays = maxCharge / (24000f * BaseConsumptionFactor);
+                    float chargePercent = (currentCharge / maxCharge) * 100f;
+
+                    dsc.AppendLine($"Charge: {daysRemaining:F1}/{maxDays:F0} days ({chargePercent:F0}%)");
+
+                    // Volitelně: info o spotřebě podle aktuálního volume
+                    float operationalVolume = holder.GetOperationalVolume();
+                    float actualConsumptionPerTick = CalculateConsumptionPerTick(operationalVolume);
+                    float actualDaysRemaining = currentCharge / (actualConsumptionPerTick * 24000f);
+
+                    if (Math.Abs(operationalVolume - ReferenceVolume) > 0.1f)
+                    {
+                        dsc.AppendLine($"At current volume ({operationalVolume:F0} blocks): ~{actualDaysRemaining:F1} days");
+                    }
+                }
+                else
+                {
+                    dsc.AppendLine("Charge: Empty - needs temporal gear");
+                }
+            }
+        }
+
     }
 }

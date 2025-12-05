@@ -3,6 +3,9 @@
   "signalslink:block-blocksensor-*": "Blokový senzor",
   "signals:con-input": "Vstup",
   "signals:con-output": "Výstup",
+  "signalslink:blockinfo-charge": "Nabití: {0}/{1} jednotek ({2}%)",
+  "signalslink:blockinfo-charge-at-volume": "Při aktuálním objemu ({0} bloků) vydrží pracovat: ~{1} dní",
+  "signalslink:blockinfo-charge-empty": "Nabití: Prázdné - potřebuje temporal gear",
   "signalslink:usageinfo-signalslink-title": "SignalsLink - rozšíření modu Signals",
   "signalslink:usageinfo-signalslink-text": "<font size=\"25\"><strong>SignalsLink<\/strong><\/font><br>Rozšiřuje mod  <a href=\\\"handbook://signals:craftinginfo-signals\\\">Signals<\/a>  o další komponenty.<br><br><font size=\"21\"><strong>Block Sensor<\/strong><\/font><br>Umožňuje detekovat přítomnost bloku na vybrané sousední pozici a na základě vstupního signálu detekovat zaplnění jeho slotů.<br>Vstupní signál určuje, který slot má být skenován.<br>Signál 1-14 určuje sloty 0-13. Výstupem je informace o zaplnění slotu vzhledem k maximální kapacitě stacku položky v daném slotu, převedená na signál 0-15.<br>Signál 15 určuje, že má sensor detekovat stav bloku na základě toho, o jaký blok se jedná.<br>Prozatím podporované bloky jsou:<br>Truhla nebo obecně kontejner - výstupní signál odpovídá celkovému zaplnění kontejneru.<br>Libovolné bloky, které mají nějaké sloty inventáře (např. ohniště, sud apod.). Na Výstupu je signál dle vstupního signálu, viz popis výše.<br>Kovadlina - pokud je na kovadlině dostatečně žhavý ingot ke kování, je na Výstupu signál 1. Jinak posílá signál 0.<br><br>"
 }

@@ -3,6 +3,9 @@
   "signalslink:block-blocksensor-*": "Block Sensor",
   "signals:con-input": "Input",
   "signals:con-output": "Output",
+  "signalslink:blockinfo-charge": "Charge: {0}/{1} days ({2}%)",
+  "signalslink:blockinfo-charge-at-volume": "At current volume ({0} blocks): ~{1} days",
+  "signalslink:blockinfo-charge-empty": "Charge: Empty - needs temporal gear",
   "signalslink:usageinfo-signalslink-title": "SignalsLink - extending the Signals mod",
   "signalslink:usageinfo-signalslink-text": "<font size=\"25\"><strong>SignalsLink<\/strong><\/font><br>Expands the  <a href=\\\"handbook://signals:craftinginfo-signals\\\">Signals<\/a>  mod with additional components.<br><br><font size=\"21\"><strong>Block Sensor<\/strong><\/font><br>Allows detecting the presence of a block at a selected adjacent position and, based on the input signal, determining how full its inventory slots are.<br>The input signal determines which slot should be scanned.<br>Signals 1–14 correspond to slots 0–13. The output is information about the slot’s fill level relative to the maximum stack capacity of the item in that slot, converted to a 0–15 signal.<br>Signal 15 indicates that the sensor should detect the block state based on what kind of block it is.<br>Currently supported blocks are:<br>Chest or any general container – the output signal corresponds to the total fullness of the container.<br>Any blocks that have inventory slots (e.g., firepit, barrel, etc.). The output is a signal according to the input signal; see the description above.<br>Anvil – if there is a sufficiently hot ingot on the anvil ready for forging, the Output is signal 1. Otherwise it sends signal 0.<br><br>"
 }
