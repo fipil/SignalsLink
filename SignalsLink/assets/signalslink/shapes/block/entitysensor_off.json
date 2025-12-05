@@ -646,7 +646,7 @@
 						"east": { "texture": "#terminal", "uv": [ 2.0, 1.0, 3.0, 2.0 ] },
 						"south": { "texture": "#terminal", "uv": [ 2.0, 1.0, 3.0, 2.0 ] },
 						"west": { "texture": "#terminal", "uv": [ 2.0, 1.0, 3.0, 2.0 ] },
-						"up": { "texture": "#rustycolored", "uv": [ 2.5, 10.5, 3.5, 11.5 ] },
+						"up": { "texture": "#rustycolored", "uv": [ 8.5, 4.0, 9.5, 5.0 ] },
 						"down": { "texture": "#terminal", "uv": [ 0.5, 0.5, 1.5, 1.5 ] }
 					}
 				},

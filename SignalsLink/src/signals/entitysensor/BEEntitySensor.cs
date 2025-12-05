@@ -1,6 +1,7 @@
 ﻿using signals.src;
 using signals.src.signalNetwork;
 using signals.src.transmission;
+using SignalsLink.src.signals.behaviours;
 using SignalsLink.src.signals.blocksensor.scanners;
 using System;
 using System.Collections.Generic;
@@ -22,32 +23,38 @@ namespace SignalsLink.src.signals.entitysensor
 
     public enum EntitySensorOutputConfig : byte
     {
-        Category = 1, //entity category boolean flags: player, creature, animal, wild animal
-        LifeState = 2, //all detected entities are: 1-dead, 2-alive or 15-mixed
-        Gender = 3, //all detected entities are: 1-male, 2-female or 15-mixed
-        Age = 4, //all detected entities are: 1-baby, 2-adult or 15-mixed
-        Species = 5, //all detected entities are: 1-player, 2-animal, 3-wild animal, 4-creature or 15-mixed
-        ReproductiveState = 6, //all detected entities are: 1-readyToMate, 2-pregnant, 3-lactating or 15-mixed
-        MinGeneration = 7, //minimal detected generation is: 0–15
-        MaxGeneration = 8, //maximal detected generation is: 0–15
-        MinWeight = 9, //minimal detected weight is: 1-starving, 2-low, 3-decent, 4-good
-        MaxWeight = 10 //maximal detected weight is: 1-starving, 2-low, 3-decent, 4-good
+        Count = 1, //count of detected entities
+        Category = 2, //entity category boolean flags: player, creature, animal, wild animal
+        LifeState = 3, //all detected entities are: 1-dead, 2-alive or 15-mixed
+        Gender = 4, //all detected entities are: 1-male, 2-female or 15-mixed
+        Age = 5, //all detected entities are: 1-baby, 2-adult or 15-mixed
+        Species = 6, //all detected entities are: 1-player, 2-animal, 3-wild animal, 4-creature or 15-mixed
+        ReproductiveState = 7, //all detected entities are: 1-readyToMate, 2-pregnant, 3-lactating or 15-mixed
+        MinGeneration = 8, //minimal detected generation is: 0–15
+        MaxGeneration = 9, //maximal detected generation is: 0–15
+        MinWeight = 10, //minimal detected weight is: 1-starving, 2-low, 3-decent, 4-good
+        MaxWeight = 11 //maximal detected weight is: 1-starving, 2-low, 3-decent, 4-good
     }
 
-    public class BEEntitySensor : BlockEntity, IBESignalReceptor
+    public class BEEntitySensor : BlockEntity, IBESignalReceptor, ITemporalChargeHolder
     {
-        const int COUNT_INDEX = 3;
+        const int ERROR_INDEX = 3;
         const int OUTPUT1_CONFIG_INDEX = 4;
         const int OUTPUT2_CONFIG_INDEX = 5;
         const int OUTPUT1_INDEX = 6;
         const int OUTPUT2_INDEX = 7;
 
         public byte x,y,z,output1config, output2config;
-        public byte count,output1,output2;
+        public byte error,output1,output2;
 
         public PoweredMode Powered = PoweredMode.Off;
 
         SignalNetworkMod signalMod;
+
+        private float currentCharge = 0f;
+        private float consumptionPerTick = 0f;
+        private long lastUpdateTick = 0;
+        private BlockBehaviorTemporalCharge chargeBehavior;
 
         private static SensorScannerFactory scannerFactory;
 
@@ -67,15 +74,76 @@ namespace SignalsLink.src.signals.entitysensor
             signalMod.RegisterSignalTickListener(OnSignalNetworkTick);
 
             SetPowered(DeterminePoweredFromInputs());
+
+            chargeBehavior = Block.GetBehavior<BlockBehaviorTemporalCharge>();
+
             if (Api.Side == EnumAppSide.Server)
             {
+                lastUpdateTick = api.World.ElapsedMilliseconds / 50;
+
+                if (chargeBehavior != null)
+                {
+                    UpdateConsumption();
+                }
+
                 RegisterGameTickListener(OnSlowServerTick, 300);
             }
         }
 
         private void OnSlowServerTick(float dt)
         {
+            if (chargeBehavior == null)
+            {
+                // Žádný charge systém, běž normálně
+                CalculateOutputSignal();
+                return;
+            }
+
+            if (currentCharge <= 0)
+            {
+                SendErrorSignal();
+                return;
+            }
+            if(error != 0)
+            {
+                // Opraveno
+                error = 0;
+                SetPowered(DeterminePoweredFromInputs());
+            }
+
+            long currentTick = Api.World.ElapsedMilliseconds / 50;
+            long ticksElapsed = currentTick - lastUpdateTick;
+
+            // Ochrana: Pokud je ticksElapsed podezřele velký, ignoruj to
+            // (může nastat při prvním ticku po načtení chunku, nebo při nějakém glitchi)
+            if (ticksElapsed > 1000) // Cca 50 sekund
+            {
+                lastUpdateTick = currentTick;
+                CalculateOutputSignal(); // Běž normálně, ale nic neodečítej
+                return;
+            }
+
+            lastUpdateTick = currentTick;
+
+            // Odečti spotřebu
+            float consumption = consumptionPerTick * ticksElapsed;
+            currentCharge -= consumption;
+
+            if (currentCharge < 0)
+                currentCharge = 0;
+
             CalculateOutputSignal();
+        }
+
+        private void SendErrorSignal()
+        {
+            if (error == 0)
+            {
+                error = 1;
+                output1 = 0;
+                output2 = 0;
+                SetPowered(PoweredMode.Off);
+            }
         }
 
         private void CalculateOutputSignal()
@@ -107,15 +175,29 @@ namespace SignalsLink.src.signals.entitysensor
 
             if (output1config > 0)
             {
-                ProcessResults(results1, output1config, out output1);
+                if (output1config == (byte)EntitySensorOutputConfig.Count)
+                {
+                    output1 = (byte)Math.Min(entities.Count(), 15); //max 15
+                }
+                else
+                {
+                    ProcessResults(results1, output1config, out output1);
+                }
             }
             if (output2config > 0)
             {
-                ProcessResults(results2, output2config, out output2);
+                if (output2config == (byte)EntitySensorOutputConfig.Count)
+                {
+                    output2 = (byte)Math.Min(entities.Count(), 15); //max 15
+                }
+                else
+                {
+                    ProcessResults(results2, output2config, out output2);
+                }
             }
 
             SetPowered(entities.Count()>0 ? PoweredMode.Active : PoweredMode.On); 
-            count = (byte)entities.Count();
+            
         }
 
         private void ProcessResults(List<byte> results, byte config, out byte output)
@@ -210,10 +292,10 @@ namespace SignalsLink.src.signals.entitysensor
         {
             BEBehaviorSignalConnector beb = GetBehavior<BEBehaviorSignalConnector>();
             if (beb == null) return;
-            ISignalNode countSource = beb.GetNodeAt(new NodePos(this.Pos, COUNT_INDEX));
+            ISignalNode errorSource = beb.GetNodeAt(new NodePos(this.Pos, ERROR_INDEX));
             ISignalNode output1Source = beb.GetNodeAt(new NodePos(this.Pos, OUTPUT1_INDEX));
             ISignalNode output2Source = beb.GetNodeAt(new NodePos(this.Pos, OUTPUT2_INDEX));
-            signalMod.netManager.UpdateSource(countSource, count);
+            signalMod.netManager.UpdateSource(errorSource, error);
             signalMod.netManager.UpdateSource(output1Source, output1);
             signalMod.netManager.UpdateSource(output2Source, output2);
             MarkDirty();
@@ -247,11 +329,23 @@ namespace SignalsLink.src.signals.entitysensor
                     return;
             };
 
+            UpdateConsumption();
             SetPowered(DeterminePoweredFromInputs());
+        }
+
+        private void UpdateConsumption()
+        {
+            if(chargeBehavior != null)
+                consumptionPerTick = chargeBehavior.CalculateConsumptionPerTick(GetOperationalVolume());
         }
 
         private PoweredMode DeterminePoweredFromInputs()
         {
+            if(error != 0)
+            {
+                return PoweredMode.Off;
+            }
+
             return (x > 0 && y > 0 && z > 0)
                             ? PoweredMode.On
                             : PoweredMode.Off;
@@ -267,6 +361,8 @@ namespace SignalsLink.src.signals.entitysensor
             output1config = inputs[3];
             output2config = inputs[4];
 
+            currentCharge = tree.GetFloat("currentCharge", 0f);
+
             Powered = DeterminePoweredFromInputs();
         }
 
@@ -274,6 +370,7 @@ namespace SignalsLink.src.signals.entitysensor
         {
             base.ToTreeAttributes(tree);
             tree.SetBytes("xyzcfg1cfg2", new byte[5] { x, y, z, output1config, output2config });
+            tree.SetFloat("currentCharge", currentCharge);
         }
 
         public void SetPowered(PoweredMode mode)
@@ -284,6 +381,26 @@ namespace SignalsLink.src.signals.entitysensor
                 UpdateBlockState();
                 MarkDirty(true);
             }
+        }
+
+        public float GetCurrentCharge() => currentCharge;
+
+        public void SetCurrentCharge(float charge)
+        {
+            if (chargeBehavior != null)
+            {
+                currentCharge = Math.Max(0, Math.Min(charge, chargeBehavior.GetMaxCharge()));
+            }
+            else
+            {
+                currentCharge = charge;
+            }
+            MarkDirty();
+        }
+
+        public float GetOperationalVolume()
+        {
+            return x * y * z;
         }
 
         public void UpdateBlockState()

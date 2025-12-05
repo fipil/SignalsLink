@@ -2,6 +2,18 @@
   "code": "entitysensor",
   "class": "EntitySensor",
   "entityclass": "BlockEntityEntitySensor",
+  "behaviors": [
+    {
+      "name": "BlockBehaviorTemporalCharge",
+      "properties": {
+        "baseConsumptionFactor": 1.0,
+        "referenceVolume": 100,
+        "referenceDays": 100,
+        "maxChargeMultiplier": 5,
+        "chargeItemCode": "gear-temporal"
+      }
+    }
+  ],
   "entityBehaviors": [
     {
       "name": "BEBehaviorSignalConnector",
@@ -134,7 +146,7 @@
       },
       {
         "index": 3,
-        "name": "con-detected-count",
+        "name": "con-error-state",
         "x1": 0.25,
         "y1": 0.0625,
         "z1": 0.8125,

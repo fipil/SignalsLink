@@ -1,4 +1,5 @@
 ﻿using signals.src.signalNetwork;
+using SignalsLink.src.signals.behaviours;
 using SignalsLink.src.signals.blocksensor;
 using SignalsLink.src.signals.entitysensor;
 using Vintagestory.API.Client;
@@ -26,6 +27,8 @@ namespace SignalsLink.src
         {
             this.api = api;
             base.Start(api);
+
+            api.RegisterBlockBehaviorClass("BlockBehaviorTemporalCharge", typeof(BlockBehaviorTemporalCharge));
 
             api.RegisterBlockClass("BlockSensor", typeof(BlockSensor));
             api.RegisterBlockClass("EntitySensor", typeof(EntitySensor));
