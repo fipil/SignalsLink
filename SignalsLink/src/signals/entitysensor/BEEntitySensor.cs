@@ -6,6 +6,7 @@ using SignalsLink.src.signals.blocksensor.scanners;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using Vintagestory.API.Common;
@@ -13,6 +14,7 @@ using Vintagestory.API.Common.Entities;
 using Vintagestory.API.Config;
 using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
+using Vintagestory.GameContent;
 
 namespace SignalsLink.src.signals.entitysensor
 {
@@ -24,16 +26,17 @@ namespace SignalsLink.src.signals.entitysensor
     public enum EntitySensorOutputConfig : byte
     {
         Count = 1, //count of detected entities
-        Category = 2, //entity category boolean flags: player, creature, animal, wild animal
+        Category = 2, //entity category flag bits 0-3: player, creature, animal, wild animal
         LifeState = 3, //all detected entities are: 1-dead, 2-alive or 15-mixed
         Gender = 4, //all detected entities are: 1-male, 2-female or 15-mixed
         Age = 5, //all detected entities are: 1-baby, 2-adult or 15-mixed
         Species = 6, //all detected entities are: 1-player, 2-animal, 3-wild animal, 4-creature or 15-mixed
         ReproductiveState = 7, //all detected entities are: 1-readyToMate, 2-pregnant, 3-lactating or 15-mixed
-        MinGeneration = 8, //minimal detected generation is: 0–15
-        MaxGeneration = 9, //maximal detected generation is: 0–15
-        MinWeight = 10, //minimal detected weight is: 1-starving, 2-low, 3-decent, 4-good
-        MaxWeight = 11 //maximal detected weight is: 1-starving, 2-low, 3-decent, 4-good
+        ReproductiveStateFlags = 8, //flag bits 0-2: readyToMate, pregnant, lactating
+        MinGeneration = 9, //minimal detected generation is: 0–15
+        MaxGeneration = 10, //maximal detected generation is: 0–15
+        MinWeight = 11, //minimal detected weight is: 1-starving, 2-low, 3-decent, 4-good
+        MaxWeight = 12 //maximal detected weight is: 1-starving, 2-low, 3-decent, 4-good
     }
 
     public class BEEntitySensor : BlockEntity, IBESignalReceptor, ITemporalChargeHolder
@@ -246,6 +249,7 @@ namespace SignalsLink.src.signals.entitysensor
                     output = results.Max();
                     return;
                 case (byte)EntitySensorOutputConfig.Category:
+                case (byte)EntitySensorOutputConfig.ReproductiveStateFlags:
                     {
                         byte combined = 0;
                         foreach (var r in results)
@@ -276,20 +280,34 @@ namespace SignalsLink.src.signals.entitysensor
 
         private void PrepareOutputSignal(List<byte> results, Entity ent, byte config, IEnumerable<string> tags, BlockPos entBlockPos)
         {
+            //Category = 2, //entity category boolean flags: player, creature, animal, wild animal
+            //LifeState = 3, //all detected entities are: 1-dead, 2-alive or 15-mixed
+            //Gender = 4, //all detected entities are: 1-male, 2-female or 15-mixed
+            //Age = 5, //all detected entities are: 1-baby, 2-adult or 15-mixed
+            //Species = 6, //all detected entities are: 1-player, 2-animal, 3-wild animal, 4-creature or 15-mixed
+            //ReproductiveState = 7, //all detected entities are: 1-readyToMate, 2-pregnant, 3-lactating or 15-mixed
+            //ReproductiveStateFlags = 8, //flag bits: 1-readyToMate, 2-pregnant, 3-lactating or 15-mixed
+            //MinGeneration = 9, //minimal detected generation is: 0–15
+            //MaxGeneration = 10, //maximal detected generation is: 0–15
+            //MinWeight = 11, //minimal detected weight is: 1-starving, 2-low, 3-decent, 4-good
+            //MaxWeight = 12 //maximal detected weight is: 1-starving, 2-low, 3-decent, 4-good
 
             byte? result = config switch
             {
                 (byte)EntitySensorOutputConfig.Species or (byte)EntitySensorOutputConfig.Category => ent switch
                 {
-                    _ when ent is EntityPlayer => 1,
+                    _ when EntityClassifier.IsPlayer(ent) => 1,
                     _ when EntityClassifier.IsAnimal(ent) => 2,
                     _ when EntityClassifier.IsWildAnimal(ent) => 3,
                     _ when EntityClassifier.IsCreature(ent) => 4,
                     _ => null
                 },
-                (byte)EntitySensorOutputConfig.Gender => tags.Contains("male") || !(EntityClassifier.IsAnimal(ent) || EntityClassifier.IsWildAnimal(ent)) ? (byte)1 : (byte)2,
                 (byte)EntitySensorOutputConfig.LifeState => ent.Alive ? (byte)2 : (byte)1,
+                (byte)EntitySensorOutputConfig.Gender => tags.Contains("male") || !(EntityClassifier.IsAnimal(ent) || EntityClassifier.IsWildAnimal(ent)) ? (byte)1 : (byte)2,
                 (byte)EntitySensorOutputConfig.Age => tags.Contains("adult") || !(EntityClassifier.IsAnimal(ent) || EntityClassifier.IsWildAnimal(ent)) ? (byte)2 : (byte)1,
+                (byte)EntitySensorOutputConfig.MaxGeneration or (byte)EntitySensorOutputConfig.MinGeneration => ent.WatchedAttributes.HasAttribute("generation") && (EntityClassifier.IsAnimal(ent) || EntityClassifier.IsWildAnimal(ent)) ? (byte)ent.WatchedAttributes.GetInt("generation") : null,
+                (byte)EntitySensorOutputConfig.MaxWeight or (byte)EntitySensorOutputConfig.MinWeight => GetWeightCategory(ent),
+                (byte)EntitySensorOutputConfig.ReproductiveState or (byte)EntitySensorOutputConfig.ReproductiveStateFlags => GetReproductiveState(ent),
                 _ => null
             };
 
@@ -298,6 +316,54 @@ namespace SignalsLink.src.signals.entitysensor
                 results.Add(result.Value);
             }
 
+        }
+
+        private byte? GetReproductiveState(Entity ent)
+        {
+            var multiply = ent.GetBehavior<EntityBehaviorMultiply>();
+            if (multiply!=null)
+            {
+                if(multiply.IsPregnant)
+                    return (byte)2;
+
+                float lastMilkedTotalHours = ent.WatchedAttributes.GetFloat("lastMilkedTotalHours");
+                float lactatingDaysAfterBirth = ent.Properties.Attributes["lactatingDaysAfterBirth"].AsFloat(21f);
+                double lactatingDays = (double)lactatingDaysAfterBirth - Math.Max(0.0, ent.World.Calendar.TotalDays - multiply.TotalDaysLastBirth);
+
+                if (lactatingDays > 0)
+                    return 3;
+
+                double cooldown = multiply.TotalDaysCooldownUntil - ent.World.Calendar.TotalDays;
+                if (cooldown <= 0)
+                    return 1;
+            }
+
+            return (byte)0;
+        }
+
+        private byte? GetWeightCategory(Entity ent)
+        {
+            if (!ent.WatchedAttributes.HasAttribute("animalWeight"))
+            {
+                return null;
+            }
+            float weight = ent.WatchedAttributes.GetFloat("animalWeight");
+            if (weight < 0.5f)
+            {
+                return 1; //starving
+            }
+            else if (weight < 0.75f)
+            {
+                return 2; //low
+            }
+            else if (weight < 0.95f)
+            {
+                return 3; //decent
+            }
+            else
+            {
+                return 4; //good
+            }
         }
 
         public override void OnBlockUnloaded()
