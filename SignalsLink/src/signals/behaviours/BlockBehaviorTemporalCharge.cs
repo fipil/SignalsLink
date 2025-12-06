@@ -76,7 +76,7 @@ namespace SignalsLink.src.signals.behaviours
                 if (serverPlayer != null)
                 {
                     (world.Api as ICoreServerAPI)?.SendIngameError(serverPlayer, "fullycharged",
-                        "This device is already fully charged");
+                        Lang.Get("signalslink:entitysensor-already-fully-charged"));
                 }
                 return true;
             }
@@ -96,7 +96,7 @@ namespace SignalsLink.src.signals.behaviours
                 float totalDays = newCharge / TICKS_PER_DAY / BaseConsumptionFactor;
 
                 (world.Api as ICoreServerAPI)?.SendIngameDiscovery(serverPlayer, "charged",
-                    $"Charged! Added {daysAdded:F0} days. Total: {totalDays:F0} days (at reference volume)");
+                    Lang.Get("signalslink:entitysensor-charged", daysAdded, totalDays));
             }
 
             return true;
@@ -132,38 +132,6 @@ namespace SignalsLink.src.signals.behaviours
             else
             {
                 dsc.AppendLine(Lang.Get("signalslink:blockinfo-charge-empty"));
-            }
-        }
-
-        public void AppendPlacedBlockInfo(IWorldAccessor world, BlockPos pos, StringBuilder dsc)
-        {
-            if (world.BlockAccessor.GetBlockEntity(pos) is ITemporalChargeHolder holder)
-            {
-                float currentCharge = holder.GetCurrentCharge();
-                float maxCharge = GetMaxCharge();
-
-                if (currentCharge > 0)
-                {
-                    float daysRemaining = currentCharge / (24000f * BaseConsumptionFactor);
-                    float maxDays = maxCharge / (24000f * BaseConsumptionFactor);
-                    float chargePercent = (currentCharge / maxCharge) * 100f;
-
-                    dsc.AppendLine($"Charge: {daysRemaining:F1}/{maxDays:F0} days ({chargePercent:F0}%)");
-
-                    // Volitelně: info o spotřebě podle aktuálního volume
-                    float operationalVolume = holder.GetOperationalVolume();
-                    float actualConsumptionPerTick = CalculateConsumptionPerTick(operationalVolume);
-                    float actualDaysRemaining = currentCharge / (actualConsumptionPerTick * 24000f);
-
-                    if (Math.Abs(operationalVolume - ReferenceVolume) > 0.1f)
-                    {
-                        dsc.AppendLine($"At current volume ({operationalVolume:F0} blocks): ~{actualDaysRemaining:F1} days");
-                    }
-                }
-                else
-                {
-                    dsc.AppendLine("Charge: Empty - needs temporal gear");
-                }
             }
         }
 
