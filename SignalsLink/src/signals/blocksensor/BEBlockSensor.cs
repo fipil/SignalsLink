@@ -132,13 +132,19 @@ namespace SignalsLink.src.signals.blocksensor
             signalMod.DisposeSignalTickListener(OnSignalNetworkTick);
         }
 
+        private byte? lastOutputState;
+
         public void OnSignalNetworkTick()
         {
             BEBehaviorSignalConnector beb = GetBehavior<BEBehaviorSignalConnector>();
             if (beb == null) return;
-            ISignalNode nodeProbe = beb.GetNodeAt(new NodePos(this.Pos, 0));
+
+            if(lastOutputState == outputState) return;
+
             ISignalNode nodeSource = beb.GetNodeAt(new NodePos(this.Pos, 1));
             signalMod.netManager.UpdateSource(nodeSource, outputState);
+            lastOutputState = outputState;
+
             MarkDirty();
         }
 

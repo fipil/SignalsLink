@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
+using Vintagestory.API.Config;
 using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Server;
@@ -112,24 +113,26 @@ namespace SignalsLink.src.signals.behaviours
 
                 if (charge > 0)
                 {
-                    float daysRemaining = (charge / TICKS_PER_DAY) / BaseConsumptionFactor;
-                    float maxDays = (maxCharge / TICKS_PER_DAY) / BaseConsumptionFactor;
+                    float baseDailyConsumption = TICKS_PER_DAY * BaseConsumptionFactor;
+
+                    float daysRemaining = charge / baseDailyConsumption;
+                    float maxDays = maxCharge / baseDailyConsumption;
                     float chargePercent = (charge / maxCharge) * 100f;
 
-                    dsc.AppendLine($"Charge: {daysRemaining:F1}/{maxDays:F0} days ({chargePercent:F0}%)");
-                    dsc.AppendLine($"  (at reference volume)");
+                    dsc.AppendLine(Lang.Get("signalslink:blockinfo-charge",
+                        daysRemaining.ToString("F1"),
+                        maxDays.ToString("F0"),
+                        chargePercent.ToString("F0")));
                 }
                 else
                 {
-                    dsc.AppendLine("Charge: Empty");
+                    dsc.AppendLine(Lang.Get("signalslink:blockinfo-charge-empty"));
                 }
             }
             else
             {
-                dsc.AppendLine("Charge: Empty");
+                dsc.AppendLine(Lang.Get("signalslink:blockinfo-charge-empty"));
             }
-
-            dsc.AppendLine($"Max capacity: {MaxChargeMultiplier} temporal gears");
         }
 
         public void AppendPlacedBlockInfo(IWorldAccessor world, BlockPos pos, StringBuilder dsc)

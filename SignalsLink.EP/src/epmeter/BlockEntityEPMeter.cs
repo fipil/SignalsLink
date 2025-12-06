@@ -144,12 +144,19 @@ namespace SignalsLink.EP.src.epmeter
             }
         }
 
+        private byte? lastOutputState;
+
         public void OnSignalNetworkTick()
         {
             BEBehaviorSignalConnector beb = GetBehavior<BEBehaviorSignalConnector>();
             if (beb == null) return;
+
+            if (lastOutputState == outputState) return;
+
             ISignalNode nodeSource = beb.GetNodeAt(new NodePos(this.Pos, 1));
             signalMod.netManager.UpdateSource(nodeSource, outputState);
+            lastOutputState = outputState;
+
             MarkDirty();
         }
 

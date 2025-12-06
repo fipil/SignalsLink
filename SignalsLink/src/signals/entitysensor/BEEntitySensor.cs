@@ -99,8 +99,12 @@ namespace SignalsLink.src.signals.entitysensor
             }
         }
 
+        private long lastDirtyTime;
+
         private void OnSlowServerTick(float dt)
         {
+            long now = Api.World.ElapsedMilliseconds;
+
             if (chargeBehavior == null)
             {
                 // Žádný charge systém, běž normálně
@@ -145,7 +149,11 @@ namespace SignalsLink.src.signals.entitysensor
             if (currentCharge < 0)
                 currentCharge = 0;
 
-            MarkDirty(true);
+            if (now - lastDirtyTime >= 10000) 
+            {
+                MarkDirty();
+                lastDirtyTime = now;
+            }
 
             CalculateOutputSignal();
         }
@@ -312,17 +320,42 @@ namespace SignalsLink.src.signals.entitysensor
             base.OnBlockBroken(byPlayer);
         }
 
+        private byte? lastError, lastOutput1, lastOutput2;
+
         public void OnSignalNetworkTick()
         {
             BEBehaviorSignalConnector beb = GetBehavior<BEBehaviorSignalConnector>();
             if (beb == null) return;
-            ISignalNode errorSource = beb.GetNodeAt(new NodePos(this.Pos, ERROR_INDEX));
-            ISignalNode output1Source = beb.GetNodeAt(new NodePos(this.Pos, OUTPUT1_INDEX));
-            ISignalNode output2Source = beb.GetNodeAt(new NodePos(this.Pos, OUTPUT2_INDEX));
-            signalMod.netManager.UpdateSource(errorSource, error);
-            signalMod.netManager.UpdateSource(output1Source, output1);
-            signalMod.netManager.UpdateSource(output2Source, output2);
-            MarkDirty();
+
+            bool changed = false;
+            if (lastError != error)
+            {
+                ISignalNode errorSource = beb.GetNodeAt(new NodePos(this.Pos, ERROR_INDEX));
+                signalMod.netManager.UpdateSource(errorSource, error);
+                lastError = error;
+                changed = true;
+            }
+
+            if (lastOutput1 != output1)
+            {
+                ISignalNode output1Source = beb.GetNodeAt(new NodePos(this.Pos, OUTPUT1_INDEX));
+                signalMod.netManager.UpdateSource(output1Source, output1);
+                lastOutput1 = output1;
+                changed = true;
+            }
+
+            if (lastOutput2 != output2)
+            {
+                ISignalNode output2Source = beb.GetNodeAt(new NodePos(this.Pos, OUTPUT2_INDEX));
+                signalMod.netManager.UpdateSource(output2Source, output2);
+                lastOutput2 = output2;
+                changed = true;
+            }
+
+            if (changed)
+            {
+                MarkDirty();
+            }
         }
 
         public void OnValueChanged(NodePos pos, byte value)
@@ -427,7 +460,7 @@ namespace SignalsLink.src.signals.entitysensor
             {
                 currentCharge = charge;
             }
-            MarkDirty(true);
+            MarkDirty();
         }
 
         public float GetOperationalVolume()
@@ -598,31 +631,44 @@ namespace SignalsLink.src.signals.entitysensor
 
         public override void GetBlockInfo(IPlayer forPlayer, StringBuilder dsc)
         {
-            // Používej cachované hodnoty (funguje na obou stranách)
-            if (maxCharge > 0 && baseConsumptionFactor > 0)
+            if (maxCharge <= 0 || baseConsumptionFactor <= 0)
             {
-                if (currentCharge > 0)
+                base.GetBlockInfo(forPlayer, dsc);
+                return;
+            }
+
+            var sel = forPlayer?.CurrentBlockSelection;
+
+            // Pokud je výběr na konektoru, info neukazuj
+            if (sel?.SelectionBoxIndex != null && sel.SelectionBoxIndex<8)
+            {
+                base.GetBlockInfo(forPlayer, dsc);
+                return;
+            }
+
+            if (currentCharge > 0)
+            {
+                const float TICKS_PER_DAY = 24000f;
+                float baseDailyConsumption = TICKS_PER_DAY * baseConsumptionFactor;
+
+                float daysRemaining = currentCharge / baseDailyConsumption;
+                float maxDays = maxCharge / baseDailyConsumption;
+                float chargePercent = (currentCharge / maxCharge) * 100f;
+
+                dsc.AppendLine(Lang.Get("signalslink:blockinfo-charge",
+                    daysRemaining.ToString("F1"),
+                    maxDays.ToString("F0"),
+                    chargePercent.ToString("F0")));
+
+                float operationalVolume = GetOperationalVolume();
+
+                if (referenceVolume > 0f && operationalVolume > 0f)
                 {
-                    float daysRemaining = currentCharge / (24000f * baseConsumptionFactor);
-                    float maxDays = maxCharge / (24000f * baseConsumptionFactor);
-                    float chargePercent = (currentCharge / maxCharge) * 100f;
-
-                    dsc.AppendLine(Lang.Get("signalslink:blockinfo-charge",
-                        daysRemaining.ToString("F1"),
-                        maxDays.ToString("F0"),
-                        chargePercent.ToString("F0")));
-
-                    float operationalVolume = GetOperationalVolume();
-
-                    // OPRAVENÝ výpočet - stejný jako v behavioru
-                    const float REFERENCE_DAYS = 100f;
                     float volumeRatio = operationalVolume / referenceVolume;
-                    float actualConsumptionPerTick = volumeRatio * baseConsumptionFactor / REFERENCE_DAYS / 24000f;
 
-                    // Ochrana proti dělení nulou
-                    if (actualConsumptionPerTick > 0)
+                    if (volumeRatio > 0f)
                     {
-                        float referenceDaysRemaining = currentCharge / (24000f * baseConsumptionFactor);
+                        float referenceDaysRemaining = currentCharge / baseDailyConsumption;
                         float actualDaysRemaining = referenceDaysRemaining / volumeRatio;
 
                         dsc.AppendLine(Lang.Get("signalslink:blockinfo-charge-at-volume",
@@ -630,15 +676,16 @@ namespace SignalsLink.src.signals.entitysensor
                             actualDaysRemaining.ToString("F1")));
                     }
                 }
-                else
-                {
-                    dsc.AppendLine(Lang.Get("signalslink:blockinfo-charge-empty"));
-                }
+            }
+            else
+            {
+                dsc.AppendLine(Lang.Get("signalslink:blockinfo-charge-empty"));
             }
 
+            dsc.Append("\r\n");
+
             base.GetBlockInfo(forPlayer, dsc);
-
-
         }
+
     }
 }
