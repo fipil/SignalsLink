@@ -18,7 +18,7 @@ namespace SignalsLink.src.signals.blocksensor
     class BEBlockSensor : BlockEntity, IBESignalReceptor
     {
         public byte state;
-        public byte outputState = 3;
+        public byte outputState = 0;
 
         public bool IsPowered;
         public string ScanningDirection = "fwd";
