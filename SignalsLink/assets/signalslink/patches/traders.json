@@ -38,5 +38,45 @@
       }
 
     }
+  },
+  {
+    "side": "server",
+    "file": "game:config/tradelists/trader-commodities.json",
+    "op": "add",
+    "path": "/selling/list/-",
+    "value": {
+      "code": "signalslink:entitysensor",
+      "type": "block",
+      "stacksize": 1,
+      "stock": {
+        "avg": 2,
+        "var": 1
+      },
+      "price": {
+        "avg": 21,
+        "var": 4
+      }
+
+    }
+  },
+  {
+    "side": "server",
+    "file": "game:config/tradelists/trader-treasurehunter.json",
+    "op": "add",
+    "path": "/selling/list/-",
+    "value": {
+      "code": "signalslink:entitysensor",
+      "type": "block",
+      "stacksize": 1,
+      "stock": {
+        "avg": 2,
+        "var": 1
+      },
+      "price": {
+        "avg": 21,
+        "var": 4
+      }
+
+    }
   }
 ]
