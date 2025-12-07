@@ -1,0 +1,68 @@
+name: Localize SignalsLink
+
+on:
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      - "SignalsLink/assets/signalslink/lang/signalslink.html"
+      - ".github/prompts/localize-signalslink.md"
+      - ".github/scripts/localize-signalslink.mjs"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  localize:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Debug je volitelný, ale doporuèuju ho tam prvních pár bìhù nechat
+      - name: Debug – show repo structure
+        run: |
+          pwd
+          echo "--- root ---"
+          ls -la
+          echo "--- .github ---"
+          ls -la .github
+          echo "--- .github/scripts ---"
+          ls -la .github/scripts
+          echo "--- .github/prompts ---"
+          ls -la .github/prompts
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Run localization script
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: node .github/scripts/localize-signalslink.mjs
+
+      - name: Detect changes
+        id: detect_changes
+        run: |
+          if git diff --quiet; then
+            echo "changes=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changes=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create pull request with localization updates
+        if: steps.detect_changes.outputs.changes == 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          commit-message: "chore: update SignalsLink localizations"
+          branch: codex/localize-${{ github.run_id }}
+          base: ${{ github.ref_name }}
+          title: "Update SignalsLink localizations"
+          body: |
+            This PR was generated automatically by a localization script using OpenAI gpt-5-mini.

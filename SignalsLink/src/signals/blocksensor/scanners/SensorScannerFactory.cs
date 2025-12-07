@@ -21,7 +21,6 @@ namespace SignalsLink.src.signals.blocksensor.scanners
             RegisterScanner(new AnvilScanner());
             RegisterScanner(new DoorScanner());
             RegisterScanner(new InventoryScanner());
-            RegisterScanner(new EntityScanner());
         }
 
         public void RegisterScanner(IBlockSensorScanner scanner)

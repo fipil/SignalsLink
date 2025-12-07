@@ -12,7 +12,7 @@
   "signals:con-output2": "Výstup 2",
   "signals:con-output1-config": "Nastavení výstupu 1",
   "signals:con-output2-config": "Nastavení výstupu 2",
-  "signalslink:entitysensor-charged": "Nabito. Přidáno {0} jednotek. \r\nMaximální limit nabití je {1} jednotek.",
+  "signalslink:entitysensor-charged": "Nabito. Přidáno {0} jednotek. Maximální limit nabití je {1} jednotek.",
   "signalslink:entitysensor-already-fully-charged": "Tento přístroj je již plně nabitý.",
   "signalslink:blockinfo-charge": "Nabití: {0}/{1} jednotek ({2}%)",
   "signalslink:blockinfo-charge-at-volume": "Při aktuálním pokrytí ({0} bloků) vydrží pracovat: ~{1} dní",
