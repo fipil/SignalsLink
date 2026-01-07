@@ -1,0 +1,62 @@
+{
+	"code": "managedchute",
+	"class": "BlockChute",
+	"entityclass": "BlockEntityManagedChute",
+	"behaviors": [
+		{ "name": "Lockable" },
+		{ "name": "WrenchOrientable", "properties": { "baseCode": "managedchute-{type}"  } }
+	],
+	"attributes": {
+		"pullFacesByType": {
+			"managedchute-straight-ud": ["up"]
+		},
+		"pushFacesByType": {
+			"managedchute-straight-ud": ["down"],
+			"managedchute-straight-ns": ["north", "south"],
+			"managedchute-straight-we": ["west", "east"]
+		},
+		"acceptFromFacesByType": {
+			"managedchute-straight-ns": ["north", "south"],
+			"managedchute-straight-we": ["west", "east"]
+		},
+		"item-flowrate": 1,
+		"inventoryClassName": "chute",
+		"quantitySlots": 1
+	},
+	"variantgroups": [
+		{ "code": "type", "states": ["straight"] },
+		{ "code": "side", "states": ["ns", "we", "ud"] }
+	],
+	"creativeinventory": { "general": ["*-ns"], "mechanics": ["*-ns"] },
+	"shapeinventory": { "base": "block/managedchute", "rotateY": 90  },
+	"shapebytype": {
+		"*-ud": { "base": "block/managedchute", "rotateZ": 90 },
+		"*-ns": { "base": "block/managedchute", "rotateY": 90 },
+		"*-we": { "base": "block/managedchute", "rotateY": 0 }
+	},
+	"blockmaterial": "Metal",
+	"lightAbsorption": 0,
+	"drawtype": "json",
+	"replaceable": 160,
+	"resistance": 1.75,
+	"sidesolid": {
+		"all": false
+	},
+	"sideopaque": {
+		"all": false
+	},
+	"sounds": {
+		"place": "game:block/chute",
+		"break": "game:block/chute",
+		"hit": "game:block/chute",
+		"walk": "game:walk/stone"
+	},
+	"collisionselectionboxByType": {
+		"*-ud": { "x1": 0.25, "y1": 0, "z1": 0.25, "x2": 0.75, "y2": 1, "z2": 0.75 },
+		"*-ns": 	{ "x1": 0.25, "y1": 0.25, "z1": 0, "x2": 0.75, "y2": 0.75, "z2": 1 },
+		"*-we": { "x1": 0, "y1": 0.25, "z1": 0.25, "x2": 1, "y2": 0.75, "z2": 0.75 }
+	},
+	"guiTransform": {
+		"scale": 1.22
+	}
+}

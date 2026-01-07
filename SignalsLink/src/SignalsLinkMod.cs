@@ -2,6 +2,7 @@
 using SignalsLink.src.signals.behaviours;
 using SignalsLink.src.signals.blocksensor;
 using SignalsLink.src.signals.entitysensor;
+using SignalsLink.src.signals.managedchute;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Server;
@@ -9,7 +10,7 @@ using Vintagestory.API.Server;
 [assembly: ModInfo("Signals Link", "signalslink",
     Description = "Extends Signals mod with sensors and control elements for interacting with other mods and vanilla blocks.",
     Website = "",
-    Version = "0.1.1",
+    Version = "0.1.2",
     Authors = new[] { "fipil" }
 )]
 
@@ -35,6 +36,7 @@ namespace SignalsLink.src
 
             api.RegisterBlockEntityClass("BlockEntityBlockSensor", typeof(BEBlockSensor));
             api.RegisterBlockEntityClass("BlockEntityEntitySensor", typeof(BEEntitySensor));
+            api.RegisterBlockEntityClass("BlockEntityManagedChute", typeof(BEManagedChute));
 
         }
 
