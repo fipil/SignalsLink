@@ -33,6 +33,7 @@ namespace SignalsLink.src
 
             api.RegisterBlockClass("BlockSensor", typeof(BlockSensor));
             api.RegisterBlockClass("EntitySensor", typeof(EntitySensor));
+            api.RegisterBlockClass("ManagedChute", typeof(ManagedChute));
 
             api.RegisterBlockEntityClass("BlockEntityBlockSensor", typeof(BEBlockSensor));
             api.RegisterBlockEntityClass("BlockEntityEntitySensor", typeof(BEEntitySensor));

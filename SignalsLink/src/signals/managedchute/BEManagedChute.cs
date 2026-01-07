@@ -275,22 +275,54 @@ namespace SignalsLink.src.signals.managedchute
 
         private bool TrySpitOut(BlockFacing outputFace, int allowedNow)
         {
+            // Must be able to spit into an (air/replaceable) block
             if (this.Api.World.BlockAccessor.GetBlock(this.Pos.AddCopy(outputFace)).Replaceable < 6000)
                 return false;
+
+            // Compute spawn position first and ensure the chunk for that position is loaded.
+            // This prevents "TakeOut()" removing items when the target chunk is unloaded,
+            // which can lead to item loss on chunk unload/load boundaries.
+            Vec3d spawnPos = this.Pos.ToVec3d().Add(
+                0.5 + (double)outputFace.Normalf.X / 2.0,
+                0.5 + (double)outputFace.Normalf.Y / 2.0,
+                0.5 + (double)outputFace.Normalf.Z / 2.0
+            );
+
+            BlockPos spawnBlockPos = new BlockPos(
+                (int)Math.Floor(spawnPos.X),
+                (int)Math.Floor(spawnPos.Y),
+                (int)Math.Floor(spawnPos.Z)
+            );
+
+            if (this.Api.World.BlockAccessor.GetChunkAtBlockPos(spawnBlockPos) == null)
+                return false;
+
             ItemSlot itemSlot = this.inventory.FirstOrDefault<ItemSlot>((System.Func<ItemSlot, bool>)(slot => !slot.Empty));
-            ItemStack itemstack = itemSlot.TakeOut(allowedNow);
+            if (itemSlot == null || itemSlot.Empty)
+                return false;
+
+            int takeQty = Math.Min(allowedNow, itemSlot.StackSize);
+            ItemStack itemstack = itemSlot.TakeOut(takeQty);
+            if (itemstack == null || itemstack.StackSize <= 0)
+                return false;
+
             this.itemFlowAccum -= (float)itemstack.StackSize;
             if (!unlimited) remaining -= itemstack.StackSize;
+
             itemstack.Attributes.RemoveAttribute("chuteQHTravelled");
             itemstack.Attributes.RemoveAttribute("chuteDir");
+
             float x = (float)((double)outputFace.Normalf.X / 10.0 + (this.Api.World.Rand.NextDouble() / 20.0 - 0.05000000074505806) * (double)Math.Sign(outputFace.Normalf.X));
             float y = (float)((double)outputFace.Normalf.Y / 10.0 + (this.Api.World.Rand.NextDouble() / 20.0 - 0.05000000074505806) * (double)Math.Sign(outputFace.Normalf.Y));
             float z = (float)((double)outputFace.Normalf.Z / 10.0 + (this.Api.World.Rand.NextDouble() / 20.0 - 0.05000000074505806) * (double)Math.Sign(outputFace.Normalf.Z));
-            this.Api.World.SpawnItemEntity(itemstack, this.Pos.ToVec3d().Add(0.5 + (double)outputFace.Normalf.X / 2.0, 0.5 + (double)outputFace.Normalf.Y / 2.0, 0.5 + (double)outputFace.Normalf.Z / 2.0), new Vec3d((double)x, (double)y, (double)z));
+
+            this.Api.World.SpawnItemEntity(itemstack, spawnPos, new Vec3d((double)x, (double)y, (double)z));
+
             itemSlot.MarkDirty();
             this.MarkDirty();
             return true;
         }
+
 
         public override bool OnPlayerRightClick(IPlayer byPlayer, BlockSelection blockSel)
         {
@@ -315,8 +347,6 @@ namespace SignalsLink.src.signals.managedchute
             this.LastReceivedFromDir = index >= 0 ? BlockFacing.ALLFACES[index] : (BlockFacing)null;
 
             signalState = tree.GetBytes("state", new byte[1] { 0 })[0];
-            remaining = tree.GetInt("remaining", 0);
-            unlimited = tree.GetBool("unlimited", false);
 
             base.FromTreeAttributes(tree, worldForResolving);
         }
@@ -329,8 +359,6 @@ namespace SignalsLink.src.signals.managedchute
             int num = lastReceivedFromDir != null ? lastReceivedFromDir.Index : -1;
             treeAttribute.SetInt("lastReceivedFromDir", num);
             tree.SetBytes("state", new byte[1] { signalState });
-            tree.SetInt("remaining", remaining);
-            tree.SetBool("unlimited", unlimited);
         }
 
         public override void GetBlockInfo(IPlayer forPlayer, StringBuilder sb)
@@ -409,8 +437,6 @@ namespace SignalsLink.src.signals.managedchute
             }
 
             signalState = value;
-
-            this.MarkDirty();
         }
 
     }

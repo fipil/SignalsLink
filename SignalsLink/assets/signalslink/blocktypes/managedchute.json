@@ -1,12 +1,44 @@
 {
 	"code": "managedchute",
-	"class": "BlockChute",
+	"class": "ManagedChute",
 	"entityclass": "BlockEntityManagedChute",
 	"behaviors": [
 		{ "name": "Lockable" },
 		{ "name": "WrenchOrientable", "properties": { "baseCode": "managedchute-{type}"  } }
 	],
+	"entityBehaviors": [
+    {
+      "name": "BEBehaviorSignalConnector",
+      "properties": {
+        "signalNodes": [
+          {
+            "index": 0,
+            "isSource": false
+          }
+        ]
+      }
+    }
+  ],
 	"attributes": {
+		"signalNodes": [
+      {
+        "index": 0,
+        "name": "input",
+        "x1": 0.5625,
+				"y1": 0.4375,
+				"z1": 0.78125,
+				"x2": 0.6875,
+				"y2": 0.5625,
+				"z2": 0.96875,
+        "rotateYbytype": {
+          "*-ns": 90,
+          "*-we": 0
+        },
+        "rotateZbyType": {
+          "*-ud": 90
+        }
+      }
+		],
 		"pullFacesByType": {
 			"managedchute-straight-ud": ["up"]
 		},
