@@ -15,6 +15,7 @@ using Vintagestory.API.Server;
 using Vintagestory.Client.NoObf;
 using Vintagestory.GameContent;
 using Vintagestory.GameContent.Mechanics;
+using HarmonyLib;
 
 namespace SignalsLink.src.signals.managedchute
 {
@@ -23,6 +24,9 @@ namespace SignalsLink.src.signals.managedchute
         public byte signalState;
         private int remaining;
         private bool unlimited;
+        private bool placing;
+
+        private const int PLACE_SIGNAL = 10;
 
         internal InventoryGeneric inventory;
         public BlockFacing[] PullFaces = Array.Empty<BlockFacing>();
@@ -188,11 +192,68 @@ namespace SignalsLink.src.signals.managedchute
             int allowedNow = unlimited ? canByRate : Math.Min(canByRate, remaining);
             if (allowedNow <= 0) return;
 
-            PushItems(allowedNow);
+            if (placing)
+            {
+                PlaceItems(allowedNow);
+            }
+            else
+            {
+                PushItems(allowedNow);
+            }
 
             if (this.PullFaces == null || this.PullFaces.Length == 0 || !this.inventory.Empty)
                 return;
             this.TryPullFrom(this.PullFaces[this.Api.World.Rand.Next(this.PullFaces.Length)], allowedNow);
+        }
+
+        private BlockFacing? FindFreePushFace()
+        {
+            if (this.PushFaces == null) return null;
+
+            foreach (var face in this.PushFaces)
+            {
+                BlockPos targetPos = this.Pos.AddCopy(face);
+                Block block = this.Api.World.BlockAccessor.GetBlock(targetPos);
+
+                if (block.Replaceable >= 6000)   // air / replaceable
+                    return face;
+            }
+
+            return null;
+        }
+
+        private void PlaceItems(int allowedNow)
+        {
+            ItemSlot slot = this.inventory.FirstOrDefault<ItemSlot>((System.Func<ItemSlot, bool>)(s => !s.Empty));
+            if (slot == null || slot.Empty)
+                return;
+
+            if (this.PushFaces?.Length == 0) return;
+
+            BlockFacing pushFace = FindFreePushFace();
+            if (pushFace == null) return;
+
+            BlockPos targetPos = this.Pos.AddCopy(pushFace);
+            Block blockAtTarget = this.Api.World.BlockAccessor.GetBlock(targetPos);
+
+            bool placed = false;
+            // Try placing normally
+            placed = TryPlace(slot, targetPos, blockAtTarget);
+            // If not placed, try placing as pileable item
+            if (!placed && slot.Itemstack.Item is ItemPileable)
+            {
+                placed = TryPlacePileableItem(slot, targetPos);
+            }
+            if (placed)
+            {
+                this.itemFlowAccum -= 1;
+                SubstractRemaining(1);
+                this.MarkDirty();
+            }
+            else
+            {
+                PushItems(allowedNow);
+            }
         }
 
         private void SubstractRemaining(int amount)
@@ -348,6 +409,92 @@ namespace SignalsLink.src.signals.managedchute
             return true;
         }
 
+        private bool TryPlace(ItemSlot slot, BlockPos pos, Block blockAtTarget)
+        {
+            if (blockAtTarget.Code.FirstCodePart() == slot.Itemstack.Collectible.Code.FirstCodePart()) return false; //Prevent it from replacing itself with variants (like with pannable blocks)
+
+            if(slot.Itemstack.Block==null) return false;
+
+            string failureCode = null;
+            var placed = slot.Itemstack.Block.TryPlaceBlock(Api.World, null, slot.Itemstack, new BlockSelection
+            {
+                Position = pos,
+                Face = BlockFacing.DOWN
+            }, ref failureCode);
+
+            if (placed)
+            {
+                itemFlowAccum -= 1;
+                SubstractRemaining(1);
+                slot.TakeOut(1);
+                slot.MarkDirty();
+                MarkDirty(false, null);
+            }
+            return placed;
+        }
+
+        private bool TryPlacePileableItem(ItemSlot slot, BlockPos pos)
+        {
+            var IteratingPos = pos.Copy();
+            while (IteratingPos.Y > -1)
+            {
+                var nextBlock = Api.World.BlockAccessor.GetBlock(IteratingPos);
+                if (nextBlock.Id == 0)
+                {
+                    //Slowly traverse down if no block was found
+                    IteratingPos.Y--;
+                    continue;
+                }
+
+                //See if there already is a pile
+                var entity = Api.World.BlockAccessor.GetBlockEntity<BlockEntityItemPile>(IteratingPos);
+                if (entity != null)
+                {
+                    if (!slot.Itemstack.Equals(Api.World, entity.inventory[0].Itemstack, GlobalConstants.IgnoredStackAttributes))
+                    {
+                        //Throw item if it can't be added to the pile
+                        return false;
+                    }
+
+                    if (entity.MaxStackSize > entity.OwnStackSize)
+                    {
+                        //If pile isn't already full
+                        Api.World.PlaySoundAt(entity.SoundLocation, IteratingPos.X, IteratingPos.Y, IteratingPos.Z, null, 0.88f + (float)Api.World.Rand.NextDouble() * 0.24f, 16f, 1f);
+                        var itemSlot = entity.inventory[0];
+                        itemSlot.Itemstack.StackSize++;
+                        itemSlot.MarkDirty();
+                        entity.MarkDirty(false, null);
+
+                        slot.TakeOut(1);
+                        slot.MarkDirty();
+                        MarkDirty(false, null);
+
+                        if (entity is BlockEntityCoalPile coalPileEntity) Traverse.Create(coalPileEntity).Method("TriggerPileChanged").GetValue();
+                        return true;
+                    }
+                }
+
+                //Go up a block to make a new pile
+                IteratingPos.Y++;
+
+                //Ensure the new pile location is actually underneath the chute block placer
+                if (IteratingPos.Y > pos.Y) return false;
+
+                var pileableItem = slot.Itemstack.Item as ItemPileable;
+                var pileableItemTraverse = Traverse.Create(pileableItem);
+                var pileBlock = Api.World.GetBlock(pileableItemTraverse.Property("PileBlockCode").GetValue<AssetLocation>());
+                if (pileBlock != null)
+                {
+                    var success = ((IBlockItemPile)pileBlock).Construct(slot, Api.World, IteratingPos, null);
+                    MarkDirty(false, null);
+                    return success;
+                }
+                Api.Logger.Log(EnumLogType.Warning, $"Pileable item does not have a pileblock to put down? ({pileableItem.Code})");
+            }
+
+            return false;
+        }
+
 
         public override bool OnPlayerRightClick(IPlayer byPlayer, BlockSelection blockSel)
         {
@@ -448,18 +595,26 @@ namespace SignalsLink.src.signals.managedchute
                 remaining += 1 << (value - 1);
                 // volitelně omez max, aby ti to nepřeteklo při blbnutí signálem
                 // remaining = Math.Min(remaining, 1000000);
+                placing = false;
+            }
+            else if (value == PLACE_SIGNAL)
+            {
+                remaining += 1;
+                placing = true;
             }
 
             // 8 = trvale otevřeno
             if (value == 8)
             {
                 unlimited = true;
+                placing = false;
             }
             else if (signalState == 8 && value != 8)
             {
                 // odchod z 8: zavři "unlimited", ale kredit nech jak byl
                 unlimited = false;
             }
+            
 
             signalState = value;
 
