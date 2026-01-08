@@ -45,6 +45,7 @@ jobs:
       - name: Run localization script
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          NODE_OPTIONS: --dns-result-order=ipv4first
         run: node .github/scripts/localize-signalslink.mjs
 
       - name: Detect changes
