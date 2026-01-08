@@ -6,26 +6,26 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Reference Include="ElectricalProgressive-Basics">
-      <HintPath>..\dependencies\ElectricalProgressive-Basics.dll</HintPath>
-    </Reference>
-    <Reference Include="ElectricalProgressive-Core">
-      <HintPath>..\dependencies\ElectricalProgressive-Core.dll</HintPath>
-    </Reference>
     <Reference Include="Newtonsoft.Json">
       <HintPath>..\..\..\..\..\VintageStory\1.21\Lib\Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="protobuf-net">
       <HintPath>..\..\..\..\..\VintageStory\1.21\Lib\protobuf-net.dll</HintPath>
     </Reference>
-    <Reference Include="signals">
-      <HintPath>..\..\..\ProjectsOthers\Signals\bin\Debug\net8\signals.dll</HintPath>
-    </Reference>
     <Reference Include="VintagestoryAPI">
       <HintPath>..\..\..\..\..\VintageStory\1.21\VintagestoryAPI.dll</HintPath>
     </Reference>
     <Reference Include="VintagestoryLib">
       <HintPath>..\..\..\..\..\VintageStory\1.21\VintagestoryLib.dll</HintPath>
+    </Reference>
+    <Reference Include="signals">
+      <HintPath>..\dependencies\signals.dll</HintPath>
+    </Reference>
+    <Reference Include="ElectricalProgressive-Core">
+      <HintPath>..\dependencies\ElectricalProgressive-Core.dll</HintPath>
+    </Reference>
+    <Reference Include="ElectricalProgressive-Basics">
+      <HintPath>..\dependencies\ElectricalProgressive-Basics.dll</HintPath>
     </Reference>
   </ItemGroup>
 
