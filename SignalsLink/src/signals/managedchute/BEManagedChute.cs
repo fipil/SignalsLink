@@ -30,7 +30,7 @@ namespace SignalsLink.src.signals.managedchute
         public BlockFacing[] AcceptFromFaces = Array.Empty<BlockFacing>();
         public string inventoryClassName = "hopper";
         public string ItemFlowObjectLangCode = "hopper-contents";
-        public int QuantitySlots = 4;
+        public int QuantitySlots = 1;
         protected float itemFlowRate = 1f;
         public BlockFacing LastReceivedFromDir;
         public int MaxHorizontalTravel = 3;
@@ -102,14 +102,27 @@ namespace SignalsLink.src.signals.managedchute
 
         private ItemSlot GetAutoPushIntoSlot(BlockFacing atBlockFace, ItemSlot fromSlot)
         {
-            return ((IEnumerable<BlockFacing>)this.PullFaces).Contains<BlockFacing>(atBlockFace) || ((IEnumerable<BlockFacing>)this.AcceptFromFaces).Contains<BlockFacing>(atBlockFace) ? this.inventory[0] : (ItemSlot)null;
+            ItemStack itemstack = this.inventory.FirstOrDefault<ItemSlot>((System.Func<ItemSlot, bool>)(slot => !slot.Empty))?.Itemstack;
+            if (itemstack?.StackSize>0)
+                return null;
+
+            if (!((IEnumerable<BlockFacing>)this.PullFaces).Contains(atBlockFace) &&
+                !((IEnumerable<BlockFacing>)this.AcceptFromFaces).Contains(atBlockFace))
+                return null;
+
+            // Lepší než natvrdo inventory[0]: najdi nejlepší slot (ať to nesype do "jiného" slotu než pak vypisuješ)
+            return this.inventory.GetBestSuitedSlot(fromSlot, (ItemStackMoveOperation)null, (List<ItemSlot>)null).slot;
         }
 
+
         public override string InventoryClassName => this.inventoryClassName;
+
+        private bool itemJustPushed = false;
 
         private void OnSlotModifid(int slot)
         {
             this.Api.World.BlockAccessor.GetChunkAtBlockPos(this.Pos)?.MarkModified();
+
         }
 
         protected virtual void OnInvOpened(IPlayer player) => this.inventory.PutLocked = false;
@@ -130,6 +143,40 @@ namespace SignalsLink.src.signals.managedchute
             this.RegisterDelayedCallback((Action<float>)(dt => this.RegisterGameTickListener(new Action<float>(this.MoveItem), this.checkRateMs)), 10 + api.World.Rand.Next(200));
         }
 
+        public bool PushItems(int allowedNow)
+        {
+            if (this.PushFaces != null && this.PushFaces.Length != 0 && !this.inventory.Empty)
+            {
+                ItemStack itemstack = this.inventory.First<ItemSlot>((System.Func<ItemSlot, bool>)(slot => !slot.Empty)).Itemstack;
+                BlockFacing pushFace = this.PushFaces[this.Api.World.Rand.Next(this.PushFaces.Length)];
+                int index = itemstack.Attributes.GetInt("chuteDir", -1);
+                BlockFacing blockFacing = index < 0 || !((IEnumerable<BlockFacing>)this.PushFaces).Contains<BlockFacing>(BlockFacing.ALLFACES[index]) ? (BlockFacing)null : BlockFacing.ALLFACES[index];
+                if (blockFacing != null)
+                {
+                    if (this.Api.World.BlockAccessor.GetChunkAtBlockPos(this.Pos.AddCopy(blockFacing)) == null)
+                        return false;
+                    if (!this.TrySpitOut(blockFacing, allowedNow) && !this.TryPushInto(blockFacing, allowedNow) && !this.TrySpitOut(pushFace, allowedNow) && pushFace != blockFacing.Opposite && !this.TryPushInto(pushFace, allowedNow) && this.PullFaces.Length != 0)
+                    {
+                        BlockFacing pullFace = this.PullFaces[this.Api.World.Rand.Next(this.PullFaces.Length)];
+                        if (pullFace.IsHorizontal && !this.TryPushInto(pullFace, allowedNow))
+                            this.TrySpitOut(pullFace, allowedNow);
+                    }
+                }
+                else
+                {
+                    if (this.Api.World.BlockAccessor.GetChunkAtBlockPos(this.Pos.AddCopy(pushFace)) == null)
+                        return false;
+                    if (!this.TrySpitOut(pushFace, allowedNow) && !this.TryPushInto(pushFace, allowedNow) && this.PullFaces != null && this.PullFaces.Length != 0)
+                    {
+                        BlockFacing pullFace = this.PullFaces[this.Api.World.Rand.Next(this.PullFaces.Length)];
+                        if (pullFace.IsHorizontal && !this.TryPushInto(pullFace, allowedNow))
+                            this.TrySpitOut(pullFace, allowedNow);
+                    }
+                }
+                return true;
+            }
+            return false;
+        }
         public void MoveItem(float dt)
         {
             if (!unlimited && remaining <= 0) return;
@@ -141,38 +188,19 @@ namespace SignalsLink.src.signals.managedchute
             int allowedNow = unlimited ? canByRate : Math.Min(canByRate, remaining);
             if (allowedNow <= 0) return;
 
-            if (this.PushFaces != null && this.PushFaces.Length != 0 && !this.inventory.Empty)
-            {
-                ItemStack itemstack = this.inventory.First<ItemSlot>((System.Func<ItemSlot, bool>)(slot => !slot.Empty)).Itemstack;
-                BlockFacing pushFace = this.PushFaces[this.Api.World.Rand.Next(this.PushFaces.Length)];
-                int index = itemstack.Attributes.GetInt("chuteDir", -1);
-                BlockFacing blockFacing = index < 0 || !((IEnumerable<BlockFacing>)this.PushFaces).Contains<BlockFacing>(BlockFacing.ALLFACES[index]) ? (BlockFacing)null : BlockFacing.ALLFACES[index];
-                if (blockFacing != null)
-                {
-                    if (this.Api.World.BlockAccessor.GetChunkAtBlockPos(this.Pos.AddCopy(blockFacing)) == null)
-                        return;
-                    if (!this.TrySpitOut(blockFacing, allowedNow) && !this.TryPushInto(blockFacing, allowedNow) && !this.TrySpitOut(pushFace, allowedNow) && pushFace != blockFacing.Opposite && !this.TryPushInto(pushFace, allowedNow) && this.PullFaces.Length != 0)
-                    {
-                        BlockFacing pullFace = this.PullFaces[this.Api.World.Rand.Next(this.PullFaces.Length)];
-                        if (pullFace.IsHorizontal && !this.TryPushInto(pullFace, allowedNow))
-                            this.TrySpitOut(pullFace, allowedNow);
-                    }
-                }
-                else
-                {
-                    if (this.Api.World.BlockAccessor.GetChunkAtBlockPos(this.Pos.AddCopy(pushFace)) == null)
-                        return;
-                    if (!this.TrySpitOut(pushFace, allowedNow) && !this.TryPushInto(pushFace, allowedNow) && this.PullFaces != null && this.PullFaces.Length != 0)
-                    {
-                        BlockFacing pullFace = this.PullFaces[this.Api.World.Rand.Next(this.PullFaces.Length)];
-                        if (pullFace.IsHorizontal && !this.TryPushInto(pullFace, allowedNow))
-                            this.TrySpitOut(pullFace, allowedNow);
-                    }
-                }
-            }
+            PushItems(allowedNow);
+
             if (this.PullFaces == null || this.PullFaces.Length == 0 || !this.inventory.Empty)
                 return;
             this.TryPullFrom(this.PullFaces[this.Api.World.Rand.Next(this.PullFaces.Length)], allowedNow);
+        }
+
+        private void SubstractRemaining(int amount)
+        {
+            if (unlimited) return;
+            remaining -= amount;
+            if (remaining < 0) 
+                remaining = 0;
         }
 
         private void TryPullFrom(BlockFacing inputFace, int allowedNow)
@@ -216,9 +244,6 @@ namespace SignalsLink.src.signals.managedchute
             }
             if (!(num2 <= 0 || this.Api.World.Rand.NextDouble() >= 0.2))
                 this.Api.World.PlaySoundAt(BEManagedChute.hopperTumble, this.Pos, 0.0, range: 8f, volume: 0.5f);
-
-            this.itemFlowAccum -= (float)num2;
-            if (!unlimited) remaining -= num2;
         }
 
         private bool TryPushInto(BlockFacing outputFace, int allowedNow)
@@ -264,7 +289,7 @@ namespace SignalsLink.src.signals.managedchute
                         this.MarkDirty();
                         blockEntityItemFlow?.MarkDirty();
                         this.itemFlowAccum -= (float)num3;
-                        if (!unlimited) remaining -= num3;
+                        SubstractRemaining(num3);
                         return true;
                     }
                     fromSlot.Itemstack.Attributes.SetInt("chuteDir", num2);
@@ -307,7 +332,7 @@ namespace SignalsLink.src.signals.managedchute
                 return false;
 
             this.itemFlowAccum -= (float)itemstack.StackSize;
-            if (!unlimited) remaining -= itemstack.StackSize;
+            SubstractRemaining(itemstack.StackSize);
 
             itemstack.Attributes.RemoveAttribute("chuteQHTravelled");
             itemstack.Attributes.RemoveAttribute("chuteDir");
@@ -363,7 +388,7 @@ namespace SignalsLink.src.signals.managedchute
 
         public override void GetBlockInfo(IPlayer forPlayer, StringBuilder sb)
         {
-            if (this.Block is BlockChute)
+            if (this.Block is ManagedChute)
             {
                 foreach (BlockEntityBehavior behavior in this.Behaviors)
                     behavior.GetBlockInfo(forPlayer, sb);
@@ -437,6 +462,8 @@ namespace SignalsLink.src.signals.managedchute
             }
 
             signalState = value;
+
+            this.MarkDirty();
         }
 
     }
