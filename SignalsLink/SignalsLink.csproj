@@ -27,6 +27,10 @@
     <Reference Include="VSSurvivalMod">
       <HintPath>..\..\..\..\..\VintageStory\1.21\Mods\VSSurvivalMod.dll</HintPath>
     </Reference>
+    <Reference Include="0Harmony">
+      <HintPath>..\..\..\..\..\VintageStory\1.21\Lib\0Harmony.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
   </ItemGroup>
 
   <Target Name="PostBuild" BeforeTargets="PostBuildEvent">
