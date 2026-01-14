@@ -4,7 +4,7 @@
 	"entityclass": "BlockEntityManagedChute",
 	"behaviors": [
 		{ "name": "Lockable" },
-		{ "name": "WrenchOrientable", "properties": { "baseCode": "managedchute-{type}"  } }
+		{ "name": "BlockBehaviorCoverWithDirection" }
 	],
 	"entityBehaviors": [
     {
@@ -13,6 +13,14 @@
         "signalNodes": [
           {
             "index": 0,
+            "isSource": false
+          },
+          {
+            "index": 1,
+            "isSource": false
+          },
+          {
+            "index": 2,
             "isSource": false
           }
         ]
@@ -25,17 +33,84 @@
         "index": 0,
         "name": "input",
         "x1": 0.5625,
-				"y1": 0.4375,
-				"z1": 0.78125,
-				"x2": 0.6875,
-				"y2": 0.5625,
-				"z2": 0.96875,
+        "y1": 0.50625,
+        "z1": 0.03125,
+        "x2": 0.6875,
+        "y2": 0.63125,
+        "z2": 0.21875,
+        "rotateXbytype": {
+          "*-*-north": 90,
+          "*-*-south": 270,
+          "@*-up-(east|west)": 90,
+          "@*-down-(east|west)": 270,
+          "@*-south-(east|west)": 180
+        },
         "rotateYbytype": {
-          "*-ns": 90,
-          "*-we": 0
+          "@*-east-(up|down|north|south)": 270,
+          "@*-south-(up|down)": 180,
+          "@*-west-(up|down|north|south)": 90,
+          "@*-(down-north|up-south)": 180
         },
         "rotateZbyType": {
-          "*-ud": 90
+          "*-*-up": 180,
+          "*-*-east": 90,
+          "*-*-west": 270
+        }
+      },
+			{
+        "index": 1,
+        "name": "source-slot",
+        "x1": 0.4375,
+        "y1": 0.7875,
+        "z1": 0.03125,
+        "x2": 0.5625,
+        "y2": 0.9125,
+        "z2": 0.21875,
+        "rotateXbytype": {
+          "*-*-north": 90,
+          "*-*-south": 270,
+          "@*-up-(east|west)": 90,
+          "@*-down-(east|west)": 270,
+          "@*-south-(east|west)": 180
+        },
+        "rotateYbytype": {
+          "@*-east-(up|down|north|south)": 270,
+          "@*-south-(up|down)": 180,
+          "@*-west-(up|down|north|south)": 90,
+          "@*-(down-north|up-south)": 180
+        },
+        "rotateZbyType": {
+          "*-*-up": 180,
+          "*-*-east": 90,
+          "*-*-west": 270
+        }
+      },
+			{
+        "index": 2,
+        "name": "target-slot",
+        "x1": 0.4375,
+        "y1": 0.19375,
+        "z1": 0.03125,
+        "x2": 0.5625,
+        "y2": 0.31875,
+        "z2": 0.21875,
+        "rotateXbytype": {
+          "*-*-north": 90,
+          "*-*-south": 270,
+          "@*-up-(east|west)": 90,
+          "@*-down-(east|west)": 270,
+          "@*-south-(east|west)": 180
+        },
+        "rotateYbytype": {
+          "@*-east-(up|down|north|south)": 270,
+          "@*-south-(up|down)": 180,
+          "@*-west-(up|down|north|south)": 90,
+          "@*-(down-north|up-south)": 180
+        },
+        "rotateZbyType": {
+          "*-*-up": 180,
+          "*-*-east": 90,
+          "*-*-west": 270
         }
       }
 		],
@@ -56,16 +131,65 @@
 		"quantitySlots": 1
 	},
 	"variantgroups": [
-		{ "code": "type", "states": ["straight"] },
-		{ "code": "side", "states": ["ns", "we", "ud"] }
+		{
+      "code": "orientation",
+      "states": [
+        "north",
+        "east",
+        "south",
+        "west",
+        "up",
+        "down"
+      ]
+    },
+    {
+      "code": "side",
+      "states": [
+        "north",
+        "east",
+        "south",
+        "west",
+        "up",
+        "down"
+      ]
+    }
 	],
-	"creativeinventory": { "general": ["*-ns"], "mechanics": ["*-ns"] },
-	"shapeinventory": { "base": "block/managedchute", "rotateY": 90  },
-	"shapebytype": {
-		"*-ud": { "base": "block/managedchute", "rotateZ": 90 },
-		"*-ns": { "base": "block/managedchute", "rotateY": 90 },
-		"*-we": { "base": "block/managedchute", "rotateY": 0 }
-	},
+  "creativeinventory": {
+    "general": [
+      "*-north-down"
+    ],
+    "signalslink": [
+      "*-north-down"
+    ]
+  },
+  "drops": [
+    {
+      "type": "block",
+      "code": "managedchute-north-down"
+    }
+  ],
+  "shape": {
+    "base": "block/managedchute",
+    "rotateXbytype": {
+      "*-*-north": 90,
+      "*-*-south": 270,
+      "@*-up-(east|west)": 90,
+      "@*-down-(east|west)": 270,
+      "@*-south-(east|west)": 180
+    },
+    "rotateYbytype": {
+      "@*-east-(up|down|north|south)": 270,
+      "@*-south-(up|down)": 180,
+      "@*-west-(up|down|north|south)": 90,
+      "@*-(down-north|up-south)": 180
+    },
+    "rotateZbyType": {
+      "*-*-up": 180,
+      "*-*-east": 90,
+      "*-*-west": 270
+    }
+
+  },
 	"blockmaterial": "Metal",
 	"lightAbsorption": 0,
 	"drawtype": "json",
@@ -83,12 +207,63 @@
 		"hit": "game:block/chute",
 		"walk": "game:walk/stone"
 	},
-	"collisionselectionboxByType": {
-		"*-ud": { "x1": 0.25, "y1": 0, "z1": 0.25, "x2": 0.75, "y2": 1, "z2": 0.75 },
-		"*-ns": 	{ "x1": 0.25, "y1": 0.25, "z1": 0, "x2": 0.75, "y2": 0.75, "z2": 1 },
-		"*-we": { "x1": 0, "y1": 0.25, "z1": 0.25, "x2": 1, "y2": 0.75, "z2": 0.75 }
-	},
-	"guiTransform": {
-		"scale": 1.22
-	}
+  "selectionbox": {
+    "x1": 0.25,
+    "y1": 0.0,
+    "z1": 0.25,
+    "x2": 0.75,
+    "y2": 1.0,
+    "z2": 0.75,
+    "rotateXbytype": {
+      "*-*-north": 90,
+      "*-*-south": 270,
+      "@*-up-(east|west)": 90,
+      "@*-down-(east|west)": 270,
+      "@*-south-(east|west)": 180
+    },
+    "rotateYbytype": {
+      "@*-east-(up|down|north|south)": 270,
+      "@*-south-(up|down)": 180,
+      "@*-west-(up|down|north|south)": 90,
+      "@*-(down-north|up-south)": 180
+    },
+    "rotateZbyType": {
+      "*-*-up": 180,
+      "*-*-east": 90,
+      "*-*-west": 270
+    }
+  },
+  "collisionbox": {
+    "x1": 0.25,
+    "y1": 0.0,
+    "z1": 0.25,
+    "x2": 0.75,
+    "y2": 1.0,
+    "z2": 0.75,
+    "rotateXbytype": {
+      "*-*-north": 90,
+      "*-*-south": 270,
+      "@*-up-(east|west)": 90,
+      "@*-down-(east|west)": 270,
+      "@*-south-(east|west)": 180
+    },
+    "rotateYbytype": {
+      "@*-east-(up|down|north|south)": 270,
+      "@*-south-(up|down)": 180,
+      "@*-west-(up|down|north|south)": 90,
+      "@*-(down-north|up-south)": 180
+    },
+    "rotateZbyType": {
+      "*-*-up": 180,
+      "*-*-east": 90,
+      "*-*-west": 270
+    }
+  },
+  "guiTransform": {
+    "origin": {
+      "x": 0.5,
+      "y": 0.0625,
+      "z": 0.5
+    }
+  }
 }
