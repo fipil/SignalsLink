@@ -59,7 +59,7 @@
       },
 			{
         "index": 1,
-        "name": "source-slot",
+        "name": "target-slot",
         "x1": 0.4375,
         "y1": 0.7875,
         "z1": 0.03125,
@@ -87,7 +87,7 @@
       },
 			{
         "index": 2,
-        "name": "target-slot",
+        "name": "source-slot",
         "x1": 0.4375,
         "y1": 0.19375,
         "z1": 0.03125,
@@ -196,7 +196,7 @@
 	"replaceable": 160,
 	"resistance": 1.75,
 	"sidesolid": {
-		"all": false
+		"all": true
 	},
 	"sideopaque": {
 		"all": false

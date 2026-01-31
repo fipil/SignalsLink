@@ -3,19 +3,15 @@ using Vintagestory.API.MathTools;
 
 namespace SignalsLink.src.signals.managedchute.transporting
 {
-    // Pøenos: inventáø -> svìt (spawn item entity).
-    public class InventoryToWorldTransfer : IItemTransfer
+    // PÅ™enos: inventÃ¡Å™ -> svÄ›t (spawn item entity).
+    public class InventoryToWorldTransfer : InventorySourcedTransferBase, IItemTransfer
     {
         private readonly ICoreAPI api;
-        private readonly IInventory sourceInv;
-        private readonly byte inputSlotSignal;
         private readonly BlockPos targetPos;
 
-        public InventoryToWorldTransfer(ICoreAPI api, IInventory sourceInv, byte inputSlotSignal, BlockPos targetPos)
+        public InventoryToWorldTransfer(ICoreAPI api, IInventory sourceInv, byte inputSlotSignal, BlockPos targetPos): base(sourceInv, inputSlotSignal)
         {
             this.api = api;
-            this.sourceInv = sourceInv;
-            this.inputSlotSignal = inputSlotSignal;
             this.targetPos = targetPos;
         }
 
@@ -38,30 +34,5 @@ namespace SignalsLink.src.signals.managedchute.transporting
             return 1;
         }
 
-        private ItemSlot GetSourceSlot()
-        {
-            if (inputSlotSignal > 0)
-            {
-                int index = inputSlotSignal - 1;
-                if (index >= 0 && index < sourceInv.Count)
-                {
-                    return sourceInv[index];
-                }
-                return null;
-            }
-
-            ItemSlot lastNonEmpty = null;
-            for (int i = sourceInv.Count - 1; i >= 0; i--)
-            {
-                if (!sourceInv[i].Empty)
-                {
-                    lastNonEmpty = sourceInv[i];
-                    break;
-                }
-            }
-
-            if (lastNonEmpty != null) return lastNonEmpty;
-            return sourceInv.Count > 0 ? sourceInv[sourceInv.Count - 1] : null;
-        }
     }
 }

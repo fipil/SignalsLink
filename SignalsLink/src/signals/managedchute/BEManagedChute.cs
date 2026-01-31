@@ -17,10 +17,18 @@ namespace SignalsLink.src.signals.managedchute
         private bool unlimited;
         private bool placing;
 
+        private byte sourceSlot;
+        private byte targetSlot;
+
         private const int PLACE_SIGNAL = 10;
+
+        private const byte SOURCE_SLOT = 2;
+        private const byte TARGET_SLOT = 1;
 
         private float itemFlowRate = 1f;
         private float itemFlowAccum;
+
+        private static AssetLocation hopperTumble = new AssetLocation("sounds/block/hoppertumble");
 
         private IItemTransfer transfer;
 
@@ -69,6 +77,13 @@ namespace SignalsLink.src.signals.managedchute
                 int movedNow = transfer.TryMoveOneItem(opTemplate);
                 if (movedNow <= 0) break;
 
+                try
+                {
+                    if (!(this.Api.World.Rand.NextDouble() >= 0.2))
+                        this.Api.World.PlaySoundAt(hopperTumble, this.Pos, 0.0, range: 8f, volume: 0.5f);
+                }
+                catch (Exception) { }
+
                 movedTotal += movedNow;
                 itemFlowAccum -= movedNow;
 
@@ -81,6 +96,44 @@ namespace SignalsLink.src.signals.managedchute
         }
 
         public void OnValueChanged(NodePos pos, byte value)
+        {
+            switch(pos.index)
+            {
+                case 0:
+                    processInput(pos, value);
+                    break;
+                case SOURCE_SLOT:
+                    ProcessSourceSlot(pos, value);
+                    break;
+                case TARGET_SLOT:
+                    ProcessTargetSlot(pos, value);
+                    break;
+            }
+        }
+
+        private void ProcessTargetSlot(NodePos pos, byte value)
+        {
+            if (pos.index != TARGET_SLOT) return;
+            if (targetSlot == value) return;
+
+            targetSlot = value;
+            transfer = null;
+
+            this.MarkDirty();
+        }
+
+        private void ProcessSourceSlot(NodePos pos, byte value)
+        {
+            if (pos.index != SOURCE_SLOT) return;
+            if (sourceSlot == value) return;
+
+            sourceSlot = value;
+            transfer = null;
+
+            this.MarkDirty();
+        }
+
+        public void processInput(NodePos pos, byte value)
         {
             if (pos.index != 0) return;
             if (signalState == value) return;
@@ -113,6 +166,7 @@ namespace SignalsLink.src.signals.managedchute
             signalState = value;
 
             this.MarkDirty();
+
         }
 
         public BlockFacing GetInputFace()
@@ -158,7 +212,7 @@ namespace SignalsLink.src.signals.managedchute
             if (transfer != null) return;
 
             // Zatím InputSlot/OutputSlot signál = 0 (default sloty)
-            transfer = ItemTransferFactory.CreateTransfer(Api, inputPos, outputPos, 0, 0);
+            transfer = ItemTransferFactory.CreateTransfer(Api, inputPos, outputPos, sourceSlot, targetSlot);
 
             lastInputPos = inputPos;
             lastOutputPos = outputPos;
@@ -179,10 +233,7 @@ namespace SignalsLink.src.signals.managedchute
         // pokud používáš OnNeighbourBlockChange:
         public void OnNeighbourBlockChange(BlockPos neibpos)
         {
-            if (neibpos.Equals(lastInputPos) || neibpos.Equals(lastOutputPos))
-            {
-                transfer = null;
-            }
+            transfer = null;
         }
 
         public override void OnExchanged(Block block)

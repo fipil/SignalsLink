@@ -9,10 +9,10 @@ namespace SignalsLink.src.signals.managedchute.transporting
         // Zjednodušené API: vytvoø pøenos podle toho, co je na input/output pozici.
         public static IItemTransfer CreateTransfer(ICoreAPI api, BlockPos inputPos, BlockPos outputPos, byte inputSlotSignal, byte outputSlotSignal)
         {
-            var beIn = api.World.BlockAccessor.GetBlockEntity(inputPos) as BlockEntityContainer;
+            var beIn = api.World.BlockAccessor.GetBlockEntity(inputPos) as IBlockEntityContainer;
             if (beIn?.Inventory == null) return null;
 
-            var beOut = api.World.BlockAccessor.GetBlockEntity(outputPos) as BlockEntityContainer;
+            var beOut = api.World.BlockAccessor.GetBlockEntity(outputPos) as IBlockEntityContainer;
             if (beOut?.Inventory != null)
             {
                 // Inventáø -> inventáø

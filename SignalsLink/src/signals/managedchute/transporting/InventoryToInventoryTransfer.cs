@@ -4,20 +4,17 @@ namespace SignalsLink.src.signals.managedchute.transporting
 {
     // Základní přenos: inventář -> inventář.
     // Respektuje 1-based InputSlot/OutputSlot signály (0 = default chování).
-    public class InventoryToInventoryTransfer : IItemTransfer
+    public class InventoryToInventoryTransfer : InventorySourcedTransferBase, IItemTransfer
     {
         private readonly ICoreAPI api;
-        private readonly IInventory sourceInv;
         private readonly IInventory targetInv;
-        private readonly byte inputSlotSignal;
         private readonly byte outputSlotSignal;
 
-        public InventoryToInventoryTransfer(ICoreAPI api, IInventory sourceInv, IInventory targetInv, byte inputSlotSignal, byte outputSlotSignal)
+
+        public InventoryToInventoryTransfer(ICoreAPI api, IInventory sourceInv, IInventory targetInv, byte inputSlotSignal, byte outputSlotSignal): base(sourceInv, inputSlotSignal)
         {
             this.api = api;
-            this.sourceInv = sourceInv;
             this.targetInv = targetInv;
-            this.inputSlotSignal = inputSlotSignal;
             this.outputSlotSignal = outputSlotSignal;
         }
 
@@ -46,34 +43,6 @@ namespace SignalsLink.src.signals.managedchute.transporting
             }
 
             return moved;
-        }
-
-        private ItemSlot GetSourceSlot()
-        {
-            // InputSlot: 1-based index, 0 = „výchozí“ (poslední ne-prázdný / poslední slot)
-            if (inputSlotSignal > 0)
-            {
-                int index = inputSlotSignal - 1;
-                if (index >= 0 && index < sourceInv.Count)
-                {
-                    return sourceInv[index];
-                }
-                return null;
-            }
-
-            // 0 → poslední ne-prázdný, fallback poslední slot
-            ItemSlot lastNonEmpty = null;
-            for (int i = sourceInv.Count - 1; i >= 0; i--)
-            {
-                if (!sourceInv[i].Empty)
-                {
-                    lastNonEmpty = sourceInv[i];
-                    break;
-                }
-            }
-
-            if (lastNonEmpty != null) return lastNonEmpty;
-            return sourceInv.Count > 0 ? sourceInv[sourceInv.Count - 1] : null;
         }
 
         private ItemSlot GetTargetSlot(ItemSlot fromSlot)
