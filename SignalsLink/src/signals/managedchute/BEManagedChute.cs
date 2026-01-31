@@ -15,7 +15,6 @@ namespace SignalsLink.src.signals.managedchute
         public byte signalState;
         private int remaining;
         private bool unlimited;
-        private bool placing;
 
         private byte sourceSlot;
         private byte targetSlot;
@@ -24,6 +23,7 @@ namespace SignalsLink.src.signals.managedchute
 
         private const byte SOURCE_SLOT = 2;
         private const byte TARGET_SLOT = 1;
+        private const byte UNLIMITED_TRANSFER = 15;
 
         private float itemFlowRate = 1f;
         private float itemFlowAccum;
@@ -143,21 +143,14 @@ namespace SignalsLink.src.signals.managedchute
                 remaining += 1 << (value - 1);
                 // volitelně omez max, aby ti to nepřeteklo při blbnutí signálem
                 // remaining = Math.Min(remaining, 1000000);
-                placing = false;
-            }
-            else if (value == PLACE_SIGNAL)
-            {
-                remaining += 1;
-                placing = true;
             }
 
             // 8 = trvale otevřeno
-            if (value == 8)
+            if (value == UNLIMITED_TRANSFER)
             {
                 unlimited = true;
-                placing = false;
             }
-            else if (signalState == 8 && value != 8)
+            else if (signalState == UNLIMITED_TRANSFER && value != UNLIMITED_TRANSFER)
             {
                 // odchod z 8: zavři "unlimited", ale kredit nech jak byl
                 unlimited = false;
@@ -242,5 +235,6 @@ namespace SignalsLink.src.signals.managedchute
             // orientace / varianta se mohla změnit -> nové pozice
             transfer = null;
         }
+
     }
 }

@@ -18,11 +18,7 @@ namespace SignalsLink.src
 {
     public class SignalsLinkMod : ModSystem
     {
-        static string MODID = "signalslink";
         ICoreAPI api;
-
-        IServerNetworkChannel serverChannel;
-        IClientNetworkChannel clientChannel;
 
         public override void Start(ICoreAPI api)
         {

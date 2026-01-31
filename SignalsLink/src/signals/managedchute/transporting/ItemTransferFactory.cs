@@ -9,18 +9,38 @@ namespace SignalsLink.src.signals.managedchute.transporting
         // Zjednodušené API: vytvoø pøenos podle toho, co je na input/output pozici.
         public static IItemTransfer CreateTransfer(ICoreAPI api, BlockPos inputPos, BlockPos outputPos, byte inputSlotSignal, byte outputSlotSignal)
         {
-            var beIn = api.World.BlockAccessor.GetBlockEntity(inputPos) as IBlockEntityContainer;
-            if (beIn?.Inventory == null) return null;
+            var beIn = api.World.BlockAccessor.GetBlockEntity(inputPos) as BlockEntityContainer;
+            var beOut = api.World.BlockAccessor.GetBlockEntity(outputPos) as BlockEntityContainer;
 
-            var beOut = api.World.BlockAccessor.GetBlockEntity(outputPos) as IBlockEntityContainer;
-            if (beOut?.Inventory != null)
+            if (beIn?.Inventory != null && beOut?.Inventory != null)
             {
-                // Inventáø -> inventáø
+                // inventáø -> inventáø
                 return new InventoryToInventoryTransfer(api, beIn.Inventory, beOut.Inventory, inputSlotSignal, outputSlotSignal);
             }
 
-            // Inventáø -> svìt (vzduch/replaceable)
-            return new InventoryToWorldTransfer(api, beIn.Inventory, inputSlotSignal, outputPos);
+            if (beIn?.Inventory != null && beOut == null)
+            {
+                // inventáø -> svìt
+                Block blockAtTarget = api.World.BlockAccessor.GetBlock(outputPos);
+                bool canUseWorldTransfer =
+                    blockAtTarget.Replaceable >= 6000 ||
+                    api.World.BlockAccessor.GetBlockEntity<BlockEntityItemPile>(outputPos) != null;
+
+                if (canUseWorldTransfer)
+                {
+                    return new InventoryToWorldTransfer(api, beIn.Inventory, inputSlotSignal, outputPos, outputSlotSignal);
+                }
+
+                return null;
+            }
+
+            if (beIn == null && beOut?.Inventory != null)
+            {
+                // svìt -> inventáø (WorldToInventoryTransfer)
+                return new WorldToInventoryTransfer(api, inputPos, beOut.Inventory, outputSlotSignal);
+            }
+
+            return null;
         }
     }
 }

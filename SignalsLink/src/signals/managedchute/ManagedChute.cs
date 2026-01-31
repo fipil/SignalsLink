@@ -19,6 +19,11 @@ namespace SignalsLink.src.signals.managedchute
 
             (world.BlockAccessor.GetBlockEntity(pos) as BEManagedChute)?.OnNeighbourBlockChange(neibpos);
         }
+
+        public override int GetRetention(BlockPos pos, BlockFacing facing, EnumRetentionType type)
+        {
+            return -1; // To allow put this pipe to cellar wall, to transfer items from/to cellars
+        }
     }
 
 }

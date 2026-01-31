@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Vintagestory.API.Common;
+using Vintagestory.GameContent; // nahoře v souboru
 
 namespace SignalsLink.src.signals.managedchute.transporting
 {
@@ -26,7 +27,11 @@ namespace SignalsLink.src.signals.managedchute.transporting
                 int index = inputSlotSignal - 1;
                 if (index >= 0 && index < sourceInv.Count)
                 {
-                    return sourceInv[index];
+                    ItemSlot slot = sourceInv[index];
+                    if (slot != null && !slot.Empty && !IsLiquidContainer(slot.Itemstack))
+                    {
+                        return slot;
+                    }
                 }
                 return null;
             }
@@ -35,22 +40,37 @@ namespace SignalsLink.src.signals.managedchute.transporting
             if (inputSlotSignal == 15)
             {
                 if (sourceInv.Count == 0) return null;
-                return sourceInv[sourceInv.Count - 1];
+                var slot = sourceInv[sourceInv.Count - 1];
+                return IsLiquidContainer(slot.Itemstack) ? null : slot;
             }
 
-            // 1) 0 -> původní chování: „vysávej všechny sloty“ = první NEprázdný slot
+            // 1) 0 -> „vysávej všechny sloty“ = první NEprázdný, který není liquid container
             for (int i = 0; i < sourceInv.Count; i++)
             {
-                if (!sourceInv[i].Empty)
+                ItemSlot slot = sourceInv[i];
+                if (slot != null && !slot.Empty && !IsLiquidContainer(slot.Itemstack))
                 {
-                    return sourceInv[i];
+                    return slot;
                 }
             }
 
-            // nic nenalezeno
             return null;
         }
 
+        protected bool IsLiquidContainer(ItemStack stack)
+        {
+            if (stack?.Collectible == null) return false;
 
+            // Sudy, džbány, kbelíky atd.
+            if (stack.Collectible is BlockLiquidContainerBase) return true;
+
+            // Obecné liquid rozhraní (pro jistotu)
+            if (stack.Collectible is ILiquidInterface) return true;
+
+            // ItemLiquidPortion is internal, so check by type name string instead
+            if (stack.Collectible.GetType().Name == "ItemLiquidPortion") return true;
+
+            return false;
+        }
     }
 }
