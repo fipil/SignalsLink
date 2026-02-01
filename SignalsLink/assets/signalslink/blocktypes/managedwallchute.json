@@ -115,46 +115,90 @@
       }
 		]
 	},
-	"variantgroups": [
+  "variantgroups": [
+    {
+      "code": "type",
+      "states": [ "wood", "rock", "cobble" ]
+    },
     {
       "code": "material",
       "states": [
         "oak",
+        "acacia",
         "birch",
+        "kapok",
+        "maple",
         "pine",
+        "redwood",
+        "walnut",
+        "aged",
+        "andesite",
+        "basalt",
+        "chalk",
+        "chert",
+        "conglomerate",
         "granite",
-        "limestone"
-      ]
-    },
-		{
-      "code": "orientation",
-      "states": [
-        "north",
-        "east",
-        "south",
-        "west",
-        "up",
-        "down"
+        "limestone",
+        "peridotite",
+        "phyllite",
+        "sandstone",
+        "shale",
+        "slate"
       ]
     },
     {
+      "code": "orientation",
+      "states": [ "north", "east", "south", "west", "up", "down" ]
+    },
+    {
       "code": "side",
-      "states": [
-        "north",
-        "east",
-        "south",
-        "west",
-        "up",
-        "down"
-      ]
+      "states": [ "north", "east", "south", "west", "up", "down" ]
     }
-	],
+  ],
+  "skipVariants": [
+    "*-wood-andesite-*-*",
+    "*-wood-basalt-*-*",
+    "*-wood-chalk-*-*",
+    "*-wood-chert-*-*",
+    "*-wood-conglomerate-*-*",
+    "*-wood-granite-*-*",
+    "*-wood-limestone-*-*",
+    "*-wood-peridotite-*-*",
+    "*-wood-phyllite-*-*",
+    "*-wood-sandstone-*-*",
+    "*-wood-shale-*-*",
+    "*-wood-slate-*-*",
+
+    "*-rock-oak-*-*",
+    "*-rock-acacia-*-*",
+    "*-rock-birch-*-*",
+    "*-rock-elm-*-*",
+    "*-rock-kapok-*-*",
+    "*-rock-maple-*-*",
+    "*-rock-pine-*-*",
+    "*-rock-redwood-*-*",
+    "*-rock-walnut-*-*",
+    "*-rock-aged-*-*",
+    "*-rock-aged2-*-*",
+
+    "*-cobble-oak-*-*",
+    "*-cobble-acacia-*-*",
+    "*-cobble-birch-*-*",
+    "*-cobble-elm-*-*",
+    "*-cobble-kapok-*-*",
+    "*-cobble-maple-*-*",
+    "*-cobble-pine-*-*",
+    "*-cobble-redwood-*-*",
+    "*-cobble-walnut-*-*",
+    "*-cobble-aged-*-*",
+    "*-cobble-aged2-*-*"
+  ],
   "creativeinventory": {
     "general": [
-      "managedwallchute-oak-north-north"
+      "managedwallchute-wood-oak-north-north"
     ],
     "signalslink": [
-      "managedwallchute-*-north-north"
+      "managedwallchute-*-*-north-north"
     ]
   },
   "drops": [
@@ -293,7 +337,7 @@
     }
   ],
   "texturesByType": {
-    "@managedwallchute-(oak|birch|pine)-.*": {
+    "@managedwallchute-wood-(oak|acacia|birch|elm|kapok|ladder|maple|pine|redwood|walnut)-.*": {
       "mat": {
         "base": "game:block/wood/planks/{material}1",
         "alternates": [
@@ -303,8 +347,22 @@
         ]
       }
     },
+    "managedwallchute-wood-aged-*-*": {
+      "mat": {
+        "base": "game:block/wood/planks/aged/generic1",
+        "alternates": [
+          { "base": "game:block/wood/planks/aged/generic2" },
+          { "base": "game:block/wood/planks/aged/generic3" },
+          { "base": "game:block/wood/planks/aged/generic4" },
+          { "base": "game:block/wood/planks/aged/generic5" },
+          { "base": "game:block/wood/planks/aged/generic6" },
+          { "base": "game:block/wood/planks/aged/generic7" },
+          { "base": "game:block/wood/planks/aged/generic8" }
+        ]
+      }
+    },
 
-    "*-limestone-*-*": {
+    "@managedwallchute-rock-(andesite|basalt|chalk|chert|conglomerate|granite|limestone|peridotite|phyllite|sandstone|shale|slate)-.*": {
       "mat": {
         "base": "game:block/stone/rock/{material}1",
         "alternates": [
@@ -315,7 +373,7 @@
       }
     },
 
-    "*-granite-*-*": {
+    "@managedwallchute-cobble-(andesite|basalt|chalk|chert|conglomerate|granite|limestone|peridotite|phyllite|sandstone|shale|slate)-.*": {
       "mat": {
         "base": "game:block/stone/cobblestone/{material}1",
         "alternates": [
