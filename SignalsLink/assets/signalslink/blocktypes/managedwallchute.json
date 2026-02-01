@@ -1,6 +1,6 @@
 {
-	"code": "managedchute",
-	"class": "ManagedChute",
+	"code": "managedwallchute",
+	"class": "ManagedWallChute",
 	"entityclass": "BlockEntityManagedChute",
 	"behaviors": [
 		{ "name": "Lockable" },
@@ -32,12 +32,12 @@
       {
         "index": 0,
         "name": "input",
-        "x1": 0.5625,
-        "y1": 0.50625,
-        "z1": 0.03125,
-        "x2": 0.6875,
-        "y2": 0.63125,
-        "z2": 0.21875,
+        "x1": 0.0625,
+        "y1": 0.78125,
+        "z1": 0.4375,
+        "x2": 0.1875,
+        "y2": 0.96875,
+        "z2": 0.5625,
         "rotateXbytype": {
           "*-*-north": 90,
           "*-*-south": 270,
@@ -60,12 +60,12 @@
 			{
         "index": 1,
         "name": "target-slot",
-        "x1": 0.4375,
-        "y1": 0.7875,
-        "z1": 0.03125,
-        "x2": 0.5625,
-        "y2": 0.9125,
-        "z2": 0.21875,
+        "x1": 0.0625,
+        "y1": 0.78125,
+        "z1": 0.59375,
+        "x2": 0.1875,
+        "y2": 0.96875,
+        "z2": 0.71875,
         "rotateXbytype": {
           "*-*-north": 90,
           "*-*-south": 270,
@@ -88,12 +88,12 @@
 			{
         "index": 2,
         "name": "source-slot",
-        "x1": 0.4375,
-        "y1": 0.19375,
-        "z1": 0.03125,
-        "x2": 0.5625,
-        "y2": 0.31875,
-        "z2": 0.21875,
+        "x1": 0.0625,
+        "y1": 0.78125,
+        "z1": 0.28125,
+        "x2": 0.1875,
+        "y2": 0.96875,
+        "z2": 0.40625,
         "rotateXbytype": {
           "*-*-north": 90,
           "*-*-south": 270,
@@ -116,6 +116,16 @@
 		]
 	},
 	"variantgroups": [
+    {
+      "code": "material",
+      "states": [
+        "oak",
+        "birch",
+        "pine",
+        "granite",
+        "limestone"
+      ]
+    },
 		{
       "code": "orientation",
       "states": [
@@ -141,20 +151,20 @@
 	],
   "creativeinventory": {
     "general": [
-      "*-north-down"
+      "managedwallchute-oak-north-north"
     ],
     "signalslink": [
-      "*-north-down"
+      "managedwallchute-*-north-north"
     ]
   },
   "drops": [
     {
       "type": "block",
-      "code": "managedchute-north-down"
+      "code": "managedwallchute-oak-north-down"
     }
   ],
   "shape": {
-    "base": "block/managedchute",
+    "base": "block/managedwallchute",
     "rotateXbytype": {
       "*-*-north": 90,
       "*-*-south": 270,
@@ -242,6 +252,40 @@
       "*-*-up": 180,
       "*-*-east": 90,
       "*-*-west": 270
+    }
+  },
+  "texturesByType": {
+    "@managedwallchute-(oak|birch|pine)-.*": {
+      "mat": {
+        "base": "game:block/wood/planks/{material}1",
+        "alternates": [
+          { "base": "game:block/wood/planks/{material}2" },
+          { "base": "game:block/wood/planks/{material}3" },
+          { "base": "game:block/wood/planks/{material}4" }
+        ]
+      }
+    },
+
+    "*-limestone-*-*": {
+      "mat": {
+        "base": "game:block/stone/rock/{material}1",
+        "alternates": [
+          { "base": "game:block/stone/rock/{material}2" },
+          { "base": "game:block/stone/rock/{material}3" },
+          { "base": "game:block/stone/rock/{material}4" }
+        ]
+      }
+    },
+
+    "*-granite-*-*": {
+      "mat": {
+        "base": "game:block/stone/cobblestone/{material}1",
+        "alternates": [
+          { "base": "game:block/stone/cobblestone/{material}2" },
+          { "base": "game:block/stone/cobblestone/{material}3" },
+          { "base": "game:block/stone/cobblestone/{material}4" }
+        ]
+      }
     }
   }
 }

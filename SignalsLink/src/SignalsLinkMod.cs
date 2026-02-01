@@ -1,4 +1,5 @@
-﻿using signals.src.signalNetwork;
+﻿using signals.src;
+using signals.src.signalNetwork;
 using SignalsLink.src.signals.behaviours;
 using SignalsLink.src.signals.blocksensor;
 using SignalsLink.src.signals.entitysensor;
@@ -30,11 +31,11 @@ namespace SignalsLink.src
             api.RegisterBlockClass("BlockSensor", typeof(BlockSensor));
             api.RegisterBlockClass("EntitySensor", typeof(EntitySensor));
             api.RegisterBlockClass("ManagedChute", typeof(ManagedChute));
+            api.RegisterBlockClass("ManagedWallChute", typeof(ManagedWallChute));
 
             api.RegisterBlockEntityClass("BlockEntityBlockSensor", typeof(BEBlockSensor));
             api.RegisterBlockEntityClass("BlockEntityEntitySensor", typeof(BEEntitySensor));
             api.RegisterBlockEntityClass("BlockEntityManagedChute", typeof(BEManagedChute));
-
         }
 
         public override void StartClientSide(ICoreClientAPI api)
