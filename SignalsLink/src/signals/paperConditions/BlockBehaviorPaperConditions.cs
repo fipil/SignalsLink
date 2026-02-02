@@ -1,0 +1,107 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using Vintagestory.API.Common;
+using Vintagestory.API.Datastructures;
+using Vintagestory.API.MathTools;
+
+namespace SignalsLink.src.signals.paperConditions
+{
+    // ============================================================
+    // BlockEntity mixin – blocks using this behavior MUST inherit
+    // or delegate storage to something equivalent
+    // ============================================================
+    public interface IPaperConditionsHost
+    {
+        string ConditionsText { get; set; }
+    }
+
+
+    // ============================================================
+    // BlockBehavior – interaction + tooltip glue
+    // ============================================================
+    public class BlockBehaviorPaperConditions : BlockBehavior
+    {
+        public BlockBehaviorPaperConditions(Block block) : base(block) { }
+
+        public override bool OnBlockInteractStart(IWorldAccessor world, IPlayer byPlayer, BlockSelection blockSel, ref EnumHandling handling)
+        {
+            var be = world.BlockAccessor.GetBlockEntity(blockSel.Position) as IPaperConditionsHost;
+            if (be == null) return false;
+
+            var slot = byPlayer.InventoryManager.ActiveHotbarSlot;
+            if (slot?.Itemstack == null) return false;
+
+            var stack = slot.Itemstack;
+            bool sneaking = byPlayer.Entity.Controls.ShiftKey;
+            bool control = byPlayer.Entity.Controls.CtrlKey;
+
+            // 1) Interakce s papírem
+            if (IsPaper(stack))
+            {
+                string paperText = PaperTextUtil.GetPaperText(stack);
+
+                // Shift + empty paper = clear
+                if (string.IsNullOrWhiteSpace(paperText) && sneaking)
+                {
+                    be.ConditionsText = null;
+                    slot.MarkDirty();
+                    return true;
+                }
+
+                // Non-empty paper -> store conditions
+                if (!string.IsNullOrWhiteSpace(paperText))
+                {
+                    be.ConditionsText = paperText;
+                    slot.MarkDirty();
+                    return true;
+                }
+
+                // Empty paper, NOT sneaking = copy out
+                if (string.IsNullOrWhiteSpace(paperText) && !sneaking && !string.IsNullOrWhiteSpace(be.ConditionsText))
+                {
+                    PaperTextUtil.SetPaperText(stack, be.ConditionsText!);
+                    slot.MarkDirty();
+                    return true;
+                }
+
+                return false;
+            }
+
+            // 2) Interakce s jiným itemem / blokem: Ctrl = export atributů do ConditionsText
+            if (control)
+            {
+                string text = ItemConditionContextUtil.BuildHintText(world, stack);
+                if (string.IsNullOrWhiteSpace(text)) return false;
+
+                be.ConditionsText = text;
+                return true;
+            }
+
+            return false;
+        }
+
+        public override string GetPlacedBlockInfo(IWorldAccessor world, BlockPos pos, IPlayer forPlayer)
+        {
+            StringBuilder dsc = new StringBuilder();
+            var be = world.BlockAccessor.GetBlockEntity(pos) as IPaperConditionsHost;
+            if (be?.ConditionsText == null) return "";
+
+            dsc.AppendLine("Conditions:");
+            foreach (var line in be.ConditionsText.Split('\n'))
+            {
+                dsc.AppendLine("  " + line);
+            }
+            return dsc.ToString();
+        }
+
+        private bool IsPaper(ItemStack stack)
+        {
+            // TODO: adjust to your paper item code
+            return stack.Collectible.Code.Path.Contains("paper");
+        }
+    }
+
+}

@@ -4,6 +4,7 @@ using SignalsLink.src.signals.behaviours;
 using SignalsLink.src.signals.blocksensor;
 using SignalsLink.src.signals.entitysensor;
 using SignalsLink.src.signals.managedchute;
+using SignalsLink.src.signals.paperConditions;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Server;
@@ -27,6 +28,7 @@ namespace SignalsLink.src
             base.Start(api);
 
             api.RegisterBlockBehaviorClass("BlockBehaviorTemporalCharge", typeof(BlockBehaviorTemporalCharge));
+            api.RegisterBlockBehaviorClass("BlockBehaviorPaperConditions", typeof(BlockBehaviorPaperConditions));
 
             api.RegisterBlockClass("BlockSensor", typeof(BlockSensor));
             api.RegisterBlockClass("EntitySensor", typeof(EntitySensor));

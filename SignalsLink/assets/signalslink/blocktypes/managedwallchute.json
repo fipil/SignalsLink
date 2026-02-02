@@ -4,7 +4,8 @@
 	"entityclass": "BlockEntityManagedChute",
 	"behaviors": [
 		{ "name": "Lockable" },
-		{ "name": "BlockBehaviorCoverWithDirection" }
+		{ "name": "BlockBehaviorCoverWithDirection" },
+		{ "name": "BlockBehaviorPaperConditions" }
 	],
 	"entityBehaviors": [
     {

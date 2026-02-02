@@ -1,14 +1,16 @@
 ﻿using signals.src.signalNetwork;
 using SignalsLink.src.signals.managedchute.transporting;
+using SignalsLink.src.signals.paperConditions;
 using System;
 using Vintagestory.API.Common;
+using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Server;
 using Vintagestory.GameContent;
 
 namespace SignalsLink.src.signals.managedchute
 {
-    public class BEManagedChute : BlockEntity, IBESignalReceptor
+    public class BEManagedChute : BlockEntity, IBESignalReceptor, IPaperConditionsHost
     {
         private int checkRateMs;
 
@@ -34,6 +36,21 @@ namespace SignalsLink.src.signals.managedchute
 
         private BlockPos lastInputPos;
         private BlockPos lastOutputPos;
+
+        private string conditionsText = null;
+
+        public string ConditionsText
+        {
+            get
+            {
+                return conditionsText;
+            }
+            set
+            {
+                conditionsText = value;
+                MarkDirty();
+            }
+        }
 
         public override void Initialize(ICoreAPI api)
         {
@@ -234,6 +251,18 @@ namespace SignalsLink.src.signals.managedchute
             base.OnExchanged(block);
             // orientace / varianta se mohla změnit -> nové pozice
             transfer = null;
+        }
+
+        public override void FromTreeAttributes(ITreeAttribute tree, IWorldAccessor worldForResolving)
+        {
+            base.FromTreeAttributes(tree, worldForResolving);
+            ConditionsText = tree.GetString("conditionsText", null);
+        }
+
+        public override void ToTreeAttributes(ITreeAttribute tree)
+        {
+            base.ToTreeAttributes(tree);
+            tree.SetString("conditionsText", ConditionsText);
         }
 
     }
