@@ -38,6 +38,7 @@ namespace SignalsLink.src.signals.managedchute
         private BlockPos lastOutputPos;
 
         private string conditionsText = null;
+        private PaperConditionsEvaluator conditionsEvaluator;
 
         public string ConditionsText
         {
@@ -48,6 +49,7 @@ namespace SignalsLink.src.signals.managedchute
             set
             {
                 conditionsText = value;
+                conditionsEvaluator?.SetConditionsText(conditionsText);
                 MarkDirty();
             }
         }
@@ -222,10 +224,23 @@ namespace SignalsLink.src.signals.managedchute
             if (transfer != null) return;
 
             // Zatím InputSlot/OutputSlot signál = 0 (default sloty)
-            transfer = ItemTransferFactory.CreateTransfer(Api, inputPos, outputPos, sourceSlot, targetSlot);
+            transfer = ItemTransferFactory.CreateTransfer(Api, inputPos, outputPos, sourceSlot, targetSlot, ConditionsEvaluator);
 
             lastInputPos = inputPos;
             lastOutputPos = outputPos;
+        }
+
+        private PaperConditionsEvaluator ConditionsEvaluator
+        {
+            get
+            {
+                if(conditionsEvaluator == null)
+                {
+                    conditionsEvaluator = new PaperConditionsEvaluator();
+                    conditionsEvaluator.SetConditionsText(ConditionsText);
+                }   
+                return conditionsEvaluator;
+            }
         }
 
         public override void OnBlockRemoved()

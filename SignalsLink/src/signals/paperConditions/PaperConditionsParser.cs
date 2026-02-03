@@ -11,7 +11,7 @@ namespace SignalsLink.src.signals.paperConditions
 {
     public static class PaperConditionsParser
     {
-        public static CompiledConditions Parse(string text)
+        public static CompiledConditions Parse(string text, List<string> errors = null)
         {
             var paragraphs = Regex.Split(text, "\\n\\s*\\n");
             var blocks = new List<ConditionBlock>();
@@ -25,7 +25,7 @@ namespace SignalsLink.src.signals.paperConditions
                     if (line.Length == 0) continue;
                     if (line.StartsWith("#") || line.StartsWith("//")) continue;
 
-                    lines.Add(ParseLine(line));
+                    lines.Add(ParseLine(line, errors));
                 }
 
                 if (lines.Count > 0)
@@ -35,7 +35,14 @@ namespace SignalsLink.src.signals.paperConditions
             return new CompiledConditions(blocks);
         }
 
-        private static ICondition ParseLine(string line)
+        private static readonly Regex validNameRegex = new Regex("^[A-Za-z0-9_]+$", RegexOptions.Compiled);
+
+        private static bool IsValidName(string name)
+        {
+            return validNameRegex.IsMatch(name);
+        }
+
+        private static ICondition ParseLine(string line, List<string> errors)
         {
             // Regex pattern
             if (line.StartsWith("@"))
@@ -49,14 +56,39 @@ namespace SignalsLink.src.signals.paperConditions
                 return new CodeGlobCondition(line);
             }
 
-            // Comparison: temperature>1100
+            // Comparison: temperature>1100, isBaked=true, isBaked=false
             var m = Regex.Match(line, "^(\\w+)([><=]+)(.+)$");
             if (m.Success)
             {
-                return new AttributeComparisonCondition(m.Groups[1].Value, m.Groups[2].Value, m.Groups[3].Value);
+                string name = m.Groups[1].Value;
+                if (!IsValidName(name))
+                {
+                    errors?.Add(line);
+                    return FalseCondition.Instance;
+                }
+
+                return new AttributeComparisonCondition(
+                    name,
+                    m.Groups[2].Value,
+                    m.Groups[3].Value.Trim()
+                );
             }
 
-            // Boolean attribute: isBaked
+            // NOT prefix: !something
+            if (line.StartsWith("!"))
+            {
+                var inner = ParseLine(line.Substring(1).TrimStart(), errors);
+                return new NotCondition(inner);
+            }
+
+            // Boolean / truthy attribute: isBaked, temperature, atd.
+            // tady je řádek bez operátoru -> jméno musí být validní
+            if (!IsValidName(line))
+            {
+                errors?.Add(line);
+                return FalseCondition.Instance;
+            }
+
             return new AttributeExistsCondition(line);
         }
     }
@@ -83,12 +115,28 @@ namespace SignalsLink.src.signals.paperConditions
             this.blocks = blocks;
         }
 
+        // Původní signatura – pro starší volání
         public bool Evaluate(ItemStack stack, IDictionary<string, object> ctx)
         {
-            foreach (var block in blocks)
+            byte _;
+            return Evaluate(stack, ctx, out _);
+        }
+
+        // Nová verze s indexem prvního splněného bloku (1-based), 0 = žádný
+        public bool Evaluate(ItemStack stack, IDictionary<string, object> ctx, out byte matchedBlockIndex)
+        {
+            matchedBlockIndex = 0;
+
+            for (int i = 0; i < blocks.Count; i++)
             {
-                if (block.Evaluate(stack, ctx)) return true;
+                if (blocks[i].Evaluate(stack, ctx))
+                {
+                    // 1-based index (1..N), aby šel přímo mapovat na signál 1..15
+                    matchedBlockIndex = (byte)(i + 1);
+                    return true;
+                }
             }
+
             return false;
         }
     }
@@ -154,7 +202,51 @@ namespace SignalsLink.src.signals.paperConditions
 
         public bool Evaluate(ItemStack stack, IDictionary<string, object> ctx)
         {
-            return stack.Attributes?.HasAttribute(attr) == true;
+            // 1) Nejprve stack.Attributes
+            if (stack.Attributes != null && stack.Attributes.HasAttribute(attr))
+            {
+                var a = stack.Attributes[attr];
+
+                switch (a)
+                {
+                    case IntAttribute ia:
+                        return ia.value != 0;
+                    case LongAttribute la:
+                        return la.value != 0L;
+                    case FloatAttribute fa:
+                        return Math.Abs(fa.value) > float.Epsilon;
+                    case DoubleAttribute da:
+                        return Math.Abs(da.value) > double.Epsilon;
+                    case StringAttribute sa:
+                        return !string.IsNullOrEmpty(sa.value);
+                    case BoolAttribute ba:
+                        return ba.value;
+                    default:
+                        // Neznámý typ, ale existuje → považuj za true
+                        return true;
+                }
+            }
+
+            // 2) Fallback na ctx (virtuální hodnoty)
+            if (ctx != null && ctx.TryGetValue(attr, out var obj))
+            {
+                if (obj == null) return false;
+
+                switch (obj)
+                {
+                    case int i: return i != 0;
+                    case long l: return l != 0L;
+                    case float f: return Math.Abs(f) > float.Epsilon;
+                    case double d: return Math.Abs(d) > double.Epsilon;
+                    case bool b: return b;
+                    case string s: return !string.IsNullOrEmpty(s);
+                    default:
+                        return true;
+                }
+            }
+
+            // 3) Atribut vůbec neexistuje → false
+            return false;
         }
     }
 
@@ -168,7 +260,22 @@ namespace SignalsLink.src.signals.paperConditions
         {
             this.attr = attr;
             this.op = op;
-            this.value = double.Parse(value);
+
+            // Podpora textových booleanů a čísel
+            var trimmed = value.Trim();
+
+            if (trimmed.Equals("true", StringComparison.OrdinalIgnoreCase))
+            {
+                this.value = 1.0;
+            }
+            else if (trimmed.Equals("false", StringComparison.OrdinalIgnoreCase))
+            {
+                this.value = 0.0;
+            }
+            else
+            {
+                this.value = double.Parse(trimmed);
+            }
         }
 
         public bool Evaluate(ItemStack stack, IDictionary<string, object> ctx)
@@ -176,17 +283,8 @@ namespace SignalsLink.src.signals.paperConditions
             double v;
 
             // 1) Zkusit stack.Attributes
-            if (stack.Attributes != null && stack.Attributes.HasAttribute(attr))
-            {
-                var a = stack.Attributes[attr];
-
-                if (a is FloatAttribute fa) v = fa.value;
-                else if (a is DoubleAttribute da) v = da.value;
-                else if (a is IntAttribute ia) v = ia.value;
-                else return false;
-            }
-            // 2) Fallback na ctx (virtuální hodnoty typu temperature, atd.)
-            else if (ctx != null && ctx.TryGetValue(attr, out var obj) && obj is IConvertible)
+            // 2) Fallback na ctx (virtuální hodnoty typu temperature, durability, atd.)
+            if (ctx != null && ctx.TryGetValue(attr, out var obj) && obj is IConvertible)
             {
                 try
                 {
@@ -197,6 +295,17 @@ namespace SignalsLink.src.signals.paperConditions
                     return false;
                 }
             }
+            else if (stack.Attributes != null && stack.Attributes.HasAttribute(attr))
+            {
+                var a = stack.Attributes[attr];
+
+                if (a is FloatAttribute fa) v = fa.value;
+                else if (a is DoubleAttribute da) v = da.value;
+                else if (a is IntAttribute ia) v = ia.value;
+                else if (a is BoolAttribute ba) v = ba.value ? 1.0 : 0.0; // bool -> 0/1
+                else return false;
+            }
+
             else
             {
                 return false;
@@ -211,6 +320,33 @@ namespace SignalsLink.src.signals.paperConditions
                 "=" or "==" => Math.Abs(v - value) < 0.0001,
                 _ => false
             };
+        }
+    }
+
+    public class NotCondition : ICondition
+    {
+        private readonly ICondition inner;
+
+        public NotCondition(ICondition inner)
+        {
+            this.inner = inner;
+        }
+
+        public bool Evaluate(ItemStack stack, IDictionary<string, object> ctx)
+        {
+            return !inner.Evaluate(stack, ctx);
+        }
+    }
+
+    public class FalseCondition : ICondition
+    {
+        public static readonly FalseCondition Instance = new FalseCondition();
+
+        private FalseCondition() { }
+
+        public bool Evaluate(ItemStack stack, IDictionary<string, object> ctx)
+        {
+            return false;
         }
     }
 }

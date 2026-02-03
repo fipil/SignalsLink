@@ -10,14 +10,12 @@ namespace SignalsLink.src.signals.managedchute.transporting
     // Přenos: inventář -> svět (spawn item entity).
     public class InventoryToWorldTransfer : InventorySourcedTransferBase, IItemTransfer
     {
-        private readonly ICoreAPI api;
         private readonly BlockPos targetPos;
         private readonly byte mode; // targetInv signal
 
-        public InventoryToWorldTransfer(ICoreAPI api, IInventory sourceInv, byte inputSlotSignal, BlockPos targetPos, byte mode)
-            : base(sourceInv, inputSlotSignal)
+        public InventoryToWorldTransfer(ICoreAPI api, IInventory sourceInv, byte inputSlotSignal, BlockPos targetPos, byte mode, PaperConditionsEvaluator conditionsEvaluator)
+            : base(api, sourceInv, inputSlotSignal, conditionsEvaluator)
         {
-            this.api = api;
             this.targetPos = targetPos;
             this.mode = mode;
         }

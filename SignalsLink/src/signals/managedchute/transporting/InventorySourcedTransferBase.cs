@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SignalsLink.src.signals.paperConditions;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -10,13 +11,18 @@ namespace SignalsLink.src.signals.managedchute.transporting
 {
     public class InventorySourcedTransferBase
     {
+        protected readonly ICoreAPI api;
+
         protected readonly IInventory sourceInv;
         protected readonly byte inputSlotSignal;
+        protected readonly PaperConditionsEvaluator conditionsEvaluator;
 
-        public InventorySourcedTransferBase(IInventory sourceInv, byte inputSlotSignal)
+        public InventorySourcedTransferBase(ICoreAPI api, IInventory sourceInv, byte inputSlotSignal, PaperConditionsEvaluator conditionsEvaluator)
         {
+            this.api = api;
             this.sourceInv = sourceInv;
             this.inputSlotSignal = inputSlotSignal;
+            this.conditionsEvaluator = conditionsEvaluator;
         }
 
         protected ItemSlot GetSourceSlot()
@@ -28,7 +34,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
                 if (index >= 0 && index < sourceInv.Count)
                 {
                     ItemSlot slot = sourceInv[index];
-                    if (slot != null && !slot.Empty && !IsLiquidContainer(slot.Itemstack))
+                    if (slot != null && !slot.Empty && IsConditionMet(slot.Itemstack) && !IsLiquidContainer(slot.Itemstack))
                     {
                         return slot;
                     }
@@ -41,14 +47,14 @@ namespace SignalsLink.src.signals.managedchute.transporting
             {
                 if (sourceInv.Count == 0) return null;
                 var slot = sourceInv[sourceInv.Count - 1];
-                return IsLiquidContainer(slot.Itemstack) ? null : slot;
+                return IsLiquidContainer(slot.Itemstack) || !IsConditionMet(slot.Itemstack) ? null : slot;
             }
 
             // 1) 0 -> „vysávej všechny sloty“ = první NEprázdný, který není liquid container
             for (int i = 0; i < sourceInv.Count; i++)
             {
                 ItemSlot slot = sourceInv[i];
-                if (slot != null && !slot.Empty && !IsLiquidContainer(slot.Itemstack))
+                if (slot != null && !slot.Empty && IsConditionMet(slot.Itemstack) && !IsLiquidContainer(slot.Itemstack))
                 {
                     return slot;
                 }
@@ -71,6 +77,16 @@ namespace SignalsLink.src.signals.managedchute.transporting
             if (stack.Collectible.GetType().Name == "ItemLiquidPortion") return true;
 
             return false;
+        }
+
+        protected bool IsConditionMet(ItemStack stack)
+        {
+            if (conditionsEvaluator.HasConditions)
+            {
+                var ctx = ItemConditionContextUtil.BuildContext(api.World, stack);
+                return conditionsEvaluator.Evaluate(stack, ctx, out byte blockIndex);
+            }
+            return true;
         }
     }
 }

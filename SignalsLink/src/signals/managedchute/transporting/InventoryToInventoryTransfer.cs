@@ -6,14 +6,12 @@ namespace SignalsLink.src.signals.managedchute.transporting
     // Respektuje 1-based InputSlot/OutputSlot signály (0 = default chování).
     public class InventoryToInventoryTransfer : InventorySourcedTransferBase, IItemTransfer
     {
-        private readonly ICoreAPI api;
         private readonly IInventory targetInv;
         private readonly byte outputSlotSignal;
 
-
-        public InventoryToInventoryTransfer(ICoreAPI api, IInventory sourceInv, IInventory targetInv, byte inputSlotSignal, byte outputSlotSignal): base(sourceInv, inputSlotSignal)
+        public InventoryToInventoryTransfer(ICoreAPI api, IInventory sourceInv, IInventory targetInv, byte inputSlotSignal, byte outputSlotSignal, PaperConditionsEvaluator conditionsEvaluator) 
+            : base(api, sourceInv, inputSlotSignal, conditionsEvaluator)
         {
-            this.api = api;
             this.targetInv = targetInv;
             this.outputSlotSignal = outputSlotSignal;
         }

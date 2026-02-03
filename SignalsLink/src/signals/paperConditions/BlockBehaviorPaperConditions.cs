@@ -89,12 +89,16 @@ namespace SignalsLink.src.signals.paperConditions
             var be = world.BlockAccessor.GetBlockEntity(pos) as IPaperConditionsHost;
             if (be?.ConditionsText == null) return "";
 
-            dsc.AppendLine("Conditions:");
             foreach (var line in be.ConditionsText.Split('\n'))
             {
                 dsc.AppendLine("  " + line);
             }
-            return dsc.ToString();
+            if(dsc.Length > 0)
+            {
+                dsc.Insert(0, "Conditions:\n");
+                return dsc.ToString();
+            }
+            return null;
         }
 
         private bool IsPaper(ItemStack stack)

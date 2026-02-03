@@ -7,7 +7,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
     public static class ItemTransferFactory
     {
         // Zjednodušené API: vytvoø pøenos podle toho, co je na input/output pozici.
-        public static IItemTransfer CreateTransfer(ICoreAPI api, BlockPos inputPos, BlockPos outputPos, byte inputSlotSignal, byte outputSlotSignal)
+        public static IItemTransfer CreateTransfer(ICoreAPI api, BlockPos inputPos, BlockPos outputPos, byte inputSlotSignal, byte outputSlotSignal, PaperConditionsEvaluator conditionsEvaluator)
         {
             var beIn = api.World.BlockAccessor.GetBlockEntity(inputPos) as BlockEntityContainer;
             var beOut = api.World.BlockAccessor.GetBlockEntity(outputPos) as BlockEntityContainer;
@@ -15,7 +15,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
             if (beIn?.Inventory != null && beOut?.Inventory != null)
             {
                 // inventáø -> inventáø
-                return new InventoryToInventoryTransfer(api, beIn.Inventory, beOut.Inventory, inputSlotSignal, outputSlotSignal);
+                return new InventoryToInventoryTransfer(api, beIn.Inventory, beOut.Inventory, inputSlotSignal, outputSlotSignal, conditionsEvaluator);
             }
 
             if (beIn?.Inventory != null && beOut == null)
@@ -28,7 +28,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
 
                 if (canUseWorldTransfer)
                 {
-                    return new InventoryToWorldTransfer(api, beIn.Inventory, inputSlotSignal, outputPos, outputSlotSignal);
+                    return new InventoryToWorldTransfer(api, beIn.Inventory, inputSlotSignal, outputPos, outputSlotSignal, conditionsEvaluator);
                 }
 
                 return null;
