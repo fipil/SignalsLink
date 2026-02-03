@@ -9,8 +9,18 @@ namespace SignalsLink.src.signals.managedchute.transporting
         // Zjednodušené API: vytvoø pøenos podle toho, co je na input/output pozici.
         public static IItemTransfer CreateTransfer(ICoreAPI api, BlockPos inputPos, BlockPos outputPos, byte inputSlotSignal, byte outputSlotSignal, PaperConditionsEvaluator conditionsEvaluator)
         {
-            var beIn = api.World.BlockAccessor.GetBlockEntity(inputPos) as BlockEntityContainer;
-            var beOut = api.World.BlockAccessor.GetBlockEntity(outputPos) as BlockEntityContainer;
+            var blockAccess = api.World.BlockAccessor;
+
+            var beIn = blockAccess.GetBlockEntity(inputPos) as BlockEntityContainer;
+
+            // Special case: output points to an anvil -> use InventoryToAnvilTransfer
+            var beAnvil = blockAccess.GetBlockEntity(outputPos) as BlockEntityAnvil;
+            if (beIn?.Inventory != null && beAnvil != null)
+            {
+                return new InventoryToAnvilTransfer(api, beIn.Inventory, beAnvil, inputSlotSignal, conditionsEvaluator);
+            }
+
+            var beOut = blockAccess.GetBlockEntity(outputPos) as BlockEntityContainer;
 
             if (beIn?.Inventory != null && beOut?.Inventory != null)
             {
@@ -18,13 +28,13 @@ namespace SignalsLink.src.signals.managedchute.transporting
                 return new InventoryToInventoryTransfer(api, beIn.Inventory, beOut.Inventory, inputSlotSignal, outputSlotSignal, conditionsEvaluator);
             }
 
-            if (beIn?.Inventory != null && beOut == null)
+            if (beIn?.Inventory != null && beOut == null && beAnvil == null)
             {
                 // inventáø -> svìt
-                Block blockAtTarget = api.World.BlockAccessor.GetBlock(outputPos);
+                Block blockAtTarget = blockAccess.GetBlock(outputPos);
                 bool canUseWorldTransfer =
                     blockAtTarget.Replaceable >= 6000 ||
-                    api.World.BlockAccessor.GetBlockEntity<BlockEntityItemPile>(outputPos) != null;
+                    blockAccess.GetBlockEntity<BlockEntityItemPile>(outputPos) != null;
 
                 if (canUseWorldTransfer)
                 {

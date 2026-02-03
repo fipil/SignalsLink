@@ -89,11 +89,16 @@ namespace SignalsLink.src.signals.paperConditions
             var be = world.BlockAccessor.GetBlockEntity(pos) as IPaperConditionsHost;
             if (be?.ConditionsText == null) return "";
 
-            foreach (var line in be.ConditionsText.Split('\n'))
+            // Escape < and > for VS rich text so they don't look like tags
+            var escaped = be.ConditionsText
+                .Replace("<", "&lt;")
+                .Replace(">", "&gt;");
+
+            foreach (var line in escaped.Split('\n'))
             {
                 dsc.AppendLine("  " + line);
             }
-            if(dsc.Length > 0)
+            if (dsc.Length > 0)
             {
                 dsc.Insert(0, "Conditions:\n");
                 return dsc.ToString();
