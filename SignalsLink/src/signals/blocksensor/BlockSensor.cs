@@ -1,4 +1,6 @@
-﻿using signals.src.transmission;
+﻿using signals.src.hangingwires;
+using signals.src.signalNetwork;
+using signals.src.transmission;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,18 +15,38 @@ namespace SignalsLink.src.signals.blocksensor
     {
         public override bool OnBlockInteractStart(IWorldAccessor world, IPlayer byPlayer, BlockSelection blockSel)
         {
-            if (!base.OnBlockInteractStart(world, byPlayer, blockSel)) return false;
+            // Workaround of the Signal's BlockConnection bug
 
+            // 1. Wires work
+            PlacingWiresMod modSystem = api.ModLoader.GetModSystem<PlacingWiresMod>();
+            if (modSystem != null)
+            {
+                NodePos nodePosForWire = GetNodePosForWire(world, blockSel, modSystem.GetPendingNode());
+                if (nodePosForWire != null && CanAttachWire(world, nodePosForWire, modSystem.GetPendingNode()))
+                {
+                    modSystem.ConnectWire(nodePosForWire, byPlayer, this);
+                    return false;
+                }
+            }
+
+            // 2. BlockBehaviors interactions
+            foreach (var behavior in BlockBehaviors)
+            {
+                EnumHandling handling = EnumHandling.PassThrough;
+                bool result = behavior.OnBlockInteractStart(world, byPlayer, blockSel, ref handling);
+
+                if (handling == EnumHandling.PreventDefault)
+                    return result;
+            }
+
+            // 3. BlockSensor specific interaction: change scanning direction
             BEBlockSensor be = world.BlockAccessor.GetBlockEntity(blockSel.Position) as BEBlockSensor;
-
             if (be != null)
             {
-                string[] scanningModes = new string[] { "fwddown", "fwd", "fwdup", "fwdrightup", "fwdright", "fwdrightdown" };
+                string[] scanningModes = { "fwddown", "fwd", "fwdup", "fwdrightup", "fwdright", "fwdrightdown" };
                 int currentIndex = Array.IndexOf(scanningModes, be.ScanningDirection);
                 int nextIndex = (currentIndex + 1) % scanningModes.Length;
-
                 be.SetScanningDirection(scanningModes[nextIndex]);
-
                 return true;
             }
 
