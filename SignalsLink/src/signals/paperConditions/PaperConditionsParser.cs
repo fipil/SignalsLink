@@ -19,17 +19,35 @@ namespace SignalsLink.src.signals.paperConditions
             foreach (var p in paragraphs)
             {
                 var lines = new List<ICondition>();
+                byte? outputValue = null;
                 foreach (var rawLine in p.Split('\n'))
                 {
                     var line = rawLine.Trim();
                     if (line.Length == 0) continue;
                     if (line.StartsWith("#") || line.StartsWith("//")) continue;
 
+                    // Special directive: output N  (N = 1..14)
+                    if (line.StartsWith("output ", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var parts = line.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                        if (parts.Length == 2 && byte.TryParse(parts[1], out byte val) && val >= 1 && val <= 14)
+                        {
+                            outputValue = val;
+                            continue;
+                        }
+
+                        errors?.Add(line);
+                        continue;
+                    }
+
                     lines.Add(ParseLine(line, errors));
                 }
 
                 if (lines.Count > 0)
-                    blocks.Add(new ConditionBlock(lines));
+                {
+                    // Default output value when none specified: 15
+                    blocks.Add(new ConditionBlock(lines, outputValue ?? 15));
+                }
             }
 
             return new CompiledConditions(blocks);
@@ -131,8 +149,8 @@ namespace SignalsLink.src.signals.paperConditions
             {
                 if (blocks[i].Evaluate(stack, ctx))
                 {
-                    // 1-based index (1..N), aby šel přímo mapovat na signál 1..15
-                    matchedBlockIndex = (byte)(i + 1);
+                    // Use block's configured output value (1..14) or default (15)
+                    matchedBlockIndex = blocks[i].OutputValue;
                     return true;
                 }
             }
@@ -145,9 +163,12 @@ namespace SignalsLink.src.signals.paperConditions
     {
         private readonly List<ICondition> conditions;
 
-        public ConditionBlock(List<ICondition> conditions)
+        public byte OutputValue { get; }
+
+        public ConditionBlock(List<ICondition> conditions, byte outputValue)
         {
             this.conditions = conditions;
+            OutputValue = outputValue;
         }
 
         public bool Evaluate(ItemStack stack, IDictionary<string, object> ctx)

@@ -70,7 +70,7 @@ namespace SignalsLink.src.signals.entitysensor
         {
             if (scannerFactory == null)
             {
-                scannerFactory = new SensorScannerFactory();
+                scannerFactory = new SensorScannerFactory(new PaperConditionsEvaluator());
             }
         }
 

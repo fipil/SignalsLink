@@ -3,6 +3,7 @@ using signals.src;
 using signals.src.signalNetwork;
 using signals.src.transmission;
 using SignalsLink.src.signals.blocksensor.scanners;
+using SignalsLink.src.signals.paperConditions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,7 +16,7 @@ using Vintagestory.API.MathTools;
 
 namespace SignalsLink.src.signals.blocksensor
 {
-    class BEBlockSensor : BlockEntity, IBESignalReceptor
+    class BEBlockSensor : BlockEntity, IBESignalReceptor, IPaperConditionsHost
     {
         public byte state;
         public byte outputState = 0;
@@ -32,11 +33,36 @@ namespace SignalsLink.src.signals.blocksensor
         BlockPos scannedPosition;
         IBlockSensorScanner activeScanner;
 
+        private string conditionsText = null;
+        private PaperConditionsEvaluator conditionsEvaluator = new PaperConditionsEvaluator();
+
+        public string ConditionsText
+        {
+            get
+            {
+                return conditionsText;
+            }
+            set
+            {
+                conditionsText = value;
+                ConditionsEvaluator?.SetConditionsText(conditionsText);
+                MarkDirty();
+            }
+        }
+
+        private PaperConditionsEvaluator ConditionsEvaluator
+        {
+            get
+            {
+                return conditionsEvaluator;
+            }
+        }
+
         public BEBlockSensor()
         {
             if (scannerFactory == null)
             {
-                scannerFactory = new SensorScannerFactory();
+                scannerFactory = new SensorScannerFactory(ConditionsEvaluator);
             }
         }
 
@@ -61,6 +87,8 @@ namespace SignalsLink.src.signals.blocksensor
                 }
             }
 
+            conditionsEvaluator?.SetConditionsText(ConditionsText);
+
             signalMod = api.ModLoader.GetModSystem<SignalNetworkMod>();
             signalMod.RegisterSignalTickListener(OnSignalNetworkTick);
 
@@ -70,6 +98,7 @@ namespace SignalsLink.src.signals.blocksensor
                 RegisterGameTickListener(OnSlowServerTick, 300);
             }
         }
+
 
         private void OnSlowServerTick(float dt)
         {
@@ -165,6 +194,7 @@ namespace SignalsLink.src.signals.blocksensor
             state = tree.GetBytes("state", new byte[1] { 0 })[0];
             ScanningDirection = tree.GetString("scanning", "fwd");
             IsPowered = state!=0;
+            ConditionsText = tree.GetString("conditionsText", null);
         }
 
         public override void ToTreeAttributes(ITreeAttribute tree)
@@ -172,6 +202,7 @@ namespace SignalsLink.src.signals.blocksensor
             base.ToTreeAttributes(tree);
             tree.SetBytes("state", new byte[1] { state });
             tree.SetString("scanning", ScanningDirection);
+            tree.SetString("conditionsText", ConditionsText);
         }
 
         public void SetPowered(bool powered)

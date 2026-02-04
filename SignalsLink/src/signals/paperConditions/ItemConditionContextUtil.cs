@@ -13,6 +13,8 @@ namespace SignalsLink.src.signals.paperConditions
 
             if (stack?.Collectible == null) return ctx;
 
+            ctx["stackSize"] = stack.StackSize;
+
             // Virtuální teplota
             try
             {

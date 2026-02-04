@@ -1,4 +1,6 @@
-﻿using System;
+﻿using SignalsLink.src.signals.paperConditions;
+using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,8 +10,12 @@ using Vintagestory.API.MathTools;
 
 namespace SignalsLink.src.signals.blocksensor.scanners
 {
-    public class SlotScanner : IBlockSensorScanner
+    public class SlotScanner : ConditionalScanner, IBlockSensorScanner
     {
+        public SlotScanner(PaperConditionsEvaluator conditionsEvaluator) : base(conditionsEvaluator)
+        {
+        }
+
         public virtual bool CanScan(Block block, BlockEntity blockEntity, byte inputSignal)
         {
             if (blockEntity == null)
@@ -22,10 +28,10 @@ namespace SignalsLink.src.signals.blocksensor.scanners
         {
             IInventory inventory = GetInventory(blockEntity);
 
-            return CalculateSlotSignal(inventory, inputSignal);
+            return CalculateSlotSignal(world, inventory, inputSignal);
         }
 
-        protected byte CalculateSlotSignal(IInventory inventory, byte inputSignal)
+        protected byte CalculateSlotSignal(IWorldAccessor world, IInventory inventory, byte inputSignal)
         {
             int slotIndex = inputSignal - 1; // 1 -> slot 0, 2 -> slot 1, etc.
 
@@ -40,6 +46,13 @@ namespace SignalsLink.src.signals.blocksensor.scanners
             // Return the slot fill level as a signal 0-15
             float fillRatio = (float)slot.StackSize / slot.Itemstack.Collectible.MaxStackSize;
             var result = (byte)Math.Ceiling(fillRatio * 15);
+
+            if(conditionsEvaluator.HasConditions)
+            {
+                var ctx = ItemConditionContextUtil.BuildContext(world, slot.Itemstack);
+                conditionsEvaluator.Evaluate(slot.Itemstack, ctx, out byte matchedBlockIndex);
+                return matchedBlockIndex;
+            }
 
             if (result == 0 && !slot.Empty)
                 result = 1;

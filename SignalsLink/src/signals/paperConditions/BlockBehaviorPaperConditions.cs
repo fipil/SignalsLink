@@ -28,6 +28,15 @@ namespace SignalsLink.src.signals.paperConditions
 
         public override bool OnBlockInteractStart(IWorldAccessor world, IPlayer byPlayer, BlockSelection blockSel, ref EnumHandling handling)
         {
+            // Let base / other behaviors do their thing first
+            base.OnBlockInteractStart(world, byPlayer, blockSel, ref handling);
+
+            // If already handled/prevented, don't do anything here
+            if (handling != EnumHandling.PassThrough)
+            {
+                return false;
+            }
+
             var be = world.BlockAccessor.GetBlockEntity(blockSel.Position) as IPaperConditionsHost;
             if (be == null) return false;
 
@@ -38,7 +47,7 @@ namespace SignalsLink.src.signals.paperConditions
             bool sneaking = byPlayer.Entity.Controls.ShiftKey;
             bool control = byPlayer.Entity.Controls.CtrlKey;
 
-            // 1) Interakce s papírem
+            // 1) Paper interaction
             if (IsPaper(stack))
             {
                 string paperText = PaperTextUtil.GetPaperText(stack);
@@ -48,6 +57,7 @@ namespace SignalsLink.src.signals.paperConditions
                 {
                     be.ConditionsText = null;
                     slot.MarkDirty();
+                    handling = EnumHandling.PreventDefault;
                     return true;
                 }
 
@@ -56,6 +66,7 @@ namespace SignalsLink.src.signals.paperConditions
                 {
                     be.ConditionsText = paperText;
                     slot.MarkDirty();
+                    handling = EnumHandling.PreventDefault;
                     return true;
                 }
 
@@ -64,19 +75,21 @@ namespace SignalsLink.src.signals.paperConditions
                 {
                     PaperTextUtil.SetPaperText(stack, be.ConditionsText!);
                     slot.MarkDirty();
+                    handling = EnumHandling.PreventDefault;
                     return true;
                 }
 
                 return false;
             }
 
-            // 2) Interakce s jiným itemem / blokem: Ctrl = export atributů do ConditionsText
+            // 2) Other item + Ctrl = export attributes into ConditionsText
             if (control)
             {
                 string text = ItemConditionContextUtil.BuildHintText(world, stack);
                 if (string.IsNullOrWhiteSpace(text)) return false;
 
                 be.ConditionsText = text;
+                handling = EnumHandling.PreventDefault;
                 return true;
             }
 

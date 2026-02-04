@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using SignalsLink.src.signals.paperConditions;
 using Vintagestory.API.Common;
+using Vintagestory.API.MathTools;
 
 public class PaperConditionsEvaluator
 {
@@ -54,7 +55,7 @@ public class PaperConditionsEvaluator
     }
 
     /// <summary>
-    /// Vyhodnotí aktuální conditionsText a vrátí i index prvního splnìného bloku (1..N, 0 = žádný).
+    /// Vyhodnotí aktuální conditionsText a vrátí i index/blokový výstup (viz parser).
     /// </summary>
     public bool Evaluate(ItemStack stack, IDictionary<string, object> ctx, out byte matchedBlockIndex)
     {
@@ -77,6 +78,50 @@ public class PaperConditionsEvaluator
         if (compiled == null) return false;
 
         return compiled.Evaluate(stack, ctx, out matchedBlockIndex);
+    }
+
+    /// <summary>
+    /// Vyhodnotí aktuální conditionsText pro blok na dané pozici.
+    /// Vytvoøí syntetický ItemStack z bloku, aby bylo možné používat code/glob/regex
+    /// podmínky i pro bloky. Další stav bloku mùže být pøedán pøes ctx.
+    /// </summary>
+    public bool Evaluate(ICoreAPI api, BlockPos pos)
+    {
+        byte _;
+        return Evaluate(api, pos, out _);
+    }
+
+    /// <summary>
+    /// Vyhodnotí aktuální conditionsText pro blok na dané pozici a vrátí i výstup.
+    /// Do ctx doplní základní aliasy pro block code.
+    /// </summary>
+    public bool Evaluate(ICoreAPI api, BlockPos pos, out byte matchedBlockIndex)
+    {
+        matchedBlockIndex = 0;
+
+        if (api == null || pos == null)
+        {
+            return false;
+        }
+
+        var block = api.World.BlockAccessor.GetBlock(pos);
+        if (block == null)
+        {
+            return false;
+        }
+
+        // Syntetický stack jen kvùli CodeGlob/CodeRegex podmínkám
+        var dummyStack = new ItemStack(block);
+
+        var ctx = ItemConditionContextUtil.BuildContext(api.World, dummyStack);
+
+        // Pokud volající nepøipravil vlastní ctx, použij prázdný slovník
+        if (ctx == null)
+        {
+            ctx = new Dictionary<string, object>();
+        }
+
+        return Evaluate(dummyStack, ctx, out matchedBlockIndex);
     }
 
     private void ParseInternal(string text)

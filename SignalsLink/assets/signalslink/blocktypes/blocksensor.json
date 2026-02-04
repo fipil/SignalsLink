@@ -83,7 +83,8 @@
   "behaviors": [
     {
       "name": "BlockBehaviorCoverWithDirection"
-    }
+    },
+		{ "name": "BlockBehaviorPaperConditions" }
   ],
   "variantgroups": [
     {

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SignalsLink.src.signals.paperConditions;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,8 +9,12 @@ using Vintagestory.API.MathTools;
 
 namespace SignalsLink.src.signals.blocksensor.scanners
 {
-    public class DefaultScanner : IBlockSensorScanner
+    public class DefaultScanner : ConditionalScanner, IBlockSensorScanner
     {
+        public DefaultScanner(PaperConditionsEvaluator conditionsEvaluator) : base(conditionsEvaluator)
+        {
+        }
+
         public bool CanScan(Block block, BlockEntity blockEntity, byte inputSignal)
         {
             return true; // Fallback pro všechno
@@ -17,6 +22,12 @@ namespace SignalsLink.src.signals.blocksensor.scanners
 
         public byte CalculateSignal(IWorldAccessor world, BlockPos position, Block block, BlockEntity blockEntity, byte inputSignal)
         {
+            if(conditionsEvaluator.HasConditions)
+            {
+                conditionsEvaluator.Evaluate(world.Api, position, out byte matchedBlockIndex);
+                return matchedBlockIndex;
+            }
+
             // 0 = vzduch
             if (block == null || block.Id == 0)
                 return 0;

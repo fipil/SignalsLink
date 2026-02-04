@@ -10,6 +10,11 @@ namespace SignalsLink.src.signals.blocksensor.scanners
 {
     public class InventoryScanner : SlotScanner
     {
+        public InventoryScanner(PaperConditionsEvaluator conditionsEvaluator) : base(conditionsEvaluator)
+        {
+            
+        }
+
         public override byte CalculateSignal(IWorldAccessor world, BlockPos position, Block block, BlockEntity blockEntity, byte inputSignal)
         {
             IInventory inventory = GetInventory(blockEntity);
@@ -20,7 +25,7 @@ namespace SignalsLink.src.signals.blocksensor.scanners
             }
             else
             {
-                return CalculateSlotSignal(inventory, inputSignal);
+                return CalculateSlotSignal(world, inventory, inputSignal);
             }
         }
 

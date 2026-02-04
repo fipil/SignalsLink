@@ -12,15 +12,15 @@ namespace SignalsLink.src.signals.blocksensor.scanners
         private readonly List<IBlockSensorScanner> scanners;
         private readonly IBlockSensorScanner defaultScanner;
 
-        public SensorScannerFactory()
+        public SensorScannerFactory(PaperConditionsEvaluator conditionsEvaluator)
         {
             scanners = new List<IBlockSensorScanner>();
-            defaultScanner = new DefaultScanner();
+            defaultScanner = new DefaultScanner(conditionsEvaluator);
 
             // Register scanners in order of priority (specific ones first)
             RegisterScanner(new AnvilScanner());
             RegisterScanner(new DoorScanner());
-            RegisterScanner(new InventoryScanner());
+            RegisterScanner(new InventoryScanner(conditionsEvaluator));
         }
 
         public void RegisterScanner(IBlockSensorScanner scanner)
@@ -30,6 +30,9 @@ namespace SignalsLink.src.signals.blocksensor.scanners
 
         public IBlockSensorScanner GetScanner(Block block, BlockEntity blockEntity, byte inputSignal)
         {
+            if(inputSignal==ConditionalScanner.USE_CONDITIONAL_SIGNAL) { // User wants to watch the block, probably conditionally
+                return defaultScanner;
+            }
             // Find the first scanner that can process this block
             foreach (var scanner in scanners)
             {
