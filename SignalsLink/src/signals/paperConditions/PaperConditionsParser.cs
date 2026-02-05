@@ -62,10 +62,26 @@ namespace SignalsLink.src.signals.paperConditions
 
         private static ICondition ParseLine(string line, List<string> errors)
         {
+            // NOT prefix: !something  -> handled first
+            if (line.StartsWith("!"))
+            {
+                var inner = ParseLine(line.Substring(1).TrimStart(), errors);
+                return new NotCondition(inner);
+            }
+
             // Regex pattern
             if (line.StartsWith("@"))
             {
                 return new CodeRegexCondition(new Regex(line.Substring(1), RegexOptions.Compiled));
+            }
+
+            // Exact code pattern: domain:path  (no wildcards)
+            // Treat it as exact code match (equivalent to regex ^domain:path$)
+            if (Regex.IsMatch(line, @"^[A-Za-z0-9_]+:[A-Za-z0-9_\-]+$"))
+            {
+                // Build a regex that matches this code exactly
+                string pattern = "^" + Regex.Escape(line) + "$";
+                return new CodeRegexCondition(new Regex(pattern, RegexOptions.Compiled));
             }
 
             // Glob pattern
@@ -74,7 +90,7 @@ namespace SignalsLink.src.signals.paperConditions
                 return new CodeGlobCondition(line);
             }
 
-            // Comparison: temperature>1100, isBaked=true, isBaked=false
+            // Comparison: temperature>1100, isBaked=true, ...
             var m = Regex.Match(line, "^(\\w+)([><=]+)(.+)$");
             if (m.Success)
             {
@@ -92,15 +108,7 @@ namespace SignalsLink.src.signals.paperConditions
                 );
             }
 
-            // NOT prefix: !something
-            if (line.StartsWith("!"))
-            {
-                var inner = ParseLine(line.Substring(1).TrimStart(), errors);
-                return new NotCondition(inner);
-            }
-
-            // Boolean / truthy attribute: isBaked, temperature, atd.
-            // tady je řádek bez operátoru -> jméno musí být validní
+            // Boolean / truthy attribute: isBaked, temperature, etc.
             if (!IsValidName(line))
             {
                 errors?.Add(line);
