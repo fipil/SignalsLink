@@ -47,7 +47,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
             if (beIn == null && beOut?.Inventory != null)
             {
                 // svìt -> inventáø (WorldToInventoryTransfer)
-                return new WorldToInventoryTransfer(api, inputPos, beOut.Inventory, outputSlotSignal);
+                return new WorldToInventoryTransfer(api, inputPos, beOut.Inventory, outputSlotSignal, conditionsEvaluator);
             }
 
             return null;

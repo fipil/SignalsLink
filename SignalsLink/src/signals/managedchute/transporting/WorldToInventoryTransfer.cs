@@ -1,8 +1,9 @@
+using SignalsLink.src.signals.paperConditions;
 using System;
 using System.Collections.Generic;
 using Vintagestory.API.Common;
-using Vintagestory.API.MathTools;
 using Vintagestory.API.Common.Entities;
+using Vintagestory.API.MathTools;
 using Vintagestory.GameContent; // nahoøe
 
 namespace SignalsLink.src.signals.managedchute.transporting
@@ -14,13 +15,15 @@ namespace SignalsLink.src.signals.managedchute.transporting
         private readonly BlockPos sourcePos;
         private readonly IInventory targetInv;
         private readonly byte targetSlotSignal;
+        protected readonly PaperConditionsEvaluator conditionsEvaluator;
 
-        public WorldToInventoryTransfer(ICoreAPI api, BlockPos sourcePos, IInventory targetInv, byte targetSlotSignal)
+        public WorldToInventoryTransfer(ICoreAPI api, BlockPos sourcePos, IInventory targetInv, byte targetSlotSignal, PaperConditionsEvaluator conditionsEvaluator)
         {
             this.api = api;
             this.sourcePos = sourcePos;
             this.targetInv = targetInv;
             this.targetSlotSignal = targetSlotSignal;
+            this.conditionsEvaluator = conditionsEvaluator;
         }
 
         public int TryMoveOneItem(ItemStackMoveOperation opTemplate)
@@ -72,9 +75,9 @@ namespace SignalsLink.src.signals.managedchute.transporting
             {
                 if (e is EntityItem itemEntity && itemEntity.Itemstack != null && itemEntity.Itemstack.StackSize > 0)
                 {
-                    if (IsLiquidContainer(itemEntity.Itemstack))
+                    if (IsLiquidContainer(itemEntity.Itemstack) || !IsConditionMet(itemEntity.Itemstack))
                     {
-                        return false; // ignoruj tekutinové kontejnery
+                        return false; // ignore liquid containers and items that doesn't meet conditions
                     }
 
                     found = itemEntity;
@@ -143,6 +146,16 @@ namespace SignalsLink.src.signals.managedchute.transporting
             // ItemLiquidPortion is internal, so check by type name string instead
             if (stack.Collectible.GetType().Name == "ItemLiquidPortion") return true;
             return false;
+        }
+
+        protected bool IsConditionMet(ItemStack stack)
+        {
+            if (conditionsEvaluator.HasConditions)
+            {
+                var ctx = ItemConditionContextUtil.BuildContext(api.World, stack);
+                return conditionsEvaluator.Evaluate(stack, ctx, out byte blockIndex);
+            }
+            return true;
         }
     }
 }
