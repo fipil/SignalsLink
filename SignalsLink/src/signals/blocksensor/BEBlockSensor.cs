@@ -29,7 +29,8 @@ namespace SignalsLink.src.signals.blocksensor
 
         SignalNetworkMod signalMod;
 
-        private static SensorScannerFactory scannerFactory;
+        private static SensorScannerFactory scannerFactory = new SensorScannerFactory();
+
         BlockPos scannedPosition;
         IBlockSensorScanner activeScanner;
 
@@ -60,10 +61,6 @@ namespace SignalsLink.src.signals.blocksensor
 
         public BEBlockSensor()
         {
-            if (scannerFactory == null)
-            {
-                scannerFactory = new SensorScannerFactory(ConditionsEvaluator);
-            }
         }
 
         public override void Initialize(ICoreAPI api)
@@ -135,7 +132,7 @@ namespace SignalsLink.src.signals.blocksensor
             }
 
             // Calculate signal
-            return activeScanner.CalculateSignal(Api.World, ScannedPosition, block, blockEntity, inputSignal);
+            return activeScanner.CalculateSignal(Api.World, ConditionsEvaluator, ScannedPosition, block, blockEntity, inputSignal);
         }
 
         BlockPos ScannedPosition {

@@ -11,7 +11,7 @@ namespace SignalsLink.src.signals.blocksensor.scanners
 {
     public class DoorScanner : IBlockSensorScanner
     {
-        public byte CalculateSignal(IWorldAccessor world, BlockPos position, Block block, BlockEntity blockEntity, byte inputSignal)
+        public byte CalculateSignal(IWorldAccessor world, PaperConditionsEvaluator conditionsEvaluator, BlockPos position, Block block, BlockEntity blockEntity, byte inputSignal)
         {
             var behavior = blockEntity?.GetBehavior<BEBehaviorTrapDoor>();
             if (behavior != null)

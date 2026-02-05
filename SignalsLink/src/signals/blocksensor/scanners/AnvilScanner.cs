@@ -11,7 +11,7 @@ namespace SignalsLink.src.signals.blocksensor.scanners
 {
     public class AnvilScanner : IBlockSensorScanner
     {
-        public byte CalculateSignal(IWorldAccessor world, BlockPos position, Block block, BlockEntity blockEntity, byte inputSignal)
+        public byte CalculateSignal(IWorldAccessor world, PaperConditionsEvaluator conditionsEvaluator, BlockPos position, Block block, BlockEntity blockEntity, byte inputSignal)
         {
             return (blockEntity as BlockEntityAnvil)?.CanWorkCurrent ?? false ? (byte)1 : (byte)0;
         }

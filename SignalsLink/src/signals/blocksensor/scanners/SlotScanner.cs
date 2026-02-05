@@ -10,12 +10,8 @@ using Vintagestory.API.MathTools;
 
 namespace SignalsLink.src.signals.blocksensor.scanners
 {
-    public class SlotScanner : ConditionalScanner, IBlockSensorScanner
+    public class SlotScanner : IBlockSensorScanner
     {
-        public SlotScanner(PaperConditionsEvaluator conditionsEvaluator) : base(conditionsEvaluator)
-        {
-        }
-
         public virtual bool CanScan(Block block, BlockEntity blockEntity, byte inputSignal)
         {
             if (blockEntity == null)
@@ -24,14 +20,14 @@ namespace SignalsLink.src.signals.blocksensor.scanners
             return GetInventory(blockEntity) != null;
         }
 
-        public virtual byte CalculateSignal(IWorldAccessor world, BlockPos position, Block block, BlockEntity blockEntity, byte inputSignal)
+        public virtual byte CalculateSignal(IWorldAccessor world, PaperConditionsEvaluator conditionsEvaluator, BlockPos position, Block block, BlockEntity blockEntity, byte inputSignal)
         {
             IInventory inventory = GetInventory(blockEntity);
 
-            return CalculateSlotSignal(world, inventory, inputSignal);
+            return CalculateSlotSignal(world, conditionsEvaluator, inventory, inputSignal);
         }
 
-        protected byte CalculateSlotSignal(IWorldAccessor world, IInventory inventory, byte inputSignal)
+        protected byte CalculateSlotSignal(IWorldAccessor world, PaperConditionsEvaluator conditionsEvaluator, IInventory inventory, byte inputSignal)
         {
             int slotIndex = inputSignal - 1; // 1 -> slot 0, 2 -> slot 1, etc.
 

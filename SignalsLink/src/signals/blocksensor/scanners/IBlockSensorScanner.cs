@@ -18,7 +18,7 @@ namespace SignalsLink.src.signals.blocksensor.scanners
         /// <summary>
         /// Calculates the output signal (0-15) based on the input and the scanned block
         /// </summary>
-        byte CalculateSignal(IWorldAccessor world, BlockPos position, Block block, BlockEntity blockEntity, byte inputSignal);
+        byte CalculateSignal(IWorldAccessor world, PaperConditionsEvaluator conditionsEvaluator, BlockPos position, Block block, BlockEntity blockEntity, byte inputSignal);
     }
 
 }
