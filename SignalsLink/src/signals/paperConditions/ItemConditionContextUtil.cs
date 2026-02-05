@@ -11,9 +11,9 @@ namespace SignalsLink.src.signals.paperConditions
         {
             var ctx = new Dictionary<string, object>();
 
-            if (stack?.Collectible == null) return ctx;
+            ctx["stackSize"] = stack?.StackSize ?? 0;
 
-            ctx["stackSize"] = stack.StackSize;
+            if (stack?.Collectible == null) return ctx;
 
             // Virtuální teplota
             try

@@ -2,7 +2,9 @@
 using SignalsLink.src.signals.managedchute.transporting;
 using SignalsLink.src.signals.paperConditions;
 using System;
+using System.Text;
 using Vintagestory.API.Common;
+using Vintagestory.API.Config;
 using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Server;
@@ -271,13 +273,37 @@ namespace SignalsLink.src.signals.managedchute
         public override void FromTreeAttributes(ITreeAttribute tree, IWorldAccessor worldForResolving)
         {
             base.FromTreeAttributes(tree, worldForResolving);
+
             ConditionsText = tree.GetString("conditionsText", null);
+
+            // sync transfer state to client
+            unlimited = tree.GetBool("unlimited", false);
+            remaining = tree.GetInt("remaining", 0);
         }
 
         public override void ToTreeAttributes(ITreeAttribute tree)
         {
             base.ToTreeAttributes(tree);
+
             tree.SetString("conditionsText", ConditionsText);
+
+            // sync transfer state to client
+            tree.SetBool("unlimited", unlimited);
+            tree.SetInt("remaining", remaining);
+        }
+
+        public override void GetBlockInfo(IPlayer forPlayer, StringBuilder dsc)
+        {
+            if (unlimited)
+            {
+                dsc.AppendLine(Lang.Get("signalslink:managedchute-info-unlimited"));
+            }
+            else if (remaining > 0)
+            {
+                dsc.AppendLine(Lang.Get("signalslink:managedchute-info-remaining", remaining));
+            }
+
+            base.GetBlockInfo(forPlayer, dsc);
         }
 
     }

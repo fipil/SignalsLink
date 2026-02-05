@@ -36,18 +36,22 @@ namespace SignalsLink.src.signals.blocksensor.scanners
 
             ItemSlot slot = inventory[slotIndex];
 
-            // If the slot is empty, use a temporary empty ItemStack so that condition evaluation
-            // and fill-ratio calculations have a non-null Itemstack to work with.
-            if (slot.Empty)
-            {
-                slot = new DummySlot(new ItemStack(()));
-            }
-
             if (conditionsEvaluator.HasConditions)
             {
-                var ctx = ItemConditionContextUtil.BuildContext(world, slot.Itemstack);
-                conditionsEvaluator.Evaluate(slot.Itemstack, ctx, out byte matchedBlockIndex);
+                // Build context first (so stackSize & other aliases are available)
+                ItemStack stackForEval = slot.Empty ? null : slot.Itemstack;
+                var ctx = ItemConditionContextUtil.BuildContext(world, stackForEval);
+
+                // Use dummy stack when slot is empty so parser doesn't crash on Collectible==null
+                ItemStack evalStack = stackForEval ?? (ItemStack)null;
+
+                conditionsEvaluator.Evaluate(evalStack, ctx, out byte matchedBlockIndex);
                 return matchedBlockIndex;
+            }
+
+            if (slot.Empty)
+            {
+                return 0;
             }
 
             // Return the slot fill level as a signal 0-15

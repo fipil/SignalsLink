@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Vintagestory.API.Common;
+using Vintagestory.API.Config;
 using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
 
@@ -100,7 +101,7 @@ namespace SignalsLink.src.signals.paperConditions
         {
             StringBuilder dsc = new StringBuilder();
             var be = world.BlockAccessor.GetBlockEntity(pos) as IPaperConditionsHost;
-            if (be?.ConditionsText == null) return "";
+            if (string.IsNullOrWhiteSpace(be?.ConditionsText)) return "";
 
             // Escape < and > for VS rich text so they don't look like tags
             var escaped = be.ConditionsText
@@ -113,7 +114,7 @@ namespace SignalsLink.src.signals.paperConditions
             }
             if (dsc.Length > 0)
             {
-                dsc.Insert(0, "Conditions:\n");
+                dsc.Insert(0, $"{Lang.Get("signalslink:managedchute-conditions")}:\n");
                 return dsc.ToString();
             }
             return null;

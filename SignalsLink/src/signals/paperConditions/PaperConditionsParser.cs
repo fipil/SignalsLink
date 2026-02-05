@@ -202,7 +202,9 @@ namespace SignalsLink.src.signals.paperConditions
 
         public bool Evaluate(ItemStack stack, IDictionary<string, object> ctx)
         {
-            return regex.IsMatch(stack.Collectible.Code.ToString());
+            var code = stack?.Collectible?.Code?.ToString();
+            if (string.IsNullOrEmpty(code)) return false;
+            return regex.IsMatch(code);
         }
     }
 
@@ -210,9 +212,12 @@ namespace SignalsLink.src.signals.paperConditions
     {
         private readonly Regex regex;
         public CodeRegexCondition(Regex regex) { this.regex = regex; }
+
         public bool Evaluate(ItemStack stack, IDictionary<string, object> ctx)
         {
-            return regex.IsMatch(stack.Collectible.Code.ToString());
+            var code = stack?.Collectible?.Code?.ToString();
+            if (string.IsNullOrEmpty(code)) return false;
+            return regex.IsMatch(code);
         }
     }
 
@@ -316,7 +321,7 @@ namespace SignalsLink.src.signals.paperConditions
                     return false;
                 }
             }
-            else if (stack.Attributes != null && stack.Attributes.HasAttribute(attr))
+            else if (stack?.Attributes != null && stack.Attributes.HasAttribute(attr))
             {
                 var a = stack.Attributes[attr];
 
