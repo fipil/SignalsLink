@@ -92,6 +92,7 @@ namespace SignalsLink.src.signals.managedchute
             // Šablona pro operaci – 1 kus, direct merge
             ItemStackMoveOperation opTemplate = new ItemStackMoveOperation(Api.World, EnumMouseButton.Left, 0, EnumMergePriority.DirectMerge, 1);
 
+            bool remainingChanged = false;
             int movedTotal = 0;
             while (movedTotal < allowedNow)
             {
@@ -111,9 +112,16 @@ namespace SignalsLink.src.signals.managedchute
                 if (!unlimited)
                 {
                     remaining -= movedNow;
+                    remainingChanged = true;
                     if (remaining <= 0) break;
                 }
             }
+
+            if (remainingChanged)
+            {
+                this.MarkDirty();
+            }
+
         }
 
         public void OnValueChanged(NodePos pos, byte value)
