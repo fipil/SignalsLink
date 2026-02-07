@@ -11,7 +11,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
         {
             var blockAccess = api.World.BlockAccessor;
 
-            var beIn = blockAccess.GetBlockEntity(inputPos) as BlockEntityContainer;
+            var beIn = blockAccess.GetBlockEntity(inputPos) as IBlockEntityContainer;
 
             // Special case: output points to an anvil -> use InventoryToAnvilTransfer
             var beAnvil = blockAccess.GetBlockEntity(outputPos) as BlockEntityAnvil;
@@ -20,7 +20,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
                 return new InventoryToAnvilTransfer(api, beIn.Inventory, beAnvil, inputSlotSignal, conditionsEvaluator);
             }
 
-            var beOut = blockAccess.GetBlockEntity(outputPos) as BlockEntityContainer;
+            var beOut = blockAccess.GetBlockEntity(outputPos) as IBlockEntityContainer;
 
             if (beIn?.Inventory != null && beOut?.Inventory != null)
             {
