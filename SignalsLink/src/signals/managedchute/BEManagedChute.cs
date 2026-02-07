@@ -23,8 +23,6 @@ namespace SignalsLink.src.signals.managedchute
         private byte sourceSlot;
         private byte targetSlot;
 
-        private const int PLACE_SIGNAL = 10;
-
         private const byte SOURCE_SLOT = 2;
         private const byte TARGET_SLOT = 1;
         private const byte UNLIMITED_TRANSFER = 15;
@@ -41,6 +39,8 @@ namespace SignalsLink.src.signals.managedchute
 
         private string conditionsText = null;
         private PaperConditionsEvaluator conditionsEvaluator;
+
+        public int SignalInputsCount => 3;
 
         public string ConditionsText
         {
@@ -302,6 +302,14 @@ namespace SignalsLink.src.signals.managedchute
 
         public override void GetBlockInfo(IPlayer forPlayer, StringBuilder dsc)
         {
+            var sel = forPlayer?.CurrentBlockSelection;
+
+            if(sel?.SelectionBoxIndex<3)
+            {
+                base.GetBlockInfo(forPlayer, dsc);
+                return;
+            }
+
             if (unlimited)
             {
                 dsc.AppendLine(Lang.Get("signalslink:managedchute-info-unlimited"));

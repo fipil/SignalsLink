@@ -32,7 +32,7 @@
 		"signalNodes": [
       {
         "index": 0,
-        "name": "input",
+        "name": "con-input",
         "x1": 0.0625,
         "y1": 0.78125,
         "z1": 0.4375,
@@ -60,7 +60,7 @@
       },
 			{
         "index": 1,
-        "name": "target-slot",
+        "name": "con-target",
         "x1": 0.0625,
         "y1": 0.78125,
         "z1": 0.59375,
@@ -88,7 +88,7 @@
       },
 			{
         "index": 2,
-        "name": "source-slot",
+        "name": "con-source",
         "x1": 0.0625,
         "y1": 0.78125,
         "z1": 0.28125,
@@ -205,7 +205,7 @@
   "drops": [
     {
       "type": "block",
-      "code": "managedwallchute-oak-north-down"
+      "code": "managedwallchute-wood-oak-north-down"
     }
   ],
   "shape": {

@@ -63,7 +63,6 @@ namespace SignalsLink.src.signals.managedchute.transporting
                 // Když se nepodaří, spadne to dál na „throw“
             }
 
-            // Default / fallback: vyhoď item ven jako entitu
             ItemStack taken = src.TakeOut(1);
             if (taken == null || taken.StackSize <= 0) return 0;
 

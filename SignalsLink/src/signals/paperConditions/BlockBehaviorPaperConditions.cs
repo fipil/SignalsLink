@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json.Converters;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -17,6 +18,7 @@ namespace SignalsLink.src.signals.paperConditions
     public interface IPaperConditionsHost
     {
         string ConditionsText { get; set; }
+        int SignalInputsCount { get; }
     }
 
 
@@ -99,9 +101,16 @@ namespace SignalsLink.src.signals.paperConditions
 
         public override string GetPlacedBlockInfo(IWorldAccessor world, BlockPos pos, IPlayer forPlayer)
         {
-            StringBuilder dsc = new StringBuilder();
             var be = world.BlockAccessor.GetBlockEntity(pos) as IPaperConditionsHost;
             if (string.IsNullOrWhiteSpace(be?.ConditionsText)) return "";
+
+            StringBuilder dsc = new StringBuilder();
+
+            var sel = forPlayer?.CurrentBlockSelection;
+            if (sel?.SelectionBoxIndex < be.SignalInputsCount)
+            {
+                return null;
+            }
 
             // Escape < and > for VS rich text so they don't look like tags
             var escaped = be.ConditionsText

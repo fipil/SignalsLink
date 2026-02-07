@@ -32,7 +32,7 @@
 		"signalNodes": [
       {
         "index": 0,
-        "name": "input",
+        "name": "con-input",
         "x1": 0.5625,
         "y1": 0.50625,
         "z1": 0.03125,
@@ -60,7 +60,7 @@
       },
 			{
         "index": 1,
-        "name": "target-slot",
+        "name": "con-target",
         "x1": 0.4375,
         "y1": 0.7875,
         "z1": 0.03125,
@@ -88,7 +88,7 @@
       },
 			{
         "index": 2,
-        "name": "source-slot",
+        "name": "con-source",
         "x1": 0.4375,
         "y1": 0.19375,
         "z1": 0.03125,

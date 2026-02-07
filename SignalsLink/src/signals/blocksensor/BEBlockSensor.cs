@@ -59,6 +59,8 @@ namespace SignalsLink.src.signals.blocksensor
             }
         }
 
+        public int SignalInputsCount => 2;
+
         public BEBlockSensor()
         {
         }
