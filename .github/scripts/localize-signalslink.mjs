@@ -49,6 +49,9 @@ const CHUNK_SIZE = Number(process.env.SIGNALSLINK_CHUNK_SIZE || 30);
 // If true, remove keys from <lang>.json that no longer exist in cs.json
 const PRUNE_EXTRA_KEYS = (process.env.SIGNALSLINK_PRUNE ?? "1") !== "0";
 
+// If true, translate all keys from cs.json regardless of git changes
+const FORCE_TRANSLATE_ALL = (process.env.SIGNALSLINK_FORCE_ALL ?? "1") === "1";
+
 // Model
 const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-5.1";
 
@@ -316,6 +319,14 @@ async function translateAll({ csNew, changedKeys }) {
         // Translate: keys changed in cs since previous commit + keys missing in this language.
         const missingKeys = Object.keys(csNew).filter((k) => !(k in langJson));
         const keysToTranslate = Array.from(new Set([...changedKeys, ...missingKeys]));
+
+        // If forced, take all keys
+        if (FORCE_TRANSLATE_ALL) {
+            console.warn(
+                `[${lang}] Překlad všech klíčů (vlivem SIGNALSLINK_FORCE_ALL=1; původně: ${keysToTranslate.length})`,
+            );
+            keysToTranslate.splice(0, keysToTranslate.length, ...Object.keys(csNew));
+        }
 
         if (keysToTranslate.length === 0) {
             console.log(`[${lang}] nic k překladu`);
