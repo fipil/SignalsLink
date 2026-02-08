@@ -148,7 +148,7 @@ namespace SignalsLink.EP.src.epswitch
             tree.SetBytes("state", new byte[1] { state });
         }
 
-        public override void OnBlockPlaced(ItemStack? byItemStack = null)
+        public override void OnBlockPlaced(ItemStack byItemStack = null)
         {
             base.OnBlockPlaced(byItemStack);
 

@@ -8,9 +8,11 @@ Dostaneš:
 
 Úkol:
 
-1. V objektu "cs" nastav hodnotu klíče "signalslink:usageinfo-signalslink-text" na jednořádkovou verzi HTML:
+1. V objektu "cs" nastav hodnoty klíčů, které najdeš v HTML a převeď je na jednořádkové verze HTML:
 
    * Použij vstupní HTML ze stringu "html".
+   * V HTML najdeš tagy <translation key="klic">, které obsahují html formátovaný text.
+   * HTML v každém tagu <translation key="klic"> převeď na jednořádkové HTML a nastav hodnotu klíče "klic" v objektu "cs" na tento jednořádkový HTML string.
    * HTML strukturu (tagy, atributy, mezery) zachovej, jen odstraň znaky nového řádku.
    * Nepřidávej ani nemaž žádné tagy ani atributy.
    * Nepřidávej do HTML žádná zpětná lomítka navíc.
@@ -21,7 +23,7 @@ Dostaneš:
    * Každý objekt musí mít stejné klíče jako "cs".
    * Hodnoty přelož z češtiny do daného jazyka.
    * Klíče se nikdy nepřekládají.
-   * U klíče "signalslink:usageinfo-signalslink-text":
+   * U klíčů, které jsi převedl z tagů <translation key="klic"> ze vstupního html:
 
      * Zachovej HTML tagy a atributy beze změny.
      * Přelož pouze viditelný text mezi tagy.
@@ -46,6 +48,6 @@ Pravidla:
 
 * Nepoužívej ve string hodnotách znaky \\n ani \\r.
 * Neescapuj lomítka "/", používej jen standardní JSON escapování pro uvozovky a případná zpětná lomítka.
-* Nezaváděj nové klíče, které nejsou v "cs".
+* Nezaváděj nové klíče, které nejsou v "cs" nebo v <translation key="klic"> tagách, uvedených v html.
 * HTML nesmí obsahovat zpětná lomítka. Pokud by obsahovalo, nahlas chybu.
 * Pokud nějaký jazykový objekt neumíš vytvořit, vrať pro daný jazyk prázdný objekt {}.

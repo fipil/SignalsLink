@@ -6,6 +6,7 @@ on:
       - main
       - master
     paths:
+      - "SignalsLink/assets/signalslink/lang/cs.json"
       - "SignalsLink/assets/signalslink/lang/signalslink.html"
       - ".github/prompts/localize-signalslink.md"
       - ".github/scripts/localize-signalslink.mjs"

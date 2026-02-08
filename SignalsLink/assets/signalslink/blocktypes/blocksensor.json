@@ -21,6 +21,11 @@
     }
   ],
   "attributes": {
+    "handbook": {
+		  "extraSections": [
+			  { "title": "signalslink:block-handbooktitle-signalslink", "text": "signalslink:block-handbooktext-blocksensor" }
+		  ]
+    },
     "signalNodes": [
       {
         "index": 0,

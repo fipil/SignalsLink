@@ -220,7 +220,7 @@ namespace SignalsLink.EP.src.epmeter
             tree.SetBytes("state", new byte[1] { state });
         }
 
-        public override void OnBlockPlaced(ItemStack? byItemStack = null)
+        public override void OnBlockPlaced(ItemStack byItemStack = null)
         {
             base.OnBlockPlaced(byItemStack);
 

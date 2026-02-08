@@ -29,6 +29,11 @@
     }
   ],
 	"attributes": {
+    "handbook": {
+		  "extraSections": [
+			  { "title": "signalslink:block-handbooktitle-signalslink", "text": "signalslink:block-handbooktext-managedwallchute" }
+		  ]
+    },
 		"signalNodes": [
       {
         "index": 0,

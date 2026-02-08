@@ -47,6 +47,11 @@
     }
   ],
   "attributes": {
+    "handbook": {
+		  "extraSections": [
+			  { "title": "signalslink:block-handbooktitle-signalslink", "text": "signalslink:block-handbooktext-entitysensor" }
+		  ]
+    },
     "signalNodes": [
       {
         "index": 0,
