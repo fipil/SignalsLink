@@ -367,6 +367,10 @@ async function translateAll({ csNew, changedKeys }) {
             }
 
             validateOneLineStrings(result, `Output ${lang}`);
+
+            for (const [k, v] of Object.entries(result)) {
+                langJson[k] = v;
+            }
         }
 
         await writeJsonUtf8(langPath, langJson);
