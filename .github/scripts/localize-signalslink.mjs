@@ -20,6 +20,9 @@ const execFileAsync = promisify(execFile);
  * - For each target language, translate only those keys from cs.json
  * - Preserve HTML tags/attributes/order, keep values one-line
  * - Save <lang>.json as normal key->value dictionary (same shape as cs.json)
+ *
+ * Force full re-translate:
+ * - Set env SIGNALSLINK_FORCE_TRANSLATE_ALL=1 to translate ALL keys (and overwrite existing translations).
  */
 
 /** =========================
@@ -49,14 +52,14 @@ const CHUNK_SIZE = Number(process.env.SIGNALSLINK_CHUNK_SIZE || 30);
 // If true, remove keys from <lang>.json that no longer exist in cs.json
 const PRUNE_EXTRA_KEYS = (process.env.SIGNALSLINK_PRUNE ?? "1") !== "0";
 
-// If true, translate all keys from cs.json regardless of git changes
-const FORCE_TRANSLATE_ALL = (process.env.SIGNALSLINK_FORCE_ALL ?? "1") === "1";
-
 // Model
 const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-5.1";
 
 // Request timeout (AbortController) for OpenAI calls
 const FETCH_TIMEOUT_MS = Number(process.env.SIGNALSLINK_FETCH_TIMEOUT_MS || 600_000);
+
+// Force: translate ALL keys for ALL languages (overwrites existing values)
+const FORCE_TRANSLATE_ALL = (process.env.SIGNALSLINK_FORCE_TRANSLATE_ALL ?? "0") === "1";
 
 /** =========================
  *  BOM helpers
@@ -132,7 +135,7 @@ function validateOneLineStrings(obj, label) {
 }
 
 /** =========================
- *  Git helpers (detect changes in cs.json between commits)
+ *  Git helpers
  *  ========================= */
 async function tryReadFileFromGit(ref, fileAbsolutePath) {
     const repoRoot = process.cwd();
@@ -159,7 +162,6 @@ async function tryReadPreviousCsJson() {
 }
 
 function computeChangedKeysVsPrevious(previousCs, currentCs) {
-    // If we can't read previous snapshot, treat all current keys as changed.
     if (!previousCs) return Object.keys(currentCs);
 
     const changed = [];
@@ -309,31 +311,28 @@ async function translateAll({ csNew, changedKeys }) {
             else throw e;
         }
 
-        // Keep language files aligned with cs keys (optional but recommended)
         if (PRUNE_EXTRA_KEYS) {
             for (const k of Object.keys(langJson)) {
                 if (!(k in csNew)) delete langJson[k];
             }
         }
 
-        // Translate: keys changed in cs since previous commit + keys missing in this language.
         const missingKeys = Object.keys(csNew).filter((k) => !(k in langJson));
-        const keysToTranslate = Array.from(new Set([...changedKeys, ...missingKeys]));
 
-        // If forced, take all keys
-        if (FORCE_TRANSLATE_ALL) {
-            console.warn(
-                `[${lang}] Překlad všech klíčů (vlivem SIGNALSLINK_FORCE_ALL=1; původně: ${keysToTranslate.length})`,
-            );
-            keysToTranslate.splice(0, keysToTranslate.length, ...Object.keys(csNew));
-        }
+        const keysToTranslate = FORCE_TRANSLATE_ALL
+            ? Object.keys(csNew) // full overwrite
+            : Array.from(new Set([...changedKeys, ...missingKeys]));
 
         if (keysToTranslate.length === 0) {
             console.log(`[${lang}] nic k překladu`);
             continue;
         }
 
-        console.log(`[${lang}] klíčů k překladu: ${keysToTranslate.length}`);
+        console.log(
+            FORCE_TRANSLATE_ALL
+                ? `[${lang}] FORCE: překládám všechny klíče (${keysToTranslate.length})`
+                : `[${lang}] klíčů k překladu: ${keysToTranslate.length}`,
+        );
 
         const chunks = chunkArray(keysToTranslate, CHUNK_SIZE);
 
@@ -358,24 +357,23 @@ async function translateAll({ csNew, changedKeys }) {
             }
 
             // Fail-fast: model must return exactly the same keys
-            const inputKeys = Object.keys(items).sort();
-            const outputKeys = Object.keys(result).sort();
-            if (inputKeys.length !== outputKeys.length) {
+            const inKeys = Object.keys(items).sort();
+            const outKeys = Object.keys(result).sort();
+            if (inKeys.length !== outKeys.length) {
                 throw new Error(
-                    `[${lang}] Model vrátil jiný počet klíčů než vstup (${outputKeys.length} vs ${inputKeys.length})`,
+                    `[${lang}] Model vrátil jiný počet klíčů než vstup (${outKeys.length} vs ${inKeys.length})`,
                 );
             }
-            for (let j = 0; j < inputKeys.length; j++) {
-                if (inputKeys[j] !== outputKeys[j]) {
+            for (let j = 0; j < inKeys.length; j++) {
+                if (inKeys[j] !== outKeys[j]) {
                     throw new Error(
-                        `[${lang}] Model vrátil jiné klíče než vstup (např. '${outputKeys[j]}' místo '${inputKeys[j]}')`,
+                        `[${lang}] Model vrátil jiné klíče než vstup (např. '${outKeys[j]}' místo '${inKeys[j]}')`,
                     );
                 }
             }
 
             validateOneLineStrings(result, `Output ${lang}`);
 
-            // Safety: enforce </ -> <\/ even if model forgets
             for (const [k, v] of Object.entries(result)) {
                 langJson[k] = escapeClosingTagsOnly(v);
             }
@@ -394,9 +392,11 @@ async function main() {
 
     const { csNew } = await seedCsFromHtml();
 
-    const changedKeys = computeChangedKeysVsPrevious(previousCs, csNew);
+    const changedKeys = FORCE_TRANSLATE_ALL
+        ? Object.keys(csNew)
+        : computeChangedKeysVsPrevious(previousCs, csNew);
 
-    if (changedKeys.length === 0) {
+    if (!FORCE_TRANSLATE_ALL && changedKeys.length === 0) {
         console.log("cs.json se oproti předchozímu commitu nezměnil, překlady se nepouští.");
         return;
     }
