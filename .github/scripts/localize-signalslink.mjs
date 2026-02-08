@@ -109,8 +109,12 @@ function extractTranslations(html) {
 }
 
 function toOneLineHtml(s) {
-    // Only remove CR/LF, keep all other characters exactly as-is.
-    return s.replace(/\r?\n/g, "");
+    // Split into lines, trim each line (leading/trailing spaces), then join without newlines.
+    // Keeps all other characters (HTML tags, spaces between words) as-is.
+    return s
+        .split(/\r?\n/)
+        .map((line) => line.trim())
+        .join("");
 }
 
 /** =========================
