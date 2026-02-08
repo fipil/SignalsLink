@@ -53,7 +53,7 @@ const CHUNK_SIZE = Number(process.env.SIGNALSLINK_CHUNK_SIZE || 30);
 const PRUNE_EXTRA_KEYS = (process.env.SIGNALSLINK_PRUNE ?? "1") !== "0";
 
 // Model
-const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-5.1";
+const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-5.2";
 
 // Request timeout (AbortController) for OpenAI calls
 const FETCH_TIMEOUT_MS = Number(process.env.SIGNALSLINK_FETCH_TIMEOUT_MS || 600_000);

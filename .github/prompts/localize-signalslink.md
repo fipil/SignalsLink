@@ -20,6 +20,7 @@ Pravidla:
 * Výstupní hodnoty musí být v jednom řádku (žádné \n ani \r).
 * Klíče musí zůstat stejné, nikdy se nepřekládají.
 * Neescapuj lomítka "/", používej jen standardní JSON escapování pro uvozovky a případná zpětná lomítka.
+* NEESCAPUJ LOMÍTKA "/" !!!!
 * Nezaváděj nové klíče, které nejsou ve vstupních items.
 * HTML nesmí obsahovat zpětná lomítka. Pokud by obsahovalo, nahlas chybu.
 * Pokud nějaký jazykový objekt neumíš vytvořit, vrať pro daný jazyk prázdný objekt {}.
