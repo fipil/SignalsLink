@@ -55,7 +55,7 @@ jobs:
       - name: Run localization script
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          SIGNALSLINK_FORCE_TRANSLATE_ALL: "1"
+          SIGNALSLINK_FORCE_TRANSLATE_ALL: "0"
           NODE_OPTIONS: --dns-result-order=ipv4first
         run: node .github/scripts/localize-signalslink.mjs
 
