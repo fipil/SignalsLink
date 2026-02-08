@@ -4,12 +4,12 @@
     Rozšiřuje mod <a href="handbook://signals:craftinginfo-signals">Signals</a> o další komponenty.
     <br>
     <br>
-    Pro sledování nějakého bloku v okolí můžete použít <a href="handbook://block-signalslink:blocksensor">Senzor bloků</a>.
+    Pro sledování nějakého bloku v okolí můžete použít <a href="handbook://block-signalslink:blocksensor-off-fwd-north-down">Senzor bloků</a>.
     <br>
-    Pokud potřebujete sledovat vaše stádo dobytka, hodí se k tomu skvěle <a href="handbook://block-signalslink:entitysensor">Senzor bytostí</a>.
+    Pokud potřebujete sledovat vaše stádo dobytka, hodí se k tomu skvěle <a href="handbook://block-signalslink:entitysensor-off-north-down">Senzor bytostí</a>.
     <br>
-    Pokud chcete zautomatizovat některé práce, poslouží vám výborně <a href="handbook://block-signalslink:managedchute">Řízená trubka</a>, která umí přepravovat položky mezi bloky podobně jako skluz, ale řídíte ji signály a dává vám
-    mnohem větší kontrolu nad tím, co se přepravuje. Její varianta <a href="handbook://block-signalslink:managedwallchute">Řízená trubka zabudovaná do zdi</a> pak umožňuje přepravovat položky skrz zdi, což může být velmi užitečné pro skryté přepravní systémy
+    Pokud chcete zautomatizovat některé práce, poslouží vám výborně <a href="handbook://block-signalslink:managedchute-north-down">Řízená trubka</a>, která umí přepravovat položky mezi bloky podobně jako skluz, ale řídíte ji signály a dává vám
+    mnohem větší kontrolu nad tím, co se přepravuje. Její varianta <a href="handbook://block-signalslink:managedwallchute-rock-granite-north-north">Řízená trubka zabudovaná do zdi</a> pak umožňuje přepravovat položky skrz zdi, což může být velmi užitečné pro skryté přepravní systémy
     nebo pro přepravu položek ze sklepa nebo do sklepa, aniž by se tím porušilo chladné sklepní prostředí, důležité pro dlouhodobé uchování potravin.
 </translation>
 <translation key="signalslink:block-handbooktext-blocksensor">
@@ -75,4 +75,45 @@
 <translation key="signalslink:block-handbooktext-managedwallchute">
     Řízená trubka zasazená ve stěně umožňuje automatizovanou přepravu položek mezi různými bloky. Umožňuje přepravovat položky skrz zdi, což může být velmi užitečné pro skryté přepravní systémy
     nebo pro přepravu položek ze sklepa nebo do sklepa, aniž by se tím porušilo chladné sklepní prostředí, důležité pro dlouhodobé uchování potravin.
+</translation>
+<translation key="signalslink:usageinfo-paperconditions-text">
+    Některé bloky z modu <a href="handbook://signalslink:usageinfo-signalslink">SignalsLink</a> umožňují používat <strong>podmínky na papíře</strong>:
+    <br>
+    • <a href="handbook://block-signalslink:blocksensor-off-fwd-north-down">Senzor bloků</a>
+    <br>
+    • <a href="handbook://block-signalslink:managedchute-north-down">Řízená trubka</a>
+    <br>
+    • <a href="handbook://block-signalslink:managedwallchute-rock-granite-north-north">Řízená trubka zabudovaná do zdi</a>
+    <br>
+    <font size="20" color="6082B6">Podmínky na papíře</font>
+    <strong>podmínky na papíře</strong> jsou podmínky, napsané na <a href="handbook://item-paper-parchment">pergamen</a>. Tyto podmínky mohou být použity pro ovlivnění chování bloku, například pro řízení výstupních signálů nebo pro filtrování položek v trubkách.
+    <br>
+    Podmínky se píšou do bloků (odstavců). Každý blok se skládá z jednoho nebo více řádků, kdy na každém řádku je uvedena jedna podmínka. Všechny podmínky <strong>v jednom bloku</strong> se vyhodnotí tak, že se mezi nimi aplikuje logický operátor AND
+    a výsledek dává výslednou hodnotu celého bloku.
+    <br>
+    Jednotlivé bloky jsou od sebe odděleny prázdným řádkem. Na výsledné hodnoty jednotlivých bloků se pak aplikuje logický operátor OR. Vyhodncování jednotlivých podmínek v bloku probíhá v pořadí shora dolů, jak jsou podmínky uvedeny na papíře.
+    Vyhodnocování bloků také probíhá v pořadí, ve kterém jsou bloky uvedeny na papíře. To znamená, že jakmile se nějaký blok vyhodnotí jako pravda (true), vrací se tento výsledek do volajícího bloku a dalším blokem se již nepokračuje.
+    Toto je velmi důležité a je třeb s tím počítat.
+    <br>
+    <br>
+    Rozlišujeme několik typů podmínek:
+    <br>
+    <strong>game:plank-oak</strong> - Vyhodnocuje se, zda je sledovaná položka v inventáři nebo sledovaný blok zadaného typu, tj. jeho kód odpovídá přesně zadanému kódu. Pokud ano, vrátí podmínka true.<br>
+    <strong>game:plank-*</strong> - Vyhodnocuje se, zda je sledovaná položka nebo blok zadaného typu, v libovolné jeho variantě (označené hvězdičkou). Pokud ano, vrátí podmínka true.<br>
+    <strong>@.*-plank-.*</strong> - Kód sledované položky nebo bloku se vyhodnocuje tímto regulárním výrazem. Pokud je shoda, vrátí podmínka true.<br>
+    <strong>attribut > 1</strong> - Vyhodnocuje se hodnota atributu položky v inventáři nebo sledovaného bloku. Lze zde použít různé srovnávací operátory (větší/menší/rovná se). Po vyhodnocení se vrátí výsledek porovnání (true/false).<br>
+    <strong>attribut</strong> - Pokud se v podmínce uvede pouze název atributu položky, vyhodnocuje se, zda má nebo nemá hodnotu. Tzn nula, NULL, prrázdný řetězec nebo false se vyhodnotá jako false. Nenulová hodnota, řetězec nebo true se vyhodnotí jako true.<br>
+    <br>
+    Na všechny podmínky lze aplikovat operátor negace <strong>!</strong>. Například !game:plank-oak se vyhodnocuje jako true, pokud sledovaná položka nebo blok není přesně dubová prkna.
+    <br>
+    Na konec každého bloku lze přidat instrukci pro nastavení výstupního signálu, například <strong>output 1</strong>, která určuje, že pokud se tento blok vyhodnotí jako pravda (true), bude na výstup poslán signál 1.
+    Toto má význam pouze u bloku <a href="handbook://block-signalslink:blocksensor-off-fwd-north-down">Senzor bloků</a>, který umožňuje nastavit, jaký signál bude poslán na výstup v případě, že se nějaký blok nebo položka shoduje s podmínkami uvedenými v bloku. U ostatních bloků, které umožňují používat podmínky na papíře, se tato instrukce ignoruje.
+    <font size="20" color="6082B6">Nastavení podmínek</font>
+    Podmínky napíšete na <a href="handbook://item-paper-parchment">pergamen</a>. Pergamen nepodepisujte, abyste text mohli znovu upravovat.<br>
+    Podmínky přenesete do bloku, který to podporuje, tak, že klepnete tímto pergamenem pravou myší na daný blok. Podmínky se tak uloží do bloku a uvidíte je v informačním okně, když se na blok podíváte.<br>
+    Pro odstranění podmínek z bloku vezměte do ruky prázdný pergamen, přidřepněte (shift klávesa) a klepněte tímto prázdným pergamenem na daný blok. Tím jste podmínky z bloku vymazali.<br>
+    Pokud chcete z bloku podmínky zkopírovat na prázdný pergamen, klepněte prázdným pergamenem pravou myší na daný blok bez přidřepnutí.<br>
+    A nakonec pomůcka pro zjištění, jaký má nějaký blok nebo položka kód a jaké máte k dispozici atributy pro použítí v podmínkových výrazech:<br>
+    Vezměte do ruky položku o kterou se zajímáte, podržte klávesu ctrl a klepněte pravou myší tímto blokem na blok, který podporuje podmínky na papíře. Kód položky a její atributy, dostupné pro podmínky na papíře, se uloží do toho bloku. Můžete je nyní zkopírovat na 
+    prázdný pergamen, jak bylo popsáno výše, a zde je libovolně upravit na bloky podmínek a použít je na nastavení bloku.
 </translation>

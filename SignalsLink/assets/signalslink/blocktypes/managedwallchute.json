@@ -149,7 +149,8 @@
         "phyllite",
         "sandstone",
         "shale",
-        "slate"
+        "slate",
+        "bauxite"
       ]
     },
     {
@@ -201,18 +202,12 @@
   ],
   "creativeinventory": {
     "general": [
-      "managedwallchute-wood-oak-north-north"
+      "managedwallchute-*-*-north-north"
     ],
     "signalslink": [
       "managedwallchute-*-*-north-north"
     ]
   },
-  "drops": [
-    {
-      "type": "block",
-      "code": "managedwallchute-wood-oak-north-down"
-    }
-  ],
   "shape": {
     "base": "block/managedwallchute",
     "rotateXbytype": {
@@ -368,7 +363,7 @@
       }
     },
 
-    "@managedwallchute-rock-(andesite|basalt|chalk|chert|conglomerate|granite|limestone|peridotite|phyllite|sandstone|shale|slate)-.*": {
+    "@managedwallchute-rock-(andesite|basalt|chalk|chert|conglomerate|granite|limestone|peridotite|phyllite|sandstone|shale|slate|bauxite)-.*": {
       "mat": {
         "base": "game:block/stone/rock/{material}1",
         "alternates": [
@@ -379,7 +374,7 @@
       }
     },
 
-    "@managedwallchute-cobble-(andesite|basalt|chalk|chert|conglomerate|granite|limestone|peridotite|phyllite|sandstone|shale|slate)-.*": {
+    "@managedwallchute-cobble-(andesite|basalt|chalk|chert|conglomerate|granite|limestone|peridotite|phyllite|sandstone|shale|slate|bauxite)-.*": {
       "mat": {
         "base": "game:block/stone/cobblestone/{material}1",
         "alternates": [

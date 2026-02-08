@@ -1,0 +1,49 @@
+[
+	{
+		"ingredientPattern": "WH_,ICE,_P_",
+		"ingredients": {
+			"W": { "type": "item", "code": "game:wrench-*",	"isTool": true, "toolDurabilityCost": 2	},
+			"H": { "type": "item", "code": "game:hammer-*",	"isTool": true, "toolDurabilityCost": 2	},
+			"E": { "type": "item", "code": "signals:el_wire" },
+			"P": { "type": "item", "code": "game:plank-*"	},
+			"C": { "type": "block", "code": "game:chute-straight-*"	},
+			"I": { "type": "item", "code": "game:metalbit-iron"	}
+		},
+		"width": 3,
+		"height": 3,
+		"output": {	"type": "block",	"code": "managedchute-north-down",	"quantity": 1	}
+	},
+	{
+		"ingredientPattern": "SSS,MCM,SSS",
+		"ingredients": {
+			"C": { "type": "block", "code": "signalslink:managedchute-*"	},
+			"S": { "type": "item", "code": "game:stone-*", "name": "material", "allowedVariants": ["andesite", "basalt", "chalk", "chert", "conglomerate", "granite", "limestone", "peridotite", "phyllite", "sandstone", "shale", "slate", "bauxite"] },
+			"M": { "type": "item", "code": "game:mortar" }
+		},
+		"width": 3,
+		"height": 3,
+		"output": {	"type": "block",	"code": "managedwallchute-rock-{material}-north-north",	"quantity": 1	}
+	},
+	{
+		"ingredientPattern": "SSS,SCM,SSS",
+		"ingredients": {
+			"C": { "type": "block", "code": "signalslink:managedchute-*"	},
+			"S": { "type": "item", "code": "game:plank-*", "name": "material", "allowedVariants": ["oak","acacia","birch","elm","kapok","ladder","maple","pine","redwood","walnut"] },
+			"M": { "type": "item", "code": "game:metalnailsandstrips-*" }
+		},
+		"width": 3,
+		"height": 3,
+		"output": {	"type": "block",	"code": "managedwallchute-wood-{material}-north-north",	"quantity": 1	}
+	},
+	{
+		"ingredientPattern": "SSS,MCM,SSS",
+		"ingredients": {
+			"C": { "type": "block", "code": "signalslink:managedchute-*"	},
+			"S": { "type": "item", "code": "game:stone-*", "name": "material", "allowedVariants": ["andesite", "basalt", "chalk", "chert", "conglomerate", "granite", "limestone", "peridotite", "phyllite", "sandstone", "shale", "slate", "bauxite"] },
+			"M": { "type": "item", "code": "game:mortar" }
+		},
+		"width": 3,
+		"height": 3,
+		"output": {	"type": "block",	"code": "managedwallchute-cobble-{material}-north-north",	"quantity": 1	}
+	}
+]
