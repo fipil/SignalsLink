@@ -35,7 +35,7 @@ const csPath = path.resolve(process.env.SIGNALSLINK_CS || path.join(defaultLangD
 
 // Prompt only for translations
 const translatePromptPath = path.resolve(
-    process.env.SIGNALSLINK_TRANSLATE_PROMPT || ".github/prompts/localize-signalslink-translate.md",
+    process.env.SIGNALSLINK_TRANSLATE_PROMPT || ".github/prompts/localize-signalslink.md",
 );
 
 // Target languages (comma-separated override supported)
