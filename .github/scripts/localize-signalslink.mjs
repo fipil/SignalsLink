@@ -1,13 +1,12 @@
 import fs from "fs/promises";
 import path from "node:path";
-import { Agent, setGlobalDispatcher } from "undici";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 
 const execFileAsync = promisify(execFile);
 
 /**
- * SignalsLink localization pipeline
+ * SignalsLink localization pipeline (NO external deps; works on Node 20+)
  *
  * Step 1 (NO AI):
  * - Read signalslink.html
@@ -25,10 +24,7 @@ const execFileAsync = promisify(execFile);
 
 /** =========================
  *  Config (paths)
- *  =========================
- * Default paths match your repo layout.
- * You can override any of them via env.
- */
+ *  ========================= */
 const defaultLangDir = "SignalsLink/assets/signalslink/lang";
 
 const langDir = path.resolve(process.env.SIGNALSLINK_LANGDIR || defaultLangDir);
@@ -56,19 +52,8 @@ const PRUNE_EXTRA_KEYS = (process.env.SIGNALSLINK_PRUNE ?? "1") !== "0";
 // Model
 const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-5.1";
 
-/** =========================
- *  Undici timeouts (Node fetch)
- *  =========================
- * Node 20+ built-in fetch uses undici; these protect against
- * UND_ERR_HEADERS_TIMEOUT when the response headers take too long.
- */
-setGlobalDispatcher(
-    new Agent({
-        connectTimeout: 30_000,
-        headersTimeout: 600_000, // 10 min on headers
-        bodyTimeout: 600_000, // 10 min on body
-    }),
-);
+// Request timeout (AbortController) for OpenAI calls
+const FETCH_TIMEOUT_MS = Number(process.env.SIGNALSLINK_FETCH_TIMEOUT_MS || 600_000);
 
 /** =========================
  *  BOM helpers
@@ -144,7 +129,7 @@ function validateOneLineStrings(obj, label) {
 }
 
 /** =========================
- *  Git helpers
+ *  Git helpers (detect changes in cs.json between commits)
  *  ========================= */
 async function tryReadFileFromGit(ref, fileAbsolutePath) {
     const repoRoot = process.cwd();
@@ -161,7 +146,6 @@ async function tryReadFileFromGit(ref, fileAbsolutePath) {
 }
 
 async function tryReadPreviousCsJson() {
-    // HEAD^ might not exist on first commit; return null then.
     const text = await tryReadFileFromGit("HEAD^", csPath);
     if (!text) return null;
     try {
@@ -222,7 +206,6 @@ async function callOpenAITranslate({ systemPrompt, targetLang, items }) {
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) throw new Error("Chybí promìnná prostøedí OPENAI_API_KEY");
 
-    // IMPORTANT: AI never sees any HTML source file. It only receives this JSON.
     const payload = { targetLanguage: targetLang, items };
 
     const res = await fetchWithTimeout(
@@ -242,7 +225,7 @@ async function callOpenAITranslate({ systemPrompt, targetLang, items }) {
                 ],
             }),
         },
-        600_000,
+        FETCH_TIMEOUT_MS,
     );
 
     if (!res.ok) {
@@ -396,13 +379,10 @@ async function translateAll({ csNew, changedKeys }) {
  *  MAIN
  *  ========================= */
 async function main() {
-    // Snapshot previous cs.json from git so we detect edits done directly in cs.json
     const previousCs = await tryReadPreviousCsJson();
 
-    // Apply seed from HTML into current cs.json in workspace
     const { csNew } = await seedCsFromHtml();
 
-    // Compute which cs keys changed vs previous commit
     const changedKeys = computeChangedKeysVsPrevious(previousCs, csNew);
 
     if (changedKeys.length === 0) {
