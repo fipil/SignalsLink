@@ -56,7 +56,7 @@ async function callOpenAI({ systemPrompt, payload }) {
                 { role: "user", content: JSON.stringify(payload) },
             ],
         }),
-        timeout: 500000, // 120 s na celé spojení
+        timeout: 1000000, // 120 s na celé spojení
     });
 
     if (!response.ok) {
