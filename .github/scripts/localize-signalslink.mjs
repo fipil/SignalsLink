@@ -49,7 +49,7 @@ async function callOpenAI({ systemPrompt, payload }) {
             Authorization: `Bearer ${apiKey}`,
         },
         body: JSON.stringify({
-            model: "gpt-5.2-pro",
+            model: "gpt-5.1",
             response_format: { type: "json_object" },
             messages: [
                 { role: "system", content: systemPrompt },
