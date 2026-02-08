@@ -18,7 +18,7 @@ Dostaneš:
    * Nepřidávej do HTML žádná zpětná lomítka navíc.
    * Výsledný string nesmí obsahovat znaky nového řádku \\n ani \\r.
 
-2. Na základě objektu "cs" připrav objekty pro jazyky uvedené v "targetLanguages":
+2. Na základě objektu "cs" připrav objekty pro jazyky uvedené v "targetLanguages". NEZAPOMEŇ na tento krok!!:
 
    * Každý objekt musí mít stejné klíče jako "cs".
    * Hodnoty přelož z češtiny do daného jazyka.
@@ -33,15 +33,15 @@ Dostaneš:
 
 {
 "cs": { ... aktualizovaný cs ... },
-"de": { ... },
-"en": { ... },
-"es": { ... },
-"fr": { ... },
-"it": { ... },
-"pl": { ... },
-"pt": { ... },
-"ru": { ... },
-"sk": { ... }
+"de": { ... přeložená de verze ... },
+"en": { ... přeložená en verze ... },
+"es": { ... přeložená es verze ... },
+"fr": { ... přeložená fr verze ... },
+"it": { ... přeložená it verze ... },
+"pl": { ... přeložená pl verze ... },
+"pt": { ... přeložená pt verze ... },
+"ru": { ... přeložená ru verze ... },
+"sk": { ... přeložená sk verze ... }
 }
 
 Pravidla:
