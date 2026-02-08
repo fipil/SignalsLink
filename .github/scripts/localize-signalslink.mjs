@@ -113,11 +113,6 @@ function toOneLineHtml(s) {
     return s.replace(/\r?\n/g, "");
 }
 
-function escapeClosingTagsOnly(s) {
-    // Only escape closing tags: </ -> <\/
-    return s.replace(/<\//g, "<\\/");
-}
-
 /** =========================
  *  Chunk + validations
  *  ========================= */
@@ -281,8 +276,7 @@ async function seedCsFromHtml() {
 
     for (const [key, inner] of translations.entries()) {
         const oneLine = toOneLineHtml(inner);
-        const escaped = escapeClosingTagsOnly(oneLine);
-        csNew[key] = escaped;
+        csNew[key] = oneLine;
     }
 
     await writeJsonUtf8(csPath, csNew);
@@ -373,10 +367,6 @@ async function translateAll({ csNew, changedKeys }) {
             }
 
             validateOneLineStrings(result, `Output ${lang}`);
-
-            for (const [k, v] of Object.entries(result)) {
-                langJson[k] = escapeClosingTagsOnly(v);
-            }
         }
 
         await writeJsonUtf8(langPath, langJson);
