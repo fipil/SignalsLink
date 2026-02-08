@@ -123,7 +123,7 @@ function chunkArray(arr, size) {
 
 function validateOneLineStrings(obj, label) {
     for (const [k, v] of Object.entries(obj)) {
-        if (typeof v !== "string") throw new Error(`${label}: key '${k}' nenÌ string`);
+        if (typeof v !== "string") throw new Error(`${label}: key '${k}' nen√≠ string`);
         if (/\r|\n/.test(v)) throw new Error(`${label}: key '${k}' obsahuje \\r nebo \\n`);
     }
 }
@@ -204,7 +204,7 @@ async function sleep(ms) {
  *  ========================= */
 async function callOpenAITranslate({ systemPrompt, targetLang, items }) {
     const apiKey = process.env.OPENAI_API_KEY;
-    if (!apiKey) throw new Error("ChybÌ promÏnn· prost¯edÌ OPENAI_API_KEY");
+    if (!apiKey) throw new Error("Chyb√≠ promƒõnn√° prost≈ôed√≠ OPENAI_API_KEY");
 
     const payload = { targetLanguage: targetLang, items };
 
@@ -240,8 +240,8 @@ async function callOpenAITranslate({ systemPrompt, targetLang, items }) {
     try {
         parsed = JSON.parse(content);
     } catch {
-        console.error("Model vr·til nevalidnÌ JSON:", content);
-        throw new Error("Model vr·til nevalidnÌ JSON");
+        console.error("Model vr√°til nevalidn√≠ JSON:", content);
+        throw new Error("Model vr√°til nevalidn√≠ JSON");
     }
 
     return stripBOMDeep(parsed);
@@ -283,7 +283,7 @@ async function seedCsFromHtml() {
     await writeJsonUtf8(csPath, csNew);
 
     console.log(
-        `CS seed hotov˝: naöel jsem ${translations.size} <translation> blok˘ a propsal je do cs.json.`,
+        `CS seed hotov√Ω: na≈°el jsem ${translations.size} <translation> blok≈Ø a propsal je do cs.json.`,
     );
 
     return { csNew };
@@ -318,11 +318,11 @@ async function translateAll({ csNew, changedKeys }) {
         const keysToTranslate = Array.from(new Set([...changedKeys, ...missingKeys]));
 
         if (keysToTranslate.length === 0) {
-            console.log(`[${lang}] nic k p¯ekladu`);
+            console.log(`[${lang}] nic k p≈ôekladu`);
             continue;
         }
 
-        console.log(`[${lang}] klÌË˘ k p¯ekladu: ${keysToTranslate.length}`);
+        console.log(`[${lang}] kl√≠ƒç≈Ø k p≈ôekladu: ${keysToTranslate.length}`);
 
         const chunks = chunkArray(keysToTranslate, CHUNK_SIZE);
 
@@ -334,7 +334,7 @@ async function translateAll({ csNew, changedKeys }) {
 
             validateOneLineStrings(items, `Input CS for ${lang}`);
 
-            console.log(`[${lang}] d·vka ${i + 1}/${chunks.length} (${keysChunk.length} keys)`);
+            console.log(`[${lang}] d√°vka ${i + 1}/${chunks.length} (${keysChunk.length} keys)`);
 
             const result = await callOpenAITranslateWithRetry({
                 systemPrompt: translatePrompt,
@@ -343,7 +343,7 @@ async function translateAll({ csNew, changedKeys }) {
             });
 
             if (!result || typeof result !== "object" || Array.isArray(result)) {
-                throw new Error(`[${lang}] Model nevr·til objekt key->value`);
+                throw new Error(`[${lang}] Model nevr√°til objekt key->value`);
             }
 
             // Fail-fast: model must return exactly the same keys
@@ -351,13 +351,13 @@ async function translateAll({ csNew, changedKeys }) {
             const outputKeys = Object.keys(result).sort();
             if (inputKeys.length !== outputKeys.length) {
                 throw new Error(
-                    `[${lang}] Model vr·til jin˝ poËet klÌË˘ neû vstup (${outputKeys.length} vs ${inputKeys.length})`,
+                    `[${lang}] Model vr√°til jin√Ω poƒçet kl√≠ƒç≈Ø ne≈æ vstup (${outputKeys.length} vs ${inputKeys.length})`,
                 );
             }
             for (let j = 0; j < inputKeys.length; j++) {
                 if (inputKeys[j] !== outputKeys[j]) {
                     throw new Error(
-                        `[${lang}] Model vr·til jinÈ klÌËe neû vstup (nap¯. '${outputKeys[j]}' mÌsto '${inputKeys[j]}')`,
+                        `[${lang}] Model vr√°til jin√© kl√≠ƒçe ne≈æ vstup (nap≈ô. '${outputKeys[j]}' m√≠sto '${inputKeys[j]}')`,
                     );
                 }
             }
@@ -371,7 +371,7 @@ async function translateAll({ csNew, changedKeys }) {
         }
 
         await writeJsonUtf8(langPath, langJson);
-        console.log(`[${lang}] uloûeno: ${langPath}`);
+        console.log(`[${lang}] ulo≈æeno: ${langPath}`);
     }
 }
 
@@ -386,7 +386,7 @@ async function main() {
     const changedKeys = computeChangedKeysVsPrevious(previousCs, csNew);
 
     if (changedKeys.length === 0) {
-        console.log("cs.json se oproti p¯edchozÌmu commitu nezmÏnil, p¯eklady se nepouötÌ.");
+        console.log("cs.json se oproti p≈ôedchoz√≠mu commitu nezmƒõnil, p≈ôeklady se nepou≈°t√≠.");
         return;
     }
 
