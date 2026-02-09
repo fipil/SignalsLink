@@ -174,14 +174,14 @@ namespace SignalsLink.src.signals.managedchute
                 // remaining = Math.Min(remaining, 1000000);
             }
 
-            // 8 = trvale otevřeno
+            // 15 = trvale otevřeno
             if (value == UNLIMITED_TRANSFER)
             {
                 unlimited = true;
             }
             else if (signalState == UNLIMITED_TRANSFER && value != UNLIMITED_TRANSFER)
             {
-                // odchod z 8: zavři "unlimited", ale kredit nech jak byl
+                // odchod z 15: zavři "unlimited", ale kredit nech jak byl
                 unlimited = false;
             }
 

@@ -70,11 +70,40 @@
     <br>
 </translation>
 <translation key="signalslink:block-handbooktext-managedchute">
-    Řízená trubka umožňuje automatizovanou přepravu položek mezi různými bloky.
+    Řízená trubka umožňuje automatizovanou přepravu položek mezi různými bloky. Dopravuje předměty jen jedním směrem, který je na trubce označen bílou šipkou.<br>
+    Na rozdíl od skluzu nemá řízená trubka vlastní inventář a přepravuje položky z bloku na zdrojové straně přímo do bloku na cílové straně. To znamená, že položky nejsou uloženy v trubce, ale jsou pouze přenášeny skrz ni.<br>
+    Řízená trubka má tři Signals konektory: Vstup, Zdroj a Cíl.<br>
+    <strong>Vstup</strong> slouží pro řízení přepravy. Pokud je na Vstupu signál 0, trubka je neaktivní a nepřepravuje žádné položky. Nenulová hodnota na vstupu vyvolá přepravu položek ze zdroje do cíle. Podporovány jsou tyto vstupní hodnoty:<br>
+    1 - Přeprav jednu položku<br>
+    2 - Přeprav 2 položky<br>
+    3 - Přeprav 4 položky<br>
+    4 - Přeprav 8 položek<br>
+    5 - Přeprav 16 položek<br>
+    6 - Přeprav 32 položek<br>
+    7 - Přeprav 64 položek<br>
+    15 - Přepravuj trvale.<br>
+    Hodnoty na inputu 1-7 umožňují přepravit položky po dávkách. Pokud není ve zdrojovém bloku dostatek položek k přepravě požadovaného množství, trubka přepraví kolik může a zbytek dopraví až se na vstupu objeví další.
+    Pokud chcete přepravit jiné množství, je možno postupně na vstup poslat různé hodnoty signálu v intervalu 1 až 7 a složit tak požadované množství dávky.<br> 
+    Hodnota 15 na vstupu způsobí, že trubka bude přepravovat položky ze zdroje do cíle trvale, bez ohledu na to, kolik položek je potřeba přepravit. Trubka bude pokračovat v přepravě položek, jakmile se objeví ve zdroji, dokud nebude vstupní signál změněn na jinou hodnotu.<br>
+    Přeprava probíhá, pokud je na zdrojové straně k dispozici něco k přepravě a součesně je na cílové straně místo pro uložení položek. Pokud není splněna některá z těchto podmínek, trubka se pokusí přepravit položky, ale pokud to není možné, zůstane neaktivní, dokud se situace nezmění (např. neobjeví se položky ve zdroji nebo se neuvolní místo v cíli).<br>
+    <strong>Zdroj</strong> je relevantní v případě, že je vstupní blok nějaký blok s inventářem. V tom případě signál na zdroji určuje, z kterého slotu se mají položky brát. Signál 1-14 určuje sloty 0-13. 
+    Signál 15 znamená, že se mají brát položky z posledního slotu.<br>
+    Signál 0 znamená, že se mají brát položky z libovolného slotu. V tomto případě trubka prohledá všechny sloty a vezme položky z prvního slotu, který není prázdný. Pokud je zdrojový blok bez inventáře, tento vstup se ignoruje.<br>
+    <strong>Cíl</strong> je relevantní v případě, že je výstupní blok nějaký blok s inventářem nebo vzduch. U inventáře signál na cíli určuje, do kterého slotu se mají položky ukládat. Signál 1-15 určuje sloty 0-14.<br>
+    Pokud je cílový blok vzduch a pod ním je zem, jsou relevantní tyto hodnoty cíle: 1 - trubka se pokusí položit blok ze zdroje na zem, 2 - trubka se pokusí umístit položku na zem, pokud je umístitelná. Toto
+    prozatím funguje pouze na uhlí a hodí se to např. na automatické přikládání pod ocelářskou pec.<br><br>
+    Pokud je zdrojový blok vzduch, trubka bude sbírat plovoucí položky z prostoru 3x3 bloků, kde prostředním blokem této krychle je blok před ústím trubky.<br><br>
+    Řízená trubka umí, kromě výše zmíněného, také vkládat položky typu ingot, Iron Bloom a Blister Steel do kovadliny, pokud je kovadlina umístěna na cílové straně trubky.
+    Pokud vkládá na kovadlinu ingoty, automaticky se zvolí recept kování plátu. V případě Iron Bloom a Blister Steel se zvolí odkování strusky, aby z nich vznikly ingoty. Toto je velmi užitečné pro automatizaci kování pomocí automatického kladiva.
+    Před vložením na kovadlinu se však musíte postarat, aby byly ingot, Iron Bloom nebo Blister Steel zahřáté na potřebnou teplotu.
+    <br><br>
+    <font size="20" color="6082B6">Filtrování přepravy</font><br>
+    Řízená trubka umožňuje nastavit podmínky pro filtrování položek, které se mají přepravovat. Podmínky se nastavují pomocí <strong>Podmínek na papíře</strong>, jejichž použití je vysvětleno <a href="handbook://signalslink:usageinfo-paperconditions-text">na této stránce</a><br>
 </translation>
 <translation key="signalslink:block-handbooktext-managedwallchute">
     Řízená trubka zasazená ve stěně umožňuje automatizovanou přepravu položek mezi různými bloky. Umožňuje přepravovat položky skrz zdi, což může být velmi užitečné pro skryté přepravní systémy
-    nebo pro přepravu položek ze sklepa nebo do sklepa, aniž by se tím porušilo chladné sklepní prostředí, důležité pro dlouhodobé uchování potravin.
+    nebo pro přepravu položek ze sklepa nebo do sklepa, aniž by se tím porušilo chladné sklepní prostředí, důležité pro dlouhodobé uchování potravin.<br>
+    Funguje na stejném principu jako Řízená trubka. Popis použití tedy najdete na stránce <a href="handbook://block-signalslink:managedchute-north-down">popisu Řízené trubky</a>.<br>
 </translation>
 <translation key="signalslink:usageinfo-paperconditions-text">
     Některé bloky z modu <a href="handbook://signalslink:usageinfo-signalslink">SignalsLink</a> umožňují používat <strong>podmínky na papíře</strong>:
@@ -85,7 +114,7 @@
     <br>
     • <a href="handbook://block-signalslink:managedwallchute-rock-granite-north-north">Řízená trubka zabudovaná do zdi</a>
     <br>
-    <font size="20" color="6082B6">Podmínky na papíře</font>
+    <font size="20" color="6082B6">Podmínky na papíře</font><br>
     <strong>podmínky na papíře</strong> jsou podmínky, napsané na <a href="handbook://item-paper-parchment">pergamen</a>. Tyto podmínky mohou být použity pro ovlivnění chování bloku, například pro řízení výstupních signálů nebo pro filtrování položek v trubkách.
     <br>
     Podmínky se píšou do bloků (odstavců). Každý blok se skládá z jednoho nebo více řádků, kdy na každém řádku je uvedena jedna podmínka. Všechny podmínky <strong>v jednom bloku</strong> se vyhodnotí tak, že se mezi nimi aplikuje logický operátor AND
@@ -102,13 +131,13 @@
     <strong>game:plank-*</strong> - Vyhodnocuje se, zda je sledovaná položka nebo blok zadaného typu, v libovolné jeho variantě (označené hvězdičkou). Pokud ano, vrátí podmínka true.<br>
     <strong>@.*-plank-.*</strong> - Kód sledované položky nebo bloku se vyhodnocuje tímto regulárním výrazem. Pokud je shoda, vrátí podmínka true.<br>
     <strong>attribut &gt; 1</strong> - Vyhodnocuje se hodnota atributu položky v inventáři nebo sledovaného bloku. Lze zde použít různé srovnávací operátory (větší/menší/rovná se). Po vyhodnocení se vrátí výsledek porovnání (true/false).<br>
-    <strong>attribut</strong> - Pokud se v podmínce uvede pouze název atributu položky, vyhodnocuje se, zda má nebo nemá hodnotu. Tzn nula, NULL, prrázdný řetězec nebo false se vyhodnotá jako false. Nenulová hodnota, řetězec nebo true se vyhodnotí jako true.<br>
+    <strong>attribut</strong> - Pokud se v podmínce uvede pouze název atributu položky, vyhodnocuje se, zda má nebo nemá hodnotu. Tzn nula, NULL, prázdný řetězec nebo false se vyhodnotá jako false. Nenulová hodnota, řetězec nebo true se vyhodnotí jako true.<br>
     <br>
     Na všechny podmínky lze aplikovat operátor negace <strong>!</strong>. Například !game:plank-oak se vyhodnocuje jako true, pokud sledovaná položka nebo blok není přesně dubová prkna.
     <br>
     Na konec každého bloku lze přidat instrukci pro nastavení výstupního signálu, například <strong>output 1</strong>, která určuje, že pokud se tento blok vyhodnotí jako pravda (true), bude na výstup poslán signál 1.
     Toto má význam pouze u bloku <a href="handbook://block-signalslink:blocksensor-off-fwd-north-down">Senzor bloků</a>, který umožňuje nastavit, jaký signál bude poslán na výstup v případě, že se nějaký blok nebo položka shoduje s podmínkami uvedenými v bloku. U ostatních bloků, které umožňují používat podmínky na papíře, se tato instrukce ignoruje.
-    <font size="20" color="6082B6">Nastavení podmínek</font>
+    <font size="20" color="6082B6">Nastavení podmínek</font><br>
     Podmínky napíšete na <a href="handbook://item-paper-parchment">pergamen</a>. Pergamen nepodepisujte, abyste text mohli znovu upravovat.<br>
     Podmínky přenesete do bloku, který to podporuje, tak, že klepnete tímto pergamenem pravou myší na daný blok. Podmínky se tak uloží do bloku a uvidíte je v informačním okně, když se na blok podíváte. <br>
     Pro odstranění podmínek z bloku vezměte do ruky prázdný pergamen, přidřepněte (shift klávesa) a klepněte tímto prázdným pergamenem na daný blok. Tím jste podmínky z bloku vymazali.<br>
