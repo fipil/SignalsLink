@@ -109,11 +109,11 @@ function extractTranslations(html) {
 }
 
 function toOneLineHtml(s) {
-    // Split into lines, trim each line (leading/trailing spaces), then join without newlines.
-    // Keeps all other characters (HTML tags, spaces between words) as-is.
     return s
         .split(/\r?\n/)
-        .map((line) => line.trim())
+        .map((line) => line.trimStart())   // cut leading spaces
+        .filter((line) => line.length > 0) // skip empty lines
+        .map((line) => line.trimEnd() + " ") // ensure at most one trailing space
         .join("");
 }
 
