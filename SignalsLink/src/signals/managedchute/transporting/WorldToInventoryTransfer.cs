@@ -56,35 +56,24 @@ namespace SignalsLink.src.signals.managedchute.transporting
         {
             IWorldAccessor world = api.World;
 
-            // 3×3×3 okolo sourcePos (vèetnì bloku nad/pod)
-            BlockPos startPos = new BlockPos(
-                sourcePos.X - 2,
-                sourcePos.Y - 2,
-                sourcePos.Z - 2
-            );
-
-            BlockPos endPos = new BlockPos(
-                sourcePos.X + 2,
-                sourcePos.Y + 2,
-                sourcePos.Z + 2
-            );
+            // 3×3×3 blokù okolo sourcePos => svìtový AABB pøes celé bloky
+            var min = new Vec3d(sourcePos.X - 1, sourcePos.Y - 1, sourcePos.Z - 1);
+            var max = new Vec3d(sourcePos.X + 2, sourcePos.Y + 2, sourcePos.Z + 2);
 
             EntityItem found = null;
 
-            world.GetEntitiesInsideCuboid(startPos, endPos, (e) =>
+            world.GetEntitiesInsideCuboid(min.AsBlockPos, max.AsBlockPos, e =>
             {
-                if (e is EntityItem itemEntity && itemEntity.Itemstack != null && itemEntity.Itemstack.StackSize > 0)
-                {
-                    if (IsLiquidContainer(itemEntity.Itemstack) || !IsConditionMet(itemEntity.Itemstack))
-                    {
-                        return false; // ignore liquid containers and items that doesn't meet conditions
-                    }
+                if (e is not EntityItem itemEntity) return false;
 
-                    found = itemEntity;
-                    return true; // pøerušit prohledávání
-                }
+                var stack = itemEntity.Itemstack;
+                if (stack == null || stack.StackSize <= 0) return false;
 
-                return false;
+                // ignorovat liquid containery + itemy nesplòující podmínky
+                if (IsLiquidContainer(stack) || !IsConditionMet(stack)) return false;
+
+                found = itemEntity;
+                return true; // stop
             });
 
             return found;

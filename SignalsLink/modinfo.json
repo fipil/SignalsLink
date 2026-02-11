@@ -4,7 +4,7 @@
   "name": "Signals Link",
   "authors": ["Fipil"],
   "description": "Extends Signals mod with sensors and control elements for interacting with other mods and vanilla blocks.",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "dependencies": {
     "game": "1.21.0", 
     "signals": "0.2.6"

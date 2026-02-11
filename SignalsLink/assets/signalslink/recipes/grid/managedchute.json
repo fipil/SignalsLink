@@ -36,14 +36,26 @@
 		"output": {	"type": "block",	"code": "managedwallchute-wood-{material}-north-north",	"quantity": 1	}
 	},
 	{
-		"ingredientPattern": "SSS,MCM,SSS",
+		"ingredientPattern": "SSS,GCM,SSS",
 		"ingredients": {
 			"C": { "type": "block", "code": "signalslink:managedchute-*"	},
 			"S": { "type": "item", "code": "game:stone-*", "name": "material", "allowedVariants": ["andesite", "basalt", "chalk", "chert", "conglomerate", "granite", "limestone", "peridotite", "phyllite", "sandstone", "shale", "slate", "bauxite"] },
+			"G": { "type": "block", "code": "game:gravel-{material}"},
 			"M": { "type": "item", "code": "game:mortar" }
 		},
 		"width": 3,
 		"height": 3,
 		"output": {	"type": "block",	"code": "managedwallchute-cobble-{material}-north-north",	"quantity": 1	}
+	},
+	{
+		"ingredientPattern": "_H_,_W_,_C_",
+		"ingredients": {
+			"W": { "type": "item", "code": "game:chisel-*",	"isTool": true, "toolDurabilityCost": 2	},
+			"H": { "type": "item", "code": "game:hammer-*",	"isTool": true, "toolDurabilityCost": 2	},
+			"C": { "type": "block", "code": "managedwallchute-*"	}
+		},
+		"width": 3,
+		"height": 3,
+		"output": {	"type": "block",	"code": "managedchute-north-down",	"quantity": 1	}
 	}
 ]
