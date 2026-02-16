@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SignalsLink.src.signals.paperConditions;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -16,7 +17,7 @@ namespace SignalsLink.src.signals.blocksensor.scanners
 
             if (inputSignal == 15)
             {
-                return CalculateInventorySignal(inventory, inputSignal);
+                return CalculateInventorySignal(world, conditionsEvaluator, inventory, inputSignal);
             }
             else
             {
@@ -25,7 +26,7 @@ namespace SignalsLink.src.signals.blocksensor.scanners
         }
 
 
-        public byte CalculateInventorySignal(IInventory inventory, byte inputSignal)
+        public byte CalculateInventorySignal(IWorldAccessor world, PaperConditionsEvaluator conditionsEvaluator, IInventory inventory, byte inputSignal)
         {
             if (inventory == null || inventory.Empty)
                 return 0;
@@ -39,9 +40,31 @@ namespace SignalsLink.src.signals.blocksensor.scanners
 
                 if (!slot.Empty)
                 {
+                    if (conditionsEvaluator.HasConditions)
+                    {
+                        ItemStack stackForEval = slot.Itemstack;
+                        var ctx = ItemConditionContextUtil.BuildContext(world, stackForEval);
+
+                        if (conditionsEvaluator.Evaluate(stackForEval, ctx, out byte matchedBlockIndex))
+                        {
+                            if (matchedBlockIndex > 0 && matchedBlockIndex < 15)
+                                return matchedBlockIndex;
+                            else if (matchedBlockIndex == 15)
+                            {
+                                return (byte)totalSlots; // Return slot number as signal
+                            }
+                        }
+                    }
+
                     float fillRatio = (float)slot.StackSize / slot.Itemstack.Collectible.MaxStackSize;
                     totalFillLevel += fillRatio;
                 }
+            }
+
+            if(conditionsEvaluator.HasConditions)
+            {
+                // No condition met, so return zero
+                return 0;
             }
 
             if (totalSlots == 0)
