@@ -84,6 +84,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
             if (conditionsEvaluator.HasConditions)
             {
                 var ctx = ItemConditionContextUtil.BuildContext(api.World, stack);
+                ctx["inventory"] = sourceInv;
                 return conditionsEvaluator.Evaluate(stack, ctx, out byte blockIndex);
             }
             return true;

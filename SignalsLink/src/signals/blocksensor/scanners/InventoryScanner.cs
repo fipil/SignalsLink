@@ -2,7 +2,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using Vintagestory.API.Common;
 using Vintagestory.API.MathTools;
@@ -44,6 +43,8 @@ namespace SignalsLink.src.signals.blocksensor.scanners
                     {
                         ItemStack stackForEval = slot.Itemstack;
                         var ctx = ItemConditionContextUtil.BuildContext(world, stackForEval);
+
+                        ctx["inventory"] = inventory;
 
                         if (conditionsEvaluator.Evaluate(stackForEval, ctx, out byte output))
                         {

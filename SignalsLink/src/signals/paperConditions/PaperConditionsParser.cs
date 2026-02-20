@@ -69,6 +69,25 @@ namespace SignalsLink.src.signals.paperConditions
                 return new NotCondition(inner);
             }
 
+            // Inventory wrapper:
+            // inventoryAny <condition>
+            if (line.StartsWith("inventoryAny", StringComparison.OrdinalIgnoreCase))
+            {
+                var rest = line.Substring("inventoryAny".Length);
+                if (rest.Length > 0 && char.IsWhiteSpace(rest[0]))
+                {
+                    string nestedLine = rest.Trim();
+                    if (nestedLine.Length > 0)
+                    {
+                        var nested = ParseLine(nestedLine, errors);
+                        return new InventoryAnyCondition(nested);
+                    }
+                }
+
+                errors?.Add(line);
+                return FalseCondition.Instance;
+            }
+
             // Regex pattern
             if (line.StartsWith("@"))
             {
@@ -369,6 +388,50 @@ namespace SignalsLink.src.signals.paperConditions
         public bool Evaluate(ItemStack stack, IDictionary<string, object> ctx)
         {
             return !inner.Evaluate(stack, ctx);
+        }
+    }
+
+    public class InventoryAnyCondition : ICondition
+    {
+        private readonly ICondition inner;
+
+        public InventoryAnyCondition(ICondition inner)
+        {
+            this.inner = inner ?? FalseCondition.Instance;
+        }
+
+        public bool Evaluate(ItemStack stack, IDictionary<string, object> ctx)
+        {
+            if (ctx == null)
+            {
+                return false;
+            }
+
+            if (!ctx.TryGetValue("inventory", out var obj) || obj is not IInventory inventory)
+            {
+                return false;
+            }
+
+            foreach (var slot in inventory)
+            {
+                if (slot?.Empty != false)
+                {
+                    continue;
+                }
+
+                var slotStack = slot.Itemstack;
+                if (slotStack?.Collectible == null)
+                {
+                    continue;
+                }
+
+                if (inner.Evaluate(slotStack, ctx))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
     }
 

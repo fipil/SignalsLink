@@ -14,7 +14,7 @@ public class PaperConditionsEvaluator
     public IReadOnlyList<string> Errors => errors;
 
     /// <summary>
-    /// Nastaví novı conditions text. Pøi zmìnì invaliduje cache.
+    /// NastavÃ­ novÃ½ conditions text. PÅ™i zmÄ›nÄ› invaliduje cache.
     /// </summary>
     public void SetConditionsText(string text)
     {
@@ -23,7 +23,7 @@ public class PaperConditionsEvaluator
 
         if (string.Equals(conditionsText, text, StringComparison.Ordinal))
         {
-            // stejnı text, nic se nemìní
+            // stejnÃ½ text, nic se nemÄ›nÃ­
             return;
         }
 
@@ -46,7 +46,7 @@ public class PaperConditionsEvaluator
     }
 
     /// <summary>
-    /// Vyhodnotí aktuální conditionsText pro danı stack a ctx.
+    /// VyhodnotÃ­ aktuÃ¡lnÃ­ conditionsText pro danÃ½ stack a ctx.
     /// </summary>
     public bool Evaluate(ItemStack stack, IDictionary<string, object> ctx = null)
     {
@@ -55,7 +55,7 @@ public class PaperConditionsEvaluator
     }
 
     /// <summary>
-    /// Vyhodnotí aktuální conditionsText a vrátí i index/blokovı vıstup (viz parser).
+    /// VyhodnotÃ­ aktuÃ¡lnÃ­ conditionsText a vrÃ¡tÃ­ i index/blokovÃ½ vÃ½stup (viz parser).
     /// </summary>
     public bool Evaluate(ItemStack stack, IDictionary<string, object> ctx, out byte matchedBlockIndex)
     {
@@ -66,7 +66,7 @@ public class PaperConditionsEvaluator
             errors.Clear();
             compiled = null;
             lastParsedText = null;
-            // ádné podmínky -> všechno projde, ale nemáme konkrétní blok
+            // Å¾Ã¡dnÃ© podmÃ­nky -> vÅ¡echno projde, ale nemÃ¡me konkrÃ©tnÃ­ blok
             return true;
         }
 
@@ -81,9 +81,9 @@ public class PaperConditionsEvaluator
     }
 
     /// <summary>
-    /// Vyhodnotí aktuální conditionsText pro blok na dané pozici.
-    /// Vytvoøí syntetickı ItemStack z bloku, aby bylo moné pouívat code/glob/regex
-    /// podmínky i pro bloky. Další stav bloku mùe bıt pøedán pøes ctx.
+    /// VyhodnotÃ­ aktuÃ¡lnÃ­ conditionsText pro blok na danÃ© pozici.
+    /// VytvoÅ™Ã­ syntetickÃ½ ItemStack z bloku, aby bylo moÅ¾nÃ© pouÅ¾Ã­vat code/glob/regex
+    /// podmÃ­nky i pro bloky. DalÅ¡Ã­ stav bloku mÅ¯Å¾e bÃ½t pÅ™edÃ¡n pÅ™es ctx.
     /// </summary>
     public bool Evaluate(ICoreAPI api, BlockPos pos)
     {
@@ -92,8 +92,8 @@ public class PaperConditionsEvaluator
     }
 
     /// <summary>
-    /// Vyhodnotí aktuální conditionsText pro blok na dané pozici a vrátí i vıstup.
-    /// Do ctx doplní základní aliasy pro block code.
+    /// VyhodnotÃ­ aktuÃ¡lnÃ­ conditionsText pro blok na danÃ© pozici a vrÃ¡tÃ­ i vÃ½stup.
+    /// Do ctx doplnÃ­ zÃ¡kladnÃ­ aliasy pro block code.
     /// </summary>
     public bool Evaluate(ICoreAPI api, BlockPos pos, out byte matchedBlockIndex)
     {
@@ -110,12 +110,12 @@ public class PaperConditionsEvaluator
             return false;
         }
 
-        // Syntetickı stack jen kvùli CodeGlob/CodeRegex podmínkám
+        // SyntetickÃ½ stack jen kvÅ¯li CodeGlob/CodeRegex podmÃ­nkÃ¡m
         var dummyStack = new ItemStack(block);
 
         var ctx = ItemConditionContextUtil.BuildContext(api.World, dummyStack);
 
-        // Pokud volající nepøipravil vlastní ctx, pouij prázdnı slovník
+        // Pokud volajÃ­cÃ­ nepÅ™ipravil vlastnÃ­ ctx, pouÅ¾ij prÃ¡zdnÃ½ slovnÃ­k
         if (ctx == null)
         {
             ctx = new Dictionary<string, object>();
