@@ -45,11 +45,11 @@ namespace SignalsLink.src.signals.blocksensor.scanners
                         ItemStack stackForEval = slot.Itemstack;
                         var ctx = ItemConditionContextUtil.BuildContext(world, stackForEval);
 
-                        if (conditionsEvaluator.Evaluate(stackForEval, ctx, out byte matchedBlockIndex))
+                        if (conditionsEvaluator.Evaluate(stackForEval, ctx, out byte output))
                         {
-                            if (matchedBlockIndex > 0 && matchedBlockIndex < 15)
-                                return matchedBlockIndex;
-                            else if (matchedBlockIndex == 15)
+                            if (output > 0 && output < 15)
+                                return output;
+                            else if (output == 15)
                             {
                                 return (byte)totalSlots; // Return slot number as signal
                             }
