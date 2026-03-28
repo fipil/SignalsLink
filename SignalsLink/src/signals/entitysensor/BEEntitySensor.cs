@@ -303,7 +303,7 @@ namespace SignalsLink.src.signals.entitysensor
                     _ => null
                 },
                 (byte)EntitySensorOutputConfig.LifeState => ent.Alive ? (byte)2 : (byte)1,
-                (byte)EntitySensorOutputConfig.Gender => tags.Contains("male") || !(EntityClassifier.IsAnimal(ent) || EntityClassifier.IsWildAnimal(ent)) ? (byte)1 : (byte)2,
+                (byte)EntitySensorOutputConfig.Gender => IsMale(ent.Code) || !(EntityClassifier.IsAnimal(ent) || EntityClassifier.IsWildAnimal(ent)) ? (byte)1 : (byte)2,
                 (byte)EntitySensorOutputConfig.Age => tags.Contains("adult") || !(EntityClassifier.IsAnimal(ent) || EntityClassifier.IsWildAnimal(ent)) ? (byte)2 : (byte)1,
                 (byte)EntitySensorOutputConfig.MaxGeneration or (byte)EntitySensorOutputConfig.MinGeneration => ent.WatchedAttributes.HasAttribute("generation") && (EntityClassifier.IsAnimal(ent) || EntityClassifier.IsWildAnimal(ent)) ? (byte)ent.WatchedAttributes.GetInt("generation") : null,
                 (byte)EntitySensorOutputConfig.MaxWeight or (byte)EntitySensorOutputConfig.MinWeight => GetWeightCategory(ent),
@@ -316,6 +316,27 @@ namespace SignalsLink.src.signals.entitysensor
                 results.Add(result.Value);
             }
 
+        }
+
+        private bool IsMale(string code)
+        {
+            if (string.IsNullOrEmpty(code))
+            {
+                return false;
+            }
+
+            // Normalize to lowercase and split by ':' and '-' which act as word separators
+            string[] parts = code.ToLowerInvariant().Split(new[] { ':', '-' }, StringSplitOptions.RemoveEmptyEntries);
+
+            foreach (var part in parts)
+            {
+                if (part == "rooster" || part == "male")
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private byte? GetReproductiveState(Entity ent)
