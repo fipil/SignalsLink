@@ -17,8 +17,11 @@
 		"ingredientPattern": "SSS,MCM,SSS",
 		"ingredients": {
 			"C": { "type": "block", "code": "signalslink:managedchute-*"	},
-			"S": { "type": "item", "code": "game:stone-*", "name": "material", "allowedVariants": ["andesite", "basalt", "chalk", "chert", "conglomerate", "granite", "limestone", "peridotite", "phyllite", "sandstone", "shale", "slate", "bauxite"] },
+			"S": { "type": "item", "code": "game:stone-{material}" },
 			"M": { "type": "item", "code": "game:mortar" }
+		},
+		"allowedVariants": {
+			"material": ["andesite", "basalt", "chalk", "chert", "conglomerate", "granite", "limestone", "peridotite", "phyllite", "sandstone", "shale", "slate", "bauxite"]
 		},
 		"width": 3,
 		"height": 3,
@@ -28,8 +31,11 @@
 		"ingredientPattern": "SSS,SCM,SSS",
 		"ingredients": {
 			"C": { "type": "block", "code": "signalslink:managedchute-*"	},
-			"S": { "type": "item", "code": "game:plank-*", "name": "material", "allowedVariants": ["oak","acacia","birch","elm","kapok","ladder","maple","pine","redwood","walnut"] },
+			"S": { "type": "item", "code": "game:plank-{material}" },
 			"M": { "type": "item", "code": "game:metalnailsandstrips-*" }
+		},
+		"allowedVariants": {
+			"material": ["oak", "acacia", "birch", "kapok", "maple", "pine", "redwood", "walnut", "aged"]
 		},
 		"width": 3,
 		"height": 3,
@@ -39,9 +45,12 @@
 		"ingredientPattern": "SSS,GCM,SSS",
 		"ingredients": {
 			"C": { "type": "block", "code": "signalslink:managedchute-*"	},
-			"S": { "type": "item", "code": "game:stone-*", "name": "material", "allowedVariants": ["andesite", "basalt", "chalk", "chert", "conglomerate", "granite", "limestone", "peridotite", "phyllite", "sandstone", "shale", "slate", "bauxite"] },
+			"S": { "type": "item", "code": "game:stone-{material}" },
 			"G": { "type": "block", "code": "game:gravel-{material}"},
 			"M": { "type": "item", "code": "game:mortar" }
+		},
+		"allowedVariants": {
+			"material": ["andesite", "basalt", "chalk", "chert", "conglomerate", "granite", "limestone", "peridotite", "phyllite", "sandstone", "shale", "slate", "bauxite"]
 		},
 		"width": 3,
 		"height": 3,

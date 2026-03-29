@@ -1,0 +1,76 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "build SignalsLink",
+      "type": "shell",
+      "command": "dotnet",
+      "args": [
+        "build",
+        "SignalsLink/SignalsLink.csproj",
+        "-c",
+        "Debug"
+      ],
+      "group": "build",
+      "problemMatcher": ["$msCompile"]
+    },
+    {
+      "label": "build SignalsLink.EP",
+      "type": "shell",
+      "command": "dotnet",
+      "args": [
+        "build",
+        "SignalsLink.EP/SignalsLink.EP.csproj",
+        "-c",
+        "Debug"
+      ],
+      "group": "build",
+      "problemMatcher": ["$msCompile"]
+    },
+    {
+      "label": "build oba mody",
+      "dependsOn": [
+        "build SignalsLink",
+        "build SignalsLink.EP"
+      ],
+      "dependsOrder": "sequence"
+    },
+    {
+      "label": "sync assets oba mody",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-Command",
+        "New-Item -ItemType Directory -Force -Path \"c:/Develope/VintageStory/Projects/SignalsLink/Publish/assets/signalslink\" | Out-Null; New-Item -ItemType Directory -Force -Path \"c:/Develope/VintageStory/Projects/SignalsLink/Publish/assets/signalslinkep\" | Out-Null; Copy-Item -Path \"c:/Develope/VintageStory/Projects/SignalsLink/SignalsLink/assets/signalslink/*\" -Destination \"c:/Develope/VintageStory/Projects/SignalsLink/Publish/assets/signalslink\" -Recurse -Force; Copy-Item -Path \"c:/Develope/VintageStory/Projects/SignalsLink/SignalsLink.EP/assets/signalslinkep/*\" -Destination \"c:/Develope/VintageStory/Projects/SignalsLink/Publish/assets/signalslinkep\" -Recurse -Force"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "spustit VS klienta (oba mody)",
+      "type": "shell",
+      "command": "cmd",
+      "args": [
+        "/c",
+        "start",
+        "",
+        "c:\\VintageStory\\1.22\\Vintagestory.exe",
+        "--openWorld=signalsLink playground5",
+        "-pcreativebuilding",
+        "--addModPath=c:/Develope/VintageStory/Projects/SignalsLink/Publish",
+        "--addOrigin=c:/Develope/VintageStory/Projects/SignalsLink/Publish/assets",
+        "--dataPath",
+        "C:/VintageStory/1.22Data",
+        "--tracelog"
+      ],
+      "dependsOn": [
+        "build oba mody",
+        "sync assets oba mody"
+      ],
+      "dependsOrder": "sequence",
+      "problemMatcher": []
+    }
+  ]
+}

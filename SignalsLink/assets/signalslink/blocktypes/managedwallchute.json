@@ -350,15 +350,11 @@
     },
     "managedwallchute-wood-aged-*-*": {
       "mat": {
-        "base": "game:block/wood/planks/aged/generic1",
+        "base": "game:block/wood/planks/aged/aged1",
         "alternates": [
-          { "base": "game:block/wood/planks/aged/generic2" },
-          { "base": "game:block/wood/planks/aged/generic3" },
-          { "base": "game:block/wood/planks/aged/generic4" },
-          { "base": "game:block/wood/planks/aged/generic5" },
-          { "base": "game:block/wood/planks/aged/generic6" },
-          { "base": "game:block/wood/planks/aged/generic7" },
-          { "base": "game:block/wood/planks/aged/generic8" }
+          { "base": "game:block/wood/planks/aged/aged2" },
+          { "base": "game:block/wood/planks/aged/aged3" },
+          { "base": "game:block/wood/planks/aged/aged4" }
         ]
       }
     },
