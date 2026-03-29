@@ -186,8 +186,9 @@ namespace SignalsLink.src.signals.entitysensor
 
             foreach (var ent in entities)
             {
-                IEnumerable<string> tags = (IEnumerable<string>)ent.Tags.ToArray().Select<ushort, string>(new System.Func<ushort, string>(Api.TagRegistry.EntityTagIdToTag));
-                BlockPos entBlockPos = ent.ServerPos.AsBlockPos;
+                
+                IEnumerable<string> tags = Api.EntityTagRegistry.SlowEnumerateTagNames(ent.Tags);
+                BlockPos entBlockPos = ent.Pos.AsBlockPos;
                 
                 if(output1config>0)
                 {
@@ -707,7 +708,7 @@ namespace SignalsLink.src.signals.entitysensor
             {
                 if (extraFilter != null && !extraFilter(entity)) continue;
 
-                Vec3d epos = entity.ServerPos.XYZ; // nebo entity.PosXYZ, podle toho co používáš
+                Vec3d epos = entity.Pos.XYZ; // nebo entity.PosXYZ, podle toho co používáš
 
                 if (IsInsideScanCuboid(epos, x, y, z))
                 {

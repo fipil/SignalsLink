@@ -7,13 +7,10 @@ using Vintagestory.API.Config;
 using Vintagestory.API.Server;
 using Vintagestory.Client.NoObf;
 
-[assembly: ModDependency("game", "1.21.0")]
-[assembly: ModDependency("signals", "0.2.6")]
-[assembly: ModDependency("electricalprogressivebasics", "2.6.0")]
 [assembly: ModInfo("Signals Link EP", "signalslinkep",
     Description = "Extends Signals mod with control elements for interacting with the Electrical Progressive mod.",
     Website = "",
-    Version = "0.1.3",
+    Version = "0.2.0",
     Authors = new[] { "fipil" }
 )]
 

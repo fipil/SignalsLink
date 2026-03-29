@@ -29,7 +29,7 @@ namespace SignalsLink.src.signals.blocksensor.scanners
                 return 0;
 
             // 2/3 = voda
-            if (block.BlockMaterial == EnumBlockMaterial.Liquid)
+            if (block.BlockMaterial == EnumBlockMaterial.Water || block.BlockMaterial == EnumBlockMaterial.Lava)
             {
                 // Rozlišení sladká/slaná voda
                 if (block.Code.Path.Contains("saltwater") || block.Code.Path.Contains("salt"))

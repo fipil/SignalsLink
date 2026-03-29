@@ -2,9 +2,9 @@
   "profiles": {
     "Debug SignalsLink": {
       "commandName": "Executable",
-      "executablePath": "c:\\VintageStory\\1.21\\Vintagestory.exe",
-      "commandLineArgs": "--openWorld=\"signalsLink playground4\" -pcreativebuilding --addModPath=\"c:\\Develope\\VintageStory\\Projects\\SignalsLink\\Publish\" --addOrigin=\"c:\\Develope\\VintageStory\\Projects\\SignalsLink\\SignalsLink\\assets\" --dataPath C:\\VintageStory\\1.21Data --tracelog",
-      "workingDirectory": "c:\\VintageStory\\1.21\\"
+      "executablePath": "c:\\VintageStory\\1.22\\Vintagestory.exe",
+      "commandLineArgs": "--openWorld=\"signalsLink playground5\" -pcreativebuilding --addModPath=\"c:\\Develope\\VintageStory\\Projects\\SignalsLink\\Publish\" --addOrigin=\"c:\\Develope\\VintageStory\\Projects\\SignalsLink\\SignalsLink\\assets\" --dataPath C:\\VintageStory\\1.22Data --tracelog",
+      "workingDirectory": "c:\\VintageStory\\1.22\\"
     }
   }
 }
