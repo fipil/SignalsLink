@@ -6,7 +6,7 @@
   "description": "Extends Signals mod with control elements for interacting with the Electrical Progressive mod.",
   "version": "0.2.0",
   "dependencies": {
-    "game": "1.22.0-rc.1", 
+    "game": "1.22.0", 
     "signals": "0.3.0",
     "electricalprogressivebasics": "3.0.0-rc.1"
   }
