@@ -12,7 +12,7 @@ using Vintagestory.API.Server;
 [assembly: ModInfo("Signals Link", "signalslink",
     Description = "Extends Signals mod with sensors and control elements for interacting with other mods and vanilla blocks.",
     Website = "",
-    Version = "0.2.1",
+    Version = "0.2.2",
     Authors = new[] { "fipil" }
 )]
 
@@ -49,14 +49,8 @@ namespace SignalsLink.src
         {
             if (logType == EnumLogType.VerboseDebug) return;
 
-            // Attempt to write to the debug output, but catch any exceptions that may occur (e.g., if the output is not available)
-            try
-            {
-                System.Diagnostics.Debug.WriteLine("[Client " + logType + "] " + message, args);
-            }
-            catch (Exception)
-            {
-            }
+            // Use a preformatted single string to avoid format parsing on arbitrary log messages.
+            System.Diagnostics.Debug.WriteLine($"[Client {logType}] {message}");
         }
     }
 }
