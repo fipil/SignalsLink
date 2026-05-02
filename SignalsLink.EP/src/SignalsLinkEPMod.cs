@@ -10,7 +10,7 @@ using Vintagestory.Client.NoObf;
 [assembly: ModInfo("Signals Link EP", "signalslinkep",
     Description = "Extends Signals mod with control elements for interacting with the Electrical Progressive mod.",
     Website = "",
-    Version = "0.2.0",
+    Version = "0.2.1",
     Authors = new[] { "fipil" }
 )]
 
@@ -86,7 +86,13 @@ namespace SignalsLink.EP.src
         private void OnClientLogEntry(EnumLogType logType, string message, params object[] args)
         {
             if (logType == EnumLogType.VerboseDebug) return;
-            System.Diagnostics.Debug.WriteLine("[Client " + logType + "] " + message, args);
+            try
+            {
+                System.Diagnostics.Debug.WriteLine("[Client " + logType + "] " + message, args);
+            }
+            catch (Exception)
+            {
+            }
         }
     }
 }

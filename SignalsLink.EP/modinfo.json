@@ -4,7 +4,7 @@
   "name": "Signals Link EP",
   "authors": ["Fipil"],
   "description": "Extends Signals mod with control elements for interacting with the Electrical Progressive mod.",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "dependencies": {
     "game": "1.22.0", 
     "signals": "0.3.0",
