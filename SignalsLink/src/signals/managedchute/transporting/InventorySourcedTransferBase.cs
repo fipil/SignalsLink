@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Vintagestory.API.Common;
+using Vintagestory.API.Datastructures;
 using Vintagestory.GameContent; // nahoře v souboru
 
 namespace SignalsLink.src.signals.managedchute.transporting
@@ -16,6 +17,8 @@ namespace SignalsLink.src.signals.managedchute.transporting
         protected readonly IInventory sourceInv;
         protected readonly byte inputSlotSignal;
         protected readonly PaperConditionsEvaluator conditionsEvaluator;
+
+        protected bool canTransferLiquids = false;
 
         public InventorySourcedTransferBase(ICoreAPI api, IInventory sourceInv, byte inputSlotSignal, PaperConditionsEvaluator conditionsEvaluator)
         {
@@ -34,7 +37,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
                 if (index >= 0 && index < sourceInv.Count)
                 {
                     ItemSlot slot = sourceInv[index];
-                    if (slot != null && !slot.Empty && IsConditionMet(slot.Itemstack) && !IsLiquidContainer(slot.Itemstack))
+                    if (slot != null && !slot.Empty && IsConditionMet(slot.Itemstack) && (!IsLiquidContainer(slot.Itemstack) || canTransferLiquids))
                     {
                         return slot;
                     }
@@ -47,14 +50,14 @@ namespace SignalsLink.src.signals.managedchute.transporting
             {
                 if (sourceInv.Count == 0) return null;
                 var slot = sourceInv[sourceInv.Count - 1];
-                return IsLiquidContainer(slot.Itemstack) || !IsConditionMet(slot.Itemstack) ? null : slot;
+                return (IsLiquidContainer(slot.Itemstack) && !canTransferLiquids) || !IsConditionMet(slot.Itemstack) ? null : slot;
             }
 
             // 1) 0 -> „vysávej všechny sloty“ = první NEprázdný, který není liquid container
             for (int i = 0; i < sourceInv.Count; i++)
             {
                 ItemSlot slot = sourceInv[i];
-                if (slot != null && !slot.Empty && IsConditionMet(slot.Itemstack) && !IsLiquidContainer(slot.Itemstack))
+                if (slot != null && !slot.Empty && IsConditionMet(slot.Itemstack) && (!IsLiquidContainer(slot.Itemstack) || canTransferLiquids))
                 {
                     return slot;
                 }
