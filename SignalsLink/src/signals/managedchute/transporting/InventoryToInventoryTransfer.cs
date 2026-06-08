@@ -2,6 +2,7 @@ using Vintagestory.API.Common;
 using Vintagestory.API.Config;
 using Vintagestory.API.Util;
 using Vintagestory.GameContent;
+using SignalsLink.src.signals.paperConditions;
 
 namespace SignalsLink.src.signals.managedchute.transporting
 {
@@ -22,29 +23,43 @@ namespace SignalsLink.src.signals.managedchute.transporting
                 canTransferLiquids = true;
         }
 
-        public int TryMoveOneItem(ItemStackMoveOperation opTemplate)
+        public override bool UsesAmountAsTriggerOnly => true;
+
+        protected override void AddConditionContext(IDictionary<string, object> ctx)
         {
-            ItemSlot src = GetSourceSlot();
-            if (src == null || src.Empty) return 0;
+            ctx["targetInventory"] = targetInv;
+        }
 
-            ItemSlot dst = GetTargetSlot(src);
-            if (dst == null) return 0;
+        public TransferOperationResult TryMove(ItemStackMoveOperation opTemplate)
+        {
+            TransferSelection selection = GetTransferSelection();
+            ItemSlot src = selection?.SourceSlot;
+            if (src == null || src.Empty) return TransferOperationResult.None;
 
-            int liquidMoved = TryMoveLiquidIntoSmeltingSlot(src, dst);
-            if (liquidMoved > 0)
+            ItemSlot dst = GetTargetSlot(src, selection.Directives);
+            if (dst == null) return TransferOperationResult.None;
+
+            decimal requestedAmount = selection.Directives.Amount ?? opTemplate.RequestedQuantity;
+
+            TransferOperationResult liquidResult = TryMoveLiquidIntoSmeltingSlot(src, dst, requestedAmount);
+            if (liquidResult.Success)
             {
                 src.MarkDirty();
                 dst.MarkDirty();
-                return 1;
+                return liquidResult;
             }
 
-            // Zkopíruj operation – šablonu si neničíme
+            if (ShouldRequireSmeltingLiquidTransfer(src, dst))
+            {
+                return TransferOperationResult.None;
+            }
+
             ItemStackMoveOperation op = new ItemStackMoveOperation(
                 opTemplate.World,
                 opTemplate.MouseButton,
                 opTemplate.Modifiers,
                 opTemplate.CurrentPriority,
-                opTemplate.RequestedQuantity 
+                GetItemTransferQuantity(src, requestedAmount)
             );
 
             int moved = src.TryPutInto(dst, ref op);
@@ -52,29 +67,38 @@ namespace SignalsLink.src.signals.managedchute.transporting
             {
                 src.MarkDirty();
                 dst.MarkDirty();
+                int triggerCost = selection.Directives.HasAmountOverride ? 1 : moved;
+                return new TransferOperationResult(moved, triggerCost);
             }
 
-            return moved;
+            return TransferOperationResult.None;
         }
 
-        private int TryMoveLiquidIntoSmeltingSlot(ItemSlot src, ItemSlot dst)
+        public int TryMoveOneItem(ItemStackMoveOperation opTemplate)
         {
-            if (!"smelting".EqualsFastIgnoreCase(targetInv.ClassName)) return 0;
-            if (outputSlotSignal > 0 && (outputSlotSignal < 4 || outputSlotSignal > 7)) return 0;
-            if (!HasCookingContainer()) return 0;
-            if (dst is not ItemSlotWatertight) return 0;
-            if (src.Itemstack == null || src.Itemstack.StackSize <= 0) return 0;
-
-            int moved = TryMoveLiquidStackIntoWatertightSlot(src, dst);
-            if (moved > 0) return moved;
-
-            moved = TryMoveLiquidContainerIntoWatertightSlot(src, dst);
-            if (moved > 0) return moved;
-
-            return 0;
+            return (int)TryMove(opTemplate).MovedAmount;
         }
 
-        private int TryMoveLiquidStackIntoWatertightSlot(ItemSlot src, ItemSlot dst)
+        private TransferOperationResult TryMoveLiquidIntoSmeltingSlot(ItemSlot src, ItemSlot dst, decimal requestedAmount)
+        {
+            if (!"smelting".EqualsFastIgnoreCase(targetInv.ClassName)) return TransferOperationResult.None;
+            if (!IsSmeltingCookingTarget(dst)) return TransferOperationResult.None;
+            if (!HasCookingContainer()) return TransferOperationResult.None;
+            if (src.Itemstack == null || src.Itemstack.StackSize <= 0) return TransferOperationResult.None;
+
+            decimal litersToMove = NormalizeLiquidAmount(requestedAmount);
+            if (litersToMove <= 0) return TransferOperationResult.None;
+
+            int moved = TryMoveLiquidStackIntoWatertightSlot(src, dst, litersToMove);
+            if (moved > 0) return CreateLiquidTransferResult(src, moved);
+
+            moved = TryMoveLiquidContainerIntoWatertightSlot(src, dst, litersToMove);
+            if (moved > 0) return CreateLiquidTransferResult(src, moved);
+
+            return TransferOperationResult.None;
+        }
+
+        private int TryMoveLiquidStackIntoWatertightSlot(ItemSlot src, ItemSlot dst, decimal litersToMove)
         {
             ItemStack liquidStack = src.Itemstack;
             var liquidProps = BlockLiquidContainerBase.GetContainableProps(liquidStack);
@@ -86,7 +110,8 @@ namespace SignalsLink.src.signals.managedchute.transporting
             float remainingLitres = ((ItemSlotWatertight)dst).capacityLitres - currentLitres;
             if (remainingLitres <= 0) return 0;
 
-            int moveQuantity = Math.Min(src.StackSize, (int)(liquidProps.ItemsPerLitre * Math.Min(1f, remainingLitres)));
+            float allowedLitres = Math.Min((float)litersToMove, remainingLitres);
+            int moveQuantity = Math.Min(src.StackSize, (int)(liquidProps.ItemsPerLitre * allowedLitres));
             if (moveQuantity <= 0) return 0;
 
             if (dst.Empty)
@@ -104,7 +129,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
             return moveQuantity;
         }
 
-        private int TryMoveLiquidContainerIntoWatertightSlot(ItemSlot src, ItemSlot dst)
+        private int TryMoveLiquidContainerIntoWatertightSlot(ItemSlot src, ItemSlot dst, decimal litersToMove)
         {
             BlockLiquidContainerBase liquidContainer = src.Itemstack?.Block as BlockLiquidContainerBase;
             if (liquidContainer == null) return 0;
@@ -122,7 +147,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
             if (remainingLitres <= 0) return 0;
 
             float sourceLitres = liquidStack.StackSize / liquidProps.ItemsPerLitre;
-            float toMoveLitres = Math.Min(1f, Math.Min(remainingLitres, sourceLitres));
+            float toMoveLitres = Math.Min((float)litersToMove, Math.Min(remainingLitres, sourceLitres));
             if (toMoveLitres <= 0) return 0;
 
             int quantityPerContainer = (int)(liquidProps.ItemsPerLitre * toMoveLitres / src.Itemstack.StackSize);
@@ -145,12 +170,14 @@ namespace SignalsLink.src.signals.managedchute.transporting
             return taken.StackSize;
         }
 
-        private ItemSlot GetTargetSlot(ItemSlot fromSlot)
+        private ItemSlot GetTargetSlot(ItemSlot fromSlot, SignalsLink.src.signals.paperConditions.PaperConditionDirectives directives)
         {
+            byte effectiveTargetSlotSignal = directives?.TargetSlot ?? outputSlotSignal;
+
             // OutputSlot: 1-based index, 0 = první vhodný
-            if (outputSlotSignal > 0)
+            if (effectiveTargetSlotSignal > 0)
             {
-                int index = outputSlotSignal - 1;
+                int index = effectiveTargetSlotSignal - 1;
                 if (index >= 0 && index < targetInv.Count)
                 {
                     return targetInv[index];
@@ -223,6 +250,49 @@ namespace SignalsLink.src.signals.managedchute.transporting
         private bool HasCookingContainer()
         {
             return targetInv is InventorySmelting smeltingInventory && smeltingInventory.HaveCookingContainer;
+        }
+
+        private bool IsSmeltingCookingTarget(ItemSlot slot)
+        {
+            if (slot is not ItemSlotWatertight) return false;
+
+            int slotIndex = targetInv.GetSlotId(slot);
+            return slotIndex >= 3 && slotIndex <= 6;
+        }
+
+        private static int GetItemTransferQuantity(ItemSlot src, decimal requestedAmount)
+        {
+            if (requestedAmount <= 0) return 0;
+
+            int quantity = (int)decimal.Truncate(requestedAmount);
+            if (quantity <= 0) quantity = 1;
+
+            return Math.Min(src.StackSize, quantity);
+        }
+
+        private static decimal NormalizeLiquidAmount(decimal amount)
+        {
+            if (amount <= 0) return 0;
+            return decimal.Round(amount, 2, MidpointRounding.ToZero);
+        }
+
+        private bool ShouldRequireSmeltingLiquidTransfer(ItemSlot src, ItemSlot dst)
+        {
+            if (!"smelting".EqualsFastIgnoreCase(targetInv.ClassName)) return false;
+            if (!IsSmeltingCookingTarget(dst)) return false;
+            if (!HasCookingContainer()) return false;
+
+            return GetLiquidStackForTransfer(src.Itemstack) != null;
+        }
+
+        private TransferOperationResult CreateLiquidTransferResult(ItemSlot src, int movedItems)
+        {
+            var liquidStack = GetLiquidStackForTransfer(src.Itemstack);
+            var liquidProps = BlockLiquidContainerBase.GetContainableProps(liquidStack);
+            if (liquidProps == null || liquidProps.ItemsPerLitre <= 0) return TransferOperationResult.None;
+
+            decimal movedLitres = decimal.Round(movedItems / (decimal)liquidProps.ItemsPerLitre, 2, MidpointRounding.ToZero);
+            return movedLitres > 0 ? new TransferOperationResult(movedLitres, 1) : TransferOperationResult.None;
         }
     }
 }

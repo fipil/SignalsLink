@@ -2,6 +2,7 @@
 using SignalsLink.src.signals.managedchute.transporting;
 using SignalsLink.src.signals.paperConditions;
 using System;
+using System.Globalization;
 using System.Text;
 using Vintagestory.API.Common;
 using Vintagestory.API.Config;
@@ -93,11 +94,14 @@ namespace SignalsLink.src.signals.managedchute
             ItemStackMoveOperation opTemplate = new ItemStackMoveOperation(Api.World, EnumMouseButton.Left, 0, EnumMergePriority.DirectMerge, 1);
 
             bool remainingChanged = false;
-            int movedTotal = 0;
+            decimal movedTotal = 0;
             while (movedTotal < allowedNow)
             {
-                int movedNow = transfer.TryMoveOneItem(opTemplate);
-                if (movedNow <= 0) break;
+                TransferOperationResult moveResult = transfer.TryMove(opTemplate);
+                if (!moveResult.Success) break;
+
+                int triggerCost = moveResult.TriggerCost;
+                if (!unlimited && movedTotal + moveResult.MovedAmount > allowedNow) break;
 
                 try
                 {
@@ -106,12 +110,12 @@ namespace SignalsLink.src.signals.managedchute
                 }
                 catch (Exception) { }
 
-                movedTotal += movedNow;
-                itemFlowAccum -= movedNow;
+                movedTotal += moveResult.MovedAmount;
+                itemFlowAccum -= (float)moveResult.MovedAmount;
 
                 if (!unlimited)
                 {
-                    remaining -= movedNow;
+                    remaining -= triggerCost;
                     remainingChanged = true;
                     if (remaining <= 0) break;
                 }

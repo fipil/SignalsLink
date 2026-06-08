@@ -28,7 +28,14 @@ namespace SignalsLink.src.signals.managedchute.transporting
             this.conditionsEvaluator = conditionsEvaluator;
         }
 
+        public virtual bool UsesAmountAsTriggerOnly => false;
+
         protected ItemSlot GetSourceSlot()
+        {
+            return GetTransferSelection()?.SourceSlot;
+        }
+
+        protected TransferSelection GetTransferSelection()
         {
             // 3) Konkrétní slot: 1–14 -> index (signal-1)
             if (inputSlotSignal > 0 && inputSlotSignal < 15)
@@ -37,9 +44,9 @@ namespace SignalsLink.src.signals.managedchute.transporting
                 if (index >= 0 && index < sourceInv.Count)
                 {
                     ItemSlot slot = sourceInv[index];
-                    if (slot != null && !slot.Empty && IsConditionMet(slot.Itemstack) && (!IsLiquidContainer(slot.Itemstack) || canTransferLiquids))
+                    if (TryCreateTransferSelection(slot, out TransferSelection selection))
                     {
-                        return slot;
+                        return selection;
                     }
                 }
                 return null;
@@ -50,16 +57,16 @@ namespace SignalsLink.src.signals.managedchute.transporting
             {
                 if (sourceInv.Count == 0) return null;
                 var slot = sourceInv[sourceInv.Count - 1];
-                return (IsLiquidContainer(slot.Itemstack) && !canTransferLiquids) || !IsConditionMet(slot.Itemstack) ? null : slot;
+                return TryCreateTransferSelection(slot, out TransferSelection selection) ? selection : null;
             }
 
             // 1) 0 -> „vysávej všechny sloty“ = první NEprázdný, který není liquid container
             for (int i = 0; i < sourceInv.Count; i++)
             {
                 ItemSlot slot = sourceInv[i];
-                if (slot != null && !slot.Empty && IsConditionMet(slot.Itemstack) && (!IsLiquidContainer(slot.Itemstack) || canTransferLiquids))
+                if (TryCreateTransferSelection(slot, out TransferSelection selection))
                 {
-                    return slot;
+                    return selection;
                 }
             }
 
@@ -84,12 +91,36 @@ namespace SignalsLink.src.signals.managedchute.transporting
 
         protected bool IsConditionMet(ItemStack stack)
         {
+            return TryGetMatchedDirectives(stack, out _);
+        }
+
+        protected bool TryGetMatchedDirectives(ItemStack stack, out PaperConditionDirectives directives)
+        {
+            directives = PaperConditionDirectives.Empty;
+            var ctx = ItemConditionContextUtil.BuildContext(api.World, stack);
+            ctx["inventory"] = sourceInv;
+            AddConditionContext(ctx);
+
             if (conditionsEvaluator.HasConditions)
             {
-                var ctx = ItemConditionContextUtil.BuildContext(api.World, stack);
-                ctx["inventory"] = sourceInv;
-                return conditionsEvaluator.Evaluate(stack, ctx, out byte blockIndex);
+                return conditionsEvaluator.Evaluate(stack, ctx, out byte blockIndex, out directives);
             }
+            return true;
+        }
+
+        protected virtual void AddConditionContext(IDictionary<string, object> ctx)
+        {
+        }
+
+        private bool TryCreateTransferSelection(ItemSlot slot, out TransferSelection selection)
+        {
+            selection = null;
+
+            if (slot == null || slot.Empty) return false;
+            if (IsLiquidContainer(slot.Itemstack) && !canTransferLiquids) return false;
+            if (!TryGetMatchedDirectives(slot.Itemstack, out PaperConditionDirectives directives)) return false;
+
+            selection = new TransferSelection(slot, directives);
             return true;
         }
     }

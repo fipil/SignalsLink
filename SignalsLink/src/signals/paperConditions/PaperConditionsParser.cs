@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -20,6 +21,9 @@ namespace SignalsLink.src.signals.paperConditions
             {
                 var lines = new List<ICondition>();
                 byte? outputValue = null;
+                byte? targetSlot = null;
+                bool requireTargetEmpty = false;
+                decimal? amount = null;
                 foreach (var rawLine in p.Split('\n'))
                 {
                     var line = rawLine.Trim();
@@ -40,17 +44,74 @@ namespace SignalsLink.src.signals.paperConditions
                         continue;
                     }
 
+                    if (TryParseTargetDirective(line, out byte parsedTargetSlot, out bool parsedRequireTargetEmpty))
+                    {
+                        targetSlot = parsedTargetSlot;
+                        requireTargetEmpty = parsedRequireTargetEmpty;
+                        continue;
+                    }
+
+                    if (line.StartsWith("target ", StringComparison.OrdinalIgnoreCase))
+                    {
+                        errors?.Add(line);
+                        continue;
+                    }
+
+                    if (TryParseAmountDirective(line, out decimal parsedAmount))
+                    {
+                        amount = parsedAmount;
+                        continue;
+                    }
+
+                    if (line.StartsWith("amount ", StringComparison.OrdinalIgnoreCase))
+                    {
+                        errors?.Add(line);
+                        continue;
+                    }
+
                     lines.Add(ParseLine(line, errors));
                 }
 
                 if (lines.Count > 0)
                 {
                     // Default output value when none specified: 15
-                    blocks.Add(new ConditionBlock(lines, outputValue ?? 15));
+                    blocks.Add(new ConditionBlock(lines, outputValue ?? 15, new PaperConditionDirectives(targetSlot, amount, requireTargetEmpty)));
                 }
             }
 
             return new CompiledConditions(blocks);
+        }
+
+        private static bool TryParseTargetDirective(string line, out byte targetSlot, out bool requireTargetEmpty)
+        {
+            targetSlot = 0;
+            requireTargetEmpty = false;
+
+            if (!line.StartsWith("target ", StringComparison.OrdinalIgnoreCase)) return false;
+
+            var parts = line.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length == 2 && byte.TryParse(parts[1], out targetSlot) && targetSlot >= 1 && targetSlot <= 14)
+            {
+                return true;
+            }
+
+            if (parts.Length == 3 && byte.TryParse(parts[1], out targetSlot) && targetSlot >= 1 && targetSlot <= 14 && parts[2].Equals("ifEmpty", StringComparison.OrdinalIgnoreCase))
+            {
+                requireTargetEmpty = true;
+                return true;
+            }
+
+            return false;
+        }
+
+        private static bool TryParseAmountDirective(string line, out decimal amount)
+        {
+            amount = 0;
+
+            if (!line.StartsWith("amount ", StringComparison.OrdinalIgnoreCase)) return false;
+
+            var parts = line.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            return parts.Length == 2 && decimal.TryParse(parts[1], NumberStyles.Number, CultureInfo.InvariantCulture, out amount);
         }
 
         private static readonly Regex validNameRegex = new Regex("^[A-Za-z0-9_]+$", RegexOptions.Compiled);
@@ -163,14 +224,21 @@ namespace SignalsLink.src.signals.paperConditions
         // Původní signatura – pro starší volání
         public bool Evaluate(ItemStack stack, IDictionary<string, object> ctx)
         {
-            byte _;
-            return Evaluate(stack, ctx, out _);
+            byte matchedBlockIndex;
+            PaperConditionDirectives directives;
+            return Evaluate(stack, ctx, out matchedBlockIndex, out directives);
         }
 
         // Nová verze s indexem prvního splněného bloku (1-based), 0 = žádný
         public bool Evaluate(ItemStack stack, IDictionary<string, object> ctx, out byte matchedBlockIndex)
         {
+            return Evaluate(stack, ctx, out matchedBlockIndex, out _);
+        }
+
+        public bool Evaluate(ItemStack stack, IDictionary<string, object> ctx, out byte matchedBlockIndex, out PaperConditionDirectives directives)
+        {
             matchedBlockIndex = 0;
+            directives = PaperConditionDirectives.Empty;
 
             for (int i = 0; i < blocks.Count; i++)
             {
@@ -178,6 +246,7 @@ namespace SignalsLink.src.signals.paperConditions
                 {
                     // Use block's configured output value (1..14) or default (15)
                     matchedBlockIndex = blocks[i].OutputValue;
+                    directives = blocks[i].Directives;
                     return true;
                 }
             }
@@ -191,11 +260,13 @@ namespace SignalsLink.src.signals.paperConditions
         private readonly List<ICondition> conditions;
 
         public byte OutputValue { get; }
+        public PaperConditionDirectives Directives { get; }
 
-        public ConditionBlock(List<ICondition> conditions, byte outputValue)
+        public ConditionBlock(List<ICondition> conditions, byte outputValue, PaperConditionDirectives directives)
         {
             this.conditions = conditions;
             OutputValue = outputValue;
+            Directives = directives ?? PaperConditionDirectives.Empty;
         }
 
         public bool Evaluate(ItemStack stack, IDictionary<string, object> ctx)
@@ -204,7 +275,8 @@ namespace SignalsLink.src.signals.paperConditions
             {
                 if (!c.Evaluate(stack, ctx)) return false;
             }
-            return true;
+
+            return Directives.Evaluate(ctx);
         }
     }
 

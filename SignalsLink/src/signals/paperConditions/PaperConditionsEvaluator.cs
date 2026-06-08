@@ -50,8 +50,9 @@ public class PaperConditionsEvaluator
     /// </summary>
     public bool Evaluate(ItemStack stack, IDictionary<string, object> ctx = null)
     {
-        byte _;
-        return Evaluate(stack, ctx, out _);
+        byte matchedBlockIndex;
+        PaperConditionDirectives directives;
+        return Evaluate(stack, ctx, out matchedBlockIndex, out directives);
     }
 
     /// <summary>
@@ -59,7 +60,13 @@ public class PaperConditionsEvaluator
     /// </summary>
     public bool Evaluate(ItemStack stack, IDictionary<string, object> ctx, out byte matchedBlockIndex)
     {
+        return Evaluate(stack, ctx, out matchedBlockIndex, out _);
+    }
+
+    public bool Evaluate(ItemStack stack, IDictionary<string, object> ctx, out byte matchedBlockIndex, out PaperConditionDirectives directives)
+    {
         matchedBlockIndex = 0;
+        directives = PaperConditionDirectives.Empty;
 
         if (string.IsNullOrWhiteSpace(conditionsText))
         {
@@ -77,7 +84,7 @@ public class PaperConditionsEvaluator
 
         if (compiled == null) return false;
 
-        return compiled.Evaluate(stack, ctx, out matchedBlockIndex);
+        return compiled.Evaluate(stack, ctx, out matchedBlockIndex, out directives);
     }
 
     /// <summary>

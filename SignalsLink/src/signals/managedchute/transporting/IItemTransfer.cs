@@ -8,5 +8,11 @@ namespace SignalsLink.src.signals.managedchute.transporting
         // Provede jeden krok pøenosu a vrátí, kolik kusù bylo skuteènì pøesunuto.
         // Chute pak podle toho odeèítá remaining / flow.
         int TryMoveOneItem(ItemStackMoveOperation opTemplate);
+
+        TransferOperationResult TryMove(ItemStackMoveOperation opTemplate)
+        {
+            int moved = TryMoveOneItem(opTemplate);
+            return moved > 0 ? new TransferOperationResult(moved, moved) : TransferOperationResult.None;
+        }
     }
 }
