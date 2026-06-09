@@ -12,7 +12,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
         TransferOperationResult TryMove(ItemStackMoveOperation opTemplate)
         {
             int moved = TryMoveOneItem(opTemplate);
-            return moved > 0 ? new TransferOperationResult(moved, moved) : TransferOperationResult.None;
+            return moved > 0 ? new TransferOperationResult(moved, moved, false) : TransferOperationResult.None;
         }
     }
 }

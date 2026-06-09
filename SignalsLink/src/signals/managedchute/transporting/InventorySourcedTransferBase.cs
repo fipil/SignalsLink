@@ -94,6 +94,11 @@ namespace SignalsLink.src.signals.managedchute.transporting
             return TryGetMatchedDirectives(stack, out _);
         }
 
+        protected virtual bool CanTransferSelection(ItemSlot slot, PaperConditionDirectives directives)
+        {
+            return true;
+        }
+
         protected bool TryGetMatchedDirectives(ItemStack stack, out PaperConditionDirectives directives)
         {
             directives = PaperConditionDirectives.Empty;
@@ -119,6 +124,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
             if (slot == null || slot.Empty) return false;
             if (IsLiquidContainer(slot.Itemstack) && !canTransferLiquids) return false;
             if (!TryGetMatchedDirectives(slot.Itemstack, out PaperConditionDirectives directives)) return false;
+            if (!CanTransferSelection(slot, directives)) return false;
 
             selection = new TransferSelection(slot, directives);
             return true;

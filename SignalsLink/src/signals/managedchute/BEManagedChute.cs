@@ -2,7 +2,6 @@
 using SignalsLink.src.signals.managedchute.transporting;
 using SignalsLink.src.signals.paperConditions;
 using System;
-using System.Globalization;
 using System.Text;
 using Vintagestory.API.Common;
 using Vintagestory.API.Config;
@@ -32,6 +31,7 @@ namespace SignalsLink.src.signals.managedchute
         private float itemFlowAccum;
 
         private static AssetLocation hopperTumble = new AssetLocation("sounds/block/hoppertumble");
+        private static AssetLocation waterSound = new AssetLocation("sounds/block/water");
 
         private IItemTransfer transfer;
 
@@ -95,18 +95,19 @@ namespace SignalsLink.src.signals.managedchute
 
             bool remainingChanged = false;
             decimal movedTotal = 0;
+            decimal allowedNowDecimal = allowedNow;
             while (movedTotal < allowedNow)
             {
                 TransferOperationResult moveResult = transfer.TryMove(opTemplate);
                 if (!moveResult.Success) break;
 
                 int triggerCost = moveResult.TriggerCost;
-                if (!unlimited && movedTotal + moveResult.MovedAmount > allowedNow) break;
+                if (!unlimited && movedTotal + moveResult.MovedAmount > allowedNowDecimal) break;
 
                 try
                 {
                     if (!(this.Api.World.Rand.NextDouble() >= 0.2))
-                        this.Api.World.PlaySoundAt(hopperTumble, this.Pos, 0.0, range: 8f, volume: 0.5f);
+                        this.Api.World.PlaySoundAt(moveResult.IsLiquid ? waterSound : hopperTumble, this.Pos, 0.0, range: 8f, volume: 0.5f);
                 }
                 catch (Exception) { }
 
