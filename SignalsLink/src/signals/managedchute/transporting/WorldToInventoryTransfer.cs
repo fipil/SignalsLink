@@ -1,21 +1,19 @@
 using SignalsLink.src.signals.paperConditions;
-using System;
-using System.Collections.Generic;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
 using Vintagestory.API.MathTools;
-using Vintagestory.GameContent; // nahoøe
+using Vintagestory.GameContent;
 
 namespace SignalsLink.src.signals.managedchute.transporting
 {
-    // Pøenos: svìt (item entity) -> inventáø.
     public class WorldToInventoryTransfer : IItemTransfer
     {
         private readonly ICoreAPI api;
         private readonly BlockPos sourcePos;
         private readonly IInventory targetInv;
         private readonly byte targetSlotSignal;
-        protected readonly PaperConditionsEvaluator conditionsEvaluator;
+        private readonly PaperConditionsEvaluator conditionsEvaluator;
+        private readonly LiquidTransferService liquidTransferService;
 
         public WorldToInventoryTransfer(ICoreAPI api, BlockPos sourcePos, IInventory targetInv, byte targetSlotSignal, PaperConditionsEvaluator conditionsEvaluator)
         {
@@ -24,21 +22,29 @@ namespace SignalsLink.src.signals.managedchute.transporting
             this.targetInv = targetInv;
             this.targetSlotSignal = targetSlotSignal;
             this.conditionsEvaluator = conditionsEvaluator;
+            liquidTransferService = new LiquidTransferService(api, targetInv, null);
         }
 
-        public int TryMoveOneItem(ItemStackMoveOperation opTemplate)
+        public TransferOperationResult TryMove(ItemStackMoveOperation opTemplate)
         {
-            // Najdi jednu vhodnou item entitu v okolí sourcePos
+            ItemSlot liquidTargetSlot = liquidTransferService.GetTargetSlot(CreatePreferredWorldLiquidProbeStack(), targetSlotSignal);
+            if (liquidTargetSlot != null)
+            {
+                TransferOperationResult liquidResult = liquidTransferService.TryMoveFromWorldSource(sourcePos, liquidTargetSlot, opTemplate.RequestedQuantity, false);
+                if (liquidResult.Success)
+                {
+                    liquidTargetSlot.MarkDirty();
+                    return liquidResult;
+                }
+            }
+
             EntityItem entity = FindItemEntityNearSource();
-            if (entity == null || entity.Itemstack == null || entity.Itemstack.StackSize <= 0) return 0;
+            if (entity == null || entity.Itemstack == null || entity.Itemstack.StackSize <= 0) return TransferOperationResult.None;
 
             ItemStack stack = entity.Itemstack;
-
-            // Pokus se vložit 1 kus do inventáøe
             int moved = TryPutOneIntoInventory(stack);
-            if (moved <= 0) return 0;
+            if (moved <= 0) return TransferOperationResult.None;
 
-            // Snížíme stack v entitì
             stack.StackSize -= moved;
             if (stack.StackSize <= 0)
             {
@@ -49,14 +55,18 @@ namespace SignalsLink.src.signals.managedchute.transporting
                 entity.Itemstack = stack;
             }
 
-            return moved;
+            return new TransferOperationResult(moved, moved, false);
+        }
+
+        public int TryMoveOneItem(ItemStackMoveOperation opTemplate)
+        {
+            return (int)TryMove(opTemplate).MovedAmount;
         }
 
         private EntityItem FindItemEntityNearSource()
         {
             IWorldAccessor world = api.World;
 
-            // 3×3×3 blokù okolo sourcePos => svìtový AABB pøes celé bloky
             var min = new Vec3d(sourcePos.X - 1, sourcePos.Y - 1, sourcePos.Z - 1);
             var max = new Vec3d(sourcePos.X + 2, sourcePos.Y + 2, sourcePos.Z + 2);
 
@@ -68,12 +78,10 @@ namespace SignalsLink.src.signals.managedchute.transporting
 
                 var stack = itemEntity.Itemstack;
                 if (stack == null || stack.StackSize <= 0) return false;
-
-                // ignorovat liquid containery + itemy nesplòující podmínky
                 if (IsLiquidContainer(stack) || !IsConditionMet(stack)) return false;
 
                 found = itemEntity;
-                return true; // stop
+                return true;
             });
 
             return found;
@@ -81,7 +89,6 @@ namespace SignalsLink.src.signals.managedchute.transporting
 
         private int TryPutOneIntoInventory(ItemStack fromStack)
         {
-            // explicitní slot
             if (targetSlotSignal > 0)
             {
                 int index = targetSlotSignal - 1;
@@ -94,7 +101,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
                         one.StackSize = 1;
 
                         DummySlot dummy = new DummySlot(one);
-                        int moved = dummy.TryPutInto(api.World, slot, 1); // použij overload s quantity
+                        int moved = dummy.TryPutInto(api.World, slot, 1);
                         if (moved > 0)
                         {
                             slot.MarkDirty();
@@ -106,7 +113,6 @@ namespace SignalsLink.src.signals.managedchute.transporting
                 return 0;
             }
 
-            // první vhodný slot
             for (int i = 0; i < targetInv.Count; i++)
             {
                 ItemSlot slot = targetInv[i];
@@ -127,23 +133,30 @@ namespace SignalsLink.src.signals.managedchute.transporting
             return 0;
         }
 
+        private ItemStack CreatePreferredWorldLiquidProbeStack()
+        {
+            Item item = api.World.GetItem(new AssetLocation("game", "waterportion"));
+            return item == null ? null : new ItemStack(item, 1);
+        }
+
         private bool IsLiquidContainer(ItemStack stack)
         {
             if (stack?.Collectible == null) return false;
             if (stack.Collectible is BlockLiquidContainerBase) return true;
             if (stack.Collectible is ILiquidInterface) return true;
-            // ItemLiquidPortion is internal, so check by type name string instead
             if (stack.Collectible.GetType().Name == "ItemLiquidPortion") return true;
             return false;
         }
 
-        protected bool IsConditionMet(ItemStack stack)
+        private bool IsConditionMet(ItemStack stack)
         {
             if (conditionsEvaluator.HasConditions)
             {
                 var ctx = ItemConditionContextUtil.BuildContext(api.World, stack);
-                return conditionsEvaluator.Evaluate(stack, ctx, out byte blockIndex);
+                liquidTransferService.AddConditionContext(ctx);
+                return conditionsEvaluator.Evaluate(stack, ctx, out byte _);
             }
+
             return true;
         }
     }
