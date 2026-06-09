@@ -276,7 +276,7 @@ namespace SignalsLink.src.signals.paperConditions
                 if (!c.Evaluate(stack, ctx)) return false;
             }
 
-            return Directives.Evaluate(ctx);
+            return true;
         }
     }
 

@@ -124,10 +124,18 @@ namespace SignalsLink.src.signals.managedchute.transporting
             if (slot == null || slot.Empty) return false;
             if (IsLiquidContainer(slot.Itemstack) && !canTransferLiquids) return false;
             if (!TryGetMatchedDirectives(slot.Itemstack, out PaperConditionDirectives directives)) return false;
+            if (!directives.Evaluate(BuildDirectiveContext())) return false;
             if (!CanTransferSelection(slot, directives)) return false;
 
             selection = new TransferSelection(slot, directives);
             return true;
+        }
+
+        private IDictionary<string, object> BuildDirectiveContext()
+        {
+            var ctx = new Dictionary<string, object>();
+            AddConditionContext(ctx);
+            return ctx;
         }
     }
 }
