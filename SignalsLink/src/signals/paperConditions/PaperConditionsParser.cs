@@ -310,9 +310,12 @@ namespace SignalsLink.src.signals.paperConditions
 
         public bool Evaluate(ItemStack stack, IDictionary<string, object> ctx)
         {
-            var code = stack?.Collectible?.Code?.ToString();
-            if (string.IsNullOrEmpty(code)) return false;
-            return regex.IsMatch(code);
+            foreach (string code in ConditionCodeHelper.GetCodes(stack))
+            {
+                if (regex.IsMatch(code)) return true;
+            }
+
+            return false;
         }
     }
 
@@ -323,9 +326,58 @@ namespace SignalsLink.src.signals.paperConditions
 
         public bool Evaluate(ItemStack stack, IDictionary<string, object> ctx)
         {
-            var code = stack?.Collectible?.Code?.ToString();
-            if (string.IsNullOrEmpty(code)) return false;
-            return regex.IsMatch(code);
+            foreach (string code in ConditionCodeHelper.GetCodes(stack))
+            {
+                if (regex.IsMatch(code)) return true;
+            }
+
+            return false;
+        }
+    }
+
+    public static class ConditionCodeHelper
+    {
+        public static IEnumerable<string> GetCodes(ItemStack stack)
+        {
+            if (stack?.Collectible?.Code == null) yield break;
+
+            string collectibleCode = stack.Collectible.Code.ToString();
+            if (!string.IsNullOrEmpty(collectibleCode))
+            {
+                yield return collectibleCode;
+            }
+
+            foreach (string spilledCode in GetLiquidSpilledCodes(stack))
+            {
+                if (!string.IsNullOrEmpty(spilledCode) && !string.Equals(spilledCode, collectibleCode, StringComparison.Ordinal))
+                {
+                    yield return spilledCode;
+                }
+            }
+        }
+
+        private static IEnumerable<string> GetLiquidSpilledCodes(ItemStack stack)
+        {
+            var whenSpilled = stack?.ItemAttributes?["waterTightContainerProps"]?["whenSpilled"];
+            if (whenSpilled == null) yield break;
+
+            string stackCode = whenSpilled["stack"]?["code"].AsString(null);
+            if (!string.IsNullOrEmpty(stackCode))
+            {
+                yield return stackCode;
+            }
+
+            Dictionary<string, JsonItemStack> stackByFillLevel = whenSpilled["stackByFillLevel"]?.AsObject<Dictionary<string, JsonItemStack>>(null);
+            if (stackByFillLevel == null) yield break;
+
+            foreach (JsonItemStack jsonStack in stackByFillLevel.Values)
+            {
+                string fillLevelCode = jsonStack?.Code?.ToString();
+                if (!string.IsNullOrEmpty(fillLevelCode))
+                {
+                    yield return fillLevelCode;
+                }
+            }
         }
     }
 
