@@ -48,6 +48,11 @@ namespace SignalsLink.src.signals.blocksensor.scanners
 
                         if (conditionsEvaluator.Evaluate(stackForEval, ctx, out byte output))
                         {
+                            if (output == ConditionBlock.DefaultOutputValue)
+                            {
+                                return GetDefaultInventorySignal(inventory);
+                            }
+
                             if (output > 0 && output < 15)
                                 return output;
                             else if (output == 15)
@@ -66,6 +71,28 @@ namespace SignalsLink.src.signals.blocksensor.scanners
             {
                 // No condition met, so return zero
                 return 0;
+            }
+
+            return GetDefaultInventorySignal(inventory);
+        }
+
+        private byte GetDefaultInventorySignal(IInventory inventory)
+        {
+            if (inventory == null || inventory.Empty)
+                return 0;
+
+            int totalSlots = 0;
+            float totalFillLevel = 0f;
+
+            foreach (var slot in inventory)
+            {
+                totalSlots++;
+
+                if (!slot.Empty)
+                {
+                    float fillRatio = (float)slot.StackSize / slot.Itemstack.Collectible.MaxStackSize;
+                    totalFillLevel += fillRatio;
+                }
             }
 
             if (totalSlots == 0)

@@ -21,9 +21,18 @@ namespace SignalsLink.src.signals.blocksensor.scanners
             if(conditionsEvaluator.HasConditions)
             {
                 conditionsEvaluator.Evaluate(world.Api, position, out byte matchedBlockIndex);
+                if (matchedBlockIndex == ConditionBlock.DefaultOutputValue)
+                {
+                    return GetDefaultSignal(block);
+                }
                 return matchedBlockIndex;
             }
 
+            return GetDefaultSignal(block);
+        }
+
+        private byte GetDefaultSignal(Block block)
+        {
             // 0 = vzduch
             if (block == null || block.Id == 0)
                 return 0;

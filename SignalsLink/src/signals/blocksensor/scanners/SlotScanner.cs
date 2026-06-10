@@ -41,14 +41,24 @@ namespace SignalsLink.src.signals.blocksensor.scanners
                 // Build context first (so stackSize & other aliases are available)
                 ItemStack stackForEval = slot.Empty ? null : slot.Itemstack;
                 var ctx = ItemConditionContextUtil.BuildContext(world, stackForEval);
+                ctx["inventory"] = inventory;
 
                 // Use dummy stack when slot is empty so parser doesn't crash on Collectible==null
                 ItemStack evalStack = stackForEval ?? (ItemStack)null;
 
                 conditionsEvaluator.Evaluate(evalStack, ctx, out byte matchedBlockIndex);
+                if (matchedBlockIndex == ConditionBlock.DefaultOutputValue)
+                {
+                    return GetDefaultSlotSignal(slot);
+                }
                 return matchedBlockIndex;
             }
 
+            return GetDefaultSlotSignal(slot);
+        }
+
+        protected byte GetDefaultSlotSignal(ItemSlot slot)
+        {
             if (slot.Empty)
             {
                 return 0;

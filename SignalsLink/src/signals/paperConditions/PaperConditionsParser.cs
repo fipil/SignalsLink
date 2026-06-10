@@ -7,6 +7,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Vintagestory.API.Common;
 using Vintagestory.API.Datastructures;
+using Vintagestory.GameContent;
 
 namespace SignalsLink.src.signals.paperConditions
 {
@@ -34,6 +35,12 @@ namespace SignalsLink.src.signals.paperConditions
                     if (line.StartsWith("output ", StringComparison.OrdinalIgnoreCase))
                     {
                         var parts = line.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                        if (parts.Length == 2 && parts[1] == ".")
+                        {
+                            outputValue = ConditionBlock.DefaultOutputValue;
+                            continue;
+                        }
+
                         if (parts.Length == 2 && byte.TryParse(parts[1], out byte val) && val >= 1 && val <= 14)
                         {
                             outputValue = val;
@@ -258,6 +265,8 @@ namespace SignalsLink.src.signals.paperConditions
     public class ConditionBlock
     {
         private readonly List<ICondition> conditions;
+
+        public const byte DefaultOutputValue = byte.MaxValue;
 
         public byte OutputValue { get; }
         public PaperConditionDirectives Directives { get; }
@@ -498,6 +507,20 @@ namespace SignalsLink.src.signals.paperConditions
                 }
 
                 if (inner.Evaluate(slotStack, ctx))
+                {
+                    return true;
+                }
+
+                if (slotStack.Block is BlockLiquidContainerBase liquidContainer)
+                {
+                    ItemStack contentStack = liquidContainer.GetContent(slotStack);
+                    if (contentStack?.Collectible != null && inner.Evaluate(contentStack, ctx))
+                    {
+                        return true;
+                    }
+                }
+
+                if (slotStack.Collectible is ILiquidInterface && inner.Evaluate(slotStack, ctx))
                 {
                     return true;
                 }
