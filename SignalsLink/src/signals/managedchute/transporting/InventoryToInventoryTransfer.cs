@@ -1,4 +1,5 @@
 using Vintagestory.API.Common;
+using Vintagestory.API.Config;
 using Vintagestory.API.MathTools;
 using SignalsLink.src.signals.paperConditions;
 
@@ -65,10 +66,10 @@ namespace SignalsLink.src.signals.managedchute.transporting
                 opTemplate.MouseButton,
                 opTemplate.Modifiers,
                 opTemplate.CurrentPriority,
-                GetItemTransferQuantity(src, requestedAmount)
+                GetItemTransferQuantity(requestedAmount)
             );
 
-            int moved = src.TryPutInto(dst, ref op);
+            int moved = TryMoveItemsFromMatchingSourceSlots(src, dst, ref op, selection.Directives);
             if (moved > 0)
             {
                 src.MarkDirty();
@@ -117,14 +118,70 @@ namespace SignalsLink.src.signals.managedchute.transporting
             return null;
         }
 
-        private static int GetItemTransferQuantity(ItemSlot src, decimal requestedAmount)
+        private static int GetItemTransferQuantity(decimal requestedAmount)
         {
             if (requestedAmount <= 0) return 0;
 
             int quantity = (int)decimal.Truncate(requestedAmount);
             if (quantity <= 0) quantity = 1;
 
-            return System.Math.Min(src.StackSize, quantity);
+            return quantity;
+        }
+
+        private int TryMoveItemsFromMatchingSourceSlots(ItemSlot initialSourceSlot, ItemSlot dst, ref ItemStackMoveOperation op, PaperConditionDirectives directives)
+        {
+            int movedTotal = 0;
+            int requestedQuantity = op.RequestedQuantity;
+
+            foreach (ItemSlot candidate in GetMatchingSourceSlots(initialSourceSlot, directives))
+            {
+                if (movedTotal >= requestedQuantity) break;
+
+                int remaining = requestedQuantity - movedTotal;
+                if (remaining <= 0) break;
+
+                var candidateOp = new ItemStackMoveOperation(
+                    op.World,
+                    op.MouseButton,
+                    op.Modifiers,
+                    op.CurrentPriority,
+                    remaining
+                );
+
+                int movedNow = candidate.TryPutInto(dst, ref candidateOp);
+                if (movedNow <= 0) continue;
+
+                movedTotal += movedNow;
+                candidate.MarkDirty();
+            }
+
+            op.MovedQuantity = movedTotal;
+            return movedTotal;
+        }
+
+        private IEnumerable<ItemSlot> GetMatchingSourceSlots(ItemSlot initialSourceSlot, PaperConditionDirectives directives)
+        {
+            if (initialSourceSlot?.Itemstack == null) yield break;
+
+            ItemStack initialStack = initialSourceSlot.Itemstack;
+
+            yield return initialSourceSlot;
+
+            for (int i = 0; i < sourceInv.Count; i++)
+            {
+                ItemSlot slot = sourceInv[i];
+                if (slot == null || ReferenceEquals(slot, initialSourceSlot) || slot.Empty) continue;
+
+                ItemStack stack = slot.Itemstack;
+                if (stack?.Collectible != initialStack.Collectible) continue;
+                if (!stack.Equals(api.World, initialStack, GlobalConstants.IgnoredStackAttributes)) continue;
+                if (IsLiquidContainer(stack)) continue;
+                if (!TryGetMatchedDirectives(stack, out PaperConditionDirectives candidateDirectives)) continue;
+                if (candidateDirectives.TargetSlot != directives.TargetSlot || candidateDirectives.Amount != directives.Amount || candidateDirectives.RequireTargetEmpty != directives.RequireTargetEmpty) continue;
+                if (!CanTransferSelection(slot, candidateDirectives)) continue;
+
+                yield return slot;
+            }
         }
     }
 }

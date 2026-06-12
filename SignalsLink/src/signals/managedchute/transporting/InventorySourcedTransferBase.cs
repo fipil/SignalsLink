@@ -131,7 +131,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
             return true;
         }
 
-        private IDictionary<string, object> BuildDirectiveContext()
+        protected IDictionary<string, object> BuildDirectiveContext()
         {
             var ctx = new Dictionary<string, object>();
             AddConditionContext(ctx);
