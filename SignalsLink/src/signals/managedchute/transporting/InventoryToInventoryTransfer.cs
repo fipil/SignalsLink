@@ -2,12 +2,14 @@ using Vintagestory.API.Common;
 using Vintagestory.API.Config;
 using Vintagestory.API.MathTools;
 using SignalsLink.src.signals.paperConditions;
+using Vintagestory.GameContent;
 
 namespace SignalsLink.src.signals.managedchute.transporting
 {
     public class InventoryToInventoryTransfer : InventorySourcedTransferBase, IItemTransfer
     {
         private readonly IInventory targetInv;
+        private readonly BlockPos targetPos;
         private readonly byte outputSlotSignal;
         private readonly LiquidTransferService liquidTransferService;
 
@@ -15,6 +17,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
             : base(api, sourceInv, inputSlotSignal, conditionsEvaluator)
         {
             this.targetInv = targetInv;
+            this.targetPos = targetPos;
             this.outputSlotSignal = outputSlotSignal;
             liquidTransferService = new LiquidTransferService(api, targetInv, targetPos);
             canTransferLiquids = liquidTransferService.HasAnyLiquidTargetSlot(outputSlotSignal);
@@ -38,6 +41,8 @@ namespace SignalsLink.src.signals.managedchute.transporting
 
         public TransferOperationResult TryMove(ItemStackMoveOperation opTemplate)
         {
+            ExecuteMatchingActions();
+
             TransferSelection selection = GetTransferSelection();
             ItemSlot src = selection?.SourceSlot;
             if (src == null || src.Empty) return TransferOperationResult.None;
@@ -53,10 +58,17 @@ namespace SignalsLink.src.signals.managedchute.transporting
             {
                 src.MarkDirty();
                 dst.MarkDirty();
+                ExecuteMatchingActions();
                 return liquidResult;
             }
 
             if (liquidTransferService.RequiresLiquidTransfer(src.Itemstack, dst))
+            {
+                return TransferOperationResult.None;
+            }
+
+            int requestedQuantity = GetItemTransferQuantity(requestedAmount);
+            if (selection.Directives.HasAmountOverride && GetAvailableMatchingSourceQuantity(src, selection.Directives) < requestedQuantity)
             {
                 return TransferOperationResult.None;
             }
@@ -66,7 +78,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
                 opTemplate.MouseButton,
                 opTemplate.Modifiers,
                 opTemplate.CurrentPriority,
-                GetItemTransferQuantity(requestedAmount)
+                requestedQuantity
             );
 
             int moved = TryMoveItemsFromMatchingSourceSlots(src, dst, ref op, selection.Directives);
@@ -74,6 +86,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
             {
                 src.MarkDirty();
                 dst.MarkDirty();
+                ExecuteMatchingActions();
                 int triggerCost = selection.Directives.HasAmountOverride ? 1 : moved;
                 return new TransferOperationResult(moved, triggerCost, false);
             }
@@ -159,6 +172,18 @@ namespace SignalsLink.src.signals.managedchute.transporting
             return movedTotal;
         }
 
+        private int GetAvailableMatchingSourceQuantity(ItemSlot initialSourceSlot, PaperConditionDirectives directives)
+        {
+            int totalQuantity = 0;
+
+            foreach (ItemSlot slot in GetMatchingSourceSlots(initialSourceSlot, directives))
+            {
+                totalQuantity += slot.StackSize;
+            }
+
+            return totalQuantity;
+        }
+
         private IEnumerable<ItemSlot> GetMatchingSourceSlots(ItemSlot initialSourceSlot, PaperConditionDirectives directives)
         {
             if (initialSourceSlot?.Itemstack == null) yield break;
@@ -182,6 +207,41 @@ namespace SignalsLink.src.signals.managedchute.transporting
 
                 yield return slot;
             }
+        }
+
+        private void ExecuteMatchingActions()
+        {
+            if (!conditionsEvaluator.HasConditions) return;
+
+            var ctx = BuildActionContext();
+            var actions = conditionsEvaluator.GetMatchingActions(null, ctx);
+            for (int i = 0; i < actions.Count; i++)
+            {
+                actions[i].Execute(ctx);
+            }
+        }
+
+        private IDictionary<string, object> BuildActionContext()
+        {
+            var ctx = new Dictionary<string, object>
+            {
+                ["sourceInventory"] = sourceInv,
+                ["targetInventory"] = targetInv,
+                ["inventory"] = sourceInv
+            };
+
+            if (targetPos != null)
+            {
+                ctx["targetBlockPos"] = targetPos;
+                BlockEntityBarrel barrel = api.World.BlockAccessor.GetBlockEntity(targetPos) as BlockEntityBarrel;
+                if (barrel != null)
+                {
+                    ctx["targetBlockEntity"] = barrel;
+                }
+            }
+
+            AddConditionContext(ctx);
+            return ctx;
         }
     }
 }

@@ -13,6 +13,8 @@ namespace SignalsLink.src.signals.paperConditions
 {
     public static class PaperConditionsParser
     {
+        private static readonly Regex inventoryAmountRegex = new Regex("^(?<pattern>@\\S+|\\S*[\\*\\?]\\S*|[A-Za-z0-9_]+:\\S+)\\s+(?<amount>\\d+(?:[\\.,]\\d+)?)(?<mode>[+-]?)$", RegexOptions.Compiled);
+
         public static CompiledConditions Parse(string text, List<string> errors = null)
         {
             var paragraphs = Regex.Split(text, "\\n\\s*\\n");
@@ -20,16 +22,31 @@ namespace SignalsLink.src.signals.paperConditions
 
             foreach (var p in paragraphs)
             {
-                var lines = new List<ICondition>();
+                var conditions = new List<ScopedCondition>();
+                var actions = new List<IConditionAction>();
                 byte? outputValue = null;
                 byte? targetSlot = null;
                 bool requireTargetEmpty = false;
                 decimal? amount = null;
+                InventoryConditionScope currentScope = InventoryConditionScope.Source;
+
                 foreach (var rawLine in p.Split('\n'))
                 {
                     var line = rawLine.Trim();
                     if (line.Length == 0) continue;
                     if (line.StartsWith("#") || line.StartsWith("//")) continue;
+
+                    if (TryParseScopeDirective(line, out InventoryConditionScope parsedScope))
+                    {
+                        currentScope = parsedScope;
+                        continue;
+                    }
+
+                    if (line.StartsWith("in ", StringComparison.OrdinalIgnoreCase))
+                    {
+                        errors?.Add(line);
+                        continue;
+                    }
 
                     // Special directive: output N  (N = 1..14)
                     if (line.StartsWith("output ", StringComparison.OrdinalIgnoreCase))
@@ -76,17 +93,66 @@ namespace SignalsLink.src.signals.paperConditions
                         continue;
                     }
 
-                    lines.Add(ParseLine(line, errors));
+                    if (TryParseAction(line, out IConditionAction action))
+                    {
+                        actions.Add(action);
+                        continue;
+                    }
+
+                    if (line.StartsWith("do ", StringComparison.OrdinalIgnoreCase))
+                    {
+                        errors?.Add(line);
+                        continue;
+                    }
+
+                    conditions.Add(new ScopedCondition(ParseLine(line, errors), currentScope));
                 }
 
-                if (lines.Count > 0)
+                if (conditions.Count > 0 || actions.Count > 0)
                 {
                     // Default output value when none specified: 15
-                    blocks.Add(new ConditionBlock(lines, outputValue ?? 15, new PaperConditionDirectives(targetSlot, amount, requireTargetEmpty)));
+                    blocks.Add(new ConditionBlock(conditions, outputValue ?? 15, new PaperConditionDirectives(targetSlot, amount, requireTargetEmpty), actions));
                 }
             }
 
             return new CompiledConditions(blocks);
+        }
+
+        private static bool TryParseScopeDirective(string line, out InventoryConditionScope scope)
+        {
+            scope = InventoryConditionScope.Source;
+
+            if (!line.StartsWith("in ", StringComparison.OrdinalIgnoreCase)) return false;
+
+            string value = line.Substring(3).Trim();
+            if (value.Equals("source", StringComparison.OrdinalIgnoreCase))
+            {
+                scope = InventoryConditionScope.Source;
+                return true;
+            }
+
+            if (value.Equals("target", StringComparison.OrdinalIgnoreCase))
+            {
+                scope = InventoryConditionScope.Target;
+                return true;
+            }
+
+            return false;
+        }
+
+        private static bool TryParseAction(string line, out IConditionAction action)
+        {
+            action = null;
+            if (!line.StartsWith("do ", StringComparison.OrdinalIgnoreCase)) return false;
+
+            string value = line.Substring(3).Trim();
+            if (value.Equals("seal", StringComparison.OrdinalIgnoreCase))
+            {
+                action = new SealConditionAction();
+                return true;
+            }
+
+            return false;
         }
 
         private static bool TryParseTargetDirective(string line, out byte targetSlot, out bool requireTargetEmpty)
@@ -135,6 +201,11 @@ namespace SignalsLink.src.signals.paperConditions
             {
                 var inner = ParseLine(line.Substring(1).TrimStart(), errors);
                 return new NotCondition(inner);
+            }
+
+            if (TryParseInventoryAmountCondition(line, out ICondition inventoryAmountCondition))
+            {
+                return inventoryAmountCondition;
             }
 
             // Inventory wrapper:
@@ -204,6 +275,65 @@ namespace SignalsLink.src.signals.paperConditions
 
             return new AttributeExistsCondition(line);
         }
+
+        private static bool TryParseInventoryAmountCondition(string line, out ICondition condition)
+        {
+            condition = null;
+
+            Match match = inventoryAmountRegex.Match(line);
+            if (!match.Success)
+            {
+                return false;
+            }
+
+            string pattern = match.Groups["pattern"].Value;
+            if (!TryParseCodePatternCondition(pattern, out ICondition codeCondition))
+            {
+                return false;
+            }
+
+            string amountText = match.Groups["amount"].Value.Replace(',', '.');
+            if (!decimal.TryParse(amountText, NumberStyles.Number, CultureInfo.InvariantCulture, out decimal amount))
+            {
+                return false;
+            }
+
+            InventoryAmountComparison comparison = match.Groups["mode"].Value switch
+            {
+                "+" => InventoryAmountComparison.AtLeast,
+                "-" => InventoryAmountComparison.AtMost,
+                _ => InventoryAmountComparison.Exact
+            };
+
+            condition = new InventoryAmountCondition(codeCondition, amount, comparison);
+            return true;
+        }
+
+        private static bool TryParseCodePatternCondition(string pattern, out ICondition condition)
+        {
+            condition = null;
+
+            if (pattern.StartsWith("@"))
+            {
+                condition = new CodeRegexCondition(new Regex(pattern.Substring(1), RegexOptions.Compiled));
+                return true;
+            }
+
+            if (Regex.IsMatch(pattern, @"^[A-Za-z0-9_]+:[A-Za-z0-9_\-]+$"))
+            {
+                string exactPattern = "^" + Regex.Escape(pattern) + "$";
+                condition = new CodeRegexCondition(new Regex(exactPattern, RegexOptions.Compiled));
+                return true;
+            }
+
+            if (pattern.Contains("*") || pattern.Contains("?"))
+            {
+                condition = new CodeGlobCondition(pattern);
+                return true;
+            }
+
+            return false;
+        }
     }
 
     public static class PaperConditionsEvaluator
@@ -244,47 +374,197 @@ namespace SignalsLink.src.signals.paperConditions
 
         public bool Evaluate(ItemStack stack, IDictionary<string, object> ctx, out byte matchedBlockIndex, out PaperConditionDirectives directives)
         {
+            PaperConditionMatchResult matchResult;
+            bool matched = TryMatch(stack, ctx, out matchResult);
             matchedBlockIndex = 0;
             directives = PaperConditionDirectives.Empty;
 
+            if (matched)
+            {
+                matchedBlockIndex = matchResult.OutputValue;
+                directives = matchResult.Directives;
+            }
+
+            return matched;
+        }
+
+        public bool TryMatch(ItemStack stack, IDictionary<string, object> ctx, out PaperConditionMatchResult matchResult)
+        {
             for (int i = 0; i < blocks.Count; i++)
             {
-                if (blocks[i].Evaluate(stack, ctx))
+                if (blocks[i].TryMatch(stack, ctx))
                 {
-                    // Use block's configured output value (1..14) or default (15)
-                    matchedBlockIndex = blocks[i].OutputValue;
-                    directives = blocks[i].Directives;
+                    matchResult = blocks[i].CreateMatchResult();
                     return true;
                 }
             }
 
+            matchResult = PaperConditionMatchResult.NoMatch;
             return false;
+        }
+
+        public IReadOnlyList<IConditionAction> GetMatchingActions(ItemStack stack, IDictionary<string, object> ctx)
+        {
+            List<IConditionAction> actions = null;
+
+            for (int i = 0; i < blocks.Count; i++)
+            {
+                if (!blocks[i].HasActions) continue;
+                if (!blocks[i].MatchesActionContext(stack, ctx)) continue;
+
+                actions ??= new List<IConditionAction>();
+                actions.AddRange(blocks[i].Actions);
+            }
+
+            return actions != null ? actions : Array.Empty<IConditionAction>();
         }
     }
 
     public class ConditionBlock
     {
-        private readonly List<ICondition> conditions;
+        private readonly List<ScopedCondition> conditions;
+        private readonly List<IConditionAction> actions;
 
         public const byte DefaultOutputValue = byte.MaxValue;
 
         public byte OutputValue { get; }
         public PaperConditionDirectives Directives { get; }
+        public IReadOnlyList<IConditionAction> Actions => actions;
+        public bool HasActions => actions.Count > 0;
+        public bool CanSelectSource => conditions.Any(condition => condition.Scope == InventoryConditionScope.Source);
 
-        public ConditionBlock(List<ICondition> conditions, byte outputValue, PaperConditionDirectives directives)
+        public ConditionBlock(List<ScopedCondition> conditions, byte outputValue, PaperConditionDirectives directives, List<IConditionAction> actions)
         {
-            this.conditions = conditions;
+            this.conditions = conditions ?? new List<ScopedCondition>();
             OutputValue = outputValue;
             Directives = directives ?? PaperConditionDirectives.Empty;
+            this.actions = actions ?? new List<IConditionAction>();
         }
 
-        public bool Evaluate(ItemStack stack, IDictionary<string, object> ctx)
+        public bool TryMatch(ItemStack stack, IDictionary<string, object> ctx)
+        {
+            if (!CanSelectSource) return false;
+
+            foreach (var c in conditions)
+            {
+                if (!c.Evaluate(stack, ctx, true)) return false;
+            }
+
+            return true;
+        }
+
+        public bool MatchesActionContext(ItemStack stack, IDictionary<string, object> ctx)
         {
             foreach (var c in conditions)
             {
-                if (!c.Evaluate(stack, ctx)) return false;
+                if (!c.Evaluate(stack, ctx, false)) return false;
             }
 
+            return true;
+        }
+
+        public PaperConditionMatchResult CreateMatchResult()
+        {
+            return new PaperConditionMatchResult(OutputValue, Directives, actions);
+        }
+    }
+
+    public enum InventoryConditionScope
+    {
+        Source,
+        Target
+    }
+
+    public sealed class ScopedCondition
+    {
+        public ICondition Condition { get; }
+        public InventoryConditionScope Scope { get; }
+
+        public ScopedCondition(ICondition condition, InventoryConditionScope scope)
+        {
+            Condition = condition ?? FalseCondition.Instance;
+            Scope = scope;
+        }
+
+        public bool Evaluate(ItemStack stack, IDictionary<string, object> ctx, bool isSelectionEvaluation)
+        {
+            IInventory inventory = ResolveInventory(ctx);
+            IDictionary<string, object> scopedCtx = BuildScopedContext(ctx, inventory);
+
+            if (Condition is IInventoryCondition inventoryCondition)
+            {
+                return inventoryCondition.Evaluate(stack, inventory, scopedCtx, Scope, isSelectionEvaluation);
+            }
+
+            if (isSelectionEvaluation && Scope == InventoryConditionScope.Source && stack?.Collectible != null)
+            {
+                return Condition.Evaluate(stack, scopedCtx);
+            }
+
+            return InventoryConditionResolver.AnyMatch(inventory, scopedCtx, Condition);
+        }
+
+        private IInventory ResolveInventory(IDictionary<string, object> ctx)
+        {
+            string key = Scope == InventoryConditionScope.Target ? "targetInventory" : "sourceInventory";
+            if (ctx != null && ctx.TryGetValue(key, out var obj) && obj is IInventory inventory)
+            {
+                return inventory;
+            }
+
+            if (ctx != null && ctx.TryGetValue("inventory", out obj) && obj is IInventory fallbackInventory)
+            {
+                return fallbackInventory;
+            }
+
+            return null;
+        }
+
+        private static IDictionary<string, object> BuildScopedContext(IDictionary<string, object> ctx, IInventory inventory)
+        {
+            var scopedCtx = ctx != null
+                ? new Dictionary<string, object>(ctx)
+                : new Dictionary<string, object>();
+
+            if (inventory != null)
+            {
+                scopedCtx["inventory"] = inventory;
+            }
+
+            return scopedCtx;
+        }
+    }
+
+    public sealed class PaperConditionMatchResult
+    {
+        public static readonly PaperConditionMatchResult NoMatch = new PaperConditionMatchResult(0, PaperConditionDirectives.Empty, Array.Empty<IConditionAction>());
+
+        public byte OutputValue { get; }
+        public PaperConditionDirectives Directives { get; }
+        public IReadOnlyList<IConditionAction> Actions { get; }
+
+        public PaperConditionMatchResult(byte outputValue, PaperConditionDirectives directives, IReadOnlyList<IConditionAction> actions)
+        {
+            OutputValue = outputValue;
+            Directives = directives ?? PaperConditionDirectives.Empty;
+            Actions = actions ?? (IReadOnlyList<IConditionAction>)Array.Empty<IConditionAction>();
+        }
+    }
+
+    public interface IConditionAction
+    {
+        bool Execute(IDictionary<string, object> ctx);
+    }
+
+    public sealed class SealConditionAction : IConditionAction
+    {
+        public bool Execute(IDictionary<string, object> ctx)
+        {
+            if (ctx == null) return false;
+            if (!ctx.TryGetValue("targetBlockEntity", out var obj) || obj is not BlockEntityBarrel barrel) return false;
+            if (barrel.Sealed) return false;
+
+            barrel.SealBarrel();
             return true;
         }
     }
@@ -296,6 +576,11 @@ namespace SignalsLink.src.signals.paperConditions
     public interface ICondition
     {
         bool Evaluate(ItemStack stack, IDictionary<string, object> ctx);
+    }
+
+    public interface IInventoryCondition : ICondition
+    {
+        bool Evaluate(ItemStack stack, IInventory inventory, IDictionary<string, object> ctx, InventoryConditionScope scope, bool isSelectionEvaluation);
     }
 
     public class CodeGlobCondition : ICondition
@@ -521,6 +806,127 @@ namespace SignalsLink.src.signals.paperConditions
         public bool Evaluate(ItemStack stack, IDictionary<string, object> ctx)
         {
             return !inner.Evaluate(stack, ctx);
+        }
+    }
+
+    public sealed class InventoryAmountCondition : IInventoryCondition
+    {
+        private readonly ICondition innerCondition;
+        private readonly decimal expectedAmount;
+        private readonly InventoryAmountComparison comparison;
+
+        public InventoryAmountCondition(ICondition innerCondition, decimal expectedAmount, InventoryAmountComparison comparison)
+        {
+            this.innerCondition = innerCondition ?? FalseCondition.Instance;
+            this.expectedAmount = expectedAmount;
+            this.comparison = comparison;
+        }
+
+        public bool Evaluate(ItemStack stack, IDictionary<string, object> ctx)
+        {
+            return innerCondition.Evaluate(stack, ctx);
+        }
+
+        public bool Evaluate(ItemStack stack, IInventory inventory, IDictionary<string, object> ctx, InventoryConditionScope scope, bool isSelectionEvaluation)
+        {
+            if (inventory == null) return false;
+
+            if (isSelectionEvaluation && scope == InventoryConditionScope.Source)
+            {
+                if (stack?.Collectible == null) return false;
+                if (!innerCondition.Evaluate(stack, ctx)) return false;
+            }
+
+            decimal actualAmount = InventoryConditionResolver.GetMatchingAmount(inventory, ctx, innerCondition);
+
+            return comparison switch
+            {
+                InventoryAmountComparison.AtLeast => actualAmount >= expectedAmount,
+                InventoryAmountComparison.AtMost => actualAmount <= expectedAmount,
+                _ => actualAmount == expectedAmount
+            };
+        }
+    }
+
+    public enum InventoryAmountComparison
+    {
+        Exact,
+        AtLeast,
+        AtMost
+    }
+
+    public static class InventoryConditionResolver
+    {
+        public static bool AnyMatch(IInventory inventory, IDictionary<string, object> ctx, ICondition condition)
+        {
+            if (inventory == null || condition == null) return false;
+
+            foreach (var slot in inventory)
+            {
+                if (slot?.Empty != false) continue;
+
+                ItemStack slotStack = slot.Itemstack;
+                if (slotStack?.Collectible == null) continue;
+
+                if (condition.Evaluate(slotStack, ctx))
+                {
+                    return true;
+                }
+
+                if (slotStack.Block is BlockLiquidContainerBase liquidContainer)
+                {
+                    ItemStack contentStack = liquidContainer.GetContent(slotStack);
+                    if (contentStack?.Collectible != null && condition.Evaluate(contentStack, ctx))
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        public static decimal GetMatchingAmount(IInventory inventory, IDictionary<string, object> ctx, ICondition condition)
+        {
+            if (inventory == null || condition == null) return 0;
+
+            decimal totalAmount = 0;
+
+            foreach (var slot in inventory)
+            {
+                if (slot?.Empty != false) continue;
+
+                ItemStack slotStack = slot.Itemstack;
+                if (slotStack?.Collectible == null) continue;
+
+                if (condition.Evaluate(slotStack, ctx))
+                {
+                    totalAmount += GetStackAmount(slotStack);
+                    continue;
+                }
+
+                if (slotStack.Block is BlockLiquidContainerBase liquidContainer)
+                {
+                    ItemStack contentStack = liquidContainer.GetContent(slotStack);
+                    if (contentStack?.Collectible != null && condition.Evaluate(contentStack, ctx))
+                    {
+                        totalAmount += GetStackAmount(contentStack);
+                    }
+                }
+            }
+
+            return totalAmount;
+        }
+
+        private static decimal GetStackAmount(ItemStack stack)
+        {
+            var props = BlockLiquidContainerBase.GetContainableProps(stack);
+            if (props != null && props.ItemsPerLitre > 0)
+            {
+                return decimal.Round(stack.StackSize / (decimal)props.ItemsPerLitre, 2, MidpointRounding.ToZero);
+            }
+
+            return stack?.StackSize ?? 0;
         }
     }
 

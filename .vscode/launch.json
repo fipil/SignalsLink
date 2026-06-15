@@ -8,7 +8,7 @@
       "preLaunchTask": "build SignalsLink",
       "program": "c:/VintageStory/1.22/Vintagestory.exe",
       "args": [
-        "--openWorld=signalsLink playground5",
+        "--openWorld=signalsLink playground6",
         "-pcreativebuilding",
         "--addModPath=c:/Develope/VintageStory/Projects/SignalsLink/Publish",
         "--addOrigin=c:/Develope/VintageStory/Projects/SignalsLink/SignalsLink/assets",
@@ -42,7 +42,7 @@
       "preLaunchTask": "build oba mody",
       "program": "c:/VintageStory/1.22/Vintagestory.exe",
       "args": [
-        "--openWorld=signalsLink playground5",
+        "--openWorld=standard",
         "-pcreativebuilding",
         "--addModPath=c:/Develope/VintageStory/Projects/SignalsLink/Publish",
         "--addOrigin=c:/Develope/VintageStory/Projects/SignalsLink/Publish/assets",

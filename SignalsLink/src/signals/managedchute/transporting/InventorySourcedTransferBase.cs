@@ -103,6 +103,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
         {
             directives = PaperConditionDirectives.Empty;
             var ctx = ItemConditionContextUtil.BuildContext(api.World, stack);
+            ctx["sourceInventory"] = sourceInv;
             ctx["inventory"] = sourceInv;
             AddConditionContext(ctx);
 

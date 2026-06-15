@@ -87,6 +87,45 @@ public class PaperConditionsEvaluator
         return compiled.Evaluate(stack, ctx, out matchedBlockIndex, out directives);
     }
 
+    public bool TryMatch(ItemStack stack, IDictionary<string, object> ctx, out PaperConditionMatchResult matchResult)
+    {
+        matchResult = PaperConditionMatchResult.NoMatch;
+
+        if (string.IsNullOrWhiteSpace(conditionsText))
+        {
+            errors.Clear();
+            compiled = null;
+            lastParsedText = null;
+            return false;
+        }
+
+        if (compiled == null || !string.Equals(lastParsedText, conditionsText, StringComparison.Ordinal))
+        {
+            ParseInternal(conditionsText);
+        }
+
+        if (compiled == null) return false;
+
+        return compiled.TryMatch(stack, ctx, out matchResult);
+    }
+
+    public IReadOnlyList<IConditionAction> GetMatchingActions(ItemStack stack, IDictionary<string, object> ctx)
+    {
+        if (string.IsNullOrWhiteSpace(conditionsText))
+        {
+            return Array.Empty<IConditionAction>();
+        }
+
+        if (compiled == null || !string.Equals(lastParsedText, conditionsText, StringComparison.Ordinal))
+        {
+            ParseInternal(conditionsText);
+        }
+
+        if (compiled == null) return Array.Empty<IConditionAction>();
+
+        return compiled.GetMatchingActions(stack, ctx);
+    }
+
     /// <summary>
     /// Vyhodnotí aktuální conditionsText pro blok na dané pozici.
     /// Vytvoří syntetický ItemStack z bloku, aby bylo možné používat code/glob/regex
