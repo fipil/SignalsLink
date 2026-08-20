@@ -1,0 +1,6 @@
+{
+	"code": "hose",
+	"maxstacksize": 64,
+	"texture": { "base": "block/copper1" },
+	"creativeinventory": { "general": [ "*" ], "signalslink": [ "*" ] }
+}

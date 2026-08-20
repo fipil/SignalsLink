@@ -31,7 +31,6 @@ namespace SignalsLink.src.signals.managedchute
         private float itemFlowAccum;
 
         private static AssetLocation hopperTumble = new AssetLocation("sounds/block/hoppertumble");
-        private static AssetLocation waterSound = new AssetLocation("sounds/block/water");
 
         private IItemTransfer transfer;
 
@@ -107,7 +106,7 @@ namespace SignalsLink.src.signals.managedchute
                 try
                 {
                     if (!(this.Api.World.Rand.NextDouble() >= 0.2))
-                        this.Api.World.PlaySoundAt(moveResult.IsLiquid ? waterSound : hopperTumble, this.Pos, 0.0, range: 8f, volume: 0.5f);
+                        this.Api.World.PlaySoundAt(hopperTumble, this.Pos, 0.0, range: 8f, volume: 0.5f);
                 }
                 catch (Exception) { }
 

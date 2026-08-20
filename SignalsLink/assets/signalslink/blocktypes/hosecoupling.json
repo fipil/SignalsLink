@@ -1,0 +1,41 @@
+{
+	"code": "hosecoupling",
+	"class": "HoseCoupling",
+	"attributes": {
+		"hoseNodes": [
+			{
+				"index": 0,
+				"name": "con-hose",
+				"x1": 0.4, "y1": 0.4, "z1": 0.0,
+				"x2": 0.6, "y2": 0.6, "z2": 0.18
+			},
+			{
+				"index": 1,
+				"name": "con-hose",
+				"x1": 0.4, "y1": 0.4, "z1": 0.82,
+				"x2": 0.6, "y2": 0.6, "z2": 1.0
+			}
+		]
+	},
+	"textures": {
+		"mat": { "base": "block/copper1" },
+		"anchor": { "base": "block/oak" }
+	},
+	"shape": { "base": "block/hose/coupling" },
+	"blockmaterial": "Metal",
+	"lightAbsorption": 0,
+	"drawtype": "json",
+	"replaceable": 500,
+	"resistance": 1.5,
+	"sidesolid": { "all": false },
+	"sideopaque": { "all": false },
+	"sounds": {
+		"place": "game:block/anvil",
+		"break": "game:block/metal",
+		"hit": "game:block/metal",
+		"walk": "game:walk/stone"
+	},
+	"creativeinventory": { "general": [ "*" ], "signalslink": [ "*" ] },
+	"selectionbox": { "x1": 0.3125, "y1": 0.0, "z1": 0.3125, "x2": 0.6875, "y2": 0.625, "z2": 0.6875 },
+	"collisionbox": { "x1": 0.3125, "y1": 0.0, "z1": 0.3125, "x2": 0.6875, "y2": 0.625, "z2": 0.6875 }
+}

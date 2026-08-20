@@ -57,6 +57,23 @@ namespace SignalsLink.src.signals.paperConditions
             return false;
         }
 
+        /// <summary>
+        /// Unified evaluation driver (see docs/paper-conditions.md → "Model vyhodnocení bloků").
+        /// Walks blocks top-down; for each block whose <b>conditions</b> hold, calls
+        /// <paramref name="execute"/> with that block. Stops at the first block for which
+        /// <paramref name="execute"/> returns true (i.e. its action actually did work — physical
+        /// validity). Returns true if some block executed.
+        /// </summary>
+        public bool RunFirst(ItemStack stack, IDictionary<string, object> ctx, System.Func<PaperConditionMatchResult, bool> execute)
+        {
+            for (int i = 0; i < blocks.Count; i++)
+            {
+                if (!blocks[i].ConditionsHold(stack, ctx)) continue;
+                if (execute(blocks[i].CreateMatchResult())) return true;
+            }
+            return false;
+        }
+
         public IReadOnlyList<IConditionAction> GetMatchingActions(ItemStack stack, IDictionary<string, object> ctx)
         {
             List<IConditionAction> actions = null;
@@ -82,15 +99,23 @@ namespace SignalsLink.src.signals.paperConditions
         public const byte DefaultOutputValue = byte.MaxValue;
 
         public byte OutputValue { get; }
+        /// <summary>
+        /// True if `output` (N or `.`) was actually specified in this block.
+        /// False = `output` omitted; OutputValue then keeps the effective default 15 for the
+        /// BlockSensor (no behavior change). ManagedHose reads this flag and, when false, does
+        /// not touch its Output anchor at all (it holds the last value).
+        /// </summary>
+        public bool HasExplicitOutput { get; }
         public PaperConditionDirectives Directives { get; }
         public IReadOnlyList<IConditionAction> Actions => actions;
         public bool HasActions => actions.Count > 0;
         public bool CanSelectSource => conditions.Any(condition => condition.Scope == InventoryConditionScope.Source);
 
-        public ConditionBlock(List<ScopedCondition> conditions, byte outputValue, PaperConditionDirectives directives, List<IConditionAction> actions)
+        public ConditionBlock(List<ScopedCondition> conditions, byte outputValue, bool hasExplicitOutput, PaperConditionDirectives directives, List<IConditionAction> actions)
         {
             this.conditions = conditions ?? new List<ScopedCondition>();
             OutputValue = outputValue;
+            HasExplicitOutput = hasExplicitOutput;
             Directives = directives ?? PaperConditionDirectives.Empty;
             this.actions = actions ?? new List<IConditionAction>();
         }
@@ -104,6 +129,28 @@ namespace SignalsLink.src.signals.paperConditions
                 if (!c.Evaluate(stack, ctx, true)) return false;
             }
 
+            // Directive validity (e.g. `target N ifEmpty`) is part of block validity: once a
+            // block's target slot is no longer empty it stops matching, so evaluation falls
+            // through to the next block. For blocks without such directives this is a no-op
+            // (Directives.Evaluate returns true).
+            if (!Directives.Evaluate(ctx)) return false;
+
+            return true;
+        }
+
+        /// <summary>
+        /// True if every condition in the block holds (each in its scope; AND). Unlike
+        /// <see cref="TryMatch(ItemStack, IDictionary{string, object})"/> this does NOT require a
+        /// source-scoped condition and does NOT check directives (`ifEmpty`) — those belong to
+        /// the consumer when it tries to execute the block's action. Used by the unified
+        /// <see cref="CompiledConditions.RunFirst"/> driver.
+        /// </summary>
+        public bool ConditionsHold(ItemStack stack, IDictionary<string, object> ctx)
+        {
+            foreach (var c in conditions)
+            {
+                if (!c.Evaluate(stack, ctx, true)) return false;
+            }
             return true;
         }
 
@@ -119,7 +166,7 @@ namespace SignalsLink.src.signals.paperConditions
 
         public PaperConditionMatchResult CreateMatchResult()
         {
-            return new PaperConditionMatchResult(OutputValue, Directives, actions);
+            return new PaperConditionMatchResult(OutputValue, HasExplicitOutput, Directives, actions);
         }
     }
 
@@ -191,15 +238,17 @@ namespace SignalsLink.src.signals.paperConditions
 
     public sealed class PaperConditionMatchResult
     {
-        public static readonly PaperConditionMatchResult NoMatch = new PaperConditionMatchResult(0, PaperConditionDirectives.Empty, Array.Empty<IConditionAction>());
+        public static readonly PaperConditionMatchResult NoMatch = new PaperConditionMatchResult(0, false, PaperConditionDirectives.Empty, Array.Empty<IConditionAction>());
 
         public byte OutputValue { get; }
+        public bool HasExplicitOutput { get; }
         public PaperConditionDirectives Directives { get; }
         public IReadOnlyList<IConditionAction> Actions { get; }
 
-        public PaperConditionMatchResult(byte outputValue, PaperConditionDirectives directives, IReadOnlyList<IConditionAction> actions)
+        public PaperConditionMatchResult(byte outputValue, bool hasExplicitOutput, PaperConditionDirectives directives, IReadOnlyList<IConditionAction> actions)
         {
             OutputValue = outputValue;
+            HasExplicitOutput = hasExplicitOutput;
             Directives = directives ?? PaperConditionDirectives.Empty;
             Actions = actions ?? (IReadOnlyList<IConditionAction>)Array.Empty<IConditionAction>();
         }

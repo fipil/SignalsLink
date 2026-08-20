@@ -3,6 +3,7 @@ using signals.src.signalNetwork;
 using SignalsLink.src.signals.behaviours;
 using SignalsLink.src.signals.blocksensor;
 using SignalsLink.src.signals.entitysensor;
+using SignalsLink.src.signals.hose;
 using SignalsLink.src.signals.managedchute;
 using SignalsLink.src.signals.paperConditions;
 using Vintagestory.API.Client;
@@ -35,6 +36,12 @@ namespace SignalsLink.src
             api.RegisterBlockClass("ManagedChute", typeof(ManagedChute));
             api.RegisterBlockClass("ManagedWallChute", typeof(ManagedWallChute));
 
+            // ManagedHose — řízená hadice (kapaliny)
+            api.RegisterBlockClass("HoseValve", typeof(BlockHoseValve));
+            api.RegisterBlockClass("HoseCoupling", typeof(BlockHoseCoupling));
+            api.RegisterBlockClass("HoseIntake", typeof(BlockHoseIntake));
+
+            api.RegisterBlockEntityClass("BlockEntityHoseValve", typeof(BlockEntityHoseValve));
             api.RegisterBlockEntityClass("BlockEntityBlockSensor", typeof(BEBlockSensor));
             api.RegisterBlockEntityClass("BlockEntityEntitySensor", typeof(BEEntitySensor));
             api.RegisterBlockEntityClass("BlockEntityManagedChute", typeof(BEManagedChute));

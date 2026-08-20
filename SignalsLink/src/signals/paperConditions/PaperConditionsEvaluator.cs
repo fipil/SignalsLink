@@ -109,6 +109,31 @@ public class PaperConditionsEvaluator
         return compiled.TryMatch(stack, ctx, out matchResult);
     }
 
+    /// <summary>
+    /// Unified evaluation driver — walks blocks top-down and runs the first block whose
+    /// conditions hold and whose action actually does work. See
+    /// <see cref="CompiledConditions.RunFirst"/> and docs/paper-conditions.md.
+    /// </summary>
+    public bool RunFirst(ItemStack stack, IDictionary<string, object> ctx, System.Func<PaperConditionMatchResult, bool> execute)
+    {
+        if (string.IsNullOrWhiteSpace(conditionsText))
+        {
+            errors.Clear();
+            compiled = null;
+            lastParsedText = null;
+            return false;
+        }
+
+        if (compiled == null || !string.Equals(lastParsedText, conditionsText, StringComparison.Ordinal))
+        {
+            ParseInternal(conditionsText);
+        }
+
+        if (compiled == null) return false;
+
+        return compiled.RunFirst(stack, ctx, execute);
+    }
+
     public IReadOnlyList<IConditionAction> GetMatchingActions(ItemStack stack, IDictionary<string, object> ctx)
     {
         if (string.IsNullOrWhiteSpace(conditionsText))

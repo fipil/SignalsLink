@@ -20,6 +20,7 @@ namespace SignalsLink.src.signals.paperConditions
                 var conditions = new List<ScopedCondition>();
                 var actions = new List<IConditionAction>();
                 byte? outputValue = null;
+                bool hasExplicitOutput = false;
                 byte? targetSlot = null;
                 bool requireTargetEmpty = false;
                 decimal? amount = null;
@@ -43,19 +44,24 @@ namespace SignalsLink.src.signals.paperConditions
                         continue;
                     }
 
-                    // Special directive: output N  (N = 1..14)
+                    // Special directive: output N  (N = 0..15) nebo `output .`
                     if (line.StartsWith("output ", StringComparison.OrdinalIgnoreCase))
                     {
                         var parts = line.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
                         if (parts.Length == 2 && parts[1] == ".")
                         {
                             outputValue = ConditionBlock.DefaultOutputValue;
+                            hasExplicitOutput = true;
                             continue;
                         }
 
-                        if (parts.Length == 2 && byte.TryParse(parts[1], out byte val) && val >= 1 && val <= 14)
+                        // Range widened from 1..14 to 0..15 for the ManagedHose Output anchor
+                        // (Signals 0..15). `output 0/15` is not used on the BlockSensor today,
+                        // so this does not change existing behavior.
+                        if (parts.Length == 2 && byte.TryParse(parts[1], out byte val) && val >= 0 && val <= 15)
                         {
                             outputValue = val;
+                            hasExplicitOutput = true;
                             continue;
                         }
 
@@ -105,8 +111,10 @@ namespace SignalsLink.src.signals.paperConditions
 
                 if (conditions.Count > 0 || actions.Count > 0)
                 {
-                    // Default output value when none specified: 15
-                    blocks.Add(new ConditionBlock(conditions, outputValue ?? 15, new PaperConditionDirectives(targetSlot, amount, requireTargetEmpty), actions));
+                    // OutputValue keeps the effective default 15 when `output` is not
+                    // specified — for the BlockSensor (no behavior change). HasExplicitOutput
+                    // records whether `output` was actually specified; ManagedHose reads it (see spec §6).
+                    blocks.Add(new ConditionBlock(conditions, outputValue ?? 15, hasExplicitOutput, new PaperConditionDirectives(targetSlot, amount, requireTargetEmpty), actions));
                 }
             }
 

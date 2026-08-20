@@ -1,0 +1,62 @@
+{
+	"textureWidth": 16,
+	"textureHeight": 16,
+	"textures": {
+		"mat": "block/iron",
+		"anchor": "block/oak"
+	},
+	"elements": [
+		{
+			"name": "body",
+			"from": [ 5, 0, 5 ],
+			"to": [ 11, 10, 11 ],
+			"faces": {
+				"north": { "texture": "#mat", "uv": [ 0, 0, 6, 10 ] },
+				"east":  { "texture": "#mat", "uv": [ 0, 0, 6, 10 ] },
+				"south": { "texture": "#mat", "uv": [ 0, 0, 6, 10 ] },
+				"west":  { "texture": "#mat", "uv": [ 0, 0, 6, 10 ] },
+				"up":    { "texture": "#mat", "uv": [ 0, 0, 6, 6 ] },
+				"down":  { "texture": "#mat", "uv": [ 0, 0, 6, 6 ] }
+			}
+		},
+		{
+			"name": "anchor-input",
+			"from": [ 2.4, 5.6, 0.0 ],
+			"to": [ 5.12, 8.32, 2.88 ],
+			"faces": {
+				"north": { "texture": "#anchor", "uv": [ 0, 0, 16, 16 ] },
+				"east":  { "texture": "#anchor", "uv": [ 0, 0, 16, 16 ] },
+				"south": { "texture": "#anchor", "uv": [ 0, 0, 16, 16 ] },
+				"west":  { "texture": "#anchor", "uv": [ 0, 0, 16, 16 ] },
+				"up":    { "texture": "#anchor", "uv": [ 0, 0, 16, 16 ] },
+				"down":  { "texture": "#anchor", "uv": [ 0, 0, 16, 16 ] }
+			}
+		},
+		{
+			"name": "anchor-output",
+			"from": [ 10.88, 5.6, 0.0 ],
+			"to": [ 13.6, 8.32, 2.88 ],
+			"faces": {
+				"north": { "texture": "#anchor", "uv": [ 0, 0, 16, 16 ] },
+				"east":  { "texture": "#anchor", "uv": [ 0, 0, 16, 16 ] },
+				"south": { "texture": "#anchor", "uv": [ 0, 0, 16, 16 ] },
+				"west":  { "texture": "#anchor", "uv": [ 0, 0, 16, 16 ] },
+				"up":    { "texture": "#anchor", "uv": [ 0, 0, 16, 16 ] },
+				"down":  { "texture": "#anchor", "uv": [ 0, 0, 16, 16 ] }
+			}
+		},
+		{
+			"name": "anchor-hose",
+			"from": [ 6.4, 10.0, 6.4 ],
+			"to": [ 9.6, 16.0, 9.6 ],
+			"faces": {
+				"north": { "texture": "#anchor", "uv": [ 0, 0, 16, 16 ] },
+				"east":  { "texture": "#anchor", "uv": [ 0, 0, 16, 16 ] },
+				"south": { "texture": "#anchor", "uv": [ 0, 0, 16, 16 ] },
+				"west":  { "texture": "#anchor", "uv": [ 0, 0, 16, 16 ] },
+				"up":    { "texture": "#anchor", "uv": [ 0, 0, 16, 16 ] },
+				"down":  { "texture": "#anchor", "uv": [ 0, 0, 16, 16 ] }
+			}
+		}
+	]
+}
