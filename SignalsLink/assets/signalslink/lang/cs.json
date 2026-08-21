@@ -43,5 +43,6 @@
 	"signalslink:block-handbooktext-hosevalve": "Hadicový ventil táhne kapalinu ze vzdáleného konce hadice do svého hostitelského bloku (sud, vědro, ohniště apod.). Řídí se signálem na Inputu; Output je programovatelný přes podmínky na papíře. (Dokumentace se připravuje.)",
 	"signalslink:ingameerror-hose-anchor-occupied": "K této kotvě už je připojená hadice.",
 	"signalslink:ingameerror-hose-same-block": "Hadice nemůže spojit dvě kotvy téhož bloku.",
-	"signalslink:hosevalve-noceiling": "Hadicový ventil nelze umístit na strop."
+	"signalslink:hosevalve-noceiling": "Hadicový ventil nelze umístit na strop.",
+	"signalslink:hoseintake-needswater": "Sání musí stát ve vodě."
 }

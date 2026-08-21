@@ -1,41 +1,205 @@
 {
 	"code": "hosecoupling",
 	"class": "HoseCoupling",
+	"behaviors": [
+		{
+			"name": "BlockBehaviorCoverWithDirection"
+		}
+	],
+	"variantgroups": [
+		{
+			"code": "orientation",
+			"states": [
+				"north",
+				"east",
+				"south",
+				"west",
+				"up",
+				"down"
+			]
+		},
+		{
+			"code": "side",
+			"states": [
+				"north",
+				"east",
+				"south",
+				"west",
+				"up",
+				"down"
+			]
+		}
+	],
 	"attributes": {
 		"hoseNodes": [
 			{
 				"index": 0,
 				"name": "con-hose",
-				"x1": 0.4, "y1": 0.4, "z1": 0.0,
-				"x2": 0.6, "y2": 0.6, "z2": 0.18
+				"x1": 0.4,
+				"y1": 0.4,
+				"z1": 0.0,
+				"x2": 0.6,
+				"y2": 0.6,
+				"z2": 0.18,
+				"rotateXbytype": {
+					"*-*-north": 90,
+					"*-*-south": 270,
+					"@*-up-(east|west)": 90,
+					"@*-down-(east|west)": 270,
+					"@*-south-(east|west)": 180
+				},
+				"rotateYbytype": {
+					"@*-east-(up|down|north|south)": 270,
+					"@*-south-(up|down)": 180,
+					"@*-west-(up|down|north|south)": 90,
+					"@*-(down-north|up-south)": 180
+				},
+				"rotateZbyType": {
+					"*-*-up": 180,
+					"*-*-east": 90,
+					"*-*-west": 270
+				}
 			},
 			{
 				"index": 1,
 				"name": "con-hose",
-				"x1": 0.4, "y1": 0.4, "z1": 0.82,
-				"x2": 0.6, "y2": 0.6, "z2": 1.0
+				"x1": 0.4,
+				"y1": 0.4,
+				"z1": 0.82,
+				"x2": 0.6,
+				"y2": 0.6,
+				"z2": 1.0,
+				"rotateXbytype": {
+					"*-*-north": 90,
+					"*-*-south": 270,
+					"@*-up-(east|west)": 90,
+					"@*-down-(east|west)": 270,
+					"@*-south-(east|west)": 180
+				},
+				"rotateYbytype": {
+					"@*-east-(up|down|north|south)": 270,
+					"@*-south-(up|down)": 180,
+					"@*-west-(up|down|north|south)": 90,
+					"@*-(down-north|up-south)": 180
+				},
+				"rotateZbyType": {
+					"*-*-up": 180,
+					"*-*-east": 90,
+					"*-*-west": 270
+				}
 			}
 		]
 	},
 	"textures": {
-		"mat": { "base": "block/copper1" },
-		"anchor": { "base": "block/oak" }
+		"mat": {
+			"base": "block/copper1"
+		},
+		"anchor": {
+			"base": "block/oak"
+		}
 	},
-	"shape": { "base": "block/hose/coupling" },
+	"shape": {
+		"base": "block/hose/coupling",
+		"rotateXbytype": {
+			"*-*-north": 90,
+			"*-*-south": 270,
+			"@*-up-(east|west)": 90,
+			"@*-down-(east|west)": 270,
+			"@*-south-(east|west)": 180
+		},
+		"rotateYbytype": {
+			"@*-east-(up|down|north|south)": 270,
+			"@*-south-(up|down)": 180,
+			"@*-west-(up|down|north|south)": 90,
+			"@*-(down-north|up-south)": 180
+		},
+		"rotateZbyType": {
+			"*-*-up": 180,
+			"*-*-east": 90,
+			"*-*-west": 270
+		}
+	},
 	"blockmaterial": "Metal",
 	"lightAbsorption": 0,
 	"drawtype": "json",
 	"replaceable": 500,
 	"resistance": 1.5,
-	"sidesolid": { "all": false },
-	"sideopaque": { "all": false },
+	"sidesolid": {
+		"all": false
+	},
+	"sideopaque": {
+		"all": false
+	},
 	"sounds": {
 		"place": "game:block/anvil",
 		"break": "game:block/metal",
 		"hit": "game:block/metal",
 		"walk": "game:walk/stone"
 	},
-	"creativeinventory": { "general": [ "*" ], "signalslink": [ "*" ] },
-	"selectionbox": { "x1": 0.3125, "y1": 0.0, "z1": 0.3125, "x2": 0.6875, "y2": 0.625, "z2": 0.6875 },
-	"collisionbox": { "x1": 0.3125, "y1": 0.0, "z1": 0.3125, "x2": 0.6875, "y2": 0.625, "z2": 0.6875 }
+	"creativeinventory": {
+		"general": [
+			"*-north-down"
+		],
+		"signalslink": [
+			"*-north-down"
+		]
+	},
+	"selectionbox": {
+		"x1": 0.3125,
+		"y1": 0.0,
+		"z1": 0.3125,
+		"x2": 0.6875,
+		"y2": 0.625,
+		"z2": 0.6875,
+		"rotateXbytype": {
+			"*-*-north": 90,
+			"*-*-south": 270,
+			"@*-up-(east|west)": 90,
+			"@*-down-(east|west)": 270,
+			"@*-south-(east|west)": 180
+		},
+		"rotateYbytype": {
+			"@*-east-(up|down|north|south)": 270,
+			"@*-south-(up|down)": 180,
+			"@*-west-(up|down|north|south)": 90,
+			"@*-(down-north|up-south)": 180
+		},
+		"rotateZbyType": {
+			"*-*-up": 180,
+			"*-*-east": 90,
+			"*-*-west": 270
+		}
+	},
+	"collisionbox": {
+		"x1": 0.3125,
+		"y1": 0.0,
+		"z1": 0.3125,
+		"x2": 0.6875,
+		"y2": 0.625,
+		"z2": 0.6875,
+		"rotateXbytype": {
+			"*-*-north": 90,
+			"*-*-south": 270,
+			"@*-up-(east|west)": 90,
+			"@*-down-(east|west)": 270,
+			"@*-south-(east|west)": 180
+		},
+		"rotateYbytype": {
+			"@*-east-(up|down|north|south)": 270,
+			"@*-south-(up|down)": 180,
+			"@*-west-(up|down|north|south)": 90,
+			"@*-(down-north|up-south)": 180
+		},
+		"rotateZbyType": {
+			"*-*-up": 180,
+			"*-*-east": 90,
+			"*-*-west": 270
+		}
+	},
+	"drops": [
+		{
+			"type": "block",
+			"code": "hosecoupling-north-down"
+		}
+	]
 }

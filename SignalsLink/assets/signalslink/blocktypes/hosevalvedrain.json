@@ -4,7 +4,7 @@
 	"entityclass": "BlockEntityHoseValve",
 	"behaviors": [
 		{
-			"name": "BlockBehaviorCoverWithDirection",
+			"name": "BlockBehaviorHoseCover",
 			"properties": {
 				"handleDrop": false
 			}
@@ -58,6 +58,11 @@
 	"attributes": {
 		"liquid-checkrateMs": 200,
 		"hose-litres-per-tick": 1.0,
+		"drainSpout": {
+			"x": 8.0,
+			"y": 5.0,
+			"z": 0.0
+		},
 		"handbook": {
 			"extraSections": [
 				{

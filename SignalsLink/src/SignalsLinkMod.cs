@@ -30,6 +30,8 @@ namespace SignalsLink.src
 
             api.RegisterBlockBehaviorClass("BlockBehaviorTemporalCharge", typeof(BlockBehaviorTemporalCharge));
             api.RegisterBlockBehaviorClass("BlockBehaviorPaperConditions", typeof(BlockBehaviorPaperConditions));
+            api.RegisterBlockBehaviorClass("BlockBehaviorHoseCover", typeof(SignalsLink.src.signals.hose.BlockBehaviorHoseCover));
+            api.RegisterCollectibleBehaviorClass("HoseCutterBehavior", typeof(SignalsLink.src.signals.hose.HoseCutterBehavior));
 
             api.RegisterBlockClass("BlockSensor", typeof(BlockSensor));
             api.RegisterBlockClass("EntitySensor", typeof(EntitySensor));

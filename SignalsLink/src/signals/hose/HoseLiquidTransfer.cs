@@ -50,6 +50,9 @@ namespace SignalsLink.src.signals.hose
             public TransferOperationResult Transfer;
             public bool HasExplicitOutput;
             public byte OutputValue;
+            // In drain mode, the liquid that was poured out (used by the BE to spawn mouth
+            // particles tinted with the liquid's colour). Null unless a drain actually happened.
+            public ItemStack DrainedLiquid;
 
             public static Result None => new Result { Transfer = TransferOperationResult.None };
         }
@@ -62,23 +65,30 @@ namespace SignalsLink.src.signals.hose
             // Target-aware context (valid even when there is nothing to pull).
             IDictionary<string, object> ctx = BuildContext(sourceLiquid, sourceInv);
 
+            Result result;
+
             // No conditions → default action (transfer, or discard in drain mode).
             if (conditions == null || !conditions.HasConditions)
             {
                 if (sourceLiquid == null) return Result.None;
-                return new Result { Transfer = DefaultAction(sourceLiquid, srcSlot, worldWaterPos, PaperConditionDirectives.Empty, litresRequested, ctx) };
+                result = new Result { Transfer = DefaultAction(sourceLiquid, srcSlot, worldWaterPos, PaperConditionDirectives.Empty, litresRequested, ctx) };
+            }
+            else
+            {
+                // Unified rule (docs/paper-conditions.md): run the FIRST block whose conditions hold
+                // and whose action actually does work. A block's action is either the default
+                // (transfer) or an explicit action that replaces it (`output N`, `do seal`).
+                result = Result.None;
+                conditions.RunFirst(sourceLiquid, ctx, match =>
+                {
+                    Result? r = ExecuteBlock(match, sourceLiquid, srcSlot, worldWaterPos, litresRequested, ctx);
+                    if (r.HasValue) { result = r.Value; return true; }
+                    return false;
+                });
             }
 
-            // Unified rule (docs/paper-conditions.md): run the FIRST block whose conditions hold
-            // and whose action actually does work. A block's action is either the default
-            // (transfer) or an explicit action that replaces it (`output N`, `do seal`).
-            Result result = Result.None;
-            conditions.RunFirst(sourceLiquid, ctx, match =>
-            {
-                Result? r = ExecuteBlock(match, sourceLiquid, srcSlot, worldWaterPos, litresRequested, ctx);
-                if (r.HasValue) { result = r.Value; return true; }
-                return false;
-            });
+            // Tell the BE which liquid was poured out, so it can render mouth particles.
+            if (discard && result.Transfer.Success) result.DrainedLiquid = sourceLiquid;
             return result;
         }
 
@@ -186,30 +196,14 @@ namespace SignalsLink.src.signals.hose
                 movedItems = wantItems;
             }
 
-            SpawnDrainParticles();
+            // Particles are rendered client-side by the BE (see BlockEntityHoseValve), tinted
+            // with the liquid's colour and emitted from the configured spout mouth.
 
             decimal movedLitres = decimal.Round(movedItems / (decimal)props.ItemsPerLitre, 2, System.MidpointRounding.ToZero);
             if (movedLitres <= 0) return TransferOperationResult.None;
             int triggerCost = directives.HasAmountOverride ? 1 : (int)movedLitres;
             if (triggerCost <= 0) triggerCost = 1;
             return new TransferOperationResult(movedLitres, triggerCost, true);
-        }
-
-        private void SpawnDrainParticles()
-        {
-            if (targetPos == null) return;
-            // Pour into the block the drain faces (targetPos): spawn near its top and let the
-            // droplets fall — they just spill and soak in (nothing is stored in the world).
-            Vec3d min = new Vec3d(targetPos.X + 0.3, targetPos.Y + 0.55, targetPos.Z + 0.3);
-            Vec3d max = new Vec3d(targetPos.X + 0.7, targetPos.Y + 0.75, targetPos.Z + 0.7);
-            SimpleParticleProperties p = new SimpleParticleProperties(
-                4, 8,
-                ColorUtil.ToRgba(160, 60, 90, 200),
-                min, max,
-                new Vec3f(-0.1f, -0.6f, -0.1f), new Vec3f(0.1f, -0.2f, 0.1f),
-                0.9f, 0.4f, 0.15f, 0.35f, EnumParticleModel.Cube);
-            p.WithTerrainCollision = true;
-            api.World.SpawnParticles(p);
         }
 
         private ItemStack ResolveSource(out ItemSlot srcSlot, out BlockPos worldWaterPos, out IInventory sourceInv)

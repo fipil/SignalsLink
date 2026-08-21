@@ -33,9 +33,29 @@ namespace SignalsLink.src.signals.hose
             return rtn;
         }
 
-        static public MeshData MakeHoseMesh(Vec3f pos1, Vec3f pos2)
+        static public MeshData MakeHoseMesh(Vec3f pos1, Vec3f pos2) => MakeHoseMesh(pos1, pos2, null, 0f);
+
+        /// <summary>
+        /// Builds the hose mesh, optionally swaying the hanging part horizontally along
+        /// <paramref name="swayDir"/> by <paramref name="swayAmount"/> (signed). The offset is
+        /// weighted by each sample's sag depth, so the anchored ends stay put and the lowest point
+        /// swings the most — the "water pulsing through a garden hose" wobble.
+        /// </summary>
+        static public MeshData MakeHoseMesh(Vec3f pos1, Vec3f pos2, Vec3f swayDir, float swayAmount)
         {
             float t = Thickness;
+
+            // Extend both ends by half the hose thickness along the chord, so the hose pokes a
+            // little way INTO each anchor and fills the anchor's hole even on steep side
+            // connections (otherwise the hole is half-empty and looks wrong).
+            float clen = pos2.DistanceTo(pos1);
+            if (clen > 1e-6f)
+            {
+                Vec3f u = (pos2 - pos1) * (1f / clen);
+                pos1 = pos1 - u * (t * 0.5f);
+                pos2 = pos2 + u * (t * 0.5f);
+            }
+
             Vec3f dPos = pos2 - pos1;
             float dist = pos2.DistanceTo(pos1);
 
@@ -67,6 +87,8 @@ namespace SignalsLink.src.signals.hose
             mesh_side2.Flags.Fill(0);
 
             Vec3f[] positions = new Vec3f[nSec + 1];
+            float minDy = 0f; // deepest (most negative) sag, for weighting the sway
+            float[] dyArr = new float[nSec + 1];
             for (int j = 0; j <= nSec; j++)
             {
                 float x = dPos.X / nSec * j;
@@ -74,7 +96,20 @@ namespace SignalsLink.src.signals.hose
                 float z = dPos.Z / nSec * j;
                 float l = (float)Math.Sqrt(x * x + y * y + z * z);
                 float dy = Catenary(l / dist, 1, CatenaryA);
+                dyArr[j] = dy;
+                if (dy < minDy) minDy = dy;
                 positions[j] = new Vec3f(x, y + dy, z);
+            }
+
+            // Sway the hanging part horizontally, weighted by sag depth (ends fixed, middle most).
+            if (swayDir != null && swayAmount != 0f && minDy < 0f)
+            {
+                for (int j = 0; j <= nSec; j++)
+                {
+                    float w = dyArr[j] / minDy; // 0 at the anchors, 1 at the deepest point
+                    positions[j].X += swayDir.X * swayAmount * w;
+                    positions[j].Z += swayDir.Z * swayAmount * w;
+                }
             }
 
             Vec3f pos, pos_next, pos_before, direction, a;

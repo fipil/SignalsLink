@@ -160,13 +160,20 @@ namespace SignalsLink.src.signals.managedchute.transporting
             return totalQuantity;
         }
 
-        private IEnumerable<ItemSlot> GetMatchingSourceSlots(ItemSlot initialSourceSlot, PaperConditionDirectives directives)
+        // Materialize the matching source slots EAGERLY (into a list), evaluated against the
+        // current target state ONCE. This must not be lazy: while gathering the full `amount`
+        // across several source slots we partially fill the target, and a `target N ifEmpty`
+        // directive would then flip subsequent candidates onto a different block (target N+1),
+        // dropping them from the gather. Building the list up front (before any item is moved)
+        // keeps every matching slot bound to the block that was valid when the transfer started.
+        private List<ItemSlot> GetMatchingSourceSlots(ItemSlot initialSourceSlot, PaperConditionDirectives directives)
         {
-            if (initialSourceSlot?.Itemstack == null) yield break;
+            List<ItemSlot> result = new List<ItemSlot>();
+            if (initialSourceSlot?.Itemstack == null) return result;
 
             ItemStack initialStack = initialSourceSlot.Itemstack;
 
-            yield return initialSourceSlot;
+            result.Add(initialSourceSlot);
 
             for (int i = 0; i < sourceInv.Count; i++)
             {
@@ -181,8 +188,9 @@ namespace SignalsLink.src.signals.managedchute.transporting
                 if (candidateDirectives.TargetSlot != directives.TargetSlot || candidateDirectives.Amount != directives.Amount || candidateDirectives.RequireTargetEmpty != directives.RequireTargetEmpty) continue;
                 if (!CanTransferSelection(slot, candidateDirectives)) continue;
 
-                yield return slot;
+                result.Add(slot);
             }
+            return result;
         }
 
         private void ExecuteMatchingActions()

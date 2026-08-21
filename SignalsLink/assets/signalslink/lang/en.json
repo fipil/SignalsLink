@@ -43,5 +43,6 @@
 	"signalslink:block-handbooktext-hosevalve": "The hose valve pulls liquid from the far end of a hose into its host block (barrel, bucket, firepit, etc.). Controlled via the Signals Input; the Output is programmable through paper conditions. (Documentation in progress.)",
 	"signalslink:ingameerror-hose-anchor-occupied": "This anchor already has a hose.",
 	"signalslink:ingameerror-hose-same-block": "A hose can't connect two anchors of the same block.",
-	"signalslink:hosevalve-noceiling": "The hose valve can't be placed on a ceiling."
+	"signalslink:hosevalve-noceiling": "The hose valve can't be placed on a ceiling.",
+	"signalslink:hoseintake-needswater": "The water intake must stand in water."
 }
