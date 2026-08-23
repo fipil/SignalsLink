@@ -366,7 +366,7 @@ namespace SignalsLink.src.signals.hose
                 new Vec3f(0.12f, -0.15f, 0.12f),    // max velocity
                 1.4f,   // life length — long enough to reach the ground
                 0.25f,  // gravity — accelerates the fall
-                0.10f, 0.22f,
+                0.20f, 0.44f, // min/max size (2× larger — the droplets were too tiny)
                 EnumParticleModel.Cube);
             p.WithTerrainCollision = true;
 
