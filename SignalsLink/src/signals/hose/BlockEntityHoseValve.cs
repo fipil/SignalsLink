@@ -216,7 +216,7 @@ namespace SignalsLink.src.signals.hose
 
             decimal litres = unlimited ? maxLitresPerTick : System.Math.Min((decimal)remaining, maxLitresPerTick);
 
-            var transfer = new HoseLiquidTransfer(Api, hostInv, hostPos, far, conditionsEvaluator, discard);
+            var transfer = new HoseLiquidTransfer(Api, hostInv, hostPos, far, conditionsEvaluator, discard, outputState);
             HoseLiquidTransfer.Result result = transfer.TryMove(litres);
 
             if (result.HasExplicitOutput) SetOutput(result.OutputValue);

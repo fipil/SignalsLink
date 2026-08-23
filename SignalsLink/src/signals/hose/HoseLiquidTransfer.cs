@@ -24,6 +24,9 @@ namespace SignalsLink.src.signals.hose
         private readonly PaperConditionsEvaluator conditions;
         private readonly LiquidTransferService liquid;
         private readonly bool discard;
+        // The valve's current Output pin value, so an `output N` block can fall through when the
+        // pin is already at N (it would change nothing).
+        private readonly byte currentOutput;
 
         // Position of the far source's host block (barrel/bucket/…), set by ResolveSource.
         // Null for an intake (world water) — there is no block entity to redraw there.
@@ -34,7 +37,7 @@ namespace SignalsLink.src.signals.hose
         /// out (particles) and consumed instead of stored. <paramref name="targetInv"/> is null and
         /// <paramref name="targetPos"/> is the valve's own position (used for the particles).
         /// </param>
-        public HoseLiquidTransfer(ICoreAPI api, IInventory targetInv, BlockPos targetPos, NodePos farEndpoint, PaperConditionsEvaluator conditions, bool discard = false)
+        public HoseLiquidTransfer(ICoreAPI api, IInventory targetInv, BlockPos targetPos, NodePos farEndpoint, PaperConditionsEvaluator conditions, bool discard = false, byte currentOutput = 0)
         {
             this.api = api;
             this.targetInv = targetInv;
@@ -42,6 +45,7 @@ namespace SignalsLink.src.signals.hose
             this.farEndpoint = farEndpoint;
             this.conditions = conditions;
             this.discard = discard;
+            this.currentOutput = currentOutput;
             this.liquid = new LiquidTransferService(api, targetInv, targetPos);
         }
 
@@ -107,13 +111,16 @@ namespace SignalsLink.src.signals.hose
             }
 
             // 2) Explicit action `output N` — replaces the transfer (the valve has an Output pin).
-            //    The block's action IS output, so it never falls back to a transfer. Values 0..15
-            //    set the pin; the `output .` sentinel (255) is sensor-only → no work → next block.
+            //    Like any action it only "does work" if it actually CHANGES something: if the pin
+            //    is already at N this block did nothing, so evaluation falls through to the next
+            //    block. That lets e.g. `in target / *water* 0 / output 0` sit ABOVE a fill block —
+            //    it resets a stale signal once, then stops blocking the transfer below it.
+            //    The `output .` sentinel (255) is sensor-only → never work here → next block.
             if (match.HasExplicitOutput)
             {
-                return match.OutputValue <= 15
-                    ? new Result { Transfer = TransferOperationResult.None, HasExplicitOutput = true, OutputValue = match.OutputValue }
-                    : (Result?)null;
+                if (match.OutputValue > 15) return null;
+                if (match.OutputValue == currentOutput) return null; // no change → fall through
+                return new Result { Transfer = TransferOperationResult.None, HasExplicitOutput = true, OutputValue = match.OutputValue };
             }
 
             // 3) Default action — transfer liquid (or discard in drain mode), shaped by directives.
