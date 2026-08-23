@@ -19,7 +19,7 @@ namespace SignalsLink.src.signals.hose
         readonly Vec3f posOffset;
 
         MeshRef hoseMesh;
-        readonly AssetLocation hoseTexName = new AssetLocation("signalslink:block/oak-dark.png");
+        readonly AssetLocation hoseTexName = new AssetLocation("signalslink:block/leather.png");
         int textureId = -1;
         Matrixf ModelMat = new Matrixf();
 

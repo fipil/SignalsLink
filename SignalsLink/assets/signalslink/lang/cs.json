@@ -26,6 +26,7 @@
 	"signalslink:block-managedwallchute-rock-*": "Řízená trubka zasazená ve skále",
 	"signalslink:block-managedwallchute-cobble-*": "Řízená trubka zasazená v dlaždicích",
 	"signalslink:managedchute-conditions": "Podmínky",
+	"signalslink:conditions-collapsed": "… (+{0} dalších — podrž Plížení pro zobrazení)",
 	"signalslink:managedchute-info-unlimited": "Přepravuje trvale",
 	"signalslink:managedchute-info-remaining": "Přepravuje {0}",
 	"signalslink:block-handbooktitle-signalslink": "Použití",

@@ -163,16 +163,19 @@ namespace SignalsLink.src.signals.hose
             if (Api is not ICoreServerAPI) return;
             if (!HasInput) { noWorkStreak = 0; tickSkip = 0; return; } // truly idle → cheap no-op
 
-            // stride grows 1→8 with the unproductive streak; skip the ticks in between.
-            int stride = 1 + System.Math.Min(noWorkStreak, 7);
-            if (++tickSkip < stride) return;
-            tickSkip = 0;
+            // --- idle-backoff TEMPORARILY DISABLED for testing (an output-only valve was not
+            // re-evaluating fast enough to drop its output). Runs TryPull every tick instead. ---
+            //int stride = 1 + System.Math.Min(noWorkStreak, 7);
+            //if (++tickSkip < stride) return;
+            //tickSkip = 0;
+            //
+            //int status = TryPull();
+            //if (status == 0) noWorkStreak = 0;                                   // moved → full rate
+            //else if (status == 1) noWorkStreak = System.Math.Min(noWorkStreak + 1, 64); // blocked → back off
+            //// status == 2 (waiting for our arbitration turn): keep the current rate so two facing
+            //// valves keep alternating without lag.
 
-            int status = TryPull();
-            if (status == 0) noWorkStreak = 0;                                   // moved → full rate
-            else if (status == 1) noWorkStreak = System.Math.Min(noWorkStreak + 1, 64); // blocked → back off
-            // status == 2 (waiting for our arbitration turn): keep the current rate so two facing
-            // valves keep alternating without lag.
+            TryPull();
         }
 
         /// <summary>

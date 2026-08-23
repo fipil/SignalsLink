@@ -1,6 +1,28 @@
 {
 	"code": "hose",
 	"maxstacksize": 64,
-	"texture": { "base": "block/copper1" },
-	"creativeinventory": { "general": [ "*" ], "signalslink": [ "*" ] }
+	"shape": { "base": "item/hose" },
+	"textures": {
+		"leather": { "base": "block/leather" },
+		"col68": { "base": "block/col68" }
+	},
+	"creativeinventory": { "general": [ "*" ], "signalslink": [ "*" ] },
+	guiTransform: {
+		translation: { x: 0, y: 0, z: 0 },
+		rotation: { x: -32, y: 36, z: -180 },
+		origin: { x: 0.53, y: 0.125, z: 0.5 },
+		scale: 1.5
+	},
+	groundTransform: {
+		translation: { x: 0, y: 0, z: 0 },
+		rotation: { x: 0, y: 0, z: 0 },
+		origin: { x: 0.5, y: 0, z: 0.5 },
+		scale: 2.8
+	},
+	tpHandTransform: {
+		translation: { x: -0.7, y: -0.28, z: -0.8 },
+		rotation: { x: -78, y: 7, z: 8 },
+		origin: { x: 0.5, y: 0.125, z: 0.5 },
+		scale: 0.7
+	}
 }

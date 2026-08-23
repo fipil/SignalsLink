@@ -26,6 +26,7 @@
 	"signalslink:block-managedwallchute-rock-*": "Managed chute embedded in rock",
 	"signalslink:block-managedwallchute-cobble-*": "Managed chute embedded in tiles",
 	"signalslink:managedchute-conditions": "Conditions",
+	"signalslink:conditions-collapsed": "… (+{0} more — hold Sneak to expand)",
 	"signalslink:managedchute-info-unlimited": "Transports indefinitely",
 	"signalslink:managedchute-info-remaining": "Transports {0}",
 	"signalslink:block-handbooktitle-signalslink": "Usage",

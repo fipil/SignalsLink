@@ -117,16 +117,27 @@ namespace SignalsLink.src.signals.paperConditions
                 .Replace("<", "&lt;")
                 .Replace(">", "&gt;");
 
-            foreach (var line in escaped.Split('\n'))
+            string[] lines = escaped.Split('\n');
+
+            dsc.AppendLine($"{Lang.Get("signalslink:managedchute-conditions")}:");
+
+            // A long conditions text grows the block-info box down over the crosshair, which blocks
+            // interacting with the block. So collapse to the first few lines unless the player is
+            // sneaking; sneaking expands to the full text on demand.
+            bool sneaking = forPlayer?.Entity?.Controls?.ShiftKey == true;
+            const int MaxCollapsedLines = 8;
+
+            if (!sneaking && lines.Length > MaxCollapsedLines)
             {
-                dsc.AppendLine("  " + line);
+                for (int i = 0; i < MaxCollapsedLines; i++) dsc.AppendLine("  " + lines[i]);
+                dsc.AppendLine("  " + Lang.Get("signalslink:conditions-collapsed", lines.Length - MaxCollapsedLines));
             }
-            if (dsc.Length > 0)
+            else
             {
-                dsc.Insert(0, $"{Lang.Get("signalslink:managedchute-conditions")}:\n");
-                return dsc.ToString();
+                foreach (var line in lines) dsc.AppendLine("  " + line);
             }
-            return null;
+
+            return dsc.ToString();
         }
 
         private bool IsPaper(ItemStack stack)

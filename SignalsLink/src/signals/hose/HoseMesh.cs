@@ -123,9 +123,18 @@ namespace SignalsLink.src.signals.hose
 
                 a = CrossProduct(direction, b * -1);
 
-                float du = dist / nSec;
+                // 2× makes the texture tile twice as often along the length → half the lengthwise
+                // stretch (the leather pattern reads finer instead of being pulled long).
+                float du = dist / nSec * 2f;
                 int color = 1;
                 float uv_v = 3f / 16;
+
+                // The leather texture has a horizontal seam across its middle. ONE side face
+                // (mesh_side) straddles that middle, so the seam runs lengthwise along the hose.
+                // Every other face samples the seam-free top band (0..uv_v) — plain brown.
+                const float SeamCenter = 0.5f; // seam is in the middle of the texture
+                float seamLo = SeamCenter - uv_v * 0.5f;
+                float seamHi = SeamCenter + uv_v * 0.5f;
 
                 mesh_top.AddVertex((pos - b * t + a * t).X, (pos - b * t + a * t).Y, (pos - b * t + a * t).Z, j * du, 0, color);
                 mesh_top.AddVertex((pos + b * t + a * t).X, (pos + b * t + a * t).Y, (pos + b * t + a * t).Z, j * du, uv_v, color);
@@ -133,8 +142,8 @@ namespace SignalsLink.src.signals.hose
                 mesh_bot.AddVertex((pos - b * t - a * t).X, (pos - b * t - a * t).Y, (pos - b * t - a * t).Z, j * du, 0, color);
                 mesh_bot.AddVertex((pos + b * t - a * t).X, (pos + b * t - a * t).Y, (pos + b * t - a * t).Z, j * du, uv_v, color);
 
-                mesh_side.AddVertex((pos - b * t + a * t).X, (pos - b * t + a * t).Y, (pos - b * t + a * t).Z, j * du, uv_v, color);
-                mesh_side.AddVertex((pos - b * t - a * t).X, (pos - b * t - a * t).Y, (pos - b * t - a * t).Z, j * du, 0, color);
+                mesh_side.AddVertex((pos - b * t + a * t).X, (pos - b * t + a * t).Y, (pos - b * t + a * t).Z, j * du, seamHi, color);
+                mesh_side.AddVertex((pos - b * t - a * t).X, (pos - b * t - a * t).Y, (pos - b * t - a * t).Z, j * du, seamLo, color);
 
                 mesh_side2.AddVertex((pos + b * t + a * t).X, (pos + b * t + a * t).Y, (pos + b * t + a * t).Z, j * du, uv_v, color);
                 mesh_side2.AddVertex((pos + b * t - a * t).X, (pos + b * t - a * t).Y, (pos + b * t - a * t).Z, j * du, 0, color);

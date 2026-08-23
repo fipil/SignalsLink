@@ -46,7 +46,7 @@ namespace SignalsLink.src.signals.hose
         bool dirty = true;
 
         int textureId = -1;
-        readonly AssetLocation hoseTexName = new AssetLocation("signalslink:block/oak-dark.png");
+        readonly AssetLocation hoseTexName = new AssetLocation("signalslink:block/leather.png");
         readonly Matrixf ModelMat = new Matrixf();
 
         public HangingHosesRenderer(ICoreClientAPI capi, HoseNetworkMod mod)
