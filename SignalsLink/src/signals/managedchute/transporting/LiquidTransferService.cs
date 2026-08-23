@@ -274,7 +274,9 @@ namespace SignalsLink.src.signals.managedchute.transporting
             if (liquidProps == null || liquidProps.ItemsPerLitre <= 0) return TransferOperationResult.None;
 
             decimal movedLitres = decimal.Round(movedItems / (decimal)liquidProps.ItemsPerLitre, 2, MidpointRounding.ToZero);
-            int triggerCost = hasAmountOverride ? 1 : (int)movedLitres;
+            // Buffer model B: cost = litres actually moved, so the Input buffer counts real litres
+            // (an `amount M` block subtracts M, not a flat 1). hasAmountOverride is now unused here.
+            int triggerCost = (int)movedLitres;
             if (triggerCost <= 0) triggerCost = 1;
 
             return movedLitres > 0 ? new TransferOperationResult(movedLitres, triggerCost, true) : TransferOperationResult.None;

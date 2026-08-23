@@ -1,9 +1,11 @@
 using signals.src;
 using signals.src.signalNetwork;
+using SignalsLink.src.signals;
 using SignalsLink.src.signals.paperConditions;
 using System.Text;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
+using Vintagestory.API.Config;
 using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Server;
@@ -16,7 +18,7 @@ namespace SignalsLink.src.signals.hose
     /// tick, like the BlockSensor). Index 2 = hose anchor (handled by the block, not the BE).
     /// Liquid transfer, host detection and shape swap are added in step 5+.
     /// </summary>
-    public class BlockEntityHoseValve : BlockEntity, IBESignalReceptor, IPaperConditionsHost
+    public class BlockEntityHoseValve : BlockEntity, IBESignalReceptor, IPaperConditionsHost, ISignalBuffer
     {
         public const int INPUT = 0;
         public const int OUTPUT = 1;
@@ -76,6 +78,7 @@ namespace SignalsLink.src.signals.hose
             {
                 conditionsText = value;
                 conditionsEvaluator?.SetConditionsText(conditionsText);
+                remaining = 0; // reconfiguring clears the pending batch (it may no longer be valid)
                 MarkDirty();
             }
         }
@@ -163,19 +166,26 @@ namespace SignalsLink.src.signals.hose
             if (Api is not ICoreServerAPI) return;
             if (!HasInput) { noWorkStreak = 0; tickSkip = 0; return; } // truly idle → cheap no-op
 
-            // --- idle-backoff TEMPORARILY DISABLED for testing (an output-only valve was not
-            // re-evaluating fast enough to drop its output). Runs TryPull every tick instead. ---
-            //int stride = 1 + System.Math.Min(noWorkStreak, 7);
-            //if (++tickSkip < stride) return;
-            //tickSkip = 0;
-            //
-            //int status = TryPull();
-            //if (status == 0) noWorkStreak = 0;                                   // moved → full rate
-            //else if (status == 1) noWorkStreak = System.Math.Min(noWorkStreak + 1, 64); // blocked → back off
-            //// status == 2 (waiting for our arbitration turn): keep the current rate so two facing
-            //// valves keep alternating without lag.
+            // A valve whose conditions produce an `output` acts like a sensor — it must stay
+            // responsive so the pin reacts (e.g. drops to 0) the moment the source state changes.
+            // Such valves skip the idle backoff and evaluate every tick.
+            if (conditionsEvaluator != null && conditionsEvaluator.HasAnyOutput)
+            {
+                TryPull();
+                return;
+            }
 
-            TryPull();
+            // Idle backoff (transfer-only valves): after repeated unproductive attempts, run the
+            // heavier pull less often (stride grows 1→8); snap back to full rate on any move.
+            int stride = 1 + System.Math.Min(noWorkStreak, 7);
+            if (++tickSkip < stride) return;
+            tickSkip = 0;
+
+            int status = TryPull();
+            if (status == 0) noWorkStreak = 0;                                   // moved → full rate
+            else if (status == 1) noWorkStreak = System.Math.Min(noWorkStreak + 1, 64); // blocked → back off
+            // status == 2 (waiting for our arbitration turn): keep the current rate so two facing
+            // valves keep alternating without lag.
         }
 
         /// <summary>
@@ -215,8 +225,11 @@ namespace SignalsLink.src.signals.hose
             if (contested && !hoseMod.IsOnTurn(myAnchor, far)) return 2;
 
             decimal litres = unlimited ? maxLitresPerTick : System.Math.Min((decimal)remaining, maxLitresPerTick);
+            // Buffer model B: the remaining Input buffer is a hard cap on litres this move (an
+            // `amount M` block never moves more than what's left). Unlimited → no cap.
+            decimal bufferCap = unlimited ? decimal.MaxValue : remaining;
 
-            var transfer = new HoseLiquidTransfer(Api, hostInv, hostPos, far, conditionsEvaluator, discard, outputState);
+            var transfer = new HoseLiquidTransfer(Api, hostInv, hostPos, far, conditionsEvaluator, discard, outputState, bufferCap);
             HoseLiquidTransfer.Result result = transfer.TryMove(litres);
 
             if (result.HasExplicitOutput) SetOutput(result.OutputValue);
@@ -474,6 +487,19 @@ namespace SignalsLink.src.signals.hose
         public override void GetBlockInfo(IPlayer forPlayer, StringBuilder dsc)
         {
             base.GetBlockInfo(forPlayer, dsc);
+
+            // Show the Input buffer (litres left to move), like the ManagedChute does.
+            if (unlimited) dsc.AppendLine(Lang.Get("signalslink:managedchute-info-unlimited"));
+            else if (remaining > 0) dsc.AppendLine(Lang.Get("signalslink:managedchute-info-remaining", remaining));
+        }
+
+        /// <summary>Wrench (sneak) clears the pending buffer and stops continuous mode.</summary>
+        public void ClearBuffer()
+        {
+            if (remaining == 0 && !unlimited) return;
+            remaining = 0;
+            unlimited = false;
+            MarkDirty();
         }
     }
 }

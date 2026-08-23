@@ -63,7 +63,9 @@ namespace SignalsLink.src.signals.managedchute.transporting
                 src.MarkDirty();
                 dst.MarkDirty();
                 ExecuteMatchingActions();
-                int triggerCost = selection.Directives.HasAmountOverride ? 1 : moved;
+                // Buffer model B: cost = pieces actually moved, so the Input buffer counts real
+                // items (an `amount M` block subtracts M, not a flat 1 — no more multiplier).
+                int triggerCost = moved;
                 return new TransferOperationResult(moved, triggerCost, false);
             }
 

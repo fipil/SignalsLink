@@ -33,6 +33,20 @@ public class PaperConditionsEvaluator
 
     public bool HasConditions => !string.IsNullOrWhiteSpace(conditionsText);
 
+    /// <summary>True if the current conditions contain any <c>output</c> action (compiles if needed).</summary>
+    public bool HasAnyOutput
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(conditionsText)) return false;
+            if (compiled == null || !string.Equals(lastParsedText, conditionsText, StringComparison.Ordinal))
+            {
+                ParseInternal(conditionsText);
+            }
+            return compiled?.HasAnyOutput ?? false;
+        }
+    }
+
     public void ClearCache()
     {
         lastParsedText = null;

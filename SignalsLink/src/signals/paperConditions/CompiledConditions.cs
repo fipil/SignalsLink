@@ -14,6 +14,16 @@ namespace SignalsLink.src.signals.paperConditions
             this.blocks = blocks;
         }
 
+        /// <summary>True if any block specifies an <c>output</c> action.</summary>
+        public bool HasAnyOutput
+        {
+            get
+            {
+                foreach (ConditionBlock b in blocks) if (b.HasExplicitOutput) return true;
+                return false;
+            }
+        }
+
         public bool Evaluate(ItemStack stack, IDictionary<string, object> ctx)
         {
             byte matchedBlockIndex;

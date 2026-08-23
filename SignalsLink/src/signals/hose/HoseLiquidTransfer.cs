@@ -27,6 +27,10 @@ namespace SignalsLink.src.signals.hose
         // The valve's current Output pin value, so an `output N` block can fall through when the
         // pin is already at N (it would change nothing).
         private readonly byte currentOutput;
+        // Upper bound on litres this move may transfer (the remaining Input buffer). An `amount M`
+        // directive is capped by it, so the buffer is a hard "litres left to move" limit
+        // (buffer 3 + amount 6 → move only 3). decimal.MaxValue = unlimited (signal 15).
+        private readonly decimal maxTransfer;
 
         // Position of the far source's host block (barrel/bucket/…), set by ResolveSource.
         // Null for an intake (world water) — there is no block entity to redraw there.
@@ -37,7 +41,7 @@ namespace SignalsLink.src.signals.hose
         /// out (particles) and consumed instead of stored. <paramref name="targetInv"/> is null and
         /// <paramref name="targetPos"/> is the valve's own position (used for the particles).
         /// </param>
-        public HoseLiquidTransfer(ICoreAPI api, IInventory targetInv, BlockPos targetPos, NodePos farEndpoint, PaperConditionsEvaluator conditions, bool discard = false, byte currentOutput = 0)
+        public HoseLiquidTransfer(ICoreAPI api, IInventory targetInv, BlockPos targetPos, NodePos farEndpoint, PaperConditionsEvaluator conditions, bool discard = false, byte currentOutput = 0, decimal maxTransfer = decimal.MaxValue)
         {
             this.api = api;
             this.targetInv = targetInv;
@@ -46,6 +50,7 @@ namespace SignalsLink.src.signals.hose
             this.conditions = conditions;
             this.discard = discard;
             this.currentOutput = currentOutput;
+            this.maxTransfer = maxTransfer;
             this.liquid = new LiquidTransferService(api, targetInv, targetPos);
         }
 
@@ -153,7 +158,8 @@ namespace SignalsLink.src.signals.hose
             ItemSlot dst = liquid.GetTargetSlot(sourceLiquid, targetSlotSignal);
             if (dst == null) return TransferOperationResult.None;
 
-            decimal litres = directives.Amount ?? litresRequested;
+            // Cap by the remaining buffer: `amount M` never moves more than what is left to move.
+            decimal litres = System.Math.Min(directives.Amount ?? litresRequested, maxTransfer);
 
             TransferOperationResult res = srcSlot != null
                 ? liquid.TryMoveFromItemSlot(srcSlot, dst, litres, directives.HasAmountOverride)
@@ -181,7 +187,8 @@ namespace SignalsLink.src.signals.hose
             WaterTightContainableProps props = BlockLiquidContainerBase.GetContainableProps(sourceLiquid);
             if (props == null || props.ItemsPerLitre <= 0) return TransferOperationResult.None;
 
-            decimal litres = decimal.Round(directives.Amount ?? litresRequested, 2, System.MidpointRounding.ToZero);
+            // Cap by the remaining buffer (see maxTransfer): the drain consumes at most what's left.
+            decimal litres = decimal.Round(System.Math.Min(directives.Amount ?? litresRequested, maxTransfer), 2, System.MidpointRounding.ToZero);
             if (litres <= 0) return TransferOperationResult.None;
 
             int wantItems = (int)(props.ItemsPerLitre * (float)litres);
@@ -208,7 +215,9 @@ namespace SignalsLink.src.signals.hose
 
             decimal movedLitres = decimal.Round(movedItems / (decimal)props.ItemsPerLitre, 2, System.MidpointRounding.ToZero);
             if (movedLitres <= 0) return TransferOperationResult.None;
-            int triggerCost = directives.HasAmountOverride ? 1 : (int)movedLitres;
+            // Buffer model B: the cost is the litres actually moved (not a flat 1 per amount-op),
+            // so the Input buffer counts down in real litres.
+            int triggerCost = (int)movedLitres;
             if (triggerCost <= 0) triggerCost = 1;
             return new TransferOperationResult(movedLitres, triggerCost, true);
         }
