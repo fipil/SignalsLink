@@ -184,6 +184,22 @@
 			"*-*-west": 270
 		}
 	},
+	"shapeInventory": {
+		"base": "block/hose/valve_gui"
+	},
+	"guiTransform": {
+		"origin": {
+			"x": 0.5,
+			"y": 0.5,
+			"z": 0.5
+		},
+		"rotation": {
+			"x": -22.6,
+			"y": 135.0,
+			"z": 0.0
+		},
+		"scale": 1.8
+	},
 	"blockmaterial": "Metal",
 	"lightAbsorption": 0,
 	"drawtype": "json",
@@ -194,12 +210,6 @@
 	},
 	"sideopaque": {
 		"all": false
-	},
-	"sounds": {
-		"place": "game:block/anvil",
-		"break": "game:block/metal",
-		"hit": "game:block/metal",
-		"walk": "game:walk/stone"
 	},
 	"creativeinventory": {
 		"general": [

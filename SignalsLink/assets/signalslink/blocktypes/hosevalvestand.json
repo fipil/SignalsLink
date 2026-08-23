@@ -195,12 +195,6 @@
 	"sideopaque": {
 		"all": false
 	},
-	"sounds": {
-		"place": "game:block/anvil",
-		"break": "game:block/metal",
-		"hit": "game:block/metal",
-		"walk": "game:walk/stone"
-	},
 	"drops": [
 		{
 			"type": "block",

@@ -200,68 +200,118 @@
 	"sideopaque": {
 		"all": false
 	},
-	"sounds": {
-		"place": "game:block/anvil",
-		"break": "game:block/metal",
-		"hit": "game:block/metal",
-		"walk": "game:walk/stone"
-	},
 	"drops": [
 		{
 			"type": "block",
 			"code": "hosevalve-north-down"
 		}
 	],
-	"selectionbox": {
-		"x1": 0.375,
-		"y1": 0.0,
-		"z1": 0.375,
-		"x2": 0.625,
-		"y2": 0.9375,
-		"z2": 0.625,
-		"rotateXbytype": {
-			"*-*-north": 90,
-			"*-*-south": 270,
-			"@*-up-(east|west)": 90,
-			"@*-down-(east|west)": 270,
-			"@*-south-(east|west)": 180
+	"selectionBoxes": [
+		{
+			"x1": 0.375,
+			"y1": 0.0,
+			"z1": 0.375,
+			"x2": 0.625,
+			"y2": 0.9375,
+			"z2": 0.625,
+			"rotateXbytype": {
+				"*-*-north": 90,
+				"*-*-south": 270,
+				"@*-up-(east|west)": 90,
+				"@*-down-(east|west)": 270,
+				"@*-south-(east|west)": 180
+			},
+			"rotateYbytype": {
+				"@*-east-(up|down|north|south)": 270,
+				"@*-south-(up|down)": 180,
+				"@*-west-(up|down|north|south)": 90,
+				"@*-(down-north|up-south)": 180
+			},
+			"rotateZbyType": {
+				"*-*-up": 180,
+				"*-*-east": 90,
+				"*-*-west": 270
+			}
 		},
-		"rotateYbytype": {
-			"@*-east-(up|down|north|south)": 270,
-			"@*-south-(up|down)": 180,
-			"@*-west-(up|down|north|south)": 90,
-			"@*-(down-north|up-south)": 180
-		},
-		"rotateZbyType": {
-			"*-*-up": 180,
-			"*-*-east": 90,
-			"*-*-west": 270
+		{
+			"x1": 0.1875,
+			"y1": 0.0,
+			"z1": 0.1875,
+			"x2": 0.8125,
+			"y2": 0.0625,
+			"z2": 0.8125,
+			"rotateXbytype": {
+				"*-*-north": 90,
+				"*-*-south": 270,
+				"@*-up-(east|west)": 90,
+				"@*-down-(east|west)": 270,
+				"@*-south-(east|west)": 180
+			},
+			"rotateYbytype": {
+				"@*-east-(up|down|north|south)": 270,
+				"@*-south-(up|down)": 180,
+				"@*-west-(up|down|north|south)": 90,
+				"@*-(down-north|up-south)": 180
+			},
+			"rotateZbyType": {
+				"*-*-up": 180,
+				"*-*-east": 90,
+				"*-*-west": 270
+			}
 		}
-	},
-	"collisionbox": {
-		"x1": 0.375,
-		"y1": 0.0,
-		"z1": 0.375,
-		"x2": 0.625,
-		"y2": 0.9375,
-		"z2": 0.625,
-		"rotateXbytype": {
-			"*-*-north": 90,
-			"*-*-south": 270,
-			"@*-up-(east|west)": 90,
-			"@*-down-(east|west)": 270,
-			"@*-south-(east|west)": 180
+	],
+	"collisionBoxes": [
+		{
+			"x1": 0.375,
+			"y1": 0.0,
+			"z1": 0.375,
+			"x2": 0.625,
+			"y2": 0.9375,
+			"z2": 0.625,
+			"rotateXbytype": {
+				"*-*-north": 90,
+				"*-*-south": 270,
+				"@*-up-(east|west)": 90,
+				"@*-down-(east|west)": 270,
+				"@*-south-(east|west)": 180
+			},
+			"rotateYbytype": {
+				"@*-east-(up|down|north|south)": 270,
+				"@*-south-(up|down)": 180,
+				"@*-west-(up|down|north|south)": 90,
+				"@*-(down-north|up-south)": 180
+			},
+			"rotateZbyType": {
+				"*-*-up": 180,
+				"*-*-east": 90,
+				"*-*-west": 270
+			}
 		},
-		"rotateYbytype": {
-			"@*-east-(up|down|north|south)": 270,
-			"@*-south-(up|down)": 180,
-			"@*-west-(up|down|north|south)": 90,
-			"@*-(down-north|up-south)": 180
-		},
-		"rotateZbyType": {
-			"*-*-up": 180,
-			"*-*-east": 90,
-			"*-*-west": 270
+		{
+			"x1": 0.1875,
+			"y1": 0.0,
+			"z1": 0.1875,
+			"x2": 0.8125,
+			"y2": 0.0625,
+			"z2": 0.8125,
+			"rotateXbytype": {
+				"*-*-north": 90,
+				"*-*-south": 270,
+				"@*-up-(east|west)": 90,
+				"@*-down-(east|west)": 270,
+				"@*-south-(east|west)": 180
+			},
+			"rotateYbytype": {
+				"@*-east-(up|down|north|south)": 270,
+				"@*-south-(up|down)": 180,
+				"@*-west-(up|down|north|south)": 90,
+				"@*-(down-north|up-south)": 180
+			},
+			"rotateZbyType": {
+				"*-*-up": 180,
+				"*-*-east": 90,
+				"*-*-west": 270
+			}
 		}
-	}
+	]
 }

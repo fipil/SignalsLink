@@ -6,30 +6,59 @@
 			{
 				"index": 0,
 				"name": "con-hose",
-				"x1": 0.4, "y1": 0.75, "z1": 0.4,
-				"x2": 0.6, "y2": 1.0, "z2": 0.6
+				"x1": 0.41875,
+				"y1": 0.9375,
+				"z1": 0.41875,
+				"x2": 0.60625,
+				"y2": 1.0,
+				"z2": 0.60625
 			}
 		]
 	},
 	"textures": {
-		"mat": { "base": "block/bismuthbronze" },
-		"anchor": { "base": "block/oak" }
+		"mat": {
+			"base": "block/bismuthbronze"
+		},
+		"anchor": {
+			"base": "block/oak"
+		}
 	},
-	"shape": { "base": "block/hose/intake" },
+	"shape": {
+		"base": "block/hose/intake"
+	},
 	"blockmaterial": "Metal",
 	"lightAbsorption": 0,
 	"drawtype": "json",
 	"replaceable": 500,
 	"resistance": 1.5,
-	"sidesolid": { "all": false },
-	"sideopaque": { "all": false },
-	"sounds": {
-		"place": "game:block/anvil",
-		"break": "game:block/metal",
-		"hit": "game:block/metal",
-		"walk": "game:walk/stone"
+	"sidesolid": {
+		"all": false
 	},
-	"creativeinventory": { "general": [ "*" ], "signalslink": [ "*" ] },
-	"selectionbox": { "x1": 0.3125, "y1": 0.0, "z1": 0.3125, "x2": 0.6875, "y2": 0.75, "z2": 0.6875 },
-	"collisionbox": { "x1": 0.3125, "y1": 0.0, "z1": 0.3125, "x2": 0.6875, "y2": 0.75, "z2": 0.6875 }
+	"sideopaque": {
+		"all": false
+	},
+	"creativeinventory": {
+		"general": [
+			"*"
+		],
+		"signalslink": [
+			"*"
+		]
+	},
+	"selectionbox": {
+		"x1": 0.23125,
+		"y1": 0.0,
+		"z1": 0.23125,
+		"x2": 0.76875,
+		"y2": 0.8125,
+		"z2": 0.76875
+	},
+	"collisionbox": {
+		"x1": 0.23125,
+		"y1": 0.0,
+		"z1": 0.23125,
+		"x2": 0.76875,
+		"y2": 0.8125,
+		"z2": 0.76875
+	}
 }

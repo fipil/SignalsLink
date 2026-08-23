@@ -252,11 +252,14 @@ namespace SignalsLink.src.signals.managedchute.transporting
 
         private static bool IsAllowedWorldLiquidBlock(Block block)
         {
-            string path = block?.Code?.Path;
-            if (path == null) return false;
+            if (block == null) return false;
 
-            return path.Equals("water-still-7", StringComparison.OrdinalIgnoreCase)
-                || path.Equals("saltwater-still-7", StringComparison.OrdinalIgnoreCase);
+            // Match by the block's liquid code, which is the same for EVERY water variant —
+            // source, settled and flowing (water-still-7, water-still-3, water-e-2, water-d-5 …).
+            // This lets the intake draw non-source water that merely flowed onto the block, while
+            // still excluding lava (liquidCode "lava").
+            string lc = block.LiquidCode;
+            return lc == "water" || lc == "saltwater";
         }
 
         private static decimal NormalizeLiquidAmount(decimal amount)
