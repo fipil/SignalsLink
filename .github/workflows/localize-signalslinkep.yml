@@ -20,12 +20,12 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
-      # Debug je volitelný, ale doporuèuju ho tam prvních pár bìhù nechat
-      - name: Debug – show repo structure
+      # Debug je volitelnï¿½, ale doporuï¿½uju ho tam prvnï¿½ch pï¿½r bï¿½hï¿½ nechat
+      - name: Debug ï¿½ show repo structure
         run: |
           pwd
           echo "--- root ---"
@@ -38,9 +38,10 @@ jobs:
           ls -la .github/prompts
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
-          node-version: 20
+          node-version: 24
+          package-manager-cache: false
 
       - name: Run localization script
         env:
