@@ -173,7 +173,12 @@
     Hadice spojuje hadicové kotvy <a href="handbook://block-signalslink:hosevalve-north-down">Řízených ventilů</a>, <a href="handbook://block-signalslink:hosecoupling-north-down">hadicových spojek</a> a <a href="handbook://block-signalslink:hoseintake">sání</a>. Jeden úsek může být dlouhý nejvýše 10 bloků; spojky dovolují vedení prodloužit na větší vzdálenost.
 </translation>
 <translation key="signalslink:block-handbooktext-hosevalve">
-    Řízený ventil přepravuje kapaliny <a href="handbook://item-signalslink:hose">hadicí</a> ze vzdáleného ventilu nebo <a href="handbook://block-signalslink:hoseintake">sání</a> do svého hostitelského bloku, například sudu, vědra nebo ohniště. Lávu nepřenáší a horkou vodu v cíli ochladí.<br><br>
-    Ventil řídí Signals <strong>Vstup</strong>: 1 až 7 přenese dávku 1, 2, 4, 8, 16, 32 nebo 64 litrů; 15 přenáší průběžně. Má také <strong>Výstup</strong>, který lze nastavit pomocí <a href="handbook://signalslink:usageinfo-paperconditions">Podmínek na papíře</a>. Dva ventily na opačných koncích vedení se při čerpání střídají.<br><br>
-    Na stěně se ventil přisaje k sousednímu bloku s kapalinovým inventářem. Bez hostitelského bloku stojí jako stojánek; na podlaze funguje jako výlevka a kapalinu vypouští do světa. Výlevka je užitečná pro odstranění přebytečné kapaliny.
+    Řízený ventil přepravuje kapaliny <a href="handbook://item-signalslink:hose">hadicí</a>. Kapalinu vždy táhne ze vzdáleného konce vedení do svého hostitele. Má jednu hadicovou kotvu a dva Signals konektory: <strong>Vstup</strong> řídí čerpání a <strong>Výstup</strong> lze ovládat pomocí <a href="handbook://signalslink:usageinfo-paperconditions">Podmínek na papíře</a>.<br><br>
+    <font size="20" color="6082B6">Stavy ventilu</font><br>
+    • <strong>Přisátý</strong> — ventil je umístěn vedle bloku s inventářem kapaliny, například sudu, vědra nebo ohniště. Při signálu na Vstupu čerpá kapalinu ze vzdáleného konce hadice do tohoto hostitele.<br>
+    • <strong>Stojánek</strong> — ventil nemá na montážní straně žádný vhodný inventář. V tomto stavu kapalinu nepřenáší; jakmile k němu přistavíte vhodný hostitelský blok, přisaje se a začne fungovat jako přisátý ventil.<br>
+    • <strong>Výlevka</strong> — ventil položený na zemi. Při signálu na Vstupu kapalinu ze vzdáleného konce hadice vypustí; kapalina se neukládá do světa, jen se zobrazí jako kapky a spotřebuje se. Užitečné, pokud se potřebujete zbavit nějaké přebytečné kapaliny.<br><br>
+    <font size="20" color="6082B6">Řízení čerpání</font><br>
+    Vstupní signály 1 až 7 přidávají dávku 1, 2, 4, 8, 16, 32 nebo 64 litrů. Signál 15 čerpá trvale. Jsou-li na jedné hadici aktivní dva Řízené ventily, střídají se v čerpání.<br>
+    Ventil nepřenáší lávu a horkou vodu v cíli ochladí na okolní teplotu. Podmínky na papíře mohou přenos filtrovat, změnit velikost dávky, zapečetit cílový sud nebo nastavit Výstup na hodnotu 0 až 15.
 </translation>
