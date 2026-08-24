@@ -22,8 +22,8 @@ Pravidla:
 * Neescapuj lomítka "/", používej jen standardní JSON escapování pro uvozovky a případná zpětná lomítka.
 * NEESCAPUJ LOMÍTKA "/" !!!!
 * Nezaváděj nové klíče, které nejsou ve vstupních items.
+* Vrať všechny vstupní klíče právě jednou, beze změny jejich názvu; nesmíš žádný vynechat ani nahradit jiným.
 * HTML nesmí obsahovat zpětná lomítka. Pokud by obsahovalo, nahlas chybu.
-* Pokud nějaký jazykový objekt neumíš vytvořit, vrať pro daný jazyk prázdný objekt {}.
 
 Výstup:
 - Vrať JSON ve stejném tvaru jako items:

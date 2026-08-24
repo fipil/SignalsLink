@@ -133,6 +133,29 @@ function validateOneLineStrings(obj, label) {
     }
 }
 
+function validateTranslationResult(result, items, label) {
+    if (!result || typeof result !== "object" || Array.isArray(result)) {
+        throw new Error(`${label}: model nevrátil objekt key->value`);
+    }
+
+    const inputKeys = Object.keys(items).sort();
+    const outputKeys = Object.keys(result).sort();
+    if (inputKeys.length !== outputKeys.length) {
+        throw new Error(
+            `${label}: model vrátil jiný počet klíčů než vstup (${outputKeys.length} vs ${inputKeys.length})`,
+        );
+    }
+    for (let index = 0; index < inputKeys.length; index++) {
+        if (inputKeys[index] !== outputKeys[index]) {
+            throw new Error(
+                `${label}: model vrátil jiné klíče než vstup (např. '${outputKeys[index]}' místo '${inputKeys[index]}')`,
+            );
+        }
+    }
+
+    validateOneLineStrings(result, label);
+}
+
 /** =========================
  *  Git helpers
  *  ========================= */
@@ -256,12 +279,15 @@ async function callOpenAITranslateWithRetry(args, maxAttempts = 4) {
     while (true) {
         attempt++;
         try {
-            return await callOpenAITranslate(args);
+            const result = await callOpenAITranslate(args);
+            validateTranslationResult(result, args.items, `Output ${args.targetLang}`);
+            return result;
         } catch (err) {
-            if (attempt >= maxAttempts || !isRetryableError(err)) throw err;
+            const retryable = isRetryableError(err) || err?.message?.startsWith("Output ");
+            if (attempt >= maxAttempts || !retryable) throw err;
             const wait = Math.min(30_000, 1_000 * 2 ** (attempt - 1));
             console.warn(
-                `OpenAI call failed (attempt ${attempt}/${maxAttempts}). Retrying in ${wait}ms...`,
+                `OpenAI response rejected (attempt ${attempt}/${maxAttempts}). Retrying in ${wait}ms...`,
                 err?.cause?.code || err?.code || err,
             );
             await sleep(wait);
@@ -349,28 +375,6 @@ async function translateAll({ csNew, changedKeys }) {
                 targetLang: lang,
                 items,
             });
-
-            if (!result || typeof result !== "object" || Array.isArray(result)) {
-                throw new Error(`[${lang}] Model nevrátil objekt key->value`);
-            }
-
-            // Fail-fast: model must return exactly the same keys
-            const inKeys = Object.keys(items).sort();
-            const outKeys = Object.keys(result).sort();
-            if (inKeys.length !== outKeys.length) {
-                throw new Error(
-                    `[${lang}] Model vrátil jiný počet klíčů než vstup (${outKeys.length} vs ${inKeys.length})`,
-                );
-            }
-            for (let j = 0; j < inKeys.length; j++) {
-                if (inKeys[j] !== outKeys[j]) {
-                    throw new Error(
-                        `[${lang}] Model vrátil jiné klíče než vstup (např. '${outKeys[j]}' místo '${inKeys[j]}')`,
-                    );
-                }
-            }
-
-            validateOneLineStrings(result, `Output ${lang}`);
 
             for (const [k, v] of Object.entries(result)) {
                 langJson[k] = v;
