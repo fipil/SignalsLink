@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - master
+      - managedHose
     paths:
       - "SignalsLink/assets/signalslink/lang/cs.json"
       - "SignalsLink/assets/signalslink/lang/signalslink.html"
@@ -25,8 +26,8 @@ jobs:
         with:
           fetch-depth: 0
 
-      # Debug je volitelný, ale doporuèuju ho tam prvních pár bìhù nechat
-      - name: Debug – show repo structure
+      # Debug je volitelnï¿½, ale doporuï¿½uju ho tam prvnï¿½ch pï¿½r bï¿½hï¿½ nechat
+      - name: Debug ï¿½ show repo structure
         run: |
           pwd
           echo "--- root ---"
