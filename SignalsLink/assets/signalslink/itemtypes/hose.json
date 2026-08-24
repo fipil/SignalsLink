@@ -6,6 +6,16 @@
 		"leather": { "base": "block/leather" },
 		"col68": { "base": "block/col68" }
 	},
+	"attributes": {
+		"handbook": {
+			"extraSections": [
+				{
+					"title": "signalslink:block-handbooktitle-signalslink",
+					"text": "signalslink:item-handbooktext-hose"
+				}
+			]
+		}
+	},
 	"creativeinventory": { "general": [ "*" ], "signalslink": [ "*" ] },
 	guiTransform: {
 		translation: { x: 0, y: 0, z: 0 },

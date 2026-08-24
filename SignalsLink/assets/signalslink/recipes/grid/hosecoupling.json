@@ -1,0 +1,13 @@
+{
+	"ingredientPattern": "SHN,_B_,_P_",
+	"ingredients": {
+		"S": { "type": "item", "code": "game:saw-*", "isTool": true, "toolDurabilityCost": 2 },
+		"H": { "type": "item", "code": "game:hammer-*", "isTool": true, "toolDurabilityCost": 2 },
+		"N": { "type": "item", "code": "game:metalnailsandstrips-*" },
+		"B": { "type": "item", "code": "game:ingot-brass" },
+		"P": { "type": "item", "code": "game:plank-*" }
+	},
+	"width": 3,
+	"height": 3,
+	"output": { "type": "block", "code": "signalslink:hosecoupling-north-down", "quantity": 1 }
+}

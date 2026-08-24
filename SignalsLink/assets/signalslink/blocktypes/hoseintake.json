@@ -2,6 +2,14 @@
 	"code": "hoseintake",
 	"class": "HoseIntake",
 	"attributes": {
+		"handbook": {
+			"extraSections": [
+				{
+					"title": "signalslink:block-handbooktitle-signalslink",
+					"text": "signalslink:block-handbooktext-hoseintake"
+				}
+			]
+		},
 		"hoseNodes": [
 			{
 				"index": 0,

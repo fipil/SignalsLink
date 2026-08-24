@@ -31,6 +31,14 @@
 		}
 	],
 	"attributes": {
+		"handbook": {
+			"extraSections": [
+				{
+					"title": "signalslink:block-handbooktitle-signalslink",
+					"text": "signalslink:block-handbooktext-hosecoupling"
+				}
+			]
+		},
 		"hoseNodes": [
 			{
 				"index": 0,
