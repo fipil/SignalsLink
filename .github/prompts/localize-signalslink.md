@@ -24,6 +24,7 @@ Pravidla:
 * Nezaváděj nové klíče, které nejsou ve vstupních items.
 * Vrať všechny vstupní klíče právě jednou, beze změny jejich názvu; nesmíš žádný vynechat ani nahradit jiným.
 * HTML nesmí obsahovat zpětná lomítka. Pokud by obsahovalo, nahlas chybu.
+* České slovo "Řízená" překládej do angličtiny jako "Managed": Managed Chute, Managed Valve.
 
 Výstup:
 - Vrať JSON ve stejném tvaru jako items:
