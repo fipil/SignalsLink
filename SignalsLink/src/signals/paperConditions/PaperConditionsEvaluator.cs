@@ -33,6 +33,20 @@ public class PaperConditionsEvaluator
 
     public bool HasConditions => !string.IsNullOrWhiteSpace(conditionsText);
 
+    /// <summary>True if the current conditions contain any <c>output</c> action (compiles if needed).</summary>
+    public bool HasAnyOutput
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(conditionsText)) return false;
+            if (compiled == null || !string.Equals(lastParsedText, conditionsText, StringComparison.Ordinal))
+            {
+                ParseInternal(conditionsText);
+            }
+            return compiled?.HasAnyOutput ?? false;
+        }
+    }
+
     public void ClearCache()
     {
         lastParsedText = null;
@@ -107,6 +121,31 @@ public class PaperConditionsEvaluator
         if (compiled == null) return false;
 
         return compiled.TryMatch(stack, ctx, out matchResult);
+    }
+
+    /// <summary>
+    /// Unified evaluation driver — walks blocks top-down and runs the first block whose
+    /// conditions hold and whose action actually does work. See
+    /// <see cref="CompiledConditions.RunFirst"/> and docs/paper-conditions.md.
+    /// </summary>
+    public bool RunFirst(ItemStack stack, IDictionary<string, object> ctx, System.Func<PaperConditionMatchResult, bool> execute)
+    {
+        if (string.IsNullOrWhiteSpace(conditionsText))
+        {
+            errors.Clear();
+            compiled = null;
+            lastParsedText = null;
+            return false;
+        }
+
+        if (compiled == null || !string.Equals(lastParsedText, conditionsText, StringComparison.Ordinal))
+        {
+            ParseInternal(conditionsText);
+        }
+
+        if (compiled == null) return false;
+
+        return compiled.RunFirst(stack, ctx, execute);
     }
 
     public IReadOnlyList<IConditionAction> GetMatchingActions(ItemStack stack, IDictionary<string, object> ctx)

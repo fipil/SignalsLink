@@ -1,0 +1,15 @@
+{
+	"ingredientPattern": "SBH,NIF,_P_",
+	"ingredients": {
+		"S": { "type": "item", "code": "game:saw-*", "isTool": true, "toolDurabilityCost": 2 },
+		"B": { "type": "item", "code": "game:ingot-brass" },
+		"H": { "type": "item", "code": "game:hammer-*", "isTool": true, "toolDurabilityCost": 2 },
+		"N": { "type": "item", "code": "game:metalnailsandstrips-*" },
+		"F": { "type": "item", "code": "signals:solenoid" },
+		"P": { "type": "item", "code": "game:plank-*" },
+		"I": { "type": "item", "code": "game:ingot-iron" }
+	},
+	"width": 3,
+	"height": 3,
+	"output": { "type": "block", "code": "signalslink:hosevalve-north-down", "quantity": 1 }
+}

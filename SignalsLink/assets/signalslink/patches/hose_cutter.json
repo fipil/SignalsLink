@@ -1,0 +1,24 @@
+[
+    {
+        "op": "add",
+        "path": "/behaviorsByType/*/-",
+        "value":
+            {
+                "name": "HoseCutterBehavior",
+                "properties": {}
+            }
+        ,
+        "file": "game:itemtypes/tool/shears.json"
+    },
+    {
+        "op": "add",
+        "path": "/behaviorsByType/@(.*-steel|.*-meteoriciron|.*-iron)/-",
+        "value":
+            {
+                "name": "HoseCutterBehavior",
+                "properties": {}
+            }
+        ,
+        "file": "game:itemtypes/tool/shears.json"
+    }
+]

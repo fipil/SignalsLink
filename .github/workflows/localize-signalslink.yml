@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - master
+      - managedHose
     paths:
       - "SignalsLink/assets/signalslink/lang/cs.json"
       - "SignalsLink/assets/signalslink/lang/signalslink.html"
@@ -21,12 +22,12 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
-      # Debug je volitelný, ale doporuèuju ho tam prvních pár bìhù nechat
-      - name: Debug – show repo structure
+      # Debug je volitelnï¿½, ale doporuï¿½uju ho tam prvnï¿½ch pï¿½r bï¿½hï¿½ nechat
+      - name: Debug ï¿½ show repo structure
         run: |
           pwd
           echo "--- root ---"
@@ -39,9 +40,10 @@ jobs:
           ls -la .github/prompts
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
-          node-version: 20
+          node-version: 24
+          package-manager-cache: false
 
       - name: Test connection to OpenAI (curl)
         env:
@@ -55,6 +57,7 @@ jobs:
       - name: Run localization script
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_MODEL: gpt-5.6-luna
           SIGNALSLINK_FORCE_TRANSLATE_ALL: "0"
           NODE_OPTIONS: --dns-result-order=ipv4first
         run: node .github/scripts/localize-signalslink.mjs
@@ -77,4 +80,4 @@ jobs:
           base: ${{ github.ref_name }}
           title: "Update SignalsLink localizations"
           body: |
-            This PR was generated automatically by a localization script using OpenAI gpt-5-mini.
+            This PR was generated automatically by a localization script using OpenAI gpt-5.6-luna.

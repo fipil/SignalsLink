@@ -252,11 +252,14 @@ namespace SignalsLink.src.signals.managedchute.transporting
 
         private static bool IsAllowedWorldLiquidBlock(Block block)
         {
-            string path = block?.Code?.Path;
-            if (path == null) return false;
+            if (block == null) return false;
 
-            return path.Equals("water-still-7", StringComparison.OrdinalIgnoreCase)
-                || path.Equals("saltwater-still-7", StringComparison.OrdinalIgnoreCase);
+            // Match by the block's liquid code, which is the same for EVERY water variant —
+            // source, settled and flowing (water-still-7, water-still-3, water-e-2, water-d-5 …).
+            // This lets the intake draw non-source water that merely flowed onto the block, while
+            // still excluding lava (liquidCode "lava").
+            string lc = block.LiquidCode;
+            return lc == "water" || lc == "saltwater";
         }
 
         private static decimal NormalizeLiquidAmount(decimal amount)
@@ -271,7 +274,9 @@ namespace SignalsLink.src.signals.managedchute.transporting
             if (liquidProps == null || liquidProps.ItemsPerLitre <= 0) return TransferOperationResult.None;
 
             decimal movedLitres = decimal.Round(movedItems / (decimal)liquidProps.ItemsPerLitre, 2, MidpointRounding.ToZero);
-            int triggerCost = hasAmountOverride ? 1 : (int)movedLitres;
+            // Buffer model B: cost = litres actually moved, so the Input buffer counts real litres
+            // (an `amount M` block subtracts M, not a flat 1). hasAmountOverride is now unused here.
+            int triggerCost = (int)movedLitres;
             if (triggerCost <= 0) triggerCost = 1;
 
             return movedLitres > 0 ? new TransferOperationResult(movedLitres, triggerCost, true) : TransferOperationResult.None;

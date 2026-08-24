@@ -1,0 +1,14 @@
+[
+    {
+        "op": "add",
+        "path": "/behaviorsByType/*/-",
+        "value": { "name": "WrenchBufferClear", "properties": {} },
+        "file": "game:itemtypes/tool/wrench.json"
+    },
+    {
+        "op": "add",
+        "path": "/behaviorsByType/@(.*-steel|.*-meteoriciron|.*-iron)/-",
+        "value": { "name": "WrenchBufferClear", "properties": {} },
+        "file": "game:itemtypes/tool/wrench.json"
+    }
+]

@@ -13,7 +13,6 @@ namespace SignalsLink.src.signals.managedchute.transporting
         private readonly IInventory targetInv;
         private readonly byte targetSlotSignal;
         private readonly PaperConditionsEvaluator conditionsEvaluator;
-        private readonly LiquidTransferService liquidTransferService;
 
         public WorldToInventoryTransfer(ICoreAPI api, BlockPos sourcePos, IInventory targetInv, byte targetSlotSignal, PaperConditionsEvaluator conditionsEvaluator)
         {
@@ -22,22 +21,10 @@ namespace SignalsLink.src.signals.managedchute.transporting
             this.targetInv = targetInv;
             this.targetSlotSignal = targetSlotSignal;
             this.conditionsEvaluator = conditionsEvaluator;
-            liquidTransferService = new LiquidTransferService(api, targetInv, null);
         }
 
         public TransferOperationResult TryMove(ItemStackMoveOperation opTemplate)
         {
-            ItemSlot liquidTargetSlot = liquidTransferService.GetTargetSlot(CreatePreferredWorldLiquidProbeStack(), targetSlotSignal);
-            if (liquidTargetSlot != null)
-            {
-                TransferOperationResult liquidResult = liquidTransferService.TryMoveFromWorldSource(sourcePos, liquidTargetSlot, opTemplate.RequestedQuantity, false);
-                if (liquidResult.Success)
-                {
-                    liquidTargetSlot.MarkDirty();
-                    return liquidResult;
-                }
-            }
-
             EntityItem entity = FindItemEntityNearSource();
             if (entity == null || entity.Itemstack == null || entity.Itemstack.StackSize <= 0) return TransferOperationResult.None;
 
@@ -133,12 +120,6 @@ namespace SignalsLink.src.signals.managedchute.transporting
             return 0;
         }
 
-        private ItemStack CreatePreferredWorldLiquidProbeStack()
-        {
-            Item item = api.World.GetItem(new AssetLocation("game", "waterportion"));
-            return item == null ? null : new ItemStack(item, 1);
-        }
-
         private bool IsLiquidContainer(ItemStack stack)
         {
             if (stack?.Collectible == null) return false;
@@ -153,7 +134,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
             if (conditionsEvaluator.HasConditions)
             {
                 var ctx = ItemConditionContextUtil.BuildContext(api.World, stack);
-                liquidTransferService.AddConditionContext(ctx);
+                ctx["targetInventory"] = targetInv;
                 return conditionsEvaluator.Evaluate(stack, ctx, out byte _);
             }
 

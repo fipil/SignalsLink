@@ -1,4 +1,5 @@
 ﻿using signals.src.signalNetwork;
+using SignalsLink.src.signals;
 using SignalsLink.src.signals.managedchute.transporting;
 using SignalsLink.src.signals.paperConditions;
 using System;
@@ -12,7 +13,7 @@ using Vintagestory.GameContent;
 
 namespace SignalsLink.src.signals.managedchute
 {
-    public class BEManagedChute : BlockEntity, IBESignalReceptor, IPaperConditionsHost
+    public class BEManagedChute : BlockEntity, IBESignalReceptor, IPaperConditionsHost, ISignalBuffer
     {
         private int checkRateMs;
 
@@ -31,7 +32,6 @@ namespace SignalsLink.src.signals.managedchute
         private float itemFlowAccum;
 
         private static AssetLocation hopperTumble = new AssetLocation("sounds/block/hoppertumble");
-        private static AssetLocation waterSound = new AssetLocation("sounds/block/water");
 
         private IItemTransfer transfer;
 
@@ -53,8 +53,18 @@ namespace SignalsLink.src.signals.managedchute
             {
                 conditionsText = value;
                 conditionsEvaluator?.SetConditionsText(conditionsText);
+                remaining = 0; // reconfiguring clears the pending batch (it may no longer be valid)
                 MarkDirty();
             }
+        }
+
+        /// <summary>Wrench (sneak) clears the pending buffer and stops continuous mode.</summary>
+        public void ClearBuffer()
+        {
+            if (remaining == 0 && !unlimited) return;
+            remaining = 0;
+            unlimited = false;
+            MarkDirty();
         }
 
         public override void Initialize(ICoreAPI api)
@@ -95,19 +105,17 @@ namespace SignalsLink.src.signals.managedchute
 
             bool remainingChanged = false;
             decimal movedTotal = 0;
-            decimal allowedNowDecimal = allowedNow;
             while (movedTotal < allowedNow)
             {
                 TransferOperationResult moveResult = transfer.TryMove(opTemplate);
                 if (!moveResult.Success) break;
 
                 int triggerCost = moveResult.TriggerCost;
-                if (!unlimited && movedTotal + moveResult.MovedAmount > allowedNowDecimal) break;
 
                 try
                 {
                     if (!(this.Api.World.Rand.NextDouble() >= 0.2))
-                        this.Api.World.PlaySoundAt(moveResult.IsLiquid ? waterSound : hopperTumble, this.Pos, 0.0, range: 8f, volume: 0.5f);
+                        this.Api.World.PlaySoundAt(hopperTumble, this.Pos, 0.0, range: 8f, volume: 0.5f);
                 }
                 catch (Exception) { }
 
@@ -117,6 +125,7 @@ namespace SignalsLink.src.signals.managedchute
                 if (!unlimited)
                 {
                     remaining -= triggerCost;
+                    if (remaining < 0) remaining = 0; // an atomic amount-op may overshoot the last bit
                     remainingChanged = true;
                     if (remaining <= 0) break;
                 }

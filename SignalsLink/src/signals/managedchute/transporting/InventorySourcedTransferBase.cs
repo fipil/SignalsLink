@@ -18,8 +18,6 @@ namespace SignalsLink.src.signals.managedchute.transporting
         protected readonly byte inputSlotSignal;
         protected readonly PaperConditionsEvaluator conditionsEvaluator;
 
-        protected bool canTransferLiquids = false;
-
         public InventorySourcedTransferBase(ICoreAPI api, IInventory sourceInv, byte inputSlotSignal, PaperConditionsEvaluator conditionsEvaluator)
         {
             this.api = api;
@@ -123,7 +121,9 @@ namespace SignalsLink.src.signals.managedchute.transporting
             selection = null;
 
             if (slot == null || slot.Empty) return false;
-            if (IsLiquidContainer(slot.Itemstack) && !canTransferLiquids) return false;
+            // ManagedChute = items-only: liquid containers are not transferred as a source
+            // (liquids are handled by the separate ManagedHose network).
+            if (IsLiquidContainer(slot.Itemstack)) return false;
             if (!TryGetMatchedDirectives(slot.Itemstack, out PaperConditionDirectives directives)) return false;
             if (!directives.Evaluate(BuildDirectiveContext())) return false;
             if (!CanTransferSelection(slot, directives)) return false;

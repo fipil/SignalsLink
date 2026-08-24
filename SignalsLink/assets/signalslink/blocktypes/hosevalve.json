@@ -1,0 +1,280 @@
+{
+	"code": "hosevalve",
+	"class": "HoseValve",
+	"entityclass": "BlockEntityHoseValve",
+	"behaviors": [
+		{
+			"name": "BlockBehaviorHoseCover",
+			"properties": {
+				"handleDrop": false
+			}
+		},
+		{
+			"name": "BlockBehaviorPaperConditions"
+		}
+	],
+	"entityBehaviors": [
+		{
+			"name": "BEBehaviorSignalConnector",
+			"properties": {
+				"signalNodes": [
+					{
+						"index": 0,
+						"isSource": false
+					},
+					{
+						"index": 1,
+						"isSource": true,
+						"output": 0
+					}
+				]
+			}
+		}
+	],
+	"variantgroups": [
+		{
+			"code": "orientation",
+			"states": [
+				"north",
+				"east",
+				"south",
+				"west",
+				"up",
+				"down"
+			]
+		},
+		{
+			"code": "side",
+			"states": [
+				"north",
+				"east",
+				"south",
+				"west",
+				"up",
+				"down"
+			]
+		}
+	],
+	"attributes": {
+		"liquid-checkrateMs": 200,
+		"hose-litres-per-tick": 1.0,
+		"handbook": {
+			"extraSections": [
+				{
+					"title": "signalslink:block-handbooktitle-signalslink",
+					"text": "signalslink:block-handbooktext-hosevalve"
+				}
+			]
+		},
+		"signalNodes": [
+			{
+				"index": 0,
+				"name": "con-input",
+				"x1": 0.3125,
+				"y1": 0.0625,
+				"z1": 0.125,
+				"x2": 0.4375,
+				"y2": 0.23125,
+				"z2": 0.25,
+				"rotateXbytype": {
+					"*-*-north": 90,
+					"*-*-south": 270,
+					"@*-up-(east|west)": 90,
+					"@*-down-(east|west)": 270,
+					"@*-south-(east|west)": 180
+				},
+				"rotateYbytype": {
+					"@*-east-(up|down|north|south)": 270,
+					"@*-south-(up|down)": 180,
+					"@*-west-(up|down|north|south)": 90,
+					"@*-(down-north|up-south)": 180
+				},
+				"rotateZbyType": {
+					"*-*-up": 180,
+					"*-*-east": 90,
+					"*-*-west": 270
+				}
+			},
+			{
+				"index": 1,
+				"name": "con-output",
+				"x1": 0.5625,
+				"y1": 0.0625,
+				"z1": 0.125,
+				"x2": 0.6875,
+				"y2": 0.23125,
+				"z2": 0.25,
+				"rotateXbytype": {
+					"*-*-north": 90,
+					"*-*-south": 270,
+					"@*-up-(east|west)": 90,
+					"@*-down-(east|west)": 270,
+					"@*-south-(east|west)": 180
+				},
+				"rotateYbytype": {
+					"@*-east-(up|down|north|south)": 270,
+					"@*-south-(up|down)": 180,
+					"@*-west-(up|down|north|south)": 90,
+					"@*-(down-north|up-south)": 180
+				},
+				"rotateZbyType": {
+					"*-*-up": 180,
+					"*-*-east": 90,
+					"*-*-west": 270
+				}
+			}
+		],
+		"hoseNodes": [
+			{
+				"index": 2,
+				"name": "con-hose",
+				"x1": 0.40625,
+				"y1": 0.28125,
+				"z1": 0.4375,
+				"x2": 0.59375,
+				"y2": 0.34375,
+				"z2": 0.625,
+				"rotateXbytype": {
+					"*-*-north": 90,
+					"*-*-south": 270,
+					"@*-up-(east|west)": 90,
+					"@*-down-(east|west)": 270,
+					"@*-south-(east|west)": 180
+				},
+				"rotateYbytype": {
+					"@*-east-(up|down|north|south)": 270,
+					"@*-south-(up|down)": 180,
+					"@*-west-(up|down|north|south)": 90,
+					"@*-(down-north|up-south)": 180
+				},
+				"rotateZbyType": {
+					"*-*-up": 180,
+					"*-*-east": 90,
+					"*-*-west": 270
+				}
+			}
+		]
+	},
+	"textures": {
+		"mat": {
+			"base": "block/iron"
+		},
+		"anchor": {
+			"base": "block/oak"
+		}
+	},
+	"shape": {
+		"base": "block/hose/valve_hung",
+		"rotateXbytype": {
+			"*-*-north": 90,
+			"*-*-south": 270,
+			"@*-up-(east|west)": 90,
+			"@*-down-(east|west)": 270,
+			"@*-south-(east|west)": 180
+		},
+		"rotateYbytype": {
+			"@*-east-(up|down|north|south)": 270,
+			"@*-south-(up|down)": 180,
+			"@*-west-(up|down|north|south)": 90,
+			"@*-(down-north|up-south)": 180
+		},
+		"rotateZbyType": {
+			"*-*-up": 180,
+			"*-*-east": 90,
+			"*-*-west": 270
+		}
+	},
+	"shapeInventory": {
+		"base": "block/hose/valve_gui"
+	},
+	"guiTransform": {
+		"origin": {
+			"x": 0.5,
+			"y": 0.5,
+			"z": 0.5
+		},
+		"rotation": {
+			"x": -22.6,
+			"y": 135.0,
+			"z": 0.0
+		},
+		"scale": 1.8
+	},
+	"blockmaterial": "Metal",
+	"lightAbsorption": 0,
+	"drawtype": "json",
+	"replaceable": 500,
+	"resistance": 1.75,
+	"sidesolid": {
+		"all": false
+	},
+	"sideopaque": {
+		"all": false
+	},
+	"creativeinventory": {
+		"general": [
+			"*-north-down"
+		],
+		"signalslink": [
+			"*-north-down"
+		]
+	},
+	"drops": [
+		{
+			"type": "block",
+			"code": "hosevalve-north-down"
+		}
+	],
+	"selectionbox": {
+		"x1": 0.25,
+		"y1": 0.0,
+		"z1": 0.0625,
+		"x2": 0.75,
+		"y2": 0.0625,
+		"z2": 0.8125,
+		"rotateXbytype": {
+			"*-*-north": 90,
+			"*-*-south": 270,
+			"@*-up-(east|west)": 90,
+			"@*-down-(east|west)": 270,
+			"@*-south-(east|west)": 180
+		},
+		"rotateYbytype": {
+			"@*-east-(up|down|north|south)": 270,
+			"@*-south-(up|down)": 180,
+			"@*-west-(up|down|north|south)": 90,
+			"@*-(down-north|up-south)": 180
+		},
+		"rotateZbyType": {
+			"*-*-up": 180,
+			"*-*-east": 90,
+			"*-*-west": 270
+		}
+	},
+	"collisionbox": {
+		"x1": 0.25,
+		"y1": 0.0,
+		"z1": 0.0625,
+		"x2": 0.75,
+		"y2": 0.0625,
+		"z2": 0.8125,
+		"rotateXbytype": {
+			"*-*-north": 90,
+			"*-*-south": 270,
+			"@*-up-(east|west)": 90,
+			"@*-down-(east|west)": 270,
+			"@*-south-(east|west)": 180
+		},
+		"rotateYbytype": {
+			"@*-east-(up|down|north|south)": 270,
+			"@*-south-(up|down)": 180,
+			"@*-west-(up|down|north|south)": 90,
+			"@*-(down-north|up-south)": 180
+		},
+		"rotateZbyType": {
+			"*-*-up": 180,
+			"*-*-east": 90,
+			"*-*-west": 270
+		}
+	}
+}

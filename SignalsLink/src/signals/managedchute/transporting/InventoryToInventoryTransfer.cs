@@ -11,7 +11,6 @@ namespace SignalsLink.src.signals.managedchute.transporting
         private readonly IInventory targetInv;
         private readonly BlockPos targetPos;
         private readonly byte outputSlotSignal;
-        private readonly LiquidTransferService liquidTransferService;
 
         public InventoryToInventoryTransfer(ICoreAPI api, IInventory sourceInv, IInventory targetInv, BlockPos targetPos, byte inputSlotSignal, byte outputSlotSignal, PaperConditionsEvaluator conditionsEvaluator)
             : base(api, sourceInv, inputSlotSignal, conditionsEvaluator)
@@ -19,24 +18,15 @@ namespace SignalsLink.src.signals.managedchute.transporting
             this.targetInv = targetInv;
             this.targetPos = targetPos;
             this.outputSlotSignal = outputSlotSignal;
-            liquidTransferService = new LiquidTransferService(api, targetInv, targetPos);
-            canTransferLiquids = liquidTransferService.HasAnyLiquidTargetSlot(outputSlotSignal);
         }
 
         public override bool UsesAmountAsTriggerOnly => true;
 
         protected override void AddConditionContext(IDictionary<string, object> ctx)
         {
-            liquidTransferService.AddConditionContext(ctx);
-        }
-
-        protected override bool CanTransferSelection(ItemSlot slot, PaperConditionDirectives directives)
-        {
-            ItemStack liquidStack = liquidTransferService.GetLiquidStackForTransfer(slot?.Itemstack);
-            if (liquidStack == null) return true;
-
-            byte effectiveTargetSlotSignal = directives?.TargetSlot ?? outputSlotSignal;
-            return liquidTransferService.GetTargetSlot(slot.Itemstack, effectiveTargetSlotSignal) != null;
+            // The `in target` scope, the `target ... ifEmpty` directive and the `do seal`
+            // action all require the ctx to know the target inventory.
+            ctx["targetInventory"] = targetInv;
         }
 
         public TransferOperationResult TryMove(ItemStackMoveOperation opTemplate)
@@ -48,24 +38,10 @@ namespace SignalsLink.src.signals.managedchute.transporting
             if (src == null || src.Empty) return TransferOperationResult.None;
 
             byte effectiveTargetSlotSignal = selection.Directives?.TargetSlot ?? outputSlotSignal;
-            ItemSlot dst = liquidTransferService.GetTargetSlot(src.Itemstack, effectiveTargetSlotSignal) ?? GetGenericTargetSlot(src.Itemstack, effectiveTargetSlotSignal);
+            ItemSlot dst = GetGenericTargetSlot(src.Itemstack, effectiveTargetSlotSignal);
             if (dst == null) return TransferOperationResult.None;
 
             decimal requestedAmount = selection.Directives.Amount ?? opTemplate.RequestedQuantity;
-
-            TransferOperationResult liquidResult = liquidTransferService.TryMoveFromItemSlot(src, dst, requestedAmount, selection.Directives.HasAmountOverride);
-            if (liquidResult.Success)
-            {
-                src.MarkDirty();
-                dst.MarkDirty();
-                ExecuteMatchingActions();
-                return liquidResult;
-            }
-
-            if (liquidTransferService.RequiresLiquidTransfer(src.Itemstack, dst))
-            {
-                return TransferOperationResult.None;
-            }
 
             int requestedQuantity = GetItemTransferQuantity(requestedAmount);
             if (selection.Directives.HasAmountOverride && GetAvailableMatchingSourceQuantity(src, selection.Directives) < requestedQuantity)
@@ -87,7 +63,9 @@ namespace SignalsLink.src.signals.managedchute.transporting
                 src.MarkDirty();
                 dst.MarkDirty();
                 ExecuteMatchingActions();
-                int triggerCost = selection.Directives.HasAmountOverride ? 1 : moved;
+                // Buffer model B: cost = pieces actually moved, so the Input buffer counts real
+                // items (an `amount M` block subtracts M, not a flat 1 — no more multiplier).
+                int triggerCost = moved;
                 return new TransferOperationResult(moved, triggerCost, false);
             }
 
@@ -184,13 +162,20 @@ namespace SignalsLink.src.signals.managedchute.transporting
             return totalQuantity;
         }
 
-        private IEnumerable<ItemSlot> GetMatchingSourceSlots(ItemSlot initialSourceSlot, PaperConditionDirectives directives)
+        // Materialize the matching source slots EAGERLY (into a list), evaluated against the
+        // current target state ONCE. This must not be lazy: while gathering the full `amount`
+        // across several source slots we partially fill the target, and a `target N ifEmpty`
+        // directive would then flip subsequent candidates onto a different block (target N+1),
+        // dropping them from the gather. Building the list up front (before any item is moved)
+        // keeps every matching slot bound to the block that was valid when the transfer started.
+        private List<ItemSlot> GetMatchingSourceSlots(ItemSlot initialSourceSlot, PaperConditionDirectives directives)
         {
-            if (initialSourceSlot?.Itemstack == null) yield break;
+            List<ItemSlot> result = new List<ItemSlot>();
+            if (initialSourceSlot?.Itemstack == null) return result;
 
             ItemStack initialStack = initialSourceSlot.Itemstack;
 
-            yield return initialSourceSlot;
+            result.Add(initialSourceSlot);
 
             for (int i = 0; i < sourceInv.Count; i++)
             {
@@ -205,8 +190,9 @@ namespace SignalsLink.src.signals.managedchute.transporting
                 if (candidateDirectives.TargetSlot != directives.TargetSlot || candidateDirectives.Amount != directives.Amount || candidateDirectives.RequireTargetEmpty != directives.RequireTargetEmpty) continue;
                 if (!CanTransferSelection(slot, candidateDirectives)) continue;
 
-                yield return slot;
+                result.Add(slot);
             }
+            return result;
         }
 
         private void ExecuteMatchingActions()

@@ -1,0 +1,11 @@
+{
+	"ingredientPattern": "F__,LLL,WWW",
+	"ingredients": {
+		"F": { "type": "item", "code": "game:flaxtwine" },
+		"L": { "type": "item", "code": "game:leather-normal-plain" },
+		"W": { "type": "item", "code": "game:beeswax" }
+	},
+	"width": 3,
+	"height": 3,
+	"output": { "type": "item", "code": "signalslink:hose", "quantity": 1 }
+}
