@@ -62,7 +62,7 @@ Explicitní akci musí daná třída podporovat: `output` má smysl jen tam, kde
 Platnost nezáleží jen na podmínkách, ale i na tom, zda **akce bloku reálně proběhne**:
 
 - **Přenos** je platný, jen když opravdu něco přesune — zdroj má co odebrat a cíl má kam vložit (a je-li uvedeno `target N ifEmpty`, je cílový slot prázdný). Když by přenos nic nepřesunul (zdroj prázdný / cíl plný / `ifEmpty` neplatí), je **blok neplatný** a vyhodnocení **pokračuje dalším blokem**.
-- **`output X`** jde provést vždy → blok je platný hned, jakmile platí jeho podmínky.
+- **`output X`** je platný, jen když výstupní pin **reálně změní**. Pokud už pin hodnotu X má, akce nic neudělá → **blok je neplatný** a vyhodnocení **pokračuje dalším blokem** (stejně jako u přenosu, který nic nepřesune).
 - **`do seal`** je platný, když je co zapečetit.
 
 Díky tomu lze bloky skládat do sekvence: horní bloky plní, a jakmile „dojedou" (nemají co přenášet nebo už neplatí jejich `ifEmpty`), spadne vyhodnocení na další blok.
@@ -70,6 +70,8 @@ Díky tomu lze bloky skládat do sekvence: horní bloky plní, a jakmile „doje
 ### Jak často
 
 Bloky se vyhodnocují **opakovaně** — ManagedChute i ManagedHose je procházejí při každém svém pracovním tiku, dokud jsou aktivní (u ManagedHose navíc jen když ventil právě drží token střídání). Dokud je vybraný blok platný a má co přenášet, přenos pokračuje; jakmile přestane platit, nastupuje další blok.
+
+U ManagedHose platí ještě: ventil, jehož podmínky obsahují `output`, vyhodnocuje **každý tik**, aby výstup reagoval okamžitě (např. hned spadl na 0, když se zdroj vyprázdní). Čistě přenášecí ventil, který zrovna nemá co dělat (prázdný zdroj / plný cíl), může frekvenci vyhodnocování dočasně snížit kvůli výkonu a vrátí se na plný takt, jakmile je zase co přenášet.
 
 ### Výstupní pin drží hodnotu
 
@@ -360,7 +362,7 @@ game:resin
 amount 3
 ```
 
-Pokud blok obsahuje `amount`, vstupní signál žlabu slouží jako **spouštěč**, nikoli jako počet kusů nebo litrů k přesunu. Jedna úspěšná odpovídající dávka přenese zadané množství.
+`amount` je **velikost jedné dávky** — kolik se přesune při jedné odpovídající operaci. Vstupní signál zařízení přitom řídí **celkové** množství k přenosu: signál 1–7 naplní *buffer* v kusech/litrech, který se každým přenosem sníží o **skutečně přenesené množství** (ne o 1). `amount` tedy jen určuje, po jak velkých dávkách se buffer čerpá; buffer sám říká, kolik ještě zbývá přenést. (Signál `15` = přenášej průběžně bez omezení.)
 
 Množství může být desetinné s tečkou jako oddělovačem:
 
@@ -371,7 +373,10 @@ amount 2.75
 
 U kapalin představuje hodnota litry a podporuje maximálně dvě desetinná místa. U běžných předmětů se desetinná část zahodí; pokud je zadané množství větší než nula, výsledkem je alespoň jeden kus.
 
-Při přesunu běžných předmětů může žlab spojit odpovídající stejné stacky z více zdrojových slotů. Je-li pro direktivu `amount` k dispozici méně kusů, celá dávka se nespustí.
+Chování na konci/okrajích se liší podle média:
+
+- **ManagedChute (předměty):** dávka je **atomická** — žlab spojí odpovídající stejné stacky z více zdrojových slotů a `amount` přenese jen tehdy, když je celé množství ve zdroji k dispozici; jinak se nespustí. Poslední naplnění dávky se dokončí celé (buffer může přetéct o méně než `amount`).
+- **ManagedHose (kapaliny):** přenese se **až** `amount` — kolik zdroj má, cíl pojme a zbývající buffer dovolí (klidně i méně). Např. buffer 3 a `amount 6` → přeteče jen 3.
 
 ## `output` — akce nastavení výstupu
 
@@ -387,6 +392,24 @@ output 5
 Blok nastaví výstup na 5, jakmile je v cíli aspoň 5 kůží a 30 vody. Výstup ovládaný podmínkou zapiš na vhodné místo (typicky **za** přenosové bloky): dokud přenosové bloky nad ním pracují, jsou platné a output blok se ke slovu nedostane; jakmile „dojedou" a podmínky output bloku platí, výstup se nastaví.
 
 Výstupní pin **drží poslední hodnotu**, dokud ji nepřepíše jiný platný `output` blok.
+
+### `output X` propadne, když nic nezmění
+
+Protože `output X` je platný jen když pin **reálně změní** (viz [Fyzická platnost bloku](#fyzická-platnost-bloku)), blok s `output X`, jehož hodnota už na pinu je, **nic neudělá a vyhodnocení propadne na další blok**. Díky tomu můžeš dát `output` i jako **první** blok — reset dřívějšího signálu **před** tím, než začneš plnit:
+
+```text
+# 1) když je cíl prázdný, shoď dřívější "plno" signál na 0
+in target
+*water* 0
+output 0
+
+# 2) plň cíl vodou
+game:water-*
+target 2 ifEmpty
+amount 6
+```
+
+Když je sud prázdný a pin je na 5, první blok pin změní na 0 (vyhraje). Další tik už je pin na 0 → první blok propadne a spustí se plnění. Kdyby `output X` platil „vždy", zůstal by první blok navěky platný a k plnění pod ním by se nikdy nedošlo.
 
 > `output` má smysl jen u zařízení s výstupním pinem — **ManagedHose (ventil)** a **senzory**. **ManagedChute výstupní pin nemá**, takže u něj `output` nedává smysl.
 
@@ -505,6 +528,8 @@ Po naplnění (30 vody a aspoň 5 kůže v cíli) přestane platit přenosový b
 - Blok, který má provést **přenos** (defaultní akce žlabu/hadice), musí obsahovat aspoň jednu podmínku v rozsahu `in source` (musí umět vybrat, co přenáší). Blok s explicitní akcí (`output`, `do seal`) tuto podmínku mít nemusí.
 - `target`, `amount`, `ifEmpty` jsou **direktivy** — tvarují defaultní přenos, nejsou to samy o sobě podmínky.
 - `output` a `do seal` jsou **akce** — nahrazují defaultní akci bloku.
+- `output X` je platný, jen když výstupní pin **reálně změní**; když už hodnotu X má, blok propadne na další (umožňuje dát reset `output 0` nad plnicí bloky).
+- `amount` je velikost jedné dávky; vstupní signál 1–7 naplní buffer v kusech/litrech, který se čerpá o skutečně přenesené množství (ne o počet dávek). Signál `15` = průběžně.
 - `do seal` má smysl jen tam, kde je v cílové pozici sud; `output` jen tam, kde má zařízení výstupní pin (ManagedHose, senzory — ne ManagedChute).
 - Množství kapalin se vyhodnocuje v litrech, zatímco `stackSize` u kapaliny je interní počet porcí.
 - U podmínek množství používej tečku jako desetinný oddělovač, například `2.75`.
