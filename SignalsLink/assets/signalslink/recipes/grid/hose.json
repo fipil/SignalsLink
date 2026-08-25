@@ -7,5 +7,5 @@
 	},
 	"width": 3,
 	"height": 3,
-	"output": { "type": "item", "code": "signalslink:hose", "quantity": 1 }
+	"output": { "type": "item", "code": "signalslink:hose", "quantity": 3 }
 }
