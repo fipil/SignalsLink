@@ -49,5 +49,6 @@
   "signalslink:block-hosevalvestand-*": "Válvula controlada",
   "signalslink:ingameerror-hose-anchor-occupied": "Já existe uma mangueira ligada a esta âncora.",
   "signalslink:ingameerror-hose-same-block": "A mangueira não pode ligar duas âncoras do mesmo bloco.",
-  "signalslink:hosevalve-noceiling": "A válvula controlada não pode ser colocada no teto."
+  "signalslink:hosevalve-noceiling": "A válvula controlada não pode ser colocada no teto.",
+  "signalslink:con-hose": "Conexão da mangueira "
 }

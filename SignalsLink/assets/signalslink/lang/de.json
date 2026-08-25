@@ -49,5 +49,6 @@
   "signalslink:block-hosevalvestand-*": "Gesteuertes Ventil",
   "signalslink:ingameerror-hose-anchor-occupied": "Mit diesem Anker ist bereits ein Schlauch verbunden.",
   "signalslink:ingameerror-hose-same-block": "Ein Schlauch kann nicht zwei Anker desselben Blocks verbinden.",
-  "signalslink:hosevalve-noceiling": "Das gesteuerte Ventil kann nicht an einer Decke platziert werden."
+  "signalslink:hosevalve-noceiling": "Das gesteuerte Ventil kann nicht an einer Decke platziert werden.",
+  "signalslink:con-hose": "Schlauchanschluss "
 }
