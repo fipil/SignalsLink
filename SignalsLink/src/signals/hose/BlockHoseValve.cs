@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using signals.src.signalNetwork;
 using Vintagestory.API.Common;
+using Vintagestory.API.Config;
 using Vintagestory.API.MathTools;
 
 namespace SignalsLink.src.signals.hose
@@ -63,6 +64,16 @@ namespace SignalsLink.src.signals.hose
             foreach (HoseAnchor a in hoseAnchors) boxes.Add(a.RotatedCopy());                    // hose anchors
             for (int i = wireCount; i < baseBoxes.Length; i++) boxes.Add(baseBoxes[i]);          // body last
             return boxes.ToArray();
+        }
+
+        public override string GetPlacedBlockInfo(IWorldAccessor world, BlockPos pos, IPlayer forPlayer)
+        {
+            if (forPlayer?.CurrentBlockSelection?.SelectionBoxIndex == BlockEntityHoseValve.HOSE)
+            {
+                return Lang.Get("signalslink:con-hose");
+            }
+
+            return base.GetPlacedBlockInfo(world, pos, forPlayer);
         }
 
         public override void OnBlockRemoved(IWorldAccessor world, BlockPos pos)

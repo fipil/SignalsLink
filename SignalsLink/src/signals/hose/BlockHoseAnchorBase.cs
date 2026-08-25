@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using signals.src.signalNetwork;
 using Vintagestory.API.Common;
+using Vintagestory.API.Config;
 using Vintagestory.API.MathTools;
 
 namespace SignalsLink.src.signals.hose
@@ -31,6 +32,23 @@ namespace SignalsLink.src.signals.hose
         }
 
         public override bool DoPartialSelection(IWorldAccessor world, BlockPos pos) => true;
+
+        public override string GetPlacedBlockInfo(IWorldAccessor world, BlockPos pos, IPlayer forPlayer)
+        {
+            int? selectionBoxIndex = forPlayer?.CurrentBlockSelection?.SelectionBoxIndex;
+            if (selectionBoxIndex != null)
+            {
+                foreach (HoseAnchor anchor in hoseAnchors)
+                {
+                    if (anchor.Index == selectionBoxIndex)
+                    {
+                        return Lang.Get("signalslink:con-hose");
+                    }
+                }
+            }
+
+            return base.GetPlacedBlockInfo(world, pos, forPlayer);
+        }
 
         public override void OnBlockRemoved(IWorldAccessor world, BlockPos pos)
         {
