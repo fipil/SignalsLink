@@ -214,8 +214,22 @@ Dostupné generované kontextové hodnoty:
 | `durabilityRatio` | Aktuální odolnost dělená maximální odolností. |
 | `freshHoursLeft` | Zbývající čas čerstvosti, má-li předmět data přechodu. |
 | `isSpoiling` | Pravda, pokud `freshHoursLeft <= 0`. |
+| `isLiquidContainer` | Pravda pro vědro a jinou přenositelnou nádobu na kapalinu. |
+| `liquidContainerEmpty` | Pravda, pokud nádoba neobsahuje kapalinu. |
+| `liquidContainerFilled` | Pravda, pokud nádoba obsahuje kapalinu. |
+| `liquidCode` | Kód kapaliny v nádobě, například `game:waterportion`. Textový kód porovnávejte přes `=` nebo `==`. |
+| `liquidLitres` | Množství kapaliny v litrech. |
 
 Porovnávat lze také vlastní číselné a logické atributy stacku předmětu.
+
+Například plné vědro s deseti litry vody vyberete takto:
+
+```text
+isLiquidContainer
+liquidContainerFilled
+liquidCode=game:waterportion
+liquidLitres=10
+```
 
 ## `inventoryAny`
 
@@ -352,6 +366,16 @@ amount 3
 Dokud je slot 4 prázdný, platí první blok a nalijí se do něj 2. Jakmile slot 4 prázdný není, první blok přestane platit a nastupuje druhý — nalije 3 do slotu 6. Poté už žádný blok neplatí a nic dalšího se nepřenese.
 
 U varných slotů ohniště / EP sporáku není neaktivní varný slot použitelný; musí v něm být hrnec nebo jiná varná nádoba.
+
+### `target ground`
+
+Platí pro ManagedChute, když její cíl míří do vzduchu. Ignoruje signál na pinu Cíl a pokusí se položit vybraný blok, vědro včetně obsahu nebo položku, která umí vytvořit hromádku na zemi. Pokud na cíli není pevná zem nebo položku nelze umístit, blok podmínek neprovede přenos a může propadnout na další blok.
+
+```text
+isLiquidContainer
+liquidContainerFilled
+target ground
+```
 
 ### `amount <množství>`
 

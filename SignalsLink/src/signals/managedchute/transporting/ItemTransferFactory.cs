@@ -6,12 +6,13 @@ namespace SignalsLink.src.signals.managedchute.transporting
 {
     public static class ItemTransferFactory
     {
-        // Zjednodušené API: vytvoø pøenos podle toho, co je na input/output pozici.
+        // Zjednoduï¿½enï¿½ API: vytvoï¿½ pï¿½enos podle toho, co je na input/output pozici.
         public static IItemTransfer CreateTransfer(ICoreAPI api, BlockPos inputPos, BlockPos outputPos, byte inputSlotSignal, byte outputSlotSignal, PaperConditionsEvaluator conditionsEvaluator)
         {
             var blockAccess = api.World.BlockAccessor;
 
             var beIn = blockAccess.GetBlockEntity(inputPos) as IBlockEntityContainer;
+            var inputBlock = blockAccess.GetBlock(inputPos);
 
             // Special case: output points to an anvil -> use InventoryToAnvilTransfer
             var beAnvil = blockAccess.GetBlockEntity(outputPos) as BlockEntityAnvil;
@@ -22,15 +23,20 @@ namespace SignalsLink.src.signals.managedchute.transporting
 
             var beOut = blockAccess.GetBlockEntity(outputPos) as IBlockEntityContainer;
 
+            if (inputBlock is BlockLiquidContainerBase && beOut?.Inventory != null)
+            {
+                return new WorldToInventoryTransfer(api, inputPos, beOut.Inventory, outputSlotSignal, conditionsEvaluator);
+            }
+
             if (beIn?.Inventory != null && beOut?.Inventory != null)
             {
-                // inventáø -> inventáø
+                // inventï¿½ï¿½ -> inventï¿½ï¿½
                 return new InventoryToInventoryTransfer(api, beIn.Inventory, beOut.Inventory, outputPos, inputSlotSignal, outputSlotSignal, conditionsEvaluator);
             }
 
             if (beIn?.Inventory != null && beOut == null && beAnvil == null)
             {
-                // inventáø -> svìt
+                // inventï¿½ï¿½ -> svï¿½t
                 Block blockAtTarget = blockAccess.GetBlock(outputPos);
                 bool canUseWorldTransfer =
                     blockAtTarget.Replaceable >= 6000 ||
@@ -46,7 +52,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
 
             if (beIn == null && beOut?.Inventory != null)
             {
-                // svìt -> inventáø (WorldToInventoryTransfer)
+                // svï¿½t -> inventï¿½ï¿½ (WorldToInventoryTransfer)
                 return new WorldToInventoryTransfer(api, inputPos, beOut.Inventory, outputSlotSignal, conditionsEvaluator);
             }
 

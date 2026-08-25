@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using Vintagestory.API.Common;
 using Vintagestory.API.Datastructures;
 
@@ -64,7 +65,8 @@ namespace SignalsLink.src.signals.paperConditions
     {
         private readonly string attr;
         private readonly string op;
-        private readonly double value;
+        private readonly double? numericValue;
+        private readonly string stringValue;
 
         public AttributeComparisonCondition(string attr, string op, string value)
         {
@@ -75,27 +77,44 @@ namespace SignalsLink.src.signals.paperConditions
 
             if (trimmed.Equals("true", StringComparison.OrdinalIgnoreCase))
             {
-                this.value = 1.0;
+                numericValue = 1.0;
             }
             else if (trimmed.Equals("false", StringComparison.OrdinalIgnoreCase))
             {
-                this.value = 0.0;
+                numericValue = 0.0;
+            }
+            else if (double.TryParse(trimmed, NumberStyles.Float, CultureInfo.InvariantCulture, out double parsedValue))
+            {
+                numericValue = parsedValue;
             }
             else
             {
-                this.value = double.Parse(trimmed);
+                stringValue = trimmed;
             }
         }
 
         public bool Evaluate(ItemStack stack, IDictionary<string, object> ctx)
         {
+            object contextValue = null;
+            if (ctx != null && ctx.TryGetValue(attr, out contextValue) && contextValue is string contextString)
+            {
+                return (op == "=" || op == "==") && string.Equals(contextString, stringValue, StringComparison.OrdinalIgnoreCase);
+            }
+
+            if (stack?.Attributes != null && stack.Attributes[attr] is StringAttribute stringAttribute)
+            {
+                return (op == "=" || op == "==") && string.Equals(stringAttribute.value, stringValue, StringComparison.OrdinalIgnoreCase);
+            }
+
+            if (!numericValue.HasValue) return false;
+
             double v;
 
-            if (ctx != null && ctx.TryGetValue(attr, out var obj) && obj is IConvertible)
+            if (contextValue is IConvertible)
             {
                 try
                 {
-                    v = Convert.ToDouble(obj);
+                    v = Convert.ToDouble(contextValue);
                 }
                 catch
                 {
@@ -119,11 +138,11 @@ namespace SignalsLink.src.signals.paperConditions
 
             return op switch
             {
-                ">" => v > value,
-                ">=" => v >= value,
-                "<" => v < value,
-                "<=" => v <= value,
-                "=" or "==" => Math.Abs(v - value) < 0.0001,
+                ">" => v > numericValue.Value,
+                ">=" => v >= numericValue.Value,
+                "<" => v < numericValue.Value,
+                "<=" => v <= numericValue.Value,
+                "=" or "==" => Math.Abs(v - numericValue.Value) < 0.0001,
                 _ => false
             };
         }

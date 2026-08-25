@@ -22,11 +22,19 @@ namespace SignalsLink.src.signals.managedchute.transporting
 
         public override bool UsesAmountAsTriggerOnly => true;
 
+        protected override bool AllowsLiquidContainers => true;
+
         protected override void AddConditionContext(IDictionary<string, object> ctx)
         {
             // The `in target` scope, the `target ... ifEmpty` directive and the `do seal`
             // action all require the ctx to know the target inventory.
             ctx["targetInventory"] = targetInv;
+        }
+
+        protected override bool CanTransferSelection(ItemSlot slot, PaperConditionDirectives directives)
+        {
+            byte effectiveTargetSlotSignal = directives.TargetSlot ?? outputSlotSignal;
+            return GetGenericTargetSlot(slot, effectiveTargetSlotSignal) != null;
         }
 
         public TransferOperationResult TryMove(ItemStackMoveOperation opTemplate)
@@ -38,7 +46,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
             if (src == null || src.Empty) return TransferOperationResult.None;
 
             byte effectiveTargetSlotSignal = selection.Directives?.TargetSlot ?? outputSlotSignal;
-            ItemSlot dst = GetGenericTargetSlot(src.Itemstack, effectiveTargetSlotSignal);
+            ItemSlot dst = GetGenericTargetSlot(src, effectiveTargetSlotSignal);
             if (dst == null) return TransferOperationResult.None;
 
             decimal requestedAmount = selection.Directives.Amount ?? opTemplate.RequestedQuantity;
@@ -77,8 +85,9 @@ namespace SignalsLink.src.signals.managedchute.transporting
             return (int)TryMove(opTemplate).MovedAmount;
         }
 
-        private ItemSlot GetGenericTargetSlot(ItemStack stack, byte targetSlotSignal)
+        private ItemSlot GetGenericTargetSlot(ItemSlot sourceSlot, byte targetSlotSignal)
         {
+            ItemStack stack = sourceSlot?.Itemstack;
             if (stack == null) return null;
 
             if (targetSlotSignal > 0)
@@ -86,7 +95,8 @@ namespace SignalsLink.src.signals.managedchute.transporting
                 int index = targetSlotSignal - 1;
                 if (index >= 0 && index < targetInv.Count)
                 {
-                    return targetInv[index];
+                    ItemSlot slot = targetInv[index];
+                    return CanMoveToTarget(sourceSlot, slot) ? slot : null;
                 }
 
                 return null;
@@ -96,17 +106,25 @@ namespace SignalsLink.src.signals.managedchute.transporting
             {
                 ItemSlot slot = targetInv[i];
 
-                if (slot.Empty) return slot;
+                if (slot.Empty && CanMoveToTarget(sourceSlot, slot)) return slot;
 
                 if (slot.Itemstack != null &&
-                    slot.Itemstack.Collectible == stack.Collectible &&
-                    slot.Itemstack.StackSize < slot.Itemstack.Collectible.MaxStackSize)
+                    slot.Itemstack.Equals(api.World, stack, GlobalConstants.IgnoredStackAttributes) &&
+                    slot.Itemstack.StackSize < slot.Itemstack.Collectible.MaxStackSize &&
+                    CanMoveToTarget(sourceSlot, slot))
                 {
                     return slot;
                 }
             }
 
             return null;
+        }
+
+        private static bool CanMoveToTarget(ItemSlot sourceSlot, ItemSlot targetSlot)
+        {
+            return sourceSlot != null && targetSlot != null &&
+                targetSlot.CanTakeFrom(sourceSlot, EnumMergePriority.DirectMerge) &&
+                targetSlot.CanHold(sourceSlot);
         }
 
         private static int GetItemTransferQuantity(decimal requestedAmount)
@@ -185,9 +203,9 @@ namespace SignalsLink.src.signals.managedchute.transporting
                 ItemStack stack = slot.Itemstack;
                 if (stack?.Collectible != initialStack.Collectible) continue;
                 if (!stack.Equals(api.World, initialStack, GlobalConstants.IgnoredStackAttributes)) continue;
-                if (IsLiquidContainer(stack)) continue;
+                if (IsLiquidContainer(stack) && !AllowsLiquidContainers) continue;
                 if (!TryGetMatchedDirectives(stack, out PaperConditionDirectives candidateDirectives)) continue;
-                if (candidateDirectives.TargetSlot != directives.TargetSlot || candidateDirectives.Amount != directives.Amount || candidateDirectives.RequireTargetEmpty != directives.RequireTargetEmpty) continue;
+                if (candidateDirectives.TargetSlot != directives.TargetSlot || candidateDirectives.TargetGround != directives.TargetGround || candidateDirectives.Amount != directives.Amount || candidateDirectives.RequireTargetEmpty != directives.RequireTargetEmpty) continue;
                 if (!CanTransferSelection(slot, candidateDirectives)) continue;
 
                 result.Add(slot);

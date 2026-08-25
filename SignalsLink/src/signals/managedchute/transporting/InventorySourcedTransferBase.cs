@@ -28,6 +28,8 @@ namespace SignalsLink.src.signals.managedchute.transporting
 
         public virtual bool UsesAmountAsTriggerOnly => false;
 
+        protected virtual bool AllowsLiquidContainers => false;
+
         protected ItemSlot GetSourceSlot()
         {
             return GetTransferSelection()?.SourceSlot;
@@ -121,9 +123,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
             selection = null;
 
             if (slot == null || slot.Empty) return false;
-            // ManagedChute = items-only: liquid containers are not transferred as a source
-            // (liquids are handled by the separate ManagedHose network).
-            if (IsLiquidContainer(slot.Itemstack)) return false;
+            if (IsLiquidContainer(slot.Itemstack) && !AllowsLiquidContainers) return false;
             if (!TryGetMatchedDirectives(slot.Itemstack, out PaperConditionDirectives directives)) return false;
             if (!directives.Evaluate(BuildDirectiveContext())) return false;
             if (!CanTransferSelection(slot, directives)) return false;

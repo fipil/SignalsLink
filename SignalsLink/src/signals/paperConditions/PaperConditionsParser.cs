@@ -22,6 +22,7 @@ namespace SignalsLink.src.signals.paperConditions
                 byte? outputValue = null;
                 bool hasExplicitOutput = false;
                 byte? targetSlot = null;
+                bool targetGround = false;
                 bool requireTargetEmpty = false;
                 decimal? amount = null;
                 InventoryConditionScope currentScope = InventoryConditionScope.Source;
@@ -69,9 +70,10 @@ namespace SignalsLink.src.signals.paperConditions
                         continue;
                     }
 
-                    if (TryParseTargetDirective(line, out byte parsedTargetSlot, out bool parsedRequireTargetEmpty))
+                    if (TryParseTargetDirective(line, out byte? parsedTargetSlot, out bool parsedTargetGround, out bool parsedRequireTargetEmpty))
                     {
                         targetSlot = parsedTargetSlot;
+                        targetGround = parsedTargetGround;
                         requireTargetEmpty = parsedRequireTargetEmpty;
                         continue;
                     }
@@ -114,7 +116,7 @@ namespace SignalsLink.src.signals.paperConditions
                     // OutputValue keeps the effective default 15 when `output` is not
                     // specified — for the BlockSensor (no behavior change). HasExplicitOutput
                     // records whether `output` was actually specified; ManagedHose reads it (see spec §6).
-                    blocks.Add(new ConditionBlock(conditions, outputValue ?? 15, hasExplicitOutput, new PaperConditionDirectives(targetSlot, amount, requireTargetEmpty), actions));
+                    blocks.Add(new ConditionBlock(conditions, outputValue ?? 15, hasExplicitOutput, new PaperConditionDirectives(targetSlot, targetGround, amount, requireTargetEmpty), actions));
                 }
             }
 
@@ -158,21 +160,30 @@ namespace SignalsLink.src.signals.paperConditions
             return false;
         }
 
-        private static bool TryParseTargetDirective(string line, out byte targetSlot, out bool requireTargetEmpty)
+        private static bool TryParseTargetDirective(string line, out byte? targetSlot, out bool targetGround, out bool requireTargetEmpty)
         {
-            targetSlot = 0;
+            targetSlot = null;
+            targetGround = false;
             requireTargetEmpty = false;
 
             if (!line.StartsWith("target ", StringComparison.OrdinalIgnoreCase)) return false;
 
             var parts = line.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
-            if (parts.Length == 2 && byte.TryParse(parts[1], out targetSlot) && targetSlot >= 1 && targetSlot <= 14)
+            if (parts.Length == 2 && parts[1].Equals("ground", StringComparison.OrdinalIgnoreCase))
             {
+                targetGround = true;
                 return true;
             }
 
-            if (parts.Length == 3 && byte.TryParse(parts[1], out targetSlot) && targetSlot >= 1 && targetSlot <= 14 && parts[2].Equals("ifEmpty", StringComparison.OrdinalIgnoreCase))
+            if (parts.Length == 2 && byte.TryParse(parts[1], out byte parsedTargetSlot) && parsedTargetSlot >= 1 && parsedTargetSlot <= 14)
             {
+                targetSlot = parsedTargetSlot;
+                return true;
+            }
+
+            if (parts.Length == 3 && byte.TryParse(parts[1], out parsedTargetSlot) && parsedTargetSlot >= 1 && parsedTargetSlot <= 14 && parts[2].Equals("ifEmpty", StringComparison.OrdinalIgnoreCase))
+            {
+                targetSlot = parsedTargetSlot;
                 requireTargetEmpty = true;
                 return true;
             }

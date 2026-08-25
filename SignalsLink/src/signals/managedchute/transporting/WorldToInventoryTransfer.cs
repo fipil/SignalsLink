@@ -25,11 +25,18 @@ namespace SignalsLink.src.signals.managedchute.transporting
 
         public TransferOperationResult TryMove(ItemStackMoveOperation opTemplate)
         {
+            if (TryGetPlacedLiquidContainer(out ItemStack containerStack))
+            {
+                return TryMovePlacedLiquidContainer(containerStack);
+            }
+
             EntityItem entity = FindItemEntityNearSource();
             if (entity == null || entity.Itemstack == null || entity.Itemstack.StackSize <= 0) return TransferOperationResult.None;
 
             ItemStack stack = entity.Itemstack;
-            int moved = TryPutOneIntoInventory(stack);
+            if (!TryGetMatchedDirectives(stack, out PaperConditionDirectives directives) || !directives.Evaluate(BuildDirectiveContext())) return TransferOperationResult.None;
+
+            int moved = TryPutOneIntoInventory(stack, directives.TargetSlot ?? targetSlotSignal);
             if (moved <= 0) return TransferOperationResult.None;
 
             stack.StackSize -= moved;
@@ -42,6 +49,18 @@ namespace SignalsLink.src.signals.managedchute.transporting
                 entity.Itemstack = stack;
             }
 
+            return new TransferOperationResult(moved, moved, false);
+        }
+
+        private TransferOperationResult TryMovePlacedLiquidContainer(ItemStack containerStack)
+        {
+            if (!TryGetMatchedDirectives(containerStack, out PaperConditionDirectives directives) || !directives.Evaluate(BuildDirectiveContext())) return TransferOperationResult.None;
+
+            int moved = TryPutOneIntoInventory(containerStack, directives.TargetSlot ?? targetSlotSignal);
+            if (moved <= 0) return TransferOperationResult.None;
+
+            api.World.BlockAccessor.SetBlock(0, sourcePos);
+            api.World.BlockAccessor.MarkBlockModified(sourcePos);
             return new TransferOperationResult(moved, moved, false);
         }
 
@@ -74,11 +93,11 @@ namespace SignalsLink.src.signals.managedchute.transporting
             return found;
         }
 
-        private int TryPutOneIntoInventory(ItemStack fromStack)
+        private int TryPutOneIntoInventory(ItemStack fromStack, byte effectiveTargetSlotSignal)
         {
-            if (targetSlotSignal > 0)
+            if (effectiveTargetSlotSignal > 0)
             {
-                int index = targetSlotSignal - 1;
+                int index = effectiveTargetSlotSignal - 1;
                 if (index >= 0 && index < targetInv.Count)
                 {
                     ItemSlot slot = targetInv[index];
@@ -120,6 +139,17 @@ namespace SignalsLink.src.signals.managedchute.transporting
             return 0;
         }
 
+        private bool TryGetPlacedLiquidContainer(out ItemStack containerStack)
+        {
+            containerStack = null;
+
+            if (api.World.BlockAccessor.GetBlock(sourcePos) is not BlockLiquidContainerBase container) return false;
+
+            containerStack = new ItemStack(container, 1);
+            container.SetContent(containerStack, container.GetContent(sourcePos)?.Clone());
+            return true;
+        }
+
         private bool IsLiquidContainer(ItemStack stack)
         {
             if (stack?.Collectible == null) return false;
@@ -131,14 +161,25 @@ namespace SignalsLink.src.signals.managedchute.transporting
 
         private bool IsConditionMet(ItemStack stack)
         {
-            if (conditionsEvaluator.HasConditions)
-            {
-                var ctx = ItemConditionContextUtil.BuildContext(api.World, stack);
-                ctx["targetInventory"] = targetInv;
-                return conditionsEvaluator.Evaluate(stack, ctx, out byte _);
-            }
+            return TryGetMatchedDirectives(stack, out _);
+        }
 
-            return true;
+        private bool TryGetMatchedDirectives(ItemStack stack, out PaperConditionDirectives directives)
+        {
+            directives = PaperConditionDirectives.Empty;
+            if (!conditionsEvaluator.HasConditions) return true;
+
+            var ctx = ItemConditionContextUtil.BuildContext(api.World, stack);
+            ctx["targetInventory"] = targetInv;
+            return conditionsEvaluator.Evaluate(stack, ctx, out byte _, out directives);
+        }
+
+        private IDictionary<string, object> BuildDirectiveContext()
+        {
+            return new Dictionary<string, object>
+            {
+                ["targetInventory"] = targetInv
+            };
         }
     }
 }

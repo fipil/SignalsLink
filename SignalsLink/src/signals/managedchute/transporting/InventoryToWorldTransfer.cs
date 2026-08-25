@@ -20,9 +20,12 @@ namespace SignalsLink.src.signals.managedchute.transporting
             this.mode = mode;
         }
 
+        protected override bool AllowsLiquidContainers => true;
+
         public int TryMoveOneItem(ItemStackMoveOperation opTemplate)
         {
-            ItemSlot src = GetSourceSlot();
+            TransferSelection selection = GetTransferSelection();
+            ItemSlot src = selection?.SourceSlot;
             if (src == null || src.Empty) return 0;
 
             // Zkontroluj blok pod cílem – musí být solid pro „placing na zem“
@@ -30,26 +33,40 @@ namespace SignalsLink.src.signals.managedchute.transporting
             Block blockBelow = api.World.BlockAccessor.GetBlock(belowPos);
             bool hasSolidBelow = blockBelow.SideSolid[BlockFacing.UP.Index];
 
-            // Rozhodni režim podle mode (targetInv signal)
+            bool targetGround = selection.Directives.TargetGround;
+
+            if (targetGround)
+            {
+                if (!hasSolidBelow) return 0;
+
+                if (TryPlaceBlockOnGround(src, targetPos) || TryStackOnGround(src, targetPos))
+                {
+                    src.MarkDirty();
+                    return 1;
+                }
+
+                return 0;
+            }
+
             if (mode == 1 && hasSolidBelow)
             {
-                // Pokus o umístění jako blok
                 if (TryPlaceBlockOnGround(src, targetPos))
                 {
                     src.MarkDirty();
                     return 1;
                 }
-                else 
-                {
-                    // Pokud se nepodaří stackovat, nespadá to dál – režim je „pouze stackovat“
-                    return 0;
-                }
-                // Když se nepodaří, spadne to dál na ostatní režimy (stack / throw)
+
+                return 0;
             }
 
             if (mode == 2 && hasSolidBelow)
             {
-                // Pokus o stackování na zemi (pile, ingoty, apod.)
+                if (TryPlaceLiquidContainerOnGround(src, targetPos))
+                {
+                    src.MarkDirty();
+                    return 1;
+                }
+
                 if (TryStackOnGround(src, targetPos))
                 {
                     src.MarkDirty();
@@ -87,17 +104,39 @@ namespace SignalsLink.src.signals.managedchute.transporting
                 return false;
             }
 
-            string failureCode = null;
-            bool placed = stack.Block.TryPlaceBlock(api.World, null, stack, new BlockSelection
+            BlockSelection blockSelection = new BlockSelection
             {
                 Position = pos,
                 Face = BlockFacing.DOWN
-            }, ref failureCode);
+            };
+
+            if (stack.Block is BlockLiquidContainerBase)
+            {
+                if (blockAtTarget.Replaceable < 6000 || api.World.BlockAccessor.GetBlockEntity(pos) != null) return false;
+
+                string canPlaceFailureCode = null;
+                if (!stack.Block.CanPlaceBlock(api.World, null, blockSelection, ref canPlaceFailureCode)) return false;
+
+                // Liquid-container placement needs its complete stack to initialize the placed
+                // block entity. Unlike player placement, this path does not require an IPlayer.
+                api.World.BlockAccessor.SetBlock(stack.Block.BlockId, pos, stack);
+                api.World.BlockAccessor.MarkBlockModified(pos);
+                src.TakeOut(1);
+                return true;
+            }
+
+            string failureCode = null;
+            bool placed = stack.Block.TryPlaceBlock(api.World, null, stack, blockSelection, ref failureCode);
 
             if (!placed) return false;
 
             src.TakeOut(1);
             return true;
+        }
+
+        private bool TryPlaceLiquidContainerOnGround(ItemSlot src, BlockPos pos)
+        {
+            return src.Itemstack?.Block is BlockLiquidContainerBase && TryPlaceBlockOnGround(src, pos);
         }
 
         private bool TryStackOnGround(ItemSlot src, BlockPos pos)

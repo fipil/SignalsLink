@@ -2,6 +2,7 @@ using System.Text;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
 using Vintagestory.API.Datastructures;
+using Vintagestory.GameContent;
 
 namespace SignalsLink.src.signals.paperConditions
 {
@@ -15,7 +16,27 @@ namespace SignalsLink.src.signals.paperConditions
 
             if (stack?.Collectible == null) return ctx;
 
-            // Virtuální teplota
+            if (stack.Block is BlockLiquidContainerBase liquidContainer)
+            {
+                ItemStack liquidStack = liquidContainer.GetContent(stack);
+                bool hasLiquid = liquidStack != null && liquidStack.StackSize > 0;
+                ctx["isLiquidContainer"] = true;
+                ctx["liquidContainerEmpty"] = !hasLiquid;
+                ctx["liquidContainerFilled"] = hasLiquid;
+                ctx["liquidLitres"] = 0d;
+
+                if (hasLiquid)
+                {
+                    ctx["liquidCode"] = liquidStack.Collectible?.Code?.ToString();
+                    var liquidProps = BlockLiquidContainerBase.GetContainableProps(liquidStack);
+                    if (liquidProps?.ItemsPerLitre > 0)
+                    {
+                        ctx["liquidLitres"] = liquidStack.StackSize / (double)liquidProps.ItemsPerLitre;
+                    }
+                }
+            }
+
+            // Virtuï¿½lnï¿½ teplota
             try
             {
                 float temp = stack.Collectible.GetTemperature(world, stack);
@@ -23,7 +44,7 @@ namespace SignalsLink.src.signals.paperConditions
             }
             catch
             {
-                // Ignoruj, pokud collectible teplotu neumí
+                // Ignoruj, pokud collectible teplotu neumï¿½
             }
 
             // Durability (pokud item/block podporuje trvanlivost)
@@ -36,7 +57,7 @@ namespace SignalsLink.src.signals.paperConditions
                 ctx["durabilityRatio"] = (double)current / maxDurability;
             }
 
-            // Stav zkažení (perish) jako 0..1
+            // Stav zkaï¿½enï¿½ (perish) jako 0..1
             try
             {
                 TransitionableProperties[] transitionableProperties =
@@ -44,15 +65,15 @@ namespace SignalsLink.src.signals.paperConditions
 
                 if (transitionableProperties != null && transitionableProperties.Length > 0)
                 {
-                    // Vytvoøení dummy slotu ze stacku
+                    // Vytvoï¿½enï¿½ dummy slotu ze stacku
                     var dummySlot = new DummySlot(stack);
 
-                    // Aktualizace a získání transition stavù
+                    // Aktualizace a zï¿½skï¿½nï¿½ transition stavï¿½
                     var transitionStates = stack.Collectible.UpdateAndGetTransitionStates(world, dummySlot);
 
                     if (transitionStates != null)
                     {
-                        // Najdi první perish transition state (typicky "perish")
+                        // Najdi prvnï¿½ perish transition state (typicky "perish")
                         foreach (var tstate in transitionStates)
                         {
                             if (tstate == null) continue;
@@ -65,7 +86,7 @@ namespace SignalsLink.src.signals.paperConditions
                                 ctx["isSpoiling"] = freshHoursLeft<=0;
                             }
 
-                            // Staèí první nalezený perish state
+                            // Staï¿½ï¿½ prvnï¿½ nalezenï¿½ perish state
                             break;
                         }
                     }
@@ -73,7 +94,7 @@ namespace SignalsLink.src.signals.paperConditions
             }
             catch
             {
-                // pokud item nemá perish transition, nic se nepøidá
+                // pokud item nemï¿½ perish transition, nic se nepï¿½idï¿½
             }
 
             return ctx;
@@ -83,17 +104,17 @@ namespace SignalsLink.src.signals.paperConditions
         {
             var sb = new StringBuilder();
 
-            // 1) První øádek: plný kód
+            // 1) Prvnï¿½ ï¿½ï¿½dek: plnï¿½ kï¿½d
             AppendLineLf(sb, stack.Collectible.Code.ToString());
 
-            // 2) Virtuální hodnoty, které známe (napø. temperature)
+            // 2) Virtuï¿½lnï¿½ hodnoty, kterï¿½ znï¿½me (napï¿½. temperature)
             var ctx = BuildContext(world, stack);
             foreach(var kvp in ctx)
             {
                 AppendLineLf(sb, $"{kvp.Key}={kvp.Value}");
             }
 
-            // 3) Skuteèné atributy stacku
+            // 3) Skuteï¿½nï¿½ atributy stacku
             var attrs = stack.Attributes;
             if (attrs != null)
             {
@@ -120,7 +141,7 @@ namespace SignalsLink.src.signals.paperConditions
                             line = $"{key}={da.value}";
                             break;
                         case StringAttribute sa:
-                            // pøeskoè prázdné øetìzce
+                            // pï¿½eskoï¿½ prï¿½zdnï¿½ ï¿½etï¿½zce
                             if (!string.IsNullOrEmpty(sa.value))
                             {
                                 line = $"{key}={sa.value}";

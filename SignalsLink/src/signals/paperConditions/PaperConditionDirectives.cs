@@ -2,18 +2,20 @@ namespace SignalsLink.src.signals.paperConditions
 {
     public sealed class PaperConditionDirectives
     {
-        public static readonly PaperConditionDirectives Empty = new PaperConditionDirectives(null, null, false);
+        public static readonly PaperConditionDirectives Empty = new PaperConditionDirectives(null, false, null, false);
 
         public byte? TargetSlot { get; }
+        public bool TargetGround { get; }
         public decimal? Amount { get; }
         public bool RequireTargetEmpty { get; }
 
-        public bool HasTargetOverride => TargetSlot.HasValue;
+        public bool HasTargetOverride => TargetSlot.HasValue || TargetGround;
         public bool HasAmountOverride => Amount.HasValue;
 
-        public PaperConditionDirectives(byte? targetSlot, decimal? amount, bool requireTargetEmpty)
+        public PaperConditionDirectives(byte? targetSlot, bool targetGround, decimal? amount, bool requireTargetEmpty)
         {
             TargetSlot = targetSlot;
+            TargetGround = targetGround;
             Amount = amount;
             RequireTargetEmpty = requireTargetEmpty;
         }
@@ -21,7 +23,7 @@ namespace SignalsLink.src.signals.paperConditions
         public bool Evaluate(IDictionary<string, object> ctx)
         {
             if (!RequireTargetEmpty) return true;
-            if (!TargetSlot.HasValue || TargetSlot.Value <= 0) return false;
+            if (TargetGround || !TargetSlot.HasValue || TargetSlot.Value <= 0) return false;
             if (ctx == null) return false;
             if (!ctx.TryGetValue("targetInventory", out var obj) || obj is not Vintagestory.API.Common.IInventory targetInventory) return false;
 
