@@ -21,6 +21,7 @@ namespace SignalsLink.src.signals.paperConditions
                 var actions = new List<IConditionAction>();
                 byte? outputValue = null;
                 bool hasExplicitOutput = false;
+                byte? sourceSlot = null;
                 byte? targetSlot = null;
                 bool targetGround = false;
                 bool requireTargetEmpty = false;
@@ -66,6 +67,18 @@ namespace SignalsLink.src.signals.paperConditions
                             continue;
                         }
 
+                        errors?.Add(line);
+                        continue;
+                    }
+
+                    if (TryParseSourceDirective(line, out byte parsedSourceSlot))
+                    {
+                        sourceSlot = parsedSourceSlot;
+                        continue;
+                    }
+
+                    if (line.StartsWith("source ", StringComparison.OrdinalIgnoreCase))
+                    {
                         errors?.Add(line);
                         continue;
                     }
@@ -116,7 +129,7 @@ namespace SignalsLink.src.signals.paperConditions
                     // OutputValue keeps the effective default 15 when `output` is not
                     // specified — for the BlockSensor (no behavior change). HasExplicitOutput
                     // records whether `output` was actually specified; ManagedHose reads it (see spec §6).
-                    blocks.Add(new ConditionBlock(conditions, outputValue ?? 15, hasExplicitOutput, new PaperConditionDirectives(targetSlot, targetGround, amount, requireTargetEmpty), actions));
+                    blocks.Add(new ConditionBlock(conditions, outputValue ?? 15, hasExplicitOutput, new PaperConditionDirectives(sourceSlot, targetSlot, targetGround, amount, requireTargetEmpty), actions));
                 }
             }
 
@@ -158,6 +171,15 @@ namespace SignalsLink.src.signals.paperConditions
             }
 
             return false;
+        }
+
+        private static bool TryParseSourceDirective(string line, out byte sourceSlot)
+        {
+            sourceSlot = 0;
+            if (!line.StartsWith("source ", StringComparison.OrdinalIgnoreCase)) return false;
+
+            var parts = line.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            return parts.Length == 2 && byte.TryParse(parts[1], out sourceSlot) && sourceSlot >= 1 && sourceSlot <= 14;
         }
 
         private static bool TryParseTargetDirective(string line, out byte? targetSlot, out bool targetGround, out bool requireTargetEmpty)

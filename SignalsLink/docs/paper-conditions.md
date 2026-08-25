@@ -85,7 +85,7 @@ Pravidlo je stejné pro všechny, ale **zdroj**, **cíl**, defaultní akce a pod
 
 - **Přenáší předměty.** Zdroj = inventář bloku na vstupní straně, cíl = inventář bloku na výstupní straně.
 - Defaultní akce: **přenos předmětů**.
-- Podporuje direktivy `target` / `amount` / `ifEmpty` a akci `do seal`.
+- Podporuje direktivy `source` / `target` / `amount` / `ifEmpty` a akci `do seal`.
 - **Nemá výstupní pin → `output` nepodporuje.**
 - Zdroj prochází po slotech (podle signálu zdrojového slotu) a hledá kandidátní předmět.
 
@@ -334,7 +334,19 @@ stackSize>=4
 
 ## Direktivy přesunu
 
-Direktivy tvarují **defaultní přenos** — platí tedy pro **ManagedChute a ManagedHose**, u senzorů nemají smysl. Nejsou to samy o sobě podmínky.
+Direktivy tvarují **defaultní přenos** — platí tedy pro **ManagedChute a ManagedHose**, u senzorů nemají smysl. Nejsou to samy o sobě podmínky. Direktiva `source` platí pouze pro ManagedChute.
+
+### `source <slot>`
+
+Pouze pro ManagedChute. Určí zdrojový slot, číslovaný **od jedné**, a pro odpovídající blok má přednost před signálem na pinu Zdroj. Podporovány jsou sloty 1 až 14.
+
+```text
+*carrot*
+source 3
+target 6 ifEmpty
+```
+
+Příklad odešle mrkev ze zdrojového slotu 3 do cílového slotu 6, i kdyby pin Zdroj ukazoval jinam. Bloky bez `source` nadále používají pin Zdroj jako dosud.
 
 ### `target <slot>`
 

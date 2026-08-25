@@ -37,6 +37,17 @@ namespace SignalsLink.src.signals.managedchute.transporting
 
         protected TransferSelection GetTransferSelection()
         {
+            if (conditionsEvaluator.HasConditions)
+            {
+                for (int i = 0; i < sourceInv.Count; i++)
+                {
+                    if (TryCreateTransferSelection(sourceInv[i], i, true, out TransferSelection selection))
+                    {
+                        return selection;
+                    }
+                }
+            }
+
             // 3) Konkrétní slot: 1–14 -> index (signal-1)
             if (inputSlotSignal > 0 && inputSlotSignal < 15)
             {
@@ -44,7 +55,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
                 if (index >= 0 && index < sourceInv.Count)
                 {
                     ItemSlot slot = sourceInv[index];
-                    if (TryCreateTransferSelection(slot, out TransferSelection selection))
+                    if (TryCreateTransferSelection(slot, index, false, out TransferSelection selection))
                     {
                         return selection;
                     }
@@ -57,14 +68,14 @@ namespace SignalsLink.src.signals.managedchute.transporting
             {
                 if (sourceInv.Count == 0) return null;
                 var slot = sourceInv[sourceInv.Count - 1];
-                return TryCreateTransferSelection(slot, out TransferSelection selection) ? selection : null;
+                return TryCreateTransferSelection(slot, sourceInv.Count - 1, false, out TransferSelection selection) ? selection : null;
             }
 
             // 1) 0 -> „vysávej všechny sloty“ = první NEprázdný, který není liquid container
             for (int i = 0; i < sourceInv.Count; i++)
             {
                 ItemSlot slot = sourceInv[i];
-                if (TryCreateTransferSelection(slot, out TransferSelection selection))
+                if (TryCreateTransferSelection(slot, i, false, out TransferSelection selection))
                 {
                     return selection;
                 }
@@ -118,13 +129,21 @@ namespace SignalsLink.src.signals.managedchute.transporting
         {
         }
 
-        private bool TryCreateTransferSelection(ItemSlot slot, out TransferSelection selection)
+        private bool TryCreateTransferSelection(ItemSlot slot, int slotIndex, bool requireExplicitSource, out TransferSelection selection)
         {
             selection = null;
 
             if (slot == null || slot.Empty) return false;
             if (IsLiquidContainer(slot.Itemstack) && !AllowsLiquidContainers) return false;
             if (!TryGetMatchedDirectives(slot.Itemstack, out PaperConditionDirectives directives)) return false;
+            if (requireExplicitSource)
+            {
+                if (directives.SourceSlot != slotIndex + 1) return false;
+            }
+            else if (directives.SourceSlot.HasValue)
+            {
+                return false;
+            }
             if (!directives.Evaluate(BuildDirectiveContext())) return false;
             if (!CanTransferSelection(slot, directives)) return false;
 

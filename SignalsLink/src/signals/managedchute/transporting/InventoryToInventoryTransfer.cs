@@ -205,7 +205,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
                 if (!stack.Equals(api.World, initialStack, GlobalConstants.IgnoredStackAttributes)) continue;
                 if (IsLiquidContainer(stack) && !AllowsLiquidContainers) continue;
                 if (!TryGetMatchedDirectives(stack, out PaperConditionDirectives candidateDirectives)) continue;
-                if (candidateDirectives.TargetSlot != directives.TargetSlot || candidateDirectives.TargetGround != directives.TargetGround || candidateDirectives.Amount != directives.Amount || candidateDirectives.RequireTargetEmpty != directives.RequireTargetEmpty) continue;
+                if (candidateDirectives.SourceSlot != directives.SourceSlot || candidateDirectives.TargetSlot != directives.TargetSlot || candidateDirectives.TargetGround != directives.TargetGround || candidateDirectives.Amount != directives.Amount || candidateDirectives.RequireTargetEmpty != directives.RequireTargetEmpty) continue;
                 if (!CanTransferSelection(slot, candidateDirectives)) continue;
 
                 result.Add(slot);
