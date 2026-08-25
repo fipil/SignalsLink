@@ -486,9 +486,16 @@ namespace SignalsLink.src.signals.hose
 
         public override void GetBlockInfo(IPlayer forPlayer, StringBuilder dsc)
         {
+            var selection = forPlayer?.CurrentBlockSelection;
+            if (selection?.SelectionBoxIndex < SignalInputsCount)
+            {
+                base.GetBlockInfo(forPlayer, dsc);
+                return;
+            }
+
             base.GetBlockInfo(forPlayer, dsc);
 
-            // Show the Input buffer (litres left to move), like the ManagedChute does.
+            // Show the Input buffer only when targeting the valve body.
             if (unlimited) dsc.AppendLine(Lang.Get("signalslink:managedchute-info-unlimited"));
             else if (remaining > 0) dsc.AppendLine(Lang.Get("signalslink:managedchute-info-remaining", remaining));
         }
