@@ -51,5 +51,5 @@
   "signalslink:ingameerror-hose-same-block": "La manguera no puede conectar dos anclajes del mismo bloque.",
   "signalslink:hosevalve-noceiling": "La Válvula controlada no se puede colocar en el techo.",
   "signalslink:con-hose": "Conexión de manguera ",
-  "signalslink:ingameerror-hose-too-long": "La manguera puede tener como máximo {0} bloques."
+  "signalslink:ingameerror-hose-too-long": "La manguera puede tener una longitud máxima de {0} bloques. "
 }
