@@ -51,5 +51,5 @@
   "signalslink:ingameerror-hose-same-block": "Hadica nemôže spojiť dve kotvy toho istého bloku.",
   "signalslink:hosevalve-noceiling": "Riadený ventil nemožno umiestniť na strop.",
   "signalslink:con-hose": "Prípojka hadice ",
-  "signalslink:ingameerror-hose-too-long": "Hadica môže byť dlhá najviac {0} blokov."
+  "signalslink:ingameerror-hose-too-long": "Hadica môže byť dlhá najviac {0} blokov. "
 }

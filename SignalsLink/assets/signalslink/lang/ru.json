@@ -51,5 +51,5 @@
   "signalslink:ingameerror-hose-same-block": "Шланг не может соединить два крепления одного блока.",
   "signalslink:hosevalve-noceiling": "Управляемый клапан нельзя установить на потолок.",
   "signalslink:con-hose": "Подключение шланга ",
-  "signalslink:ingameerror-hose-too-long": "Шланг может быть длиной не более {0} блоков. "
+  "signalslink:ingameerror-hose-too-long": "Длина шланга не может превышать {0} блоков. "
 }
