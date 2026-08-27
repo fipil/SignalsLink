@@ -50,5 +50,6 @@
   "signalslink:block-hosevalve-*": "Managed valve",
   "signalslink:block-hosevalvedrain-*": "Managed valve (drain)",
   "signalslink:block-hosevalvestand-*": "Managed valve",
-  "signalslink:con-hose": "Hose connection "
+  "signalslink:con-hose": "Hose connection ",
+  "signalslink:ingameerror-hose-too-long": "The hose can be at most {0} blocks long. "
 }

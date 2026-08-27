@@ -50,5 +50,6 @@
   "signalslink:ingameerror-hose-anchor-occupied": "Un tuyau est déjà raccordé à cet ancrage.",
   "signalslink:ingameerror-hose-same-block": "Le tuyau ne peut pas relier deux ancrages du même bloc.",
   "signalslink:hosevalve-noceiling": "Le robinet contrôlé ne peut pas être placé au plafond.",
-  "signalslink:con-hose": "Raccord de tuyau "
+  "signalslink:con-hose": "Raccord de tuyau ",
+  "signalslink:ingameerror-hose-too-long": "Le tuyau peut mesurer au maximum {0} blocs. "
 }
