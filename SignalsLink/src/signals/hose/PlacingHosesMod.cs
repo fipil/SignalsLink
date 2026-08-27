@@ -121,8 +121,12 @@ namespace SignalsLink.src.signals.hose
             {
                 UseHose(fromPlayer, true);
             }
-            // Other outcomes (TooLong / AnchorOccupied / ...) do not consume the hose.
-            // TODO: user-facing feedback via SendIngameError (polish).
+            else if (result == HoseNetworkMod.AddResult.TooLong)
+            {
+                ((ICoreServerAPI)api).SendIngameError(fromPlayer, "hosetoolong",
+                    Lang.Get("signalslink:ingameerror-hose-too-long", HoseNetworkMod.MaxHoseLength));
+            }
+            // Other outcomes do not consume the hose.
         }
 
         private bool AnchorExists(NodePos pos)
