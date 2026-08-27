@@ -1,4 +1,5 @@
 using HarmonyLib;
+using SignalsLink.src.signals.paperConditions;
 using Vintagestory.API.Common;
 using Vintagestory.API.Config;
 using Vintagestory.API.MathTools;
@@ -21,6 +22,13 @@ namespace SignalsLink.src.signals.managedchute.transporting
         }
 
         protected override bool AllowsLiquidContainers => true;
+
+        protected override bool CanTransferSelection(ItemSlot slot, PaperConditionDirectives directives)
+        {
+            // ManagedChute may place a filled bucket, but must never eject the liquid portions
+            // stored in barrels and other liquid inventories.
+            return !IsLiquidContainer(slot?.Itemstack) || slot.Itemstack.Block is BlockLiquidContainerBase;
+        }
 
         public int TryMoveOneItem(ItemStackMoveOperation opTemplate)
         {
