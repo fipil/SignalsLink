@@ -33,6 +33,8 @@ namespace SignalsLink.src.signals.managedchute.transporting
 
         protected override bool CanTransferSelection(ItemSlot slot, PaperConditionDirectives directives)
         {
+            if (slot?.Itemstack?.Collectible?.GetType().Name == "ItemLiquidPortion") return false;
+
             byte effectiveTargetSlotSignal = directives.TargetSlot ?? outputSlotSignal;
             return GetGenericTargetSlot(slot, effectiveTargetSlotSignal) != null;
         }
