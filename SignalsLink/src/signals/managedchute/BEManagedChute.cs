@@ -38,6 +38,13 @@ namespace SignalsLink.src.signals.managedchute
         private BlockPos lastInputPos;
         private BlockPos lastOutputPos;
 
+        // BlockEntity instances the cached transfer was built from. A neighbour's block entity can
+        // be recreated under us (world load, chunk reload, block exchange) — the container's
+        // inventory object is then replaced and the cached transfer keeps operating on a dead one,
+        // silently moving nothing. Comparing identities each tick catches that.
+        private BlockEntity lastInputBE;
+        private BlockEntity lastOutputBE;
+
         private string conditionsText = null;
         private PaperConditionsEvaluator conditionsEvaluator;
 
@@ -238,9 +245,15 @@ namespace SignalsLink.src.signals.managedchute
             BlockPos inputPos = GetInputBlockPos();
             BlockPos outputPos = GetOutputBlockPos();
 
-            // Když se změnilo napojení, starý transfer zahodíme
+            BlockEntity inputBE = Api.World.BlockAccessor.GetBlockEntity(inputPos);
+            BlockEntity outputBE = Api.World.BlockAccessor.GetBlockEntity(outputPos);
+
+            // Starý transfer zahodíme, když se změnilo napojení, nebo když se sousední
+            // BlockEntity mezitím vytvořila znovu (load světa, reload chunku, výměna bloku) –
+            // transfer si drží referenci na inventář, který by už byl mrtvý.
             if (transfer != null &&
-                (!inputPos.Equals(lastInputPos) || !outputPos.Equals(lastOutputPos)))
+                (!inputPos.Equals(lastInputPos) || !outputPos.Equals(lastOutputPos)
+                 || !ReferenceEquals(inputBE, lastInputBE) || !ReferenceEquals(outputBE, lastOutputBE)))
             {
                 transfer = null;
             }
@@ -252,6 +265,8 @@ namespace SignalsLink.src.signals.managedchute
 
             lastInputPos = inputPos;
             lastOutputPos = outputPos;
+            lastInputBE = inputBE;
+            lastOutputBE = outputBE;
         }
 
         private PaperConditionsEvaluator ConditionsEvaluator
@@ -301,6 +316,10 @@ namespace SignalsLink.src.signals.managedchute
             // sync transfer state to client
             unlimited = tree.GetBool("unlimited", false);
             remaining = tree.GetInt("remaining", 0);
+
+            // Edge detector of the Input pin. Persisted together with the buffer above: without it
+            // the pin looks like it went 0 -> N after every load, which credits a phantom batch.
+            signalState = (byte)tree.GetInt("signalState", 0);
         }
 
         public override void ToTreeAttributes(ITreeAttribute tree)
@@ -312,6 +331,7 @@ namespace SignalsLink.src.signals.managedchute
             // sync transfer state to client
             tree.SetBool("unlimited", unlimited);
             tree.SetInt("remaining", remaining);
+            tree.SetInt("signalState", signalState);
         }
 
         public override void GetBlockInfo(IPlayer forPlayer, StringBuilder dsc)
