@@ -12,7 +12,6 @@ namespace SignalsLink.src.signals.managedchute.transporting
             var blockAccess = api.World.BlockAccessor;
 
             var beIn = blockAccess.GetBlockEntity(inputPos) as IBlockEntityContainer;
-            var inputBlock = blockAccess.GetBlock(inputPos);
 
             // Special case: output points to an anvil -> use InventoryToAnvilTransfer
             var beAnvil = blockAccess.GetBlockEntity(outputPos) as BlockEntityAnvil;
@@ -23,7 +22,9 @@ namespace SignalsLink.src.signals.managedchute.transporting
 
             var beOut = blockAccess.GetBlockEntity(outputPos) as IBlockEntityContainer;
 
-            if (inputBlock is BlockLiquidContainerBase && beOut?.Inventory != null)
+            // Only carryable containers get moved as a whole block; a barrel or boiler on the input side
+            // falls through to the regular inventory -> inventory transfer below.
+            if (beOut?.Inventory != null && WorldToInventoryTransfer.IsPortablePlacedContainer(blockAccess, inputPos))
             {
                 return new WorldToInventoryTransfer(api, inputPos, beOut.Inventory, outputSlotSignal, conditionsEvaluator);
             }

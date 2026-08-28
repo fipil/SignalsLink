@@ -139,10 +139,22 @@ namespace SignalsLink.src.signals.managedchute.transporting
             return 0;
         }
 
+        /// <summary>
+        /// Whether the block at <paramref name="pos"/> may be picked up whole as an item. Barrel, boiler and
+        /// condenser derive from BlockLiquidContainerBase too, but their block entities hold state (item slot,
+        /// Sealed/CurrentRecipe, fuel, distillation) that moving them as an item would silently destroy.
+        /// </summary>
+        public static bool IsPortablePlacedContainer(IBlockAccessor blockAccessor, BlockPos pos)
+        {
+            if (blockAccessor.GetBlock(pos) is not BlockLiquidContainerBase) return false;
+            return blockAccessor.GetBlockEntity(pos) is BlockEntityBucket;
+        }
+
         private bool TryGetPlacedLiquidContainer(out ItemStack containerStack)
         {
             containerStack = null;
 
+            if (!IsPortablePlacedContainer(api.World.BlockAccessor, sourcePos)) return false;
             if (api.World.BlockAccessor.GetBlock(sourcePos) is not BlockLiquidContainerBase container) return false;
 
             containerStack = new ItemStack(container, 1);

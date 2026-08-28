@@ -23,17 +23,6 @@ namespace SignalsLink.src.signals.hose
             hoseAnchors = HoseAnchorUtil.Parse(Attributes, api, Code);
         }
 
-        // Ceiling placement is not allowed — the valve mounts on a wall or the floor only.
-        public override bool CanPlaceBlock(IWorldAccessor world, IPlayer byPlayer, BlockSelection blockSel, ref string failureCode)
-        {
-            if (Variant["side"] == "up")
-            {
-                failureCode = "signalslink:hosevalve-noceiling";
-                return false;
-            }
-            return base.CanPlaceBlock(world, byPlayer, blockSel, ref failureCode);
-        }
-
         // Always pick/drop the canonical valve item, regardless of the current mount state
         // (hung/stand/drain are three separate block codes).
         public override ItemStack OnPickBlock(IWorldAccessor world, BlockPos pos)

@@ -122,8 +122,8 @@
     Jeden odstavec na pergamenu tvoří jeden blok. Bloky oddělte jedním nebo více prázdnými řádky. Řádky začínající <strong>#</strong> nebo <strong>//</strong> jsou komentáře a ignorují se.<br>
     Všechny podmínky v jednom bloku musí platit zároveň (AND). Bloky se procházejí shora dolů a provede se <strong>první platný blok</strong>: jeho podmínky musí platit a jeho akce musí být fyzicky proveditelná. Když zdroj nic nemá, cíl je plný nebo akce nic nezmění, blok propadne na další.<br><br>
     <font size="20" color="6082B6">Zařízení a akce</font><br>
-    • <strong>Řízená trubka</strong> přenáší předměty. Podporuje direktivy <strong>source</strong>, <strong>target</strong>, <strong>amount</strong>, <strong>ifEmpty</strong> a akci <strong>do seal</strong>.<br>
-    • <strong>Řízený ventil</strong> přenáší kapaliny ze vzdáleného konce hadice do svého hostitelského bloku. Podporuje stejné direktivy, <strong>do seal</strong> a <strong>output 0 až 15</strong>. Lávu nepřenáší a horkou vodu v cíli ochladí.<br>
+    • <strong>Řízená trubka</strong> přenáší předměty. Podporuje direktivy <strong>source</strong>, <strong>target</strong>, <strong>target ground</strong>, <strong>amount</strong>, <strong>ifEmpty</strong> a akci <strong>do seal</strong>.<br>
+    • <strong>Řízený ventil</strong> přenáší kapaliny ze vzdáleného konce hadice do svého hostitelského bloku. Podporuje direktivy <strong>target</strong>, <strong>amount</strong>, <strong>ifEmpty</strong>, akci <strong>do seal</strong> a <strong>output 0 až 15</strong>. Lávu nepřenáší a horkou vodu v cíli ochladí.<br>
     • <strong>Senzory</strong> nepřenášejí nic; jejich výchozí akcí je výstup signálu. Podporují <strong>output</strong>, u senzoru také <strong>output .</strong> pro číslo odpovídajícího slotu.<br>
     Blok bez explicitní akce provede výchozí akci zařízení. Blok s <strong>output</strong> nebo <strong>do seal</strong> přenos nahradí: nic nepřenáší, pouze nastaví výstup nebo zapečetí sud.<br><br>
     <font size="20" color="6082B6">Podmínky kódu a atributů</font><br>

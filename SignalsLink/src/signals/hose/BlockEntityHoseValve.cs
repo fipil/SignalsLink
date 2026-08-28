@@ -118,8 +118,8 @@ namespace SignalsLink.src.signals.hose
 
         /// <summary>
         /// Swaps the block to the correct `mount` variant based on placement + host presence:
-        /// side=down → drain (výlevka); wall + host → hung (no legs); wall + no host → stand (legs).
-        /// Mirrors <c>BEBlockSensor.UpdateBlockState</c>.
+        /// side=down → drain (výlevka); wall/ceiling + host → hung (no legs); wall/ceiling + no
+        /// host → stand (legs). Mirrors <c>BEBlockSensor.UpdateBlockState</c>.
         /// </summary>
         private void UpdateMountState()
         {
@@ -146,6 +146,7 @@ namespace SignalsLink.src.signals.hose
         private string DesiredBlockCode(string side)
         {
             if (side == "down") return "hosevalvedrain";                // floor → drain (výlevka)
+            if (side == "up") return "hosevalveroof";                    // ceiling → roof shape, host or air
             return HasContainerHost() ? "hosevalve" : "hosevalvestand";  // wall → hung (host) / stand (air)
         }
 
@@ -203,9 +204,9 @@ namespace SignalsLink.src.signals.hose
             if (far == null) return 1;
 
             // Placement decides the mode:
-            //  - floor (side=down)  → drain (výlevka): pull + pour out, no host inventory;
-            //  - wall + host        → transfer into the host;
-            //  - wall + no host     → idle.
+            //  - floor (side=down)      → drain (výlevka): pull + pour out, no host inventory;
+            //  - wall/ceiling + host    → transfer into the host;
+            //  - wall/ceiling + no host → idle.
             bool discard = GetSideFace() == BlockFacing.DOWN;
             IInventory hostInv = null;
             BlockPos hostPos;
@@ -216,7 +217,7 @@ namespace SignalsLink.src.signals.hose
             else
             {
                 hostInv = GetHostInventory(out hostPos);
-                if (hostInv == null) return 1; // wall without host → idle
+                if (hostInv == null) return 1; // no host → idle
             }
 
             // Contention only exists when the far end is ALSO an active valve; then the two

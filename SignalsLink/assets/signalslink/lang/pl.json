@@ -49,7 +49,6 @@
   "signalslink:block-hosevalvestand-*": "Sterowany zawór",
   "signalslink:ingameerror-hose-anchor-occupied": "Do tej kotwy jest już podłączony wąż.",
   "signalslink:ingameerror-hose-same-block": "Wąż nie może łączyć dwóch kotew tego samego bloku.",
-  "signalslink:hosevalve-noceiling": "Nie można umieścić sterowanego zaworu na suficie.",
   "signalslink:con-hose": "Przyłącze węża ",
   "signalslink:ingameerror-hose-too-long": "Wąż może mieć najwyżej {0} bloków. "
 }

@@ -49,7 +49,6 @@
   "signalslink:block-hosevalvestand-*": "Valvola controllata",
   "signalslink:ingameerror-hose-anchor-occupied": "A questo ancoraggio è già collegato un tubo.",
   "signalslink:ingameerror-hose-same-block": "Il tubo non può collegare due ancoraggi dello stesso blocco.",
-  "signalslink:hosevalve-noceiling": "La Valvola controllata non può essere posizionata sul soffitto.",
   "signalslink:con-hose": "Attacco del tubo ",
   "signalslink:ingameerror-hose-too-long": "Il tubo può essere lungo al massimo {0} blocchi. "
 }

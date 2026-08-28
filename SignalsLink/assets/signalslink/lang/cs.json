@@ -50,6 +50,5 @@
   "signalslink:ingameerror-hose-anchor-occupied": "K této kotvě už je připojená hadice.",
   "signalslink:ingameerror-hose-same-block": "Hadice nemůže spojit dvě kotvy téhož bloku.",
   "signalslink:ingameerror-hose-too-long": "Hadice může být dlouhá nejvýše {0} bloků. ",
-  "signalslink:hosevalve-noceiling": "Řízený ventil nelze umístit na strop.",
   "signalslink:con-hose": "Přípojka hadice "
 }

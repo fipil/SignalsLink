@@ -7,8 +7,8 @@ namespace SignalsLink.src.signals.hose
 {
     /// <summary>
     /// Placement behavior for the hose valve, adapted from the Signals
-    /// <c>BlockBehaviorCoverWithDirection</c>. Difference: on a WALL the valve has no free
-    /// rotation around the wall normal — it is always mounted pins-up (orientation = "up").
+    /// <c>BlockBehaviorCoverWithDirection</c>. Difference: on a WALL or CEILING the valve has no
+    /// free rotation around the mount normal — it is always mounted pins-up (orientation = "up").
     /// Only floor placement (side = down, the drain / výlevka) keeps the projected orientation,
     /// which selects the horizontal neighbour it pours into.
     /// </summary>
@@ -92,7 +92,7 @@ namespace SignalsLink.src.signals.hose
             }
             else
             {
-                // Wall: always mounted pins-up (no free rotation around the wall normal).
+                // Wall or ceiling: always mounted pins-up (no free rotation around the mount normal).
                 orientation = "up";
             }
 
