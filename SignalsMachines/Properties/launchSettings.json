@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "Debug SignalsMachines": {
+      "commandName": "Executable",
+      "executablePath": "c:\\VintageStory\\1.22\\Vintagestory.exe",
+      "commandLineArgs": "--openWorld=\"signalsMachines playground\" -pcreativebuilding --addModPath=\"c:\\Develope\\VintageStory\\Projects\\SignalsLink\\Publish\" --addOrigin=\"c:\\Develope\\VintageStory\\Projects\\SignalsLink\\SignalsMachines\\assets\" --dataPath C:\\VintageStory\\1.22Data --tracelog",
+      "workingDirectory": "c:\\VintageStory\\1.22\\"
+    }
+  }
+}

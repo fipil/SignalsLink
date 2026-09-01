@@ -1,0 +1,12 @@
+{
+  "type": "code",
+  "modid": "signalsmachines",
+  "name": "Signals Machines",
+  "authors": ["Fipil"],
+  "description": "Machines controlled by signals.",
+  "version": "0.1.0",
+  "dependencies": {
+    "game": "1.22.0", 
+    "signals": "0.3.1"
+  }
+}
