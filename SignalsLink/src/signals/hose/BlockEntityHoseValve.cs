@@ -2,6 +2,7 @@ using signals.src;
 using signals.src.signalNetwork;
 using SignalsLink.src.signals;
 using SignalsLink.src.signals.paperConditions;
+using System.Collections.Generic;
 using System.Text;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
@@ -58,9 +59,12 @@ namespace SignalsLink.src.signals.hose
         private long lastDrainMs;
 
         // Flow pulse: bumped server-side whenever the random flow sound plays (synced to clients),
-        // so the client can wobble the hose in time with the audible surge of liquid.
+        // so the client can wobble the hose in time with the audible surge of liquid. flowFar is the
+        // anchor at the far end of the segment that is actually flowing, so that a valve with
+        // several hoses wobbles only that one; stored relative to Pos (see To/FromTreeAttributes).
         private int flowPulse;
         private int lastClientFlowPulse = -1;
+        private NodePos flowFar;
 
         // Idle backoff: after repeated unproductive pull attempts (source empty, target full, no
         // host, dangling hose …) the valve runs the heavier pull less often, then snaps back to
@@ -68,6 +72,11 @@ namespace SignalsLink.src.signals.hose
         // so two facing valves keep alternating snappily.
         private int noWorkStreak;
         private int tickSkip;
+
+        // Round-robin cursor over the valve's hose lines: the far anchor currently being served.
+        // Stored as an anchor rather than an index, because the source list is rebuilt every tick.
+        // Not persisted (like the arbitration token) — after a load the rotation simply restarts.
+        private NodePos currentSource;
 
         public int SignalInputsCount => 3; // 2 Signals anchors + 1 hose anchor (selection boxes 0..2)
 
@@ -190,8 +199,9 @@ namespace SignalsLink.src.signals.hose
         }
 
         /// <summary>
-        /// One pull attempt: while this valve has Input credit, pull liquid from the far end of its
-        /// hose into its host (or pour it out in drain mode).
+        /// One pull attempt. The valve may have several hoses on its anchor; it round-robins over
+        /// the connected sources, staying on one for as long as that source keeps delivering and
+        /// moving on to the next as soon as it does not.
         /// </summary>
         /// <returns>0 = moved, 1 = blocked (nothing to do), 2 = waiting for our arbitration turn.</returns>
         private int TryPull()
@@ -200,10 +210,11 @@ namespace SignalsLink.src.signals.hose
             if (hoseMod == null) return 1;
 
             NodePos myAnchor = new NodePos(Pos, HOSE);
-            NodePos far = hoseMod.GetOtherEndpoint(Api.World, myAnchor);
-            if (far == null) return 1;
+            List<HoseSource> sources = hoseMod.GetOtherEndpoints(Api.World, myAnchor);
+            if (sources.Count == 0) return 1;
 
-            // Placement decides the mode:
+            // Placement decides the mode; this is a property of the valve, not of the line, so it
+            // is resolved once for the whole rotation:
             //  - floor (side=down)      → drain (výlevka): pull + pour out, no host inventory;
             //  - wall/ceiling + host    → transfer into the host;
             //  - wall/ceiling + no host → idle.
@@ -219,6 +230,43 @@ namespace SignalsLink.src.signals.hose
                 hostInv = GetHostInventory(out hostPos);
                 if (hostInv == null) return 1; // no host → idle
             }
+
+            // Resume where the cursor left off. It is stored as the far anchor rather than an
+            // index, because the source list is rebuilt every tick and its length may change.
+            int start = sources.FindIndex(s => s.Endpoint == currentSource);
+            if (start < 0) start = 0;
+
+            bool waiting = false;
+
+            // At most one full rotation per tick: with four dry sources and one full one, the full
+            // one must still be found within the same tick, or throughput would collapse.
+            for (int i = 0; i < sources.Count; i++)
+            {
+                HoseSource candidate = sources[(start + i) % sources.Count];
+                int status = TryPullFrom(hoseMod, myAnchor, candidate, hostInv, hostPos, discard);
+
+                if (status == 0)
+                {
+                    currentSource = candidate.Endpoint; // keep draining this source while it delivers
+                    return 0;
+                }
+
+                if (status == 2) waiting = true; // the far valve holds the turn; try another source
+            }
+
+            // Nothing anywhere. Park the cursor on the next source so the next tick starts there
+            // and one stuck line cannot pin the rotation.
+            currentSource = sources[(start + 1) % sources.Count].Endpoint;
+            return waiting ? 2 : 1;
+        }
+
+        /// <summary>
+        /// One pull attempt from a single source (the far endpoint of one hose line).
+        /// </summary>
+        /// <returns>0 = moved, 1 = nothing to pull here, 2 = waiting for our arbitration turn.</returns>
+        private int TryPullFrom(HoseNetworkMod hoseMod, NodePos myAnchor, HoseSource source, IInventory hostInv, BlockPos hostPos, bool discard)
+        {
+            NodePos far = source.Endpoint;
 
             // Contention only exists when the far end is ALSO an active valve; then the two
             // valves must take turns (arbitration), otherwise they fight and stall.
@@ -257,6 +305,7 @@ namespace SignalsLink.src.signals.hose
             if (moved && Api.World.Rand.NextDouble() < 0.2)
             {
                 Api.World.PlaySoundAt(waterSound, Pos, 0.0, range: 8f, volume: 0.5f);
+                flowFar = source.FirstHop; // only this segment should wobble
                 flowPulse++;
                 MarkDirty();
             }
@@ -351,7 +400,7 @@ namespace SignalsLink.src.signals.hose
             if (flowPulse != lastClientFlowPulse)
             {
                 lastClientFlowPulse = flowPulse;
-                Api.ModLoader.GetModSystem<HoseNetworkMod>()?.Renderer?.TriggerWobble(new NodePos(Pos, HOSE));
+                Api.ModLoader.GetModSystem<HoseNetworkMod>()?.Renderer?.TriggerWobble(new NodePos(Pos, HOSE), flowFar);
             }
 
             if (drainPulse != lastClientPulse)
@@ -468,6 +517,13 @@ namespace SignalsLink.src.signals.hose
             outputState = (byte)tree.GetInt("outputState", 0);
             drainPulse = tree.GetInt("drainPulse", 0);
             flowPulse = tree.GetInt("flowPulse", 0);
+
+            // Far anchor of the flowing segment, stored as an offset from Pos so no BlockPos has to
+            // be rebuilt from absolute coordinates. Index < 0 means "none".
+            int flowFarIndex = tree.GetInt("flowFarIndex", -1);
+            flowFar = flowFarIndex < 0 || Pos == null
+                ? null
+                : new NodePos(Pos.AddCopy(tree.GetInt("flowFarDX", 0), tree.GetInt("flowFarDY", 0), tree.GetInt("flowFarDZ", 0)), flowFarIndex);
             drainLiquid = tree.GetItemstack("drainLiquid");
             drainLiquid?.ResolveBlockOrItem(worldForResolving);
         }
@@ -482,6 +538,14 @@ namespace SignalsLink.src.signals.hose
             tree.SetInt("outputState", outputState);
             tree.SetInt("drainPulse", drainPulse);
             tree.SetInt("flowPulse", flowPulse);
+
+            tree.SetInt("flowFarIndex", flowFar == null ? -1 : flowFar.index);
+            if (flowFar != null && Pos != null)
+            {
+                tree.SetInt("flowFarDX", flowFar.blockPos.X - Pos.X);
+                tree.SetInt("flowFarDY", flowFar.blockPos.Y - Pos.Y);
+                tree.SetInt("flowFarDZ", flowFar.blockPos.Z - Pos.Z);
+            }
             if (drainLiquid != null) tree.SetItemstack("drainLiquid", drainLiquid);
         }
 

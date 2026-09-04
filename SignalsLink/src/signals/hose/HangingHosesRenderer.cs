@@ -62,17 +62,23 @@ namespace SignalsLink.src.signals.hose
         public void RequestIncrementalRebuild(HoseNetworkData data) => dirty = true;
 
         /// <summary>
-        /// Starts (or refreshes) the wobble on the hose segment(s) attached to the given anchor.
+        /// Starts (or refreshes) the wobble on the hose segment attached to the given anchor.
         /// Called by a valve when liquid audibly pulses through its hose. Respects the wobble cap:
         /// beyond it, extra pulses are simply ignored (the hose doesn't wobble this time).
         /// </summary>
-        public void TriggerWobble(NodePos anchor)
+        /// <param name="other">
+        /// Anchor at the far end of the segment that is actually flowing. A valve may have several
+        /// hoses on one anchor, and only the one being pumped through should wobble. Null wobbles
+        /// every hose on the anchor (the old behaviour, used when the flowing line is unknown).
+        /// </param>
+        public void TriggerWobble(NodePos anchor, NodePos other = null)
         {
             if (anchor == null || hoses.Count == 0) return;
 
             foreach (HoseRender h in hoses.Values)
             {
                 if (h.con.pos1 != anchor && h.con.pos2 != anchor) continue;
+                if (other != null && h.con.pos1 != other && h.con.pos2 != other) continue;
 
                 if (h.wobbleT >= 0f) { h.wobbleT = 0f; continue; } // already wobbling → re-kick
                 if (wobblers.Count >= MaxWobblers) continue;       // over budget → skip this one

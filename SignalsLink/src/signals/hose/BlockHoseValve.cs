@@ -104,7 +104,9 @@ namespace SignalsLink.src.signals.hose
 
         public bool CanAttachHose(IWorldAccessor world, NodePos pos, NodePos posInit = null) => true;
 
-        public bool AllowsMultipleHoses(NodePos pos) => false;
+        // The valve accepts several hoses on its single anchor: it pumps from all connected
+        // sources in turn (see BlockEntityHoseValve, round-robin cursor).
+        public bool AllowsMultipleHoses(NodePos pos) => true;
 
         public NodePos[] GetHoseAnchors(IWorldAccessor world, BlockPos pos) => HoseAnchorUtil.GetHoseAnchors(hoseAnchors, pos);
         #endregion
