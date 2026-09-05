@@ -32,6 +32,8 @@ namespace SignalsLink.src.signals.hose
             public HoseConnection con;
             public Vec3d origin;     // world position of anchor 1 (mesh is built relative to it)
             public Vec3f p2local;    // anchor 2 relative to anchor 1
+            public Vec3f p1ExitDir;  // outward valve axis at anchor 1, if it is a valve
+            public Vec3f p2ExitDir;  // outward valve axis at anchor 2, if it is a valve
             public Vec3f swayDir;    // unit horizontal direction along the hose axis
             public MeshRef meshRef;
             public float wobbleT = -1f; // < 0 = at rest
@@ -62,17 +64,23 @@ namespace SignalsLink.src.signals.hose
         public void RequestIncrementalRebuild(HoseNetworkData data) => dirty = true;
 
         /// <summary>
-        /// Starts (or refreshes) the wobble on the hose segment(s) attached to the given anchor.
+        /// Starts (or refreshes) the wobble on the hose segment attached to the given anchor.
         /// Called by a valve when liquid audibly pulses through its hose. Respects the wobble cap:
         /// beyond it, extra pulses are simply ignored (the hose doesn't wobble this time).
         /// </summary>
-        public void TriggerWobble(NodePos anchor)
+        /// <param name="other">
+        /// Anchor at the far end of the segment that is actually flowing. A valve may have several
+        /// hoses on one anchor, and only the one being pumped through should wobble. Null wobbles
+        /// every hose on the anchor (the old behaviour, used when the flowing line is unknown).
+        /// </param>
+        public void TriggerWobble(NodePos anchor, NodePos other = null)
         {
             if (anchor == null || hoses.Count == 0) return;
 
             foreach (HoseRender h in hoses.Values)
             {
                 if (h.con.pos1 != anchor && h.con.pos2 != anchor) continue;
+                if (other != null && h.con.pos1 != other && h.con.pos2 != other) continue;
 
                 if (h.wobbleT >= 0f) { h.wobbleT = 0f; continue; } // already wobbling → re-kick
                 if (wobblers.Count >= MaxWobblers) continue;       // over budget → skip this one
@@ -118,7 +126,9 @@ namespace SignalsLink.src.signals.hose
                 if (swayDir.X == 0 && swayDir.Z == 0) swayDir = new Vec3f(1, 0, 0);
                 else swayDir.Normalize();
 
-                MeshData m = HoseMesh.MakeHoseMesh(new Vec3f(0, 0, 0), p2local);
+                Vec3f p1ExitDir = GetAnchorExitDirection(a1, con.pos1);
+                Vec3f p2ExitDir = GetAnchorExitDirection(a2, con.pos2);
+                MeshData m = HoseMesh.MakeHoseMesh(new Vec3f(0, 0, 0), p2local, p1ExitDir, p2ExitDir);
                 m.SetMode(EnumDrawMode.Triangles);
 
                 hoses[con] = new HoseRender
@@ -126,15 +136,53 @@ namespace SignalsLink.src.signals.hose
                     con = con,
                     origin = origin,
                     p2local = p2local,
+                    p1ExitDir = p1ExitDir,
+                    p2ExitDir = p2ExitDir,
                     swayDir = swayDir,
                     meshRef = capi.Render.UploadMesh(m)
                 };
             }
         }
 
+        private static Vec3f GetAnchorExitDirection(IHoseAnchor owner, NodePos anchor)
+        {
+            if (owner is BlockHoseValve valve)
+            {
+                string sideCode = valve.Variant?["side"];
+                BlockFacing hostFace = sideCode != null ? BlockFacing.FromCode(sideCode) : null;
+                if (hostFace == BlockFacing.DOWN)
+                {
+                    string orientationCode = valve.Variant?["orientation"];
+                    BlockFacing orientation = orientationCode != null ? BlockFacing.FromCode(orientationCode) : null;
+                    if (orientation != null)
+                    {
+                        Vec3i outward = orientation.Opposite.Normali;
+                        return new Vec3f(outward.X, outward.Y, outward.Z);
+                    }
+                }
+                if (hostFace != null)
+                {
+                    Vec3i outward = hostFace.Opposite.Normali;
+                    return new Vec3f(outward.X, outward.Y, outward.Z);
+                }
+            }
+
+            Vec3f position = owner.GetHoseAnchorPosInBlock(anchor);
+            float offsetX = position.X - 0.5f;
+            float offsetY = position.Y - 0.5f;
+            float offsetZ = position.Z - 0.5f;
+            float absX = Math.Abs(offsetX);
+            float absY = Math.Abs(offsetY);
+            float absZ = Math.Abs(offsetZ);
+
+            if (absX >= absY && absX >= absZ) return new Vec3f(offsetX >= 0f ? 1f : -1f, 0f, 0f);
+            if (absY >= absZ) return new Vec3f(0f, offsetY >= 0f ? 1f : -1f, 0f);
+            return new Vec3f(0f, 0f, offsetZ >= 0f ? 1f : -1f);
+        }
+
         void UpdateHoseMesh(HoseRender h, float swayAmount)
         {
-            MeshData m = HoseMesh.MakeHoseMesh(new Vec3f(0, 0, 0), h.p2local, h.swayDir, swayAmount);
+            MeshData m = HoseMesh.MakeHoseMesh(new Vec3f(0, 0, 0), h.p2local, h.p1ExitDir, h.p2ExitDir, h.swayDir, swayAmount);
             m.SetMode(EnumDrawMode.Triangles);
             capi.Render.UpdateMesh(h.meshRef, m);
         }

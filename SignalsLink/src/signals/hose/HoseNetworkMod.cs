@@ -101,6 +101,7 @@ namespace SignalsLink.src.signals.hose
         private void OnDataFromServer(HoseNetworkData data)
         {
             this.data = data;
+            InvalidateIndex();
             Renderer?.RequestIncrementalRebuild(data);
         }
 
@@ -120,6 +121,8 @@ namespace SignalsLink.src.signals.hose
             {
                 this.data = new HoseNetworkData();
             }
+
+            InvalidateIndex();
         }
 
         private void Event_OnPlayerJoin(IServerPlayer player)
@@ -129,11 +132,60 @@ namespace SignalsLink.src.signals.hose
 
         #region Queries
 
+        // Anchor -> the connections touching it. Without it every lookup was a linear scan over
+        // all connections, and the valve does one scan per hose per hop on every tick; with
+        // multi-source valves that adds up. Rebuilt lazily: explicitly invalidated by every
+        // mutation and whenever `data` is replaced, plus a connection-count backstop so a missed
+        // invalidation cannot leave a permanently stale index.
+        private Dictionary<NodePos, List<HoseConnection>> connectionIndex;
+        private int indexedCount = -1;
+
+        private Dictionary<NodePos, List<HoseConnection>> ConnectionIndex
+        {
+            get
+            {
+                if (connectionIndex == null || indexedCount != data.connections.Count) RebuildIndex();
+                return connectionIndex;
+            }
+        }
+
+        private void RebuildIndex()
+        {
+            Dictionary<NodePos, List<HoseConnection>> index = new Dictionary<NodePos, List<HoseConnection>>();
+            foreach (HoseConnection con in data.connections)
+            {
+                IndexAnchor(index, con.pos1, con);
+                IndexAnchor(index, con.pos2, con);
+            }
+            connectionIndex = index;
+            indexedCount = data.connections.Count;
+        }
+
+        private static void IndexAnchor(Dictionary<NodePos, List<HoseConnection>> index, NodePos anchor, HoseConnection con)
+        {
+            if (anchor == null) return;
+            if (!index.TryGetValue(anchor, out List<HoseConnection> list))
+            {
+                list = new List<HoseConnection>();
+                index[anchor] = list;
+            }
+            list.Add(con);
+        }
+
+        /// <summary>Drops the anchor index; the next query rebuilds it.</summary>
+        private void InvalidateIndex()
+        {
+            connectionIndex = null;
+            indexedCount = -1;
+        }
+
         /// <summary>Returns connections from the given anchor, oriented so that pos1 == the given position.</summary>
         public List<HoseConnection> GetConnectionsFrom(NodePos pos)
         {
             List<HoseConnection> output = new List<HoseConnection>();
-            foreach (HoseConnection con in data.connections.Where(c => c.pos1 == pos || c.pos2 == pos))
+            if (pos == null || !ConnectionIndex.TryGetValue(pos, out List<HoseConnection> touching)) return output;
+
+            foreach (HoseConnection con in touching)
             {
                 output.Add(con.pos1 == pos
                     ? new HoseConnection(con.pos1, con.pos2)
@@ -142,10 +194,11 @@ namespace SignalsLink.src.signals.hose
             return output;
         }
 
-        /// <summary>Is a hose already attached to this anchor? (Max 1 hose per anchor.)</summary>
+        /// <summary>Is any hose already attached to this anchor? Only meaningful for anchors that
+        /// do not waive the "max 1 hose" rule (see <see cref="AllowsMultiple"/>).</summary>
         public bool IsAnchorOccupied(NodePos pos)
         {
-            return data.connections.Any(c => c.pos1 == pos || c.pos2 == pos);
+            return pos != null && ConnectionIndex.TryGetValue(pos, out List<HoseConnection> touching) && touching.Count > 0;
         }
 
         /// <summary>Does the block at this anchor waive the "max 1 hose per anchor" rule (e.g. Intake)?</summary>
@@ -155,25 +208,46 @@ namespace SignalsLink.src.signals.hose
         }
 
         /// <summary>
-        /// Walks the hose line from an endpoint anchor, through any couplings, and returns the
-        /// anchor of the OTHER endpoint (valve/intake) of that line — or null if the line is
-        /// dangling or loops. An endpoint block has exactly 1 hose anchor; a coupling has 2
-        /// (pass-through). The line is linear (no branching), so each anchor has at most 1 hose.
+        /// All endpoints (valve/intake) reachable from the given endpoint anchor — one per hose
+        /// attached to it. A valve anchor may carry several hoses (multi-source pumping), so this
+        /// fans out over them; each individual branch then stays linear, because a coupling is
+        /// strictly pass-through (2 anchors, at most 1 hose each).
+        ///
+        /// Endpoints are deduplicated (two parallel routes to the same far anchor collapse into
+        /// one logical line) and returned in a stable order — <c>data.connections</c> is a HashSet
+        /// whose iteration order is not reproducible across reloads, and the caller round-robins
+        /// over this list.
         /// </summary>
-        public NodePos GetOtherEndpoint(IWorldAccessor world, NodePos startAnchor)
+        public List<HoseSource> GetOtherEndpoints(IWorldAccessor world, NodePos startAnchor)
         {
-            NodePos currentAnchor = startAnchor;
-            HashSet<NodePos> visited = new HashSet<NodePos>();
+            List<HoseSource> sources = new List<HoseSource>();
+
+            foreach (HoseConnection con in GetConnectionsFrom(startAnchor))
+            {
+                NodePos endpoint = WalkToEndpoint(world, startAnchor, con.pos2);
+                if (endpoint == null) continue;
+                if (endpoint == startAnchor) continue;                        // walked back to ourselves
+                if (sources.Exists(s => s.Endpoint == endpoint)) continue;    // parallel route to the same anchor
+                sources.Add(new HoseSource(endpoint, con.pos2));
+            }
+
+            sources.Sort((x, y) => CompareAnchors(x.Endpoint, y.Endpoint));
+            return sources;
+        }
+
+        /// <summary>
+        /// Follows one branch from <paramref name="startAnchor"/> — whose first hop leads to
+        /// <paramref name="firstHop"/> — through any couplings to the endpoint anchor on its far
+        /// side. Returns null if the branch dangles or loops.
+        /// </summary>
+        private NodePos WalkToEndpoint(IWorldAccessor world, NodePos startAnchor, NodePos firstHop)
+        {
+            HashSet<NodePos> visited = new HashSet<NodePos> { startAnchor };
+            NodePos otherAnchor = firstHop;
 
             while (true)
             {
-                if (!visited.Add(currentAnchor)) return null; // loop guard
-
-                List<HoseConnection> cons = GetConnectionsFrom(currentAnchor);
-                if (cons.Count == 0) return null; // dangling
-
-                NodePos otherAnchor = cons[0].pos2; // anchor on the connected block
-                if (visited.Contains(otherAnchor)) return null;
+                if (!visited.Add(otherAnchor)) return null; // loop guard
 
                 IHoseAnchor block = world.BlockAccessor.GetBlock(otherAnchor.blockPos) as IHoseAnchor;
                 if (block == null) return null;
@@ -188,10 +262,26 @@ namespace SignalsLink.src.signals.hose
                     if (a != otherAnchor) { through = a; break; }
                 }
                 if (through == null) return null;
+                if (!visited.Add(through)) return null;
 
-                visited.Add(otherAnchor);
-                currentAnchor = through;
+                // A coupling anchor never carries more than one hose, so this hop is unambiguous.
+                List<HoseConnection> cons = GetConnectionsFrom(through);
+                if (cons.Count == 0) return null; // dangling
+                otherAnchor = cons[0].pos2;
             }
+        }
+
+        /// <summary>Stable ordering of anchors (block position, then anchor index).</summary>
+        public static int CompareAnchors(NodePos a, NodePos b)
+        {
+            if (ReferenceEquals(a, b)) return 0;
+            if (a == null) return -1;
+            if (b == null) return 1;
+
+            int c = a.blockPos.X.CompareTo(b.blockPos.X); if (c != 0) return c;
+            c = a.blockPos.Y.CompareTo(b.blockPos.Y); if (c != 0) return c;
+            c = a.blockPos.Z.CompareTo(b.blockPos.Z); if (c != 0) return c;
+            return a.index.CompareTo(b.index);
         }
 
         #endregion
@@ -224,6 +314,7 @@ namespace SignalsLink.src.signals.hose
             bool added = data.connections.Add(connection);
             if (!added) return AddResult.Duplicate;
 
+            InvalidateIndex();
             serverChannel?.BroadcastPacket(data);
             return AddResult.Added;
         }
@@ -237,6 +328,7 @@ namespace SignalsLink.src.signals.hose
             if (toRemove.Count == 0) return false;
 
             foreach (HoseConnection con in toRemove) data.connections.Remove(con);
+            InvalidateIndex();
             serverChannel?.BroadcastPacket(data);
             return true;
         }
@@ -262,6 +354,7 @@ namespace SignalsLink.src.signals.hose
             if (toRemove.Count == 0) return;
 
             foreach (HoseConnection con in toRemove) data.connections.Remove(con);
+            InvalidateIndex();
             serverChannel?.BroadcastPacket(data);
 
             if (hoseItem != null)
@@ -274,17 +367,10 @@ namespace SignalsLink.src.signals.hose
 
         #region Valve alternation (arbitration)
 
-        // Per hose line (identified by its two endpoint anchors), which valve currently holds
-        // the transfer "turn". Server-side only, not persisted (reset on load). This makes two
-        // facing active valves take turns instead of fighting each other.
-        private readonly Dictionary<string, NodePos> lineTokenHolder = new Dictionary<string, NodePos>();
-
-        private static string LineKey(NodePos a, NodePos b)
-        {
-            string sa = a.ToString();
-            string sb = b.ToString();
-            return string.CompareOrdinal(sa, sb) <= 0 ? sa + "|" + sb : sb + "|" + sa;
-        }
+        // Which valve currently holds the transfer "turn" on a given line. Server-side only, not
+        // persisted (reset on load). This makes two facing active valves take turns instead of
+        // fighting each other. A valve with several hoses takes part in one such line per source.
+        private readonly Dictionary<HoseLine, NodePos> lineTokenHolder = new Dictionary<HoseLine, NodePos>();
 
         /// <summary>
         /// True if <paramref name="me"/> currently holds the transfer turn for the line
@@ -292,10 +378,10 @@ namespace SignalsLink.src.signals.hose
         /// </summary>
         public bool IsOnTurn(NodePos me, NodePos other)
         {
-            string key = LineKey(me, other);
-            if (!lineTokenHolder.TryGetValue(key, out NodePos holder))
+            HoseLine line = new HoseLine(me, other);
+            if (!lineTokenHolder.TryGetValue(line, out NodePos holder))
             {
-                lineTokenHolder[key] = me;
+                lineTokenHolder[line] = me;
                 return true;
             }
             return holder == me;
@@ -304,7 +390,7 @@ namespace SignalsLink.src.signals.hose
         /// <summary>Hand the transfer turn to the other endpoint of the line.</summary>
         public void PassToken(NodePos me, NodePos other)
         {
-            lineTokenHolder[LineKey(me, other)] = other;
+            lineTokenHolder[new HoseLine(me, other)] = other;
         }
 
         #endregion
@@ -325,5 +411,49 @@ namespace SignalsLink.src.signals.hose
     public class HoseNetworkData
     {
         public HashSet<HoseConnection> connections = new HashSet<HoseConnection>();
+    }
+
+    /// <summary>
+    /// One source reachable from a valve's anchor. <see cref="Endpoint"/> is the far valve/intake
+    /// anchor (used for arbitration and for the round-robin cursor); <see cref="FirstHop"/> is the
+    /// anchor at the other end of OUR own hose segment, which is what the renderer needs in order
+    /// to wobble just that one hose rather than every hose on the anchor.
+    /// </summary>
+    public readonly struct HoseSource
+    {
+        public readonly NodePos Endpoint;
+        public readonly NodePos FirstHop;
+
+        public HoseSource(NodePos endpoint, NodePos firstHop)
+        {
+            Endpoint = endpoint;
+            FirstHop = firstHop;
+        }
+    }
+
+    /// <summary>
+    /// Identity of one hose line: the unordered pair of its two endpoint anchors, stored in a
+    /// canonical order so that (a,b) and (b,a) are the same key. Replaces the former string key
+    /// of the arbitration table — same semantics, but no string building on every tick.
+    /// </summary>
+    public readonly struct HoseLine : IEquatable<HoseLine>
+    {
+        public readonly NodePos A;
+        public readonly NodePos B;
+
+        public HoseLine(NodePos x, NodePos y)
+        {
+            if (HoseNetworkMod.CompareAnchors(x, y) <= 0) { A = x; B = y; }
+            else { A = y; B = x; }
+        }
+
+        public bool Equals(HoseLine other) => A == other.A && B == other.B;
+
+        public override bool Equals(object obj) => obj is HoseLine other && Equals(other);
+
+        public override int GetHashCode()
+        {
+            return ((A?.GetHashCode() ?? 0) * 397) ^ (B?.GetHashCode() ?? 0);
+        }
     }
 }

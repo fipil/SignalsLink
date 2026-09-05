@@ -23,7 +23,8 @@ namespace SignalsLink.src.signals.hose
 
         /// <summary>
         /// If true, this anchor accepts any number of hoses (the "max 1 hose per anchor" rule is
-        /// waived for it). Used by the Intake, which is a source feeding many targets.
+        /// waived for it). Used by the Intake (one source feeding many targets) and by the Valve
+        /// (one target pumping from many sources in turn). Couplings stay strictly pass-through.
         /// </summary>
         bool AllowsMultipleHoses(NodePos pos);
 
