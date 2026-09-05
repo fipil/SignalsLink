@@ -244,6 +244,18 @@ namespace SignalsLink.src.signals.paperConditions
                 return inventoryAmountCondition;
             }
 
+            // Inventory state: inventoryEmpty / inventoryFilled (filled = "holds something",
+            // not "is full"). Must be checked before the bare-attribute fallback below, otherwise
+            // these words would be parsed as attribute-exists conditions.
+            if (string.Equals(line, "inventoryEmpty", StringComparison.OrdinalIgnoreCase))
+            {
+                return new InventoryContentCondition(false);
+            }
+            if (string.Equals(line, "inventoryFilled", StringComparison.OrdinalIgnoreCase))
+            {
+                return new InventoryContentCondition(true);
+            }
+
             // Inventory wrapper:
             // inventoryAny <condition>
             if (line.StartsWith("inventoryAny", StringComparison.OrdinalIgnoreCase))

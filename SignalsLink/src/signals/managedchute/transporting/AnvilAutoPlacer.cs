@@ -37,9 +37,22 @@ namespace SignalsLink.src.signals.managedchute.transporting
             ItemStack input,
             out string failReason,
             int desiredIngotCountForPlate = 2
+        ) => TryPlaceAndSelectRecipe(anvil, input, desiredIngotCountForPlate, out _, out failReason);
+
+        /// <summary>
+        /// Same as above but reports how many units were actually placed — vanilla may refuse
+        /// extra voxels until the work item is hammered down, so this can be less than requested.
+        /// </summary>
+        public bool TryPlaceAndSelectRecipe(
+            BlockEntityAnvil anvil,
+            ItemStack input,
+            int desiredIngotCountForPlate,
+            out int placedUnits,
+            out string failReason
         )
         {
             failReason = null;
+            placedUnits = 0;
 
             if (anvil == null) { failReason = "Anvil is null."; return false; }
             if (input == null || input.StackSize == 0) { failReason = "Input is empty."; return false; }
@@ -92,6 +105,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
                 // Keep internal field in sync with updated work item
                 SetPrivateWorkItemStack(anvil, addResult);
                 FinalizePlacement(anvil, addResult, selectedRecipeId: null);
+                placedUnits = 1;
                 return true;
             }
 
@@ -108,6 +122,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
 
             // Important: Anvil does not set workItemStack itself here (normally done inside BE Anvil TryPut)
             SetPrivateWorkItemStack(anvil, createdWorkItem);
+            placedUnits = 1;
 
             // 2) If input is ingot stack and we want more ingots (typically 2 for plate), try to add additional units.
             //    Vanilla may reject adding more voxels until the player hammers down; treat that as non-fatal.
@@ -132,6 +147,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
                     // Some implementations return a clone/updated stack; keep anvil's private field aligned
                     SetPrivateWorkItemStack(anvil, maybeUpdatedWorkItem);
                     createdWorkItem = maybeUpdatedWorkItem;
+                    placedUnits++;
                 }
             }
 
@@ -162,6 +178,51 @@ namespace SignalsLink.src.signals.managedchute.transporting
             // 4) Apply recipe to BE + to stack attributes so it is transferable like vanilla
             FinalizePlacement(anvil, createdWorkItem, recipeId);
             return true;
+        }
+
+        /// <summary>
+        /// Places exactly <paramref name="requestedUnits"/> units, or nothing at all: if fewer
+        /// could be placed the anvil is restored to its previous state (work item + selected
+        /// recipe) and false is returned. Used by the `amount N` directive, which is atomic.
+        /// </summary>
+        public bool TryPlaceUnitsAtomic(
+            BlockEntityAnvil anvil,
+            ItemStack input,
+            int requestedUnits,
+            out int placedUnits,
+            out string failReason
+        )
+        {
+            placedUnits = 0;
+            failReason = null;
+
+            if (anvil == null) { failReason = "Anvil is null."; return false; }
+            if (requestedUnits < 1) requestedUnits = 1;
+
+            // Snapshot for rollback (we own the private field via reflection anyway).
+            ItemStack prevWorkItem = anvil.WorkItemStack?.Clone();
+            int prevRecipeId = anvil.SelectedRecipeId;
+
+            bool ok = TryPlaceAndSelectRecipe(anvil, input, requestedUnits, out int placed, out failReason);
+
+            if (ok && placed >= requestedUnits)
+            {
+                placedUnits = placed;
+                return true;
+            }
+
+            // Atomic: undo whatever got placed.
+            SetPrivateWorkItemStack(anvil, prevWorkItem);
+            anvil.SelectedRecipeId = prevRecipeId;
+            anvil.MarkDirty(true);
+            anvil.Api?.World?.BlockAccessor?.MarkBlockDirty(anvil.Pos);
+
+            if (failReason == null)
+            {
+                failReason = $"Only {placed}/{requestedUnits} units could be placed (anvil needs hammering first?).";
+            }
+            placedUnits = 0;
+            return false;
         }
 
         // --------------------

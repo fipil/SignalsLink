@@ -107,6 +107,7 @@
     Řízená trubka umí, kromě výše zmíněného, také vkládat položky typu Ingot, Železná vytavenina a Blistrová ocel do kovadliny, pokud je kovadlina umístěna na cílové straně trubky.
     Pokud vkládá na kovadlinu ingoty, automaticky se zvolí recept kování plátu. V případě Železná vytaveniny a Blistrové oceli se zvolí odkování strusky, aby z nich vznikly ingoty. Toto je velmi užitečné pro automatizaci kování pomocí automatického kladiva.
     Před vložením na kovadlinu se však musíte postarat, aby byly vkládané předměty zahřáté na teplotu potřebnou ke kování.
+    Kovadlina se podmínkám ukazuje jako inventář s jedním slotem, ve kterém je její rozpracovaný výrobek. Díky tomu na ni funguje rozsah <strong>in target</strong>, tedy i <strong>inventoryEmpty</strong> a <strong>inventoryFilled</strong>. Direktiva <strong>amount N</strong> vloží N kusů a je atomická: buď se vloží všechny, nebo se nevloží nic a ze zdroje se nic neodebere.
     <br><br>
     <font size="20" color="6082B6">Filtrování přepravy</font><br>
     Řízená trubka umožňuje nastavit podmínky pro filtrování položek, které se mají přepravovat. Podmínky se nastavují pomocí <strong>Podmínek na papíře</strong>, jejichž použití je vysvětleno <a href="handbook://signalslink:usageinfo-paperconditions">na této stránce</a><br>
@@ -133,6 +134,7 @@
     U kapalin fungují vzory světového bloku i interní části kapaliny, například <strong>game:water-*</strong>, <strong>game:water-still-7</strong>, <strong>*weaktannin*</strong> nebo <strong>game:waterportion</strong>.<br><br>
     <font size="20" color="6082B6">Inventář a množství</font><br>
     <strong>inventoryAny podmínka</strong> ověří libovolný slot zvoleného inventáře, například <strong>inventoryAny game:resin</strong>. Kontroluje i kapaliny v kapalných slotech.<br>
+    <strong>inventoryEmpty</strong> platí, když je zvolený inventář zcela prázdný. <strong>inventoryFilled</strong> je opak, tedy že v něm něco je; neznamená, že je plný až po okraj. Obě se hodí zejména s <strong>in target</strong>, kdy ověřují stav cíle, ne přenášenou položku.<br>
     Podmínka <strong>vzor množství</strong> kontroluje celkové množství v inventáři: <strong>game:resin 10</strong> znamená přesně 10, <strong>game:resin 10+</strong> alespoň 10 a <strong>game:resin 10-</strong> nejvýše 10. U kapalin je množství v litrech a může mít nejvýše dvě desetinná místa, například <strong>game:water-* 50</strong> nebo <strong>*weaktannin* 20+</strong>.<br><br>
     <font size="20" color="6082B6">Rozsah a přenos</font><br>
     <strong>in source</strong> přepne podmínky na zdrojový inventář a je výchozí. <strong>in target</strong> je přepne na cílový inventář. Podmínky množství pak počítají celý zvolený inventář. Můžete je střídat v jednom bloku.<br>

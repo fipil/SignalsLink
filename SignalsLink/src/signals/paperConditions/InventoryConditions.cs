@@ -183,4 +183,52 @@ namespace SignalsLink.src.signals.paperConditions
             return false;
         }
     }
+
+    /// <summary>
+    /// `inventoryEmpty` / `inventoryFilled` — whether the scoped inventory holds anything at all.
+    /// (`inventoryFilled` means "there is something in it", NOT "it is full".)
+    ///
+    /// This must be an <see cref="IInventoryCondition"/>, not a plain ICondition: a plain condition
+    /// in the target scope is evaluated per slot via InventoryConditionResolver.AnyMatch, so an
+    /// EMPTY inventory would iterate nothing and never match — exactly the case inventoryEmpty
+    /// needs to detect. As an IInventoryCondition it receives the inventory directly.
+    /// </summary>
+    public sealed class InventoryContentCondition : IInventoryCondition
+    {
+        private readonly bool expectFilled;
+
+        public InventoryContentCondition(bool expectFilled)
+        {
+            this.expectFilled = expectFilled;
+        }
+
+        public bool Evaluate(ItemStack stack, IDictionary<string, object> ctx)
+        {
+            IInventory inventory = null;
+            if (ctx != null && ctx.TryGetValue("inventory", out var obj)) inventory = obj as IInventory;
+            return Matches(inventory);
+        }
+
+        public bool Evaluate(ItemStack stack, IInventory inventory, IDictionary<string, object> ctx, InventoryConditionScope scope, bool isSelectionEvaluation)
+        {
+            return Matches(inventory);
+        }
+
+        private bool Matches(IInventory inventory)
+        {
+            // No inventory at all -> cannot confirm either state; stay conservative and fail.
+            if (inventory == null) return false;
+            bool hasAny = HasAnyContent(inventory);
+            return expectFilled ? hasAny : !hasAny;
+        }
+
+        private static bool HasAnyContent(IInventory inventory)
+        {
+            foreach (var slot in inventory)
+            {
+                if (slot?.Empty == false && slot.Itemstack?.Collectible != null) return true;
+            }
+            return false;
+        }
+    }
 }
