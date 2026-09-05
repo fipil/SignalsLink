@@ -24,6 +24,7 @@ namespace SignalsLink.src.signals.paperConditions
                 byte? sourceSlot = null;
                 byte? targetSlot = null;
                 bool targetGround = false;
+                int targetGroundHeight = 1;
                 bool requireTargetEmpty = false;
                 decimal? amount = null;
                 InventoryConditionScope currentScope = InventoryConditionScope.Source;
@@ -83,10 +84,11 @@ namespace SignalsLink.src.signals.paperConditions
                         continue;
                     }
 
-                    if (TryParseTargetDirective(line, out byte? parsedTargetSlot, out bool parsedTargetGround, out bool parsedRequireTargetEmpty))
+                    if (TryParseTargetDirective(line, out byte? parsedTargetSlot, out bool parsedTargetGround, out bool parsedRequireTargetEmpty, out int parsedTargetGroundHeight))
                     {
                         targetSlot = parsedTargetSlot;
                         targetGround = parsedTargetGround;
+                        targetGroundHeight = parsedTargetGroundHeight;
                         requireTargetEmpty = parsedRequireTargetEmpty;
                         continue;
                     }
@@ -129,7 +131,7 @@ namespace SignalsLink.src.signals.paperConditions
                     // OutputValue keeps the effective default 15 when `output` is not
                     // specified — for the BlockSensor (no behavior change). HasExplicitOutput
                     // records whether `output` was actually specified; ManagedHose reads it (see spec §6).
-                    blocks.Add(new ConditionBlock(conditions, outputValue ?? 15, hasExplicitOutput, new PaperConditionDirectives(sourceSlot, targetSlot, targetGround, amount, requireTargetEmpty), actions));
+                    blocks.Add(new ConditionBlock(conditions, outputValue ?? 15, hasExplicitOutput, new PaperConditionDirectives(sourceSlot, targetSlot, targetGround, amount, requireTargetEmpty, targetGroundHeight), actions));
                 }
             }
 
@@ -182,11 +184,12 @@ namespace SignalsLink.src.signals.paperConditions
             return parts.Length == 2 && byte.TryParse(parts[1], out sourceSlot) && sourceSlot >= 1 && sourceSlot <= 14;
         }
 
-        private static bool TryParseTargetDirective(string line, out byte? targetSlot, out bool targetGround, out bool requireTargetEmpty)
+        private static bool TryParseTargetDirective(string line, out byte? targetSlot, out bool targetGround, out bool requireTargetEmpty, out int targetGroundHeight)
         {
             targetSlot = null;
             targetGround = false;
             requireTargetEmpty = false;
+            targetGroundHeight = 1;
 
             if (!line.StartsWith("target ", StringComparison.OrdinalIgnoreCase)) return false;
 
@@ -194,6 +197,15 @@ namespace SignalsLink.src.signals.paperConditions
             if (parts.Length == 2 && parts[1].Equals("ground", StringComparison.OrdinalIgnoreCase))
             {
                 targetGround = true;
+                return true;
+            }
+
+            // `target ground N` — grow the ground column up to N blocks high (N >= 1).
+            if (parts.Length == 3 && parts[1].Equals("ground", StringComparison.OrdinalIgnoreCase)
+                && int.TryParse(parts[2], out int parsedHeight) && parsedHeight >= 1 && parsedHeight <= 255)
+            {
+                targetGround = true;
+                targetGroundHeight = parsedHeight;
                 return true;
             }
 

@@ -29,6 +29,21 @@ namespace SignalsLink.src.signals.managedchute.transporting
                 return new WorldToInventoryTransfer(api, inputPos, beOut.Inventory, outputSlotSignal, conditionsEvaluator);
             }
 
+            // A ground-storage pile on the output side is handled by the world transfer, not by the
+            // plain inventory path: only the world transfer can create a new pile and grow the
+            // column upward. (Picking up FROM a pile is unaffected - that is the beIn side.)
+            if (beIn?.Inventory != null && blockAccess.GetBlockEntity(outputPos) is BlockEntityGroundStorage)
+            {
+                return new InventoryToWorldTransfer(api, beIn.Inventory, inputSlotSignal, outputPos, outputSlotSignal, conditionsEvaluator);
+            }
+
+            // Ground-storage pile on the INPUT side: take from the TOP of the column, not from the
+            // single pile the chute happens to point at, and refresh/remove the pile afterwards.
+            if (beOut?.Inventory != null && blockAccess.GetBlockEntity(inputPos) is BlockEntityGroundStorage)
+            {
+                return new WorldToInventoryTransfer(api, inputPos, beOut.Inventory, outputSlotSignal, conditionsEvaluator);
+            }
+
             if (beIn?.Inventory != null && beOut?.Inventory != null)
             {
                 // invent�� -> invent��

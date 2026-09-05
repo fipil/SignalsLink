@@ -379,7 +379,7 @@ Dokud je slot 4 prázdný, platí první blok a nalijí se do něj 2. Jakmile sl
 
 U varných slotů ohniště / EP sporáku není neaktivní varný slot použitelný; musí v něm být hrnec nebo jiná varná nádoba.
 
-### `target ground`
+### `target ground` / `target ground N`
 
 Platí pro ManagedChute, když její cíl míří do vzduchu. Ignoruje signál na pinu Cíl a pokusí se položit vybraný blok, vědro včetně obsahu nebo položku, která umí vytvořit hromádku na zemi. Pokud na cíli není pevná zem nebo položku nelze umístit, blok podmínek neprovede přenos a může propadnout na další blok.
 
@@ -388,6 +388,19 @@ isLiquidContainer
 liquidContainerFilled
 target ground
 ```
+
+**Hromádky skládatelných předmětů.** Polena, ingoty, desky a další předměty, které jde na zemi hromadit, se ukládají do hromádek — žlab hromádku i sám založí na prázdném místě. Kapacita hromádky je vlastnost předmětu, ne velikost stacku: hromádka ingotů pojme 64 kusů, i když se ingoty stackují po 16.
+
+`target ground N` nechá sloupec **růst nahoru**: jakmile je hromádka plná, pokračuje se o blok výš, až do výšky N bloků nad cílovou pozicí. Sloupec se zastaví na pevném bloku nebo když pod novou hromádkou není opora. Bez čísla se plní jen cílový blok (`target ground` = `target ground 1`).
+
+```text
+# sloupec polen až deset bloků vysoký
+game:firewood
+target ground 10
+amount 32
+```
+
+**Sbírání** ze země je obrácené: bere se z **vrcholu** sloupce a vyprázdněné hromádky se odstraňují, takže se sloupec rozebírá odshora dolů. Nepotřebuje žádnou direktivu — stačí, aby žlab mířil zdrojovou stranou na spodní hromádku sloupce.
 
 ### `amount <množství>`
 
@@ -413,6 +426,7 @@ Chování na konci/okrajích se liší podle média:
 
 - **ManagedChute (předměty):** dávka je **atomická** — žlab spojí odpovídající stejné stacky z více zdrojových slotů a `amount` přenese jen tehdy, když je celé množství ve zdroji k dispozici; jinak se nespustí. Poslední naplnění dávky se dokončí celé (buffer může přetéct o méně než `amount`).
 - **ManagedHose (kapaliny):** přenese se **až** `amount` — kolik zdroj má, cíl pojme a zbývající buffer dovolí (klidně i méně). Např. buffer 3 a `amount 6` → přeteče jen 3.
+- **Hromádky na zemi (`target ground`):** dávka je **atomická** a funguje oběma směry. Při pokládání se posbírá i z několika zdrojových slotů (zadané množství bývá větší než velikost stacku) a při naplnění hromádky přeteče do vyšší v sloupci. Při sbírání se naopak bere přes několik pater odshora a v cílovém inventáři se rozloží do tolika slotů, kolik je potřeba.
 
 ## `output` — akce nastavení výstupu
 

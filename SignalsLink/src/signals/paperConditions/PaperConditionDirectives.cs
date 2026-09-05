@@ -2,22 +2,26 @@ namespace SignalsLink.src.signals.paperConditions
 {
     public sealed class PaperConditionDirectives
     {
-        public static readonly PaperConditionDirectives Empty = new PaperConditionDirectives(null, null, false, null, false);
+        public static readonly PaperConditionDirectives Empty = new PaperConditionDirectives(null, null, false, null, false, 1);
 
         public byte? SourceSlot { get; }
         public byte? TargetSlot { get; }
         public bool TargetGround { get; }
+        /// <summary>How many blocks up the ground column may grow, counting the target block
+        /// itself. 1 = only the target block (plain `target ground`), N = `target ground N`.</summary>
+        public int TargetGroundHeight { get; }
         public decimal? Amount { get; }
         public bool RequireTargetEmpty { get; }
 
         public bool HasTargetOverride => TargetSlot.HasValue || TargetGround;
         public bool HasAmountOverride => Amount.HasValue;
 
-        public PaperConditionDirectives(byte? sourceSlot, byte? targetSlot, bool targetGround, decimal? amount, bool requireTargetEmpty)
+        public PaperConditionDirectives(byte? sourceSlot, byte? targetSlot, bool targetGround, decimal? amount, bool requireTargetEmpty, int targetGroundHeight = 1)
         {
             SourceSlot = sourceSlot;
             TargetSlot = targetSlot;
             TargetGround = targetGround;
+            TargetGroundHeight = targetGroundHeight < 1 ? 1 : targetGroundHeight;
             Amount = amount;
             RequireTargetEmpty = requireTargetEmpty;
         }

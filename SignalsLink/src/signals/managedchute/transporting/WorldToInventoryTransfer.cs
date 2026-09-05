@@ -1,6 +1,7 @@
 using SignalsLink.src.signals.paperConditions;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
+using Vintagestory.API.Config;
 using Vintagestory.API.MathTools;
 using Vintagestory.GameContent;
 
@@ -25,6 +26,9 @@ namespace SignalsLink.src.signals.managedchute.transporting
 
         public TransferOperationResult TryMove(ItemStackMoveOperation opTemplate)
         {
+            TransferOperationResult fromPile = TryTakeFromGroundStorageColumn();
+            if (fromPile.Success) return fromPile;
+
             if (TryGetPlacedLiquidContainer(out ItemStack containerStack))
             {
                 return TryMovePlacedLiquidContainer(containerStack);
@@ -50,6 +54,93 @@ namespace SignalsLink.src.signals.managedchute.transporting
             }
 
             return new TransferOperationResult(moved, moved, false);
+        }
+
+        /// <summary>
+        /// Takes one item off the TOP of a ground-storage column standing on the source position.
+        /// Physically you take from the top of a stack, and the chute only ever points at the
+        /// bottom block of the column. Also refreshes the pile mesh (otherwise the pile keeps
+        /// rendering its old size) and removes the block once it runs empty.
+        /// </summary>
+        private TransferOperationResult TryTakeFromGroundStorageColumn()
+        {
+            List<BlockEntityGroundStorage> column = GetColumnTopDown();
+            if (column.Count == 0) return TransferOperationResult.None;
+
+            BlockEntityGroundStorage top = column[0];
+            ItemSlot topSlot = top.Inventory?[0];
+            if (topSlot == null || topSlot.Empty) return TransferOperationResult.None;
+
+            ItemStack stack = topSlot.Itemstack;
+            if (!TryGetMatchedDirectives(stack, out PaperConditionDirectives directives, top.Inventory)) return TransferOperationResult.None;
+            if (!directives.Evaluate(BuildDirectiveContext())) return TransferOperationResult.None;
+
+            // `amount N` takes a whole batch at once, spanning several piles of the column if needed
+            // (mirrors the placing side). It is atomic on the source: the column must hold all of N.
+            int batch = 1;
+            if (directives.Amount.HasValue)
+            {
+                batch = (int)decimal.Truncate(directives.Amount.Value);
+                if (batch < 1) batch = 1;
+
+                int available = 0;
+                foreach (BlockEntityGroundStorage p in column) available += p.TotalStackSize;
+                if (available < batch) return TransferOperationResult.None;
+            }
+
+            byte targetSignal = directives.TargetSlot ?? targetSlotSignal;
+            int movedTotal = 0;
+
+            foreach (BlockEntityGroundStorage pile in column)
+            {
+                if (movedTotal >= batch) break;
+
+                ItemSlot slot = pile.Inventory?[0];
+                if (slot == null || slot.Empty) continue;
+
+                // A pile of something else ends the run - we never mix items into one batch.
+                if (!slot.Itemstack.Equals(api.World, stack, GlobalConstants.IgnoredStackAttributes)) break;
+
+                int want = System.Math.Min(batch - movedTotal, slot.StackSize);
+                int moved = TryPutIntoInventory(slot.Itemstack, targetSignal, want);
+                if (moved <= 0) break; // target is full
+
+                slot.Itemstack.StackSize -= moved;
+                if (slot.Itemstack.StackSize <= 0) slot.Itemstack = null;
+                slot.MarkDirty();
+                movedTotal += moved;
+
+                if (pile.TotalStackSize <= 0)
+                {
+                    // Don't leave an empty ghost pile behind.
+                    api.World.BlockAccessor.SetBlock(0, pile.Pos);
+                    api.World.BlockAccessor.MarkBlockDirty(pile.Pos);
+                }
+                else
+                {
+                    pile.MarkDirty(true); // redraw, or the pile keeps its old visual size
+                }
+            }
+
+            if (movedTotal <= 0) return TransferOperationResult.None;
+            return new TransferOperationResult(movedTotal, movedTotal, false);
+        }
+
+        /// <summary>The contiguous ground-storage column standing on the source position, topmost
+        /// pile first - items are taken off the top of a stack.</summary>
+        private List<BlockEntityGroundStorage> GetColumnTopDown()
+        {
+            IBlockAccessor ba = api.World.BlockAccessor;
+            List<BlockEntityGroundStorage> piles = new List<BlockEntityGroundStorage>();
+
+            for (int dy = 0; dy < 64; dy++)
+            {
+                if (ba.GetBlockEntity(sourcePos.AddCopy(0, dy, 0)) is not BlockEntityGroundStorage pile) break;
+                piles.Add(pile);
+            }
+
+            piles.Reverse();
+            return piles;
         }
 
         private TransferOperationResult TryMovePlacedLiquidContainer(ItemStack containerStack)
@@ -95,48 +186,46 @@ namespace SignalsLink.src.signals.managedchute.transporting
 
         private int TryPutOneIntoInventory(ItemStack fromStack, byte effectiveTargetSlotSignal)
         {
+            return TryPutIntoInventory(fromStack, effectiveTargetSlotSignal, 1);
+        }
+
+        /// <summary>
+        /// Moves up to <paramref name="maxCount"/> pieces into the target inventory. A batch usually
+        /// does not fit one slot (a chest slot caps at the item's max stack size), so without a
+        /// specific target slot it is spread over as many slots as needed.
+        /// </summary>
+        private int TryPutIntoInventory(ItemStack fromStack, byte effectiveTargetSlotSignal, int maxCount)
+        {
+            if (fromStack == null || maxCount < 1) return 0;
+
             if (effectiveTargetSlotSignal > 0)
             {
                 int index = effectiveTargetSlotSignal - 1;
-                if (index >= 0 && index < targetInv.Count)
-                {
-                    ItemSlot slot = targetInv[index];
-                    if (slot != null)
-                    {
-                        ItemStack one = fromStack.Clone();
-                        one.StackSize = 1;
-
-                        DummySlot dummy = new DummySlot(one);
-                        int moved = dummy.TryPutInto(api.World, slot, 1);
-                        if (moved > 0)
-                        {
-                            slot.MarkDirty();
-                            return moved;
-                        }
-                    }
-                }
-
-                return 0;
+                if (index < 0 || index >= targetInv.Count) return 0;
+                return PutIntoSlot(targetInv[index], fromStack, maxCount);
             }
 
-            for (int i = 0; i < targetInv.Count; i++)
+            int movedTotal = 0;
+            for (int i = 0; i < targetInv.Count && movedTotal < maxCount; i++)
             {
-                ItemSlot slot = targetInv[i];
-                if (slot == null) continue;
-
-                ItemStack one = fromStack.Clone();
-                one.StackSize = 1;
-
-                DummySlot dummy = new DummySlot(one);
-                int moved = dummy.TryPutInto(api.World, slot, 1);
-                if (moved > 0)
-                {
-                    slot.MarkDirty();
-                    return moved;
-                }
+                movedTotal += PutIntoSlot(targetInv[i], fromStack, maxCount - movedTotal);
             }
 
-            return 0;
+            return movedTotal;
+        }
+
+        private int PutIntoSlot(ItemSlot slot, ItemStack fromStack, int count)
+        {
+            if (slot == null || count < 1) return 0;
+
+            ItemStack portion = fromStack.Clone();
+            portion.StackSize = count;
+
+            DummySlot dummy = new DummySlot(portion);
+            int moved = dummy.TryPutInto(api.World, slot, count);
+            if (moved > 0) slot.MarkDirty();
+
+            return moved;
         }
 
         /// <summary>
@@ -176,13 +265,18 @@ namespace SignalsLink.src.signals.managedchute.transporting
             return TryGetMatchedDirectives(stack, out _);
         }
 
-        private bool TryGetMatchedDirectives(ItemStack stack, out PaperConditionDirectives directives)
+        private bool TryGetMatchedDirectives(ItemStack stack, out PaperConditionDirectives directives, IInventory sourceInv = null)
         {
             directives = PaperConditionDirectives.Empty;
             if (!conditionsEvaluator.HasConditions) return true;
 
             var ctx = ItemConditionContextUtil.BuildContext(api.World, stack);
             ctx["targetInventory"] = targetInv;
+            if (sourceInv != null)
+            {
+                ctx["sourceInventory"] = sourceInv;
+                ctx["inventory"] = sourceInv;
+            }
             return conditionsEvaluator.Evaluate(stack, ctx, out byte _, out directives);
         }
 

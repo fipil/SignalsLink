@@ -127,7 +127,11 @@ namespace SignalsLink.src.signals.managedchute
                 catch (Exception) { }
 
                 movedTotal += moveResult.MovedAmount;
-                itemFlowAccum -= (float)moveResult.MovedAmount;
+                // A batched transfer (the 'amount N' directive) is ONE action, not N ticks worth of
+                // flow. Charging the rate limiter the full batch would drive the accumulator deep
+                // negative and stall the chute for ~N ticks; cap it at this tick's whole allowance
+                // so a batch costs at most one tick. Unbatched moves (1 piece) are unaffected.
+                itemFlowAccum -= System.Math.Min((float)moveResult.MovedAmount, System.Math.Max(1f, (float)canByRate));
 
                 if (!unlimited)
                 {
