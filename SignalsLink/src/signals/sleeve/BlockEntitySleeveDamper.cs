@@ -241,7 +241,11 @@ namespace SignalsLink.src.signals.sleeve
 
             NodePos myAnchor = new NodePos(Pos, SLEEVE);
             List<LinkSource> sources = linkMod.GetOtherEndpoints(Api.World, myAnchor);
-            if (sources.Count == 0) return 1;
+            if (sources.Count == 0)
+            {
+                PullLog("no sleeve endpoints reachable");
+                return 1;
+            }
 
             BlockPos myCargoPos = GetCargoPos(Api.World, Pos);
             if (myCargoPos == null) return 1;
@@ -289,8 +293,10 @@ namespace SignalsLink.src.signals.sleeve
             bool contested = IsFarActiveDamper(far);
             if (contested && !linkMod.IsOnTurn(myAnchor, far)) return 2;
 
+            // Everything from here on has to reach the arbitration hand-off at the bottom. Bailing
+            // out early while holding the turn deadlocks the line: the other damper is told to wait
+            // for a turn that is never passed on, and neither of them ever moves anything again.
             BlockPos farCargoPos = GetCargoPos(Api.World, far.blockPos);
-            if (farCargoPos == null) return 1;
 
             // Deliberately never cached: the source changes with the rotation, and a cached transfer
             // would keep a reference to an inventory that a chunk reload has already replaced —
@@ -299,29 +305,40 @@ namespace SignalsLink.src.signals.sleeve
             // `source N` / `target N` directives on paper.
             // Passing ourselves as the output sink is what lets `output N` on paper drive the
             // Output pin; the ManagedChute passes none, because it has no such pin.
-            IItemTransfer transfer = ItemTransferFactory.CreateTransfer(Api, farCargoPos, myCargoPos, 0, 0, ConditionsEvaluator, this);
-            if (transfer == null) return 1;
-
-            ItemStackMoveOperation op = new ItemStackMoveOperation(
-                Api.World, EnumMouseButton.Left, 0, EnumMergePriority.DirectMerge, 1);
+            IItemTransfer transfer = farCargoPos == null
+                ? null
+                : ItemTransferFactory.CreateTransfer(Api, farCargoPos, myCargoPos, 0, 0, ConditionsEvaluator, this);
 
             bool moved = false;
             decimal movedTotal = 0;
 
-            while (movedTotal < budget)
+            if (transfer == null)
             {
-                TransferOperationResult result = transfer.TryMove(op);
-                if (!result.Success) break;
+                PullLog("no transfer for source " + farCargoPos + " -> target " + myCargoPos
+                    + "; source block is " + (farCargoPos == null ? "n/a" : Api.World.BlockAccessor.GetBlock(farCargoPos)?.Code?.ToString() ?? "null"));
+            }
+            else
+            {
+                PullLog("pulling " + farCargoPos + " -> " + myCargoPos + " via " + transfer.GetType().Name);
 
-                moved = true;
-                movedTotal += result.MovedAmount;
+                ItemStackMoveOperation op = new ItemStackMoveOperation(
+                    Api.World, EnumMouseButton.Left, 0, EnumMergePriority.DirectMerge, 1);
 
-                if (!unlimited)
+                while (movedTotal < budget)
                 {
-                    remaining -= result.TriggerCost;
-                    if (remaining < 0) remaining = 0; // an atomic amount-op may overshoot the last bit
-                    MarkDirty();
-                    if (remaining <= 0) break;
+                    TransferOperationResult result = transfer.TryMove(op);
+                    if (!result.Success) break;
+
+                    moved = true;
+                    movedTotal += result.MovedAmount;
+
+                    if (!unlimited)
+                    {
+                        remaining -= result.TriggerCost;
+                        if (remaining < 0) remaining = 0; // an atomic amount-op may overshoot the last bit
+                        MarkDirty();
+                        if (remaining <= 0) break;
+                    }
                 }
             }
 
@@ -345,6 +362,21 @@ namespace SignalsLink.src.signals.sleeve
             }
 
             return moved ? 0 : 1;
+        }
+
+        // TEMPORARY DIAGNOSTIC - remove together with the one in WorldToInventoryTransfer.
+        private const bool LogPull = true;
+        private long lastPullLogMs; // per damper: a shared one let the busiest block hide the rest
+
+        private void PullLog(string message)
+        {
+            if (!LogPull || Api?.Side != EnumAppSide.Server) return;
+
+            long now = Api.World.ElapsedMilliseconds;
+            if (now - lastPullLogMs < 2000) return;
+            lastPullLogMs = now;
+
+            Api.Logger.Notification("[SignalsLink] damper @ {0}: {1}", Pos, message);
         }
 
         /// <summary>Is the far endpoint another damper that currently has Input (i.e. contends for the line)?</summary>

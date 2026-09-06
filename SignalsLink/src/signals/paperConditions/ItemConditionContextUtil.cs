@@ -12,6 +12,11 @@ namespace SignalsLink.src.signals.paperConditions
         {
             var ctx = new Dictionary<string, object>();
 
+            // Conditions that ask about a BLOCK rather than a stack (isBurning) need the world to
+            // look it up with. Deliberately set before the early return below, so it is there even
+            // for an empty stack.
+            if (world != null) ctx["world"] = world;
+
             ctx["stackSize"] = stack?.StackSize ?? 0;
 
             if (stack?.Collectible == null) return ctx;
@@ -111,6 +116,10 @@ namespace SignalsLink.src.signals.paperConditions
             var ctx = BuildContext(world, stack);
             foreach(var kvp in ctx)
             {
+                // Plumbing, not a property of the item - printing it would dump the whole world
+                // object into the hint the player gets on Ctrl+click.
+                if (kvp.Key == "world") continue;
+
                 AppendLineLf(sb, $"{kvp.Key}={kvp.Value}");
             }
 

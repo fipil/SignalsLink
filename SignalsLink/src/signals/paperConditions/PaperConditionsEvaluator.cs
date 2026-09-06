@@ -231,6 +231,12 @@ public class PaperConditionsEvaluator
             ctx = new Dictionary<string, object>();
         }
 
+        // For a sensor the watched block IS the target, so block-state conditions (isBurning)
+        // resolve in either scope.
+        ctx["world"] = api.World;
+        ctx["blockPos"] = pos;
+        ctx["targetBlockPos"] = pos;
+
         return Evaluate(dummyStack, ctx, out matchedBlockIndex);
     }
 

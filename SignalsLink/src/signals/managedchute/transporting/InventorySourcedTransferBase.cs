@@ -156,6 +156,8 @@ namespace SignalsLink.src.signals.managedchute.transporting
         protected IDictionary<string, object> BuildDirectiveContext()
         {
             var ctx = new Dictionary<string, object>();
+            // Directives that ask about a block (target firepit) need something to ask with.
+            ctx["world"] = api.World;
             AddConditionContext(ctx);
             return ctx;
         }

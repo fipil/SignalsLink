@@ -39,6 +39,15 @@ namespace SignalsLink.src.signals.managedchute.transporting
                 return new InventoryToAnvilTransfer(api, beIn.Inventory, beAnvil, inputSlotSignal, conditionsEvaluator);
             }
 
+            // A firepit still under construction is built, not filled. Its block entity does have
+            // an inventory, so without this it would fall into the plain inventory path and items
+            // would be stuffed into a pit that has nowhere to put them yet. A FINISHED firepit is
+            // deliberately left alone below - loading fuel into one is an ordinary transfer.
+            if (beIn?.Inventory != null && FirepitConstruction.IsUnderConstruction(blockAccess.GetBlock(outputPos)))
+            {
+                return new InventoryToFirepitTransfer(api, beIn.Inventory, outputPos, inputSlotSignal, conditionsEvaluator);
+            }
+
             var beOut = blockAccess.GetBlockEntity(outputPos) as IBlockEntityContainer;
 
             // Only carryable containers get moved as a whole block; a barrel or boiler on the input side

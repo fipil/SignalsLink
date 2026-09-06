@@ -143,16 +143,57 @@ namespace SignalsLink.src.signals.managedchute.transporting
         /// apart: it is taken whole or left alone, so nothing is lost when the target runs out of
         /// room halfway through one.
         /// </summary>
+        // TEMPORARY DIAGNOSTIC - set to false (or delete the calls) once the charcoal pickup is
+        // understood. Throttled, because an unlimited damper runs this five times a second.
+        private const bool LogLayeredPickup = true;
+        // Keyed by position: a transfer object is rebuilt every attempt, so the throttle cannot
+        // live on the instance - but one shared clock let the busiest source hide every other one.
+        private static readonly System.Collections.Concurrent.ConcurrentDictionary<BlockPos, long> lastLayerLogMs =
+            new System.Collections.Concurrent.ConcurrentDictionary<BlockPos, long>();
+
+        private void LayerLog(string message)
+        {
+            if (!LogLayeredPickup || api.Side != EnumAppSide.Server) return;
+
+            long now = api.World.ElapsedMilliseconds;
+            if (lastLayerLogMs.TryGetValue(sourcePos, out long last) && now - last < 2000) return;
+            lastLayerLogMs[sourcePos.Copy()] = now;
+
+            api.Logger.Notification("[SignalsLink] layers @ {0}: {1}", sourcePos, message);
+        }
+
         private TransferOperationResult TryTakeFromLayeredBlock()
         {
             List<BlockPos> column = GetLayeredColumnTopDown(out Block block, out string layerGroup);
-            if (column.Count == 0) return TransferOperationResult.None;
+            if (column.Count == 0)
+            {
+                LayerLog("no layered column; block at source is "
+                    + (api.World.BlockAccessor.GetBlock(sourcePos)?.Code?.ToString() ?? "null"));
+                return TransferOperationResult.None;
+            }
 
             ItemStack layerStack = GetLayerDrop(block);
-            if (layerStack?.Collectible == null || layerStack.StackSize <= 0) return TransferOperationResult.None;
+            if (layerStack?.Collectible == null || layerStack.StackSize <= 0)
+            {
+                LayerLog("column of " + block.Code + " (" + column.Count + " blocks) but no layer drop; Drops.Length="
+                    + (block.Drops?.Length ?? -1));
+                return TransferOperationResult.None;
+            }
 
-            if (!TryGetMatchedDirectives(layerStack, out PaperConditionDirectives directives)) return TransferOperationResult.None;
-            if (!directives.Evaluate(BuildDirectiveContext())) return TransferOperationResult.None;
+            LayerLog("column of " + block.Code + " (" + column.Count + " blocks), one layer = "
+                + layerStack.StackSize + "x " + layerStack.Collectible.Code);
+
+            if (!TryGetMatchedDirectives(layerStack, out PaperConditionDirectives directives))
+            {
+                LayerLog("conditions did not match " + layerStack.Collectible.Code);
+                return TransferOperationResult.None;
+            }
+
+            if (!directives.Evaluate(BuildDirectiveContext()))
+            {
+                LayerLog("directives rejected the block");
+                return TransferOperationResult.None;
+            }
 
             int perLayer = layerStack.StackSize;
             int requested = perLayer; // no directive: one layer per attempt, so it drains gradually
@@ -165,7 +206,11 @@ namespace SignalsLink.src.signals.managedchute.transporting
                 // Atomic on the source, like the ground-storage column: the whole batch or nothing.
                 int available = 0;
                 foreach (BlockPos p in column) available += GetLayerCount(api.World.BlockAccessor.GetBlock(p), layerGroup) * perLayer;
-                if (available < requested) return TransferOperationResult.None;
+                if (available < requested)
+                {
+                    LayerLog("amount " + requested + " is atomic but only " + available + " available");
+                    return TransferOperationResult.None;
+                }
             }
 
             byte targetSignal = directives.TargetSlot ?? targetSlotSignal;
@@ -179,10 +224,18 @@ namespace SignalsLink.src.signals.managedchute.transporting
                     int layers = GetLayerCount(cur, layerGroup);
                     if (layers <= 0) break;
 
-                    if (RoomFor(layerStack, targetSignal) < perLayer) return LayerResult(movedTotal);
+                    if (RoomFor(layerStack, targetSignal) < perLayer)
+                    {
+                        LayerLog("target has no room for a whole layer (" + perLayer + "), signal " + targetSignal);
+                        return LayerResult(movedTotal);
+                    }
 
                     int moved = TryPutIntoInventory(layerStack, targetSignal, perLayer);
-                    if (moved <= 0) return LayerResult(movedTotal);
+                    if (moved <= 0)
+                    {
+                        LayerLog("target accepted nothing, signal " + targetSignal);
+                        return LayerResult(movedTotal);
+                    }
 
                     movedTotal += moved;
                     RemoveOneLayer(pos, cur, layers, layerGroup);
@@ -459,6 +512,10 @@ namespace SignalsLink.src.signals.managedchute.transporting
 
             var ctx = ItemConditionContextUtil.BuildContext(api.World, stack);
             ctx["targetInventory"] = targetInv;
+
+            // The source here is a spot in the world, so block-state conditions (isBurning) asked
+            // `in source` have something to look at.
+            if (sourcePos != null) ctx["sourceBlockPos"] = sourcePos;
             if (sourceInv != null)
             {
                 ctx["sourceInventory"] = sourceInv;

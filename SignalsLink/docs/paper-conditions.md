@@ -384,6 +384,40 @@ Dokud je slot 4 prázdný, platí první blok a nalijí se do něj 2. Jakmile sl
 
 U varných slotů ohniště / EP sporáku není neaktivní varný slot použitelný; musí v něm být hrnec nebo jiná varná nádoba.
 
+### `target firepit`
+
+Postaví na cíli ohniště místo toho, aby do něj něco vkládala. Stavba jde po stupních přesně jako u hráče a materiál se čte z drop tabulky vanilla ohniště: **1× suchá tráva** založí `construct1`, další **4× polena** posunou `construct2` → `construct3` → `construct4` → hotové ohniště.
+
+Direktiva znamená „tenhle materiál patří ohništi na cíli": dokud se staví, posouvá stupeň, a jakmile ohniště stojí, přiloží do něj palivo. Jeden pokus o přenos = jeden stupeň.
+
+```text
+game:drygrass
+target firepit
+---
+game:firewood
+target firepit
+```
+
+**O pořadí se starat nemusíš.** Blok se vybírá podle toho, co cíl zrovna potřebuje: na prázdné zemi projde jen tráva, na rozestavěném ohništi jen polena. Stačí mít ve zdroji obojí.
+
+Je to **vlastní direktiva schválně**: shodit trávu na zem přes `target ground` je normální věc a nemá se z ní potichu stávat stavba.
+
+> Milíř nevzniká zapálením hromady polen, ale z ohniště postaveného na odkrytém stacku v utěsněné jámě. Proto ten krok jde automatizovat právě takhle.
+
+### `isBurning`
+
+Platí pro **blok**, ne pro předmět — ptá se, jestli to, co je na dané pozici, právě hoří. Ve scope `in target` se ptá na cílový blok, jinak na zdrojový; když daná třída pro ten scope pozici nezná, podmínka je nepravdivá (nikdy pravdivá naslepo).
+
+```text
+in target
+isBurning
+output 3
+```
+
+Funguje i s vykřičníkem: `!isBurning`.
+
+Hoření se nezjišťuje podle seznamu typů, ale podle toho, jestli block entity (nebo některý její behavior) vystavuje `IsBurning` / `Lit`. Chytne tedy ohniště, hromádku na zemi, hromadu uhlí i milíř — a bez úprav i bloky z jiných modů, které to takhle pojmenovaly. Samotný blok ohně se počítá jako hořící vždycky.
+
 ### `target ground` / `target ground N`
 
 Platí pro ManagedChute, když její cíl míří do vzduchu. Ignoruje signál na pinu Cíl a pokusí se položit vybraný blok, vědro včetně obsahu nebo položku, která umí vytvořit hromádku na zemi. Pokud na cíli není pevná zem nebo položku nelze umístit, blok podmínek neprovede přenos a může propadnout na další blok.

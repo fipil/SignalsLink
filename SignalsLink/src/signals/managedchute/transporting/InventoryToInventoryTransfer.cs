@@ -29,6 +29,9 @@ namespace SignalsLink.src.signals.managedchute.transporting
             // The `in target` scope, the `target ... ifEmpty` directive and the `do seal`
             // action all require the ctx to know the target inventory.
             ctx["targetInventory"] = targetInv;
+
+            // Block-state conditions (isBurning) ask about the block, not its inventory.
+            if (targetPos != null) ctx["targetBlockPos"] = targetPos;
         }
 
         protected override bool CanTransferSelection(ItemSlot slot, PaperConditionDirectives directives)

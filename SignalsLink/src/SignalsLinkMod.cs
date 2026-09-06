@@ -45,6 +45,10 @@ namespace SignalsLink.src
             api.RegisterBlockClass("HoseCoupling", typeof(BlockHoseCoupling));
             api.RegisterBlockClass("HoseIntake", typeof(BlockHoseIntake));
 
+            // Managed Igniter - zapalovac
+            api.RegisterBlockClass("Igniter", typeof(SignalsLink.src.signals.igniter.BlockIgniter));
+            api.RegisterBlockEntityClass("BlockEntityIgniter", typeof(SignalsLink.src.signals.igniter.BEIgniter));
+
             // ManagedSleeve - rukav (predmety a bloky)
             api.RegisterBlockClass("SleeveDamper", typeof(SignalsLink.src.signals.sleeve.BlockSleeveDamper));
             api.RegisterBlockClass("SleeveCoupling", typeof(SignalsLink.src.signals.sleeve.BlockSleeveCoupling));

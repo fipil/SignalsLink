@@ -26,9 +26,25 @@ namespace SignalsLink.src.signals.managedchute.transporting
 
         protected override bool CanTransferSelection(ItemSlot slot, PaperConditionDirectives directives)
         {
+            // A firepit stage wants one particular material, and the source is walked slot by slot.
+            // Without this a slot of firewood standing before the dry grass would be selected -
+            // the directive only says there IS something to build - and then do nothing all tick,
+            // so the firepit would only ever get started when the grass happened to come first.
+            if (directives.TargetFirepit)
+            {
+                return FirepitConstruction.Matches(api.World.BlockAccessor.GetBlock(targetPos), slot?.Itemstack);
+            }
+
             // ManagedChute may place a filled bucket, but must never eject the liquid portions
             // stored in barrels and other liquid inventories.
             return !IsLiquidContainer(slot?.Itemstack) || slot.Itemstack.Block is BlockLiquidContainerBase;
+        }
+
+        protected override void AddConditionContext(IDictionary<string, object> ctx)
+        {
+            // No target inventory here - the target is the world - but block-state conditions
+            // (isBurning) still want to know which block is being aimed at.
+            if (targetPos != null) ctx["targetBlockPos"] = targetPos;
         }
 
         public int TryMoveOneItem(ItemStackMoveOperation opTemplate)
@@ -37,10 +53,22 @@ namespace SignalsLink.src.signals.managedchute.transporting
             ItemSlot src = selection?.SourceSlot;
             if (src == null || src.Empty) return 0;
 
-            // Zkontroluj blok pod cílem – musí být solid pro „placing na zem“
-            BlockPos belowPos = targetPos.DownCopy();
-            Block blockBelow = api.World.BlockAccessor.GetBlock(belowPos);
-            bool hasSolidBelow = blockBelow.SideSolid[BlockFacing.UP.Index];
+            // Is there a footing under the target? Asked through GroundSupport, so a pile of
+            // firewood counts as well - a charcoal pit needs its firepit built on top of one.
+            bool hasSolidBelow = GroundSupport.HasFooting(api.World, targetPos);
+
+            // `target firepit` on open ground lays the tinder that starts a firepit off. From the
+            // next stage onwards there is a block to build on and InventoryToFirepitTransfer takes
+            // over, so this only ever handles the very first step.
+            if (selection.Directives.TargetFirepit)
+            {
+                if (!hasSolidBelow) return 0;
+                if (!FirepitConstruction.Advance(api.World, targetPos, src.Itemstack)) return 0;
+
+                src.TakeOut(1);
+                src.MarkDirty();
+                return 1;
+            }
 
             bool targetGround = selection.Directives.TargetGround;
 
@@ -261,7 +289,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
         {
             BlockPos below = pos.DownCopy();
             if (api.World.BlockAccessor.GetBlockEntity(below) is BlockEntityGroundStorage) return true;
-            return api.World.BlockAccessor.GetBlock(below).SideSolid[BlockFacing.UP.Index];
+            return GroundSupport.HasFooting(api.World, pos);
         }
 
         private int TryAddToPile(BlockEntityGroundStorage pile, List<ItemSlot> srcSlots, int maxCount)

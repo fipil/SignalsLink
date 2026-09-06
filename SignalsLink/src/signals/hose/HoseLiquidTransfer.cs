@@ -328,6 +328,7 @@ namespace SignalsLink.src.signals.hose
             ctx["targetInventory"] = targetInv;
             ctx["inventory"] = sourceInv ?? targetInv;
             ctx["targetBlockPos"] = targetPos;
+            if (srcHostPos != null) ctx["sourceBlockPos"] = srcHostPos;
 
             if (api.World.BlockAccessor.GetBlockEntity(targetPos) is BlockEntityBarrel barrel)
                 ctx["targetBlockEntity"] = barrel;

@@ -24,6 +24,7 @@ namespace SignalsLink.src.signals.paperConditions
                 byte? sourceSlot = null;
                 byte? targetSlot = null;
                 bool targetGround = false;
+                bool targetFirepit = false;
                 int targetGroundHeight = 1;
                 bool requireTargetEmpty = false;
                 decimal? amount = null;
@@ -84,11 +85,12 @@ namespace SignalsLink.src.signals.paperConditions
                         continue;
                     }
 
-                    if (TryParseTargetDirective(line, out byte? parsedTargetSlot, out bool parsedTargetGround, out bool parsedRequireTargetEmpty, out int parsedTargetGroundHeight))
+                    if (TryParseTargetDirective(line, out byte? parsedTargetSlot, out bool parsedTargetGround, out bool parsedRequireTargetEmpty, out int parsedTargetGroundHeight, out bool parsedTargetFirepit))
                     {
                         targetSlot = parsedTargetSlot;
                         targetGround = parsedTargetGround;
                         targetGroundHeight = parsedTargetGroundHeight;
+                        targetFirepit = parsedTargetFirepit;
                         requireTargetEmpty = parsedRequireTargetEmpty;
                         continue;
                     }
@@ -131,7 +133,7 @@ namespace SignalsLink.src.signals.paperConditions
                     // OutputValue keeps the effective default 15 when `output` is not
                     // specified — for the BlockSensor (no behavior change). HasExplicitOutput
                     // records whether `output` was actually specified; ManagedHose reads it (see spec §6).
-                    blocks.Add(new ConditionBlock(conditions, outputValue ?? 15, hasExplicitOutput, new PaperConditionDirectives(sourceSlot, targetSlot, targetGround, amount, requireTargetEmpty, targetGroundHeight), actions));
+                    blocks.Add(new ConditionBlock(conditions, outputValue ?? 15, hasExplicitOutput, new PaperConditionDirectives(sourceSlot, targetSlot, targetGround, amount, requireTargetEmpty, targetGroundHeight, targetFirepit), actions));
                 }
             }
 
@@ -184,16 +186,23 @@ namespace SignalsLink.src.signals.paperConditions
             return parts.Length == 2 && byte.TryParse(parts[1], out sourceSlot) && sourceSlot >= 1 && sourceSlot <= 14;
         }
 
-        private static bool TryParseTargetDirective(string line, out byte? targetSlot, out bool targetGround, out bool requireTargetEmpty, out int targetGroundHeight)
+        private static bool TryParseTargetDirective(string line, out byte? targetSlot, out bool targetGround, out bool requireTargetEmpty, out int targetGroundHeight, out bool targetFirepit)
         {
             targetSlot = null;
             targetGround = false;
             requireTargetEmpty = false;
             targetGroundHeight = 1;
+            targetFirepit = false;
 
             if (!line.StartsWith("target ", StringComparison.OrdinalIgnoreCase)) return false;
 
             var parts = line.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+
+            if (parts.Length == 2 && parts[1].Equals("firepit", StringComparison.OrdinalIgnoreCase))
+            {
+                targetFirepit = true;
+                return true;
+            }
             if (parts.Length == 2 && parts[1].Equals("ground", StringComparison.OrdinalIgnoreCase))
             {
                 targetGround = true;
@@ -247,7 +256,17 @@ namespace SignalsLink.src.signals.paperConditions
             // NOT prefix: !something  -> handled first
             if (line.StartsWith("!"))
             {
-                var inner = ParseLine(line.Substring(1).TrimStart(), errors);
+                string negated = line.Substring(1).TrimStart();
+
+                // `!isBurning` is answered directly rather than wrapped: NotCondition is a plain
+                // condition, so in target scope it would be run per inventory slot instead of once
+                // against the block, which is not what the word means.
+                if (string.Equals(negated, "isBurning", StringComparison.OrdinalIgnoreCase))
+                {
+                    return new BlockBurningCondition(false);
+                }
+
+                var inner = ParseLine(negated, errors);
                 return new NotCondition(inner);
             }
 
@@ -259,6 +278,13 @@ namespace SignalsLink.src.signals.paperConditions
             // Inventory state: inventoryEmpty / inventoryFilled (filled = "holds something",
             // not "is full"). Must be checked before the bare-attribute fallback below, otherwise
             // these words would be parsed as attribute-exists conditions.
+            // Block state: isBurning. Like the two above it has to come before the bare-attribute
+            // fallback, or the word would be read as an attribute-exists condition.
+            if (string.Equals(line, "isBurning", StringComparison.OrdinalIgnoreCase))
+            {
+                return new BlockBurningCondition(true);
+            }
+
             if (string.Equals(line, "inventoryEmpty", StringComparison.OrdinalIgnoreCase))
             {
                 return new InventoryContentCondition(false);

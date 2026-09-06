@@ -38,6 +38,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
         protected override void AddConditionContext(IDictionary<string, object> ctx)
         {
             ctx["targetInventory"] = BuildAnvilTargetInventory();
+            if (targetAnvil?.Pos != null) ctx["targetBlockPos"] = targetAnvil.Pos;
         }
 
         private IInventory BuildAnvilTargetInventory()
