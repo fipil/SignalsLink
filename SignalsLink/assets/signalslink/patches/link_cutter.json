@@ -4,7 +4,7 @@
         "path": "/behaviorsByType/*/-",
         "value":
             {
-                "name": "HoseCutterBehavior",
+                "name": "LinkCutterBehavior",
                 "properties": {}
             }
         ,
@@ -15,7 +15,7 @@
         "path": "/behaviorsByType/@(.*-steel|.*-meteoriciron|.*-iron)/-",
         "value":
             {
-                "name": "HoseCutterBehavior",
+                "name": "LinkCutterBehavior",
                 "properties": {}
             }
         ,

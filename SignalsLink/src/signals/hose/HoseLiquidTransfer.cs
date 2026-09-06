@@ -5,6 +5,7 @@ using SignalsLink.src.signals.paperConditions;
 using Vintagestory.API.Common;
 using Vintagestory.API.MathTools;
 using Vintagestory.GameContent;
+using SignalsLink.src.signals.link;
 
 namespace SignalsLink.src.signals.hose
 {

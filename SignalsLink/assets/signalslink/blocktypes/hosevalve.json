@@ -4,7 +4,7 @@
 	"entityclass": "BlockEntityHoseValve",
 	"behaviors": [
 		{
-			"name": "BlockBehaviorHoseCover",
+			"name": "BlockBehaviorLinkCover",
 			"properties": {
 				"handleDrop": false
 			}
@@ -124,7 +124,7 @@
 				}
 			}
 		],
-		"hoseNodes": [
+		"linkNodes": [
 			{
 				"index": 2,
 				"name": "con-hose",

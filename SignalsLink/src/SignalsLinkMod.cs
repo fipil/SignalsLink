@@ -1,4 +1,4 @@
-﻿using signals.src;
+using signals.src;
 using signals.src.signalNetwork;
 using SignalsLink.src.signals.behaviours;
 using SignalsLink.src.signals.blocksensor;
@@ -9,6 +9,7 @@ using SignalsLink.src.signals.paperConditions;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Server;
+using SignalsLink.src.signals.link;
 
 [assembly: ModInfo("Signals Link", "signalslink",
     Description = "Extends Signals mod with sensors and control elements for interacting with other mods and vanilla blocks.",
@@ -30,8 +31,8 @@ namespace SignalsLink.src
 
             api.RegisterBlockBehaviorClass("BlockBehaviorTemporalCharge", typeof(BlockBehaviorTemporalCharge));
             api.RegisterBlockBehaviorClass("BlockBehaviorPaperConditions", typeof(BlockBehaviorPaperConditions));
-            api.RegisterBlockBehaviorClass("BlockBehaviorHoseCover", typeof(SignalsLink.src.signals.hose.BlockBehaviorHoseCover));
-            api.RegisterCollectibleBehaviorClass("HoseCutterBehavior", typeof(SignalsLink.src.signals.hose.HoseCutterBehavior));
+            api.RegisterBlockBehaviorClass("BlockBehaviorLinkCover", typeof(SignalsLink.src.signals.link.BlockBehaviorLinkCover));
+            api.RegisterCollectibleBehaviorClass("LinkCutterBehavior", typeof(SignalsLink.src.signals.link.LinkCutterBehavior));
             api.RegisterCollectibleBehaviorClass("WrenchBufferClear", typeof(SignalsLink.src.signals.WrenchBufferClearBehavior));
 
             api.RegisterBlockClass("BlockSensor", typeof(BlockSensor));

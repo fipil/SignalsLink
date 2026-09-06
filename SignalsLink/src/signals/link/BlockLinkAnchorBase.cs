@@ -4,29 +4,29 @@ using Vintagestory.API.Common;
 using Vintagestory.API.Config;
 using Vintagestory.API.MathTools;
 
-namespace SignalsLink.src.signals.hose
+namespace SignalsLink.src.signals.link
 {
     /// <summary>
-    /// Base for blocks that only have hose anchors (Coupling, Intake). Mirror of the Signals
-    /// <c>BlockConnection</c>, but for the hose network — anchors are read from
-    /// <c>attributes.hoseNodes</c>, placement is handled by <c>PlacingHosesMod</c>, and block
-    /// removal is cleaned up by <c>HoseNetworkMod.RemoveAllAt</c>. (The Valve has its own
+    /// Base for blocks that only have link anchors (Coupling, Intake). Mirror of the Signals
+    /// <c>BlockConnection</c>, but for the link network — anchors are read from
+    /// <c>attributes.linkNodes</c>, placement is handled by <c>PlacingLinksMod</c>, and block
+    /// removal is cleaned up by <c>LinkNetworkMod.RemoveAllAt</c>. (The Valve has its own
     /// <c>BlockHoseValve</c> because it derives from the Signals <c>BlockConnection</c>.)
     /// </summary>
-    public abstract class BlockHoseAnchorBase : Block, IHoseAnchor
+    public abstract class BlockLinkAnchorBase : Block, ILinkAnchor
     {
-        protected HoseAnchor[] hoseAnchors = System.Array.Empty<HoseAnchor>();
+        protected LinkAnchor[] linkAnchors = System.Array.Empty<LinkAnchor>();
 
         public override void OnLoaded(ICoreAPI api)
         {
             base.OnLoaded(api);
-            hoseAnchors = HoseAnchorUtil.Parse(Attributes, api, Code);
+            linkAnchors = LinkAnchorUtil.Parse(Attributes, api, Code);
         }
 
         public override Cuboidf[] GetSelectionBoxes(IBlockAccessor world, BlockPos pos)
         {
             List<Cuboidf> boxes = new List<Cuboidf>();
-            foreach (HoseAnchor a in hoseAnchors) boxes.Add(a.RotatedCopy());
+            foreach (LinkAnchor a in linkAnchors) boxes.Add(a.RotatedCopy());
             boxes.AddRange(base.GetSelectionBoxes(world, pos));
             return boxes.ToArray();
         }
@@ -38,10 +38,12 @@ namespace SignalsLink.src.signals.hose
             int? selectionBoxIndex = forPlayer?.CurrentBlockSelection?.SelectionBoxIndex;
             if (selectionBoxIndex != null)
             {
-                foreach (HoseAnchor anchor in hoseAnchors)
+                foreach (LinkAnchor anchor in linkAnchors)
                 {
                     if (anchor.Index == selectionBoxIndex)
                     {
+                        // Kept hose-worded until the sleeve gets its own key; the lang files are
+                        // translated into ten languages and this step changes no wording.
                         return Lang.Get("signalslink:con-hose");
                     }
                 }
@@ -53,16 +55,16 @@ namespace SignalsLink.src.signals.hose
         public override void OnBlockRemoved(IWorldAccessor world, BlockPos pos)
         {
             base.OnBlockRemoved(world, pos);
-            api.ModLoader.GetModSystem<HoseNetworkMod>()?.RemoveAllAt(pos);
+            api.ModLoader.GetModSystem<LinkNetworkMod>()?.RemoveAllAt(pos);
         }
 
         public override bool OnBlockInteractStart(IWorldAccessor world, IPlayer byPlayer, BlockSelection blockSel)
         {
-            PlacingHosesMod mod = api.ModLoader.GetModSystem<PlacingHosesMod>();
+            PlacingLinksMod mod = api.ModLoader.GetModSystem<PlacingLinksMod>();
             if (mod != null)
             {
-                NodePos pos = GetNodePosForHose(world, blockSel, mod.GetPendingNode());
-                if (pos != null && CanAttachHose(world, pos, mod.GetPendingNode()) && mod.ConnectHose(pos, byPlayer, this))
+                NodePos pos = GetNodePosForLink(world, blockSel, mod.GetPendingNode());
+                if (pos != null && CanAttachLink(world, pos, mod.GetPendingNode()) && mod.ConnectLink(pos, byPlayer, this))
                 {
                     return false;
                 }
@@ -70,23 +72,25 @@ namespace SignalsLink.src.signals.hose
             return base.OnBlockInteractStart(world, byPlayer, blockSel);
         }
 
-        #region IHoseAnchor
-        public Vec3f GetHoseAnchorPosInBlock(NodePos pos) => HoseAnchorUtil.GetAnchorPosInBlock(hoseAnchors, pos.index);
+        #region ILinkAnchor
+        public Vec3f GetLinkAnchorPosInBlock(NodePos pos) => LinkAnchorUtil.GetAnchorPosInBlock(linkAnchors, pos.index);
 
-        public NodePos GetNodePosForHose(IWorldAccessor world, BlockSelection blockSel, NodePos posInit = null)
+        public NodePos GetNodePosForLink(IWorldAccessor world, BlockSelection blockSel, NodePos posInit = null)
         {
-            foreach (HoseAnchor box in hoseAnchors)
+            foreach (LinkAnchor box in linkAnchors)
             {
                 if (box.Index == blockSel.SelectionBoxIndex) return new NodePos(blockSel.Position, blockSel.SelectionBoxIndex);
             }
             return null;
         }
 
-        public bool CanAttachHose(IWorldAccessor world, NodePos pos, NodePos posInit = null) => true;
+        public bool CanAttachLink(IWorldAccessor world, NodePos pos, NodePos posInit = null) => true;
 
-        public virtual bool AllowsMultipleHoses(NodePos pos) => false;
+        public virtual bool AllowsMultipleLinks(NodePos pos) => false;
 
-        public NodePos[] GetHoseAnchors(IWorldAccessor world, BlockPos pos) => HoseAnchorUtil.GetHoseAnchors(hoseAnchors, pos);
+        public NodePos[] GetLinkAnchors(IWorldAccessor world, BlockPos pos) => LinkAnchorUtil.GetLinkAnchors(linkAnchors, pos);
+
+        public virtual byte AcceptedLinkKind => LinkKind.Hose;
         #endregion
     }
 }

@@ -10,6 +10,7 @@ using Vintagestory.API.Config;
 using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Server;
+using SignalsLink.src.signals.link;
 
 namespace SignalsLink.src.signals.hose
 {
@@ -206,11 +207,11 @@ namespace SignalsLink.src.signals.hose
         /// <returns>0 = moved, 1 = blocked (nothing to do), 2 = waiting for our arbitration turn.</returns>
         private int TryPull()
         {
-            HoseNetworkMod hoseMod = Api.ModLoader.GetModSystem<HoseNetworkMod>();
-            if (hoseMod == null) return 1;
+            LinkNetworkMod linkMod = Api.ModLoader.GetModSystem<LinkNetworkMod>();
+            if (linkMod == null) return 1;
 
             NodePos myAnchor = new NodePos(Pos, HOSE);
-            List<HoseSource> sources = hoseMod.GetOtherEndpoints(Api.World, myAnchor);
+            List<LinkSource> sources = linkMod.GetOtherEndpoints(Api.World, myAnchor);
             if (sources.Count == 0) return 1;
 
             // Placement decides the mode; this is a property of the valve, not of the line, so it
@@ -242,8 +243,8 @@ namespace SignalsLink.src.signals.hose
             // one must still be found within the same tick, or throughput would collapse.
             for (int i = 0; i < sources.Count; i++)
             {
-                HoseSource candidate = sources[(start + i) % sources.Count];
-                int status = TryPullFrom(hoseMod, myAnchor, candidate, hostInv, hostPos, discard);
+                LinkSource candidate = sources[(start + i) % sources.Count];
+                int status = TryPullFrom(linkMod, myAnchor, candidate, hostInv, hostPos, discard);
 
                 if (status == 0)
                 {
@@ -264,14 +265,14 @@ namespace SignalsLink.src.signals.hose
         /// One pull attempt from a single source (the far endpoint of one hose line).
         /// </summary>
         /// <returns>0 = moved, 1 = nothing to pull here, 2 = waiting for our arbitration turn.</returns>
-        private int TryPullFrom(HoseNetworkMod hoseMod, NodePos myAnchor, HoseSource source, IInventory hostInv, BlockPos hostPos, bool discard)
+        private int TryPullFrom(LinkNetworkMod linkMod, NodePos myAnchor, LinkSource source, IInventory hostInv, BlockPos hostPos, bool discard)
         {
             NodePos far = source.Endpoint;
 
             // Contention only exists when the far end is ALSO an active valve; then the two
             // valves must take turns (arbitration), otherwise they fight and stall.
             bool contested = IsFarActiveValve(far);
-            if (contested && !hoseMod.IsOnTurn(myAnchor, far)) return 2;
+            if (contested && !linkMod.IsOnTurn(myAnchor, far)) return 2;
 
             decimal litres = unlimited ? maxLitresPerTick : System.Math.Min((decimal)remaining, maxLitresPerTick);
             // Buffer model B: the remaining Input buffer is a hard cap on litres this move (an
@@ -316,7 +317,7 @@ namespace SignalsLink.src.signals.hose
             if (contested)
             {
                 bool finishedBatch = !unlimited && remaining <= 0;
-                if (!moved || finishedBatch) hoseMod.PassToken(myAnchor, far);
+                if (!moved || finishedBatch) linkMod.PassToken(myAnchor, far);
             }
 
             return moved ? 0 : 1;
@@ -400,7 +401,7 @@ namespace SignalsLink.src.signals.hose
             if (flowPulse != lastClientFlowPulse)
             {
                 lastClientFlowPulse = flowPulse;
-                Api.ModLoader.GetModSystem<HoseNetworkMod>()?.Renderer?.TriggerWobble(new NodePos(Pos, HOSE), flowFar);
+                Api.ModLoader.GetModSystem<LinkNetworkMod>()?.Renderer?.TriggerWobble(new NodePos(Pos, HOSE), flowFar);
             }
 
             if (drainPulse != lastClientPulse)

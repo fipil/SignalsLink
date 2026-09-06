@@ -4,13 +4,14 @@ using Vintagestory.API.Common;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Util;
 
-namespace SignalsLink.src.signals.hose
+namespace SignalsLink.src.signals.link
 {
     /// <summary>
-    /// Builds the sagging catenary mesh of a hose between two anchor points. Mirror of the
-    /// Signals <c>WireMesh</c>, but thicker and with a deeper sag (leather hose look).
+    /// Builds the sagging catenary mesh of a link between two anchor points. Mirror of the
+    /// Signals <c>WireMesh</c>, but thicker and with a deeper sag (leather hose look). The sleeve
+    /// will need its own thickness/sag profile; today the constants below are hose-only.
     /// </summary>
-    static class HoseMesh
+    static class LinkMesh
     {
         // Thicker than a wire (wire uses 0.015).
         const float Thickness = 0.04f;
@@ -33,10 +34,10 @@ namespace SignalsLink.src.signals.hose
             return rtn;
         }
 
-        static public MeshData MakeHoseMesh(Vec3f pos1, Vec3f pos2) => MakeHoseMesh(pos1, pos2, null, null, null, 0f);
+        static public MeshData MakeLinkMesh(Vec3f pos1, Vec3f pos2) => MakeLinkMesh(pos1, pos2, null, null, null, 0f);
 
-        static public MeshData MakeHoseMesh(Vec3f pos1, Vec3f pos2, Vec3f p1ExitDir, Vec3f p2ExitDir)
-            => MakeHoseMesh(pos1, pos2, p1ExitDir, p2ExitDir, null, 0f);
+        static public MeshData MakeLinkMesh(Vec3f pos1, Vec3f pos2, Vec3f p1ExitDir, Vec3f p2ExitDir)
+            => MakeLinkMesh(pos1, pos2, p1ExitDir, p2ExitDir, null, 0f);
 
         /// <summary>
         /// Builds the hose mesh, optionally swaying the hanging part horizontally along
@@ -44,15 +45,15 @@ namespace SignalsLink.src.signals.hose
         /// weighted by each sample's sag depth, so the anchored ends stay put and the lowest point
         /// swings the most — the "water pulsing through a garden hose" wobble.
         /// </summary>
-        static public MeshData MakeHoseMesh(Vec3f pos1, Vec3f pos2, Vec3f swayDir, float swayAmount)
-            => MakeHoseMesh(pos1, pos2, null, null, swayDir, swayAmount);
+        static public MeshData MakeLinkMesh(Vec3f pos1, Vec3f pos2, Vec3f swayDir, float swayAmount)
+            => MakeLinkMesh(pos1, pos2, null, null, swayDir, swayAmount);
 
         /// <summary>
         /// Builds a hanging hose with optional valve lead-ins. A lead-in leaves a valve along its
         /// mounting axis, then turns diagonally toward the hanging middle. Texture coordinates are
         /// based on distance travelled along the resulting path, rather than its end-to-end chord.
         /// </summary>
-        static public MeshData MakeHoseMesh(Vec3f pos1, Vec3f pos2, Vec3f p1ExitDir, Vec3f p2ExitDir, Vec3f swayDir, float swayAmount)
+        static public MeshData MakeLinkMesh(Vec3f pos1, Vec3f pos2, Vec3f p1ExitDir, Vec3f p2ExitDir, Vec3f swayDir, float swayAmount)
         {
             float t = Thickness;
             float dist = pos2.DistanceTo(pos1);

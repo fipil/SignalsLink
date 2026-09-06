@@ -5,18 +5,19 @@ using Vintagestory.API.Common;
 using Vintagestory.API.Config;
 using Vintagestory.API.MathTools;
 using signals.src.signalNetwork;
+using SignalsLink.src.signals.hose;
 
-namespace SignalsLink.src.signals.hose
+namespace SignalsLink.src.signals.link
 {
     /// <summary>
-    /// Renders the hose connections — one static mesh per hose (uploaded once, redrawn each frame
+    /// Renders the link connections — one static mesh per line (uploaded once, redrawn each frame
     /// with no CPU work). When liquid pulses through a hose the valve triggers a short "wobble":
-    /// the hanging part sways horizontally along the hose axis (a damped sine), like a garden hose
-    /// with water surging through it. Only a capped number of hoses (<see cref="MaxWobblers"/>) can
+    /// the hanging part sways horizontally along the line axis (a damped sine), like a garden hose
+    /// with water surging through it. Only a capped number of links (<see cref="MaxWobblers"/>) can
     /// wobble at once and only those recompute their mesh per frame, so the effect is cheap
-    /// regardless of how many hoses exist.
+    /// regardless of how many links exist.
     /// </summary>
-    public class HangingHosesRenderer : IRenderer
+    public class HangingLinksRenderer : IRenderer
     {
         public double RenderOrder => 0.5;
         public int RenderRange => 100;
@@ -25,59 +26,59 @@ namespace SignalsLink.src.signals.hose
         const float WobbleDuration = 1.2f;   // seconds until it settles back to rest
         const float WobblePeriod = 0.6f;     // seconds per full swing (target ↔ source)
         const float WobbleAmplitude = 0.12f; // block units at the deepest point
-        const int MaxWobblers = 8;           // how many hoses may wobble simultaneously
+        const int MaxWobblers = 8;           // how many links may wobble simultaneously
 
-        class HoseRender
+        class LinkRender
         {
-            public HoseConnection con;
+            public LinkConnection con;
             public Vec3d origin;     // world position of anchor 1 (mesh is built relative to it)
             public Vec3f p2local;    // anchor 2 relative to anchor 1
             public Vec3f p1ExitDir;  // outward valve axis at anchor 1, if it is a valve
             public Vec3f p2ExitDir;  // outward valve axis at anchor 2, if it is a valve
-            public Vec3f swayDir;    // unit horizontal direction along the hose axis
+            public Vec3f swayDir;    // unit horizontal direction along the line axis
             public MeshRef meshRef;
             public float wobbleT = -1f; // < 0 = at rest
         }
 
-        readonly HoseNetworkMod mod;
+        readonly LinkNetworkMod mod;
         readonly ICoreClientAPI capi;
         readonly int chunksize;
 
-        readonly Dictionary<HoseConnection, HoseRender> hoses = new Dictionary<HoseConnection, HoseRender>();
-        readonly List<HoseRender> wobblers = new List<HoseRender>();
+        readonly Dictionary<LinkConnection, LinkRender> links = new Dictionary<LinkConnection, LinkRender>();
+        readonly List<LinkRender> wobblers = new List<LinkRender>();
         bool dirty = true;
 
         int textureId = -1;
-        readonly AssetLocation hoseTexName = new AssetLocation("signalslink:block/leather.png");
+        readonly AssetLocation linkTexName = new AssetLocation("signalslink:block/leather.png");
         readonly Matrixf ModelMat = new Matrixf();
 
-        public HangingHosesRenderer(ICoreClientAPI capi, HoseNetworkMod mod)
+        public HangingLinksRenderer(ICoreClientAPI capi, LinkNetworkMod mod)
         {
             this.capi = capi;
             this.mod = mod;
             this.chunksize = GlobalConstants.ChunkSize;
-            capi.Event.RegisterRenderer(this, EnumRenderStage.Opaque, "signalslinkhoses");
+            capi.Event.RegisterRenderer(this, EnumRenderStage.Opaque, "signalslinklinks");
         }
 
         public void RequestFullRebuild() => dirty = true;
 
-        public void RequestIncrementalRebuild(HoseNetworkData data) => dirty = true;
+        public void RequestIncrementalRebuild(LinkNetworkData data) => dirty = true;
 
         /// <summary>
-        /// Starts (or refreshes) the wobble on the hose segment attached to the given anchor.
+        /// Starts (or refreshes) the wobble on the segment attached to the given anchor.
         /// Called by a valve when liquid audibly pulses through its hose. Respects the wobble cap:
-        /// beyond it, extra pulses are simply ignored (the hose doesn't wobble this time).
+        /// beyond it, extra pulses are simply ignored (the line doesn't wobble this time).
         /// </summary>
         /// <param name="other">
         /// Anchor at the far end of the segment that is actually flowing. A valve may have several
-        /// hoses on one anchor, and only the one being pumped through should wobble. Null wobbles
-        /// every hose on the anchor (the old behaviour, used when the flowing line is unknown).
+        /// links on one anchor, and only the one being pumped through should wobble. Null wobbles
+        /// every line on the anchor (the old behaviour, used when the flowing line is unknown).
         /// </param>
         public void TriggerWobble(NodePos anchor, NodePos other = null)
         {
-            if (anchor == null || hoses.Count == 0) return;
+            if (anchor == null || links.Count == 0) return;
 
-            foreach (HoseRender h in hoses.Values)
+            foreach (LinkRender h in links.Values)
             {
                 if (h.con.pos1 != anchor && h.con.pos2 != anchor) continue;
                 if (other != null && h.con.pos1 != other && h.con.pos2 != other) continue;
@@ -104,14 +105,14 @@ namespace SignalsLink.src.signals.hose
 
             DisposeMeshes();
 
-            foreach (HoseConnection con in mod.data.connections)
+            foreach (LinkConnection con in mod.data.connections)
             {
-                IHoseAnchor a1 = accessor.GetBlock(con.pos1.blockPos) as IHoseAnchor;
-                IHoseAnchor a2 = accessor.GetBlock(con.pos2.blockPos) as IHoseAnchor;
+                ILinkAnchor a1 = accessor.GetBlock(con.pos1.blockPos) as ILinkAnchor;
+                ILinkAnchor a2 = accessor.GetBlock(con.pos2.blockPos) as ILinkAnchor;
                 if (a1 == null || a2 == null) continue;
 
-                Vec3f a1p = a1.GetHoseAnchorPosInBlock(con.pos1);
-                Vec3f a2p = a2.GetHoseAnchorPosInBlock(con.pos2);
+                Vec3f a1p = a1.GetLinkAnchorPosInBlock(con.pos1);
+                Vec3f a2p = a2.GetLinkAnchorPosInBlock(con.pos2);
 
                 BlockPos b1 = con.pos1.blockPos;
                 BlockPos b2 = con.pos2.blockPos;
@@ -128,10 +129,10 @@ namespace SignalsLink.src.signals.hose
 
                 Vec3f p1ExitDir = GetAnchorExitDirection(a1, con.pos1);
                 Vec3f p2ExitDir = GetAnchorExitDirection(a2, con.pos2);
-                MeshData m = HoseMesh.MakeHoseMesh(new Vec3f(0, 0, 0), p2local, p1ExitDir, p2ExitDir);
+                MeshData m = LinkMesh.MakeLinkMesh(new Vec3f(0, 0, 0), p2local, p1ExitDir, p2ExitDir);
                 m.SetMode(EnumDrawMode.Triangles);
 
-                hoses[con] = new HoseRender
+                links[con] = new LinkRender
                 {
                     con = con,
                     origin = origin,
@@ -144,7 +145,7 @@ namespace SignalsLink.src.signals.hose
             }
         }
 
-        private static Vec3f GetAnchorExitDirection(IHoseAnchor owner, NodePos anchor)
+        private static Vec3f GetAnchorExitDirection(ILinkAnchor owner, NodePos anchor)
         {
             if (owner is BlockHoseValve valve)
             {
@@ -167,7 +168,7 @@ namespace SignalsLink.src.signals.hose
                 }
             }
 
-            Vec3f position = owner.GetHoseAnchorPosInBlock(anchor);
+            Vec3f position = owner.GetLinkAnchorPosInBlock(anchor);
             float offsetX = position.X - 0.5f;
             float offsetY = position.Y - 0.5f;
             float offsetZ = position.Z - 0.5f;
@@ -180,26 +181,26 @@ namespace SignalsLink.src.signals.hose
             return new Vec3f(0f, 0f, offsetZ >= 0f ? 1f : -1f);
         }
 
-        void UpdateHoseMesh(HoseRender h, float swayAmount)
+        void UpdateLinkMesh(LinkRender h, float swayAmount)
         {
-            MeshData m = HoseMesh.MakeHoseMesh(new Vec3f(0, 0, 0), h.p2local, h.p1ExitDir, h.p2ExitDir, h.swayDir, swayAmount);
+            MeshData m = LinkMesh.MakeLinkMesh(new Vec3f(0, 0, 0), h.p2local, h.p1ExitDir, h.p2ExitDir, h.swayDir, swayAmount);
             m.SetMode(EnumDrawMode.Triangles);
             capi.Render.UpdateMesh(h.meshRef, m);
         }
 
         public void OnRenderFrame(float deltaTime, EnumRenderStage stage)
         {
-            if (stage != EnumRenderStage.Opaque || hoses.Count == 0) return;
+            if (stage != EnumRenderStage.Opaque || links.Count == 0) return;
 
-            // Advance the (few) wobbling hoses; only these recompute their mesh.
+            // Advance the (few) wobbling links; only these recompute their mesh.
             for (int i = wobblers.Count - 1; i >= 0; i--)
             {
-                HoseRender h = wobblers[i];
+                LinkRender h = wobblers[i];
                 h.wobbleT += deltaTime;
                 if (h.wobbleT >= WobbleDuration)
                 {
                     h.wobbleT = -1f;
-                    UpdateHoseMesh(h, 0f); // settle back to rest
+                    UpdateLinkMesh(h, 0f); // settle back to rest
                     wobblers.RemoveAt(i);
                 }
                 else
@@ -207,7 +208,7 @@ namespace SignalsLink.src.signals.hose
                     float amt = WobbleAmplitude
                         * (float)Math.Sin(h.wobbleT / WobblePeriod * Math.PI * 2.0)
                         * (1f - h.wobbleT / WobbleDuration); // damping
-                    UpdateHoseMesh(h, amt);
+                    UpdateLinkMesh(h, amt);
                 }
             }
 
@@ -220,7 +221,7 @@ namespace SignalsLink.src.signals.hose
             IStandardShaderProgram prog = rpi.PreparedStandardShader(0, 0, 0);
             prog.Use();
 
-            if (textureId < 0) textureId = capi.Render.GetOrLoadTexture(hoseTexName);
+            if (textureId < 0) textureId = capi.Render.GetOrLoadTexture(linkTexName);
             rpi.BindTexture2d(textureId);
 
             prog.ProjectionMatrix = rpi.CurrentProjectionMatrix;
@@ -229,7 +230,7 @@ namespace SignalsLink.src.signals.hose
             float maxRenderDistance = RenderRange + chunksize;
             float maxRenderDistanceSq = maxRenderDistance * maxRenderDistance;
 
-            foreach (HoseRender h in hoses.Values)
+            foreach (LinkRender h in links.Values)
             {
                 double cx = h.origin.X - camPos.X;
                 double cy = h.origin.Y - camPos.Y;
@@ -245,8 +246,8 @@ namespace SignalsLink.src.signals.hose
 
         void DisposeMeshes()
         {
-            foreach (HoseRender h in hoses.Values) h.meshRef?.Dispose();
-            hoses.Clear();
+            foreach (LinkRender h in links.Values) h.meshRef?.Dispose();
+            links.Clear();
             wobblers.Clear();
         }
 

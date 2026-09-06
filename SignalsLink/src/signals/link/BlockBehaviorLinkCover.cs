@@ -3,23 +3,23 @@ using Vintagestory.API.Common;
 using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
 
-namespace SignalsLink.src.signals.hose
+namespace SignalsLink.src.signals.link
 {
     /// <summary>
-    /// Placement behavior for the hose valve, adapted from the Signals
+    /// Placement behavior for wall/ceiling/floor mounted link endpoints, adapted from the Signals
     /// <c>BlockBehaviorCoverWithDirection</c>. Difference: on a WALL or CEILING the valve has no
     /// free rotation around the mount normal — it is always mounted pins-up (orientation = "up").
     /// Only floor placement (side = down, the drain / výlevka) keeps the projected orientation,
     /// which selects the horizontal neighbour it pours into.
     /// </summary>
-    public class BlockBehaviorHoseCover : BlockBehavior
+    public class BlockBehaviorLinkCover : BlockBehavior
     {
         public string orientationCode => "orientation";
         public string sideCode => "side";
 
         public bool handleDrop;
 
-        public BlockBehaviorHoseCover(Block block) : base(block) { }
+        public BlockBehaviorLinkCover(Block block) : base(block) { }
 
         public override void Initialize(JsonObject properties)
         {

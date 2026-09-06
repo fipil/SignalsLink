@@ -6,27 +6,30 @@ using Vintagestory.API.Config;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Server;
 
-namespace SignalsLink.src.signals.hose
+namespace SignalsLink.src.signals.link
 {
     /// <summary>
-    /// Two-phase hose placement (the <c>signalslink:hose</c> item is held). Mirror of the
-    /// Signals <c>PlacingWiresMod</c>. The client only proposes a connection; the
-    /// <b>authoritative validation (length, anchor occupancy) runs server-side</b> in
-    /// <c>HoseNetworkMod.TryToAddConnection</c>.
+    /// Two-phase placement of a link — a hose or a sleeve, whichever line item the player holds.
+    /// Mirror of the Signals <c>PlacingWiresMod</c>. The client only proposes a connection; the
+    /// <b>authoritative validation (kind, length, anchor occupancy) runs server-side</b> in
+    /// <c>LinkNetworkMod.TryToAddConnection</c>.
+    ///
+    /// The ingame error messages are still hose-worded: their lang keys are translated into ten
+    /// languages, so the sleeve gets its own keys when it gets its own wording.
     /// </summary>
-    public class PlacingHosesMod : ModSystem
+    public class PlacingLinksMod : ModSystem
     {
-        public const string ChannelName = "placinghoses";
+        public const string ChannelName = "placinglinks";
 
         ICoreClientAPI capi;
         ICoreAPI api;
         IServerNetworkChannel serverChannel;
         IClientNetworkChannel clientChannel;
 
-        HoseNetworkMod hoseMod;
+        LinkNetworkMod linkMod;
 
         NodePos pendingNode = null;
-        PendingHoseRenderer pendingRenderer;
+        PendingLinkRenderer pendingRenderer;
 
         public override bool ShouldLoad(EnumAppSide forSide) => true;
 
@@ -34,18 +37,18 @@ namespace SignalsLink.src.signals.hose
         {
             base.Start(api);
             this.api = api;
-            this.hoseMod = api.ModLoader.GetModSystem<HoseNetworkMod>();
+            this.linkMod = api.ModLoader.GetModSystem<LinkNetworkMod>();
 
             if (api.World is IClientWorldAccessor)
             {
                 clientChannel = ((ICoreClientAPI)api).Network.RegisterChannel(ChannelName)
-                    .RegisterMessageType(typeof(AddHoseConnectionPacket));
+                    .RegisterMessageType(typeof(AddLinkConnectionPacket));
             }
             else
             {
                 serverChannel = ((ICoreServerAPI)api).Network.RegisterChannel(ChannelName)
-                    .RegisterMessageType(typeof(AddHoseConnectionPacket))
-                    .SetMessageHandler<AddHoseConnectionPacket>(OnAddConnectionFromClient);
+                    .RegisterMessageType(typeof(AddLinkConnectionPacket))
+                    .SetMessageHandler<AddLinkConnectionPacket>(OnAddConnectionFromClient);
             }
         }
 
@@ -61,15 +64,19 @@ namespace SignalsLink.src.signals.hose
         /// <summary>
         /// Client-side placement: first click = pending anchor, second click = send the proposed connection.
         /// </summary>
-        public bool ConnectHose(NodePos pos, IPlayer byPlayer, IHoseAnchor anchor)
+        public bool ConnectLink(NodePos pos, IPlayer byPlayer, ILinkAnchor anchor)
         {
             if (api.Side == EnumAppSide.Server) return false;
-            if (!IsHoldingHose(byPlayer)) return false;
 
-            // Anchor already has a hose -> refuse immediately (max 1 hose per anchor). This
+            // The held line decides the kind; an anchor of the other kind is not ours to click, so
+            // fall through and let the block run its own interaction.
+            int kind = GetHeldLinkKind(byPlayer);
+            if (kind < 0 || anchor.AcceptedLinkKind != kind) return false;
+
+            // Anchor already has a link -> refuse immediately (max 1 link per anchor). This
             // mirrors the authoritative server check but gives instant feedback, and prevents
-            // even starting a second hose on an occupied anchor. Client data is synced.
-            if (hoseMod != null && !anchor.AllowsMultipleHoses(pos) && hoseMod.IsAnchorOccupied(pos))
+            // even starting a second link on an occupied anchor. Client data is synced.
+            if (linkMod != null && !anchor.AllowsMultipleLinks(pos) && linkMod.IsAnchorOccupied(pos))
             {
                 capi?.TriggerIngameError(this, "hoseoccupied", Lang.Get("signalslink:ingameerror-hose-anchor-occupied"));
                 return false;
@@ -78,10 +85,10 @@ namespace SignalsLink.src.signals.hose
             if (pendingNode == null)
             {
                 pendingNode = pos;
-                Vec3f offset = anchor.GetHoseAnchorPosInBlock(pos);
+                Vec3f offset = anchor.GetLinkAnchorPosInBlock(pos);
                 pendingRenderer?.Dispose();
-                pendingRenderer = new PendingHoseRenderer(capi, this, pos.blockPos, offset);
-                capi?.Logger.Debug("Hose pending {0}:{1}", pos.blockPos, pos.index);
+                pendingRenderer = new PendingLinkRenderer(capi, this, pos.blockPos, offset);
+                capi?.Logger.Debug("Link pending {0}:{1}", pos.blockPos, pos.index);
             }
             else
             {
@@ -100,53 +107,55 @@ namespace SignalsLink.src.signals.hose
                     return false;
                 }
 
-                HoseConnection connection = new HoseConnection(pendingNode, pos);
-                clientChannel.SendPacket(new AddHoseConnectionPacket { connection = connection, byPlayer = byPlayer.PlayerUID });
+                LinkConnection connection = new LinkConnection(pendingNode, pos, (byte)kind);
+                clientChannel.SendPacket(new AddLinkConnectionPacket { connection = connection, byPlayer = byPlayer.PlayerUID });
                 ClearPending();
             }
             return true;
         }
 
-        private void OnAddConnectionFromClient(IServerPlayer fromPlayer, AddHoseConnectionPacket msg)
+        private void OnAddConnectionFromClient(IServerPlayer fromPlayer, AddLinkConnectionPacket msg)
         {
-            HoseConnection connection = msg.connection;
+            LinkConnection connection = msg.connection;
             if (connection == null) return;
 
-            // Never trust the client: verify the player is holding a hose and that both ends are hose anchors.
-            if (!UseHose(fromPlayer, false)) return;
+            // Never trust the client: verify the player holds that very kind of line and that both
+            // ends are link anchors. The kind itself is re-validated in TryToAddConnection.
+            if (!UseLink(fromPlayer, connection.kind, false)) return;
             if (!AnchorExists(connection.pos1) || !AnchorExists(connection.pos2)) return;
 
-            HoseNetworkMod.AddResult result = hoseMod.TryToAddConnection(connection);
-            if (result == HoseNetworkMod.AddResult.Added)
+            LinkNetworkMod.AddResult result = linkMod.TryToAddConnection(connection);
+            if (result == LinkNetworkMod.AddResult.Added)
             {
-                UseHose(fromPlayer, true);
+                UseLink(fromPlayer, connection.kind, true);
             }
-            else if (result == HoseNetworkMod.AddResult.TooLong)
+            else if (result == LinkNetworkMod.AddResult.TooLong)
             {
                 ((ICoreServerAPI)api).SendIngameError(fromPlayer, "hosetoolong",
-                    Lang.Get("signalslink:ingameerror-hose-too-long", HoseNetworkMod.MaxHoseLength));
+                    Lang.Get("signalslink:ingameerror-hose-too-long", LinkNetworkMod.MaxLinkLength));
             }
-            // Other outcomes do not consume the hose.
+            // Other outcomes do not consume the line item.
         }
 
         private bool AnchorExists(NodePos pos)
         {
             if (pos?.blockPos == null) return false;
-            IHoseAnchor anchor = api.World.BlockAccessor.GetBlock(pos.blockPos) as IHoseAnchor;
+            ILinkAnchor anchor = api.World.BlockAccessor.GetBlock(pos.blockPos) as ILinkAnchor;
             if (anchor == null) return false;
-            return anchor.CanAttachHose(api.World, pos);
+            return anchor.CanAttachLink(api.World, pos);
         }
 
-        public bool IsHoldingHose(IPlayer player)
+        /// <summary>Kind of line the player holds in the right hand, or -1 if it is not a line.</summary>
+        public int GetHeldLinkKind(IPlayer player)
         {
             Item item = player?.Entity?.RightHandItemSlot?.Itemstack?.Item;
-            return item?.Code?.ToString() == HoseNetworkMod.HoseItemCode;
+            return LinkNetworkMod.KindForItemCode(item?.Code?.ToString());
         }
 
-        public bool UseHose(IPlayer player, bool doUse = false)
+        public bool UseLink(IPlayer player, byte kind, bool doUse = false)
         {
             ItemStack itemStack = player?.InventoryManager?.ActiveHotbarSlot?.Itemstack;
-            if (itemStack?.Item?.Code?.ToString() != HoseNetworkMod.HoseItemCode) return false;
+            if (LinkNetworkMod.KindForItemCode(itemStack?.Item?.Code?.ToString()) != kind) return false;
             if (player.WorldData.CurrentGameMode == EnumGameMode.Creative) return true;
 
             if (doUse)
@@ -171,11 +180,11 @@ namespace SignalsLink.src.signals.hose
     }
 
     [ProtoContract(ImplicitFields = ImplicitFields.AllPublic)]
-    public class AddHoseConnectionPacket
+    public class AddLinkConnectionPacket
     {
-        public HoseConnection connection;
+        public LinkConnection connection;
         public string byPlayer;
 
-        public AddHoseConnectionPacket() { }
+        public AddLinkConnectionPacket() { }
     }
 }

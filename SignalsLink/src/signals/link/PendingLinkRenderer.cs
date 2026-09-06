@@ -2,40 +2,40 @@ using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.MathTools;
 
-namespace SignalsLink.src.signals.hose
+namespace SignalsLink.src.signals.link
 {
     /// <summary>
-    /// Renders the hose being placed (from the pending anchor to the camera). Mirror of the
+    /// Renders the line being placed (from the pending anchor to the camera). Mirror of the
     /// Signals <c>PendingWireRenderer</c>.
     /// </summary>
-    public class PendingHoseRenderer : IRenderer
+    public class PendingLinkRenderer : IRenderer
     {
         public double RenderOrder => 0.5;
         public int RenderRange => 100;
 
-        readonly PlacingHosesMod mod;
+        readonly PlacingLinksMod mod;
         readonly ICoreClientAPI capi;
         readonly BlockPos blockPos;
         readonly Vec3f posOffset;
 
-        MeshRef hoseMesh;
-        readonly AssetLocation hoseTexName = new AssetLocation("signalslink:block/leather.png");
+        MeshRef linkMesh;
+        readonly AssetLocation linkTexName = new AssetLocation("signalslink:block/leather.png");
         int textureId = -1;
         Matrixf ModelMat = new Matrixf();
 
-        public PendingHoseRenderer(ICoreClientAPI capi, PlacingHosesMod mod, BlockPos pos, Vec3f offset)
+        public PendingLinkRenderer(ICoreClientAPI capi, PlacingLinksMod mod, BlockPos pos, Vec3f offset)
         {
             this.capi = capi;
             this.mod = mod;
             this.blockPos = pos;
             this.posOffset = offset;
-            capi.Event.RegisterRenderer(this, EnumRenderStage.Opaque, "signalslinkpendinghose");
+            capi.Event.RegisterRenderer(this, EnumRenderStage.Opaque, "signalslinkpendinglink");
         }
 
         public void Dispose()
         {
             capi.Event.UnregisterRenderer(this, EnumRenderStage.Opaque);
-            hoseMesh?.Dispose();
+            linkMesh?.Dispose();
         }
 
         public void OnRenderFrame(float deltaTime, EnumRenderStage stage)
@@ -45,7 +45,7 @@ namespace SignalsLink.src.signals.hose
             IRenderAPI rpi = capi.Render;
             Vec3d camPos = capi.World.Player.Entity.CameraPos;
 
-            if (textureId < 0) textureId = capi.Render.GetOrLoadTexture(hoseTexName);
+            if (textureId < 0) textureId = capi.Render.GetOrLoadTexture(linkTexName);
             rpi.BindTexture2d(textureId);
 
             IStandardShaderProgram prog = rpi.PreparedStandardShader(0, 0, 0);
@@ -55,14 +55,14 @@ namespace SignalsLink.src.signals.hose
 
             Vec3d offset = blockPos.ToVec3d();
             // Rebuilds the mesh every frame (not ideal, but matches the Signals pending renderer).
-            MeshData mesh = HoseMesh.MakeHoseMesh(posOffset, camPos.SubCopy(offset).ToVec3f());
+            MeshData mesh = LinkMesh.MakeLinkMesh(posOffset, camPos.SubCopy(offset).ToVec3f());
             mesh.SetMode(EnumDrawMode.Triangles);
-            hoseMesh?.Dispose();
-            hoseMesh = capi.Render.UploadMesh(mesh);
+            linkMesh?.Dispose();
+            linkMesh = capi.Render.UploadMesh(mesh);
 
             ModelMat = ModelMat.Identity().Translate(offset.X - camPos.X, offset.Y - camPos.Y, offset.Z - camPos.Z);
             prog.ModelMatrix = ModelMat.Values;
-            rpi.RenderMesh(hoseMesh);
+            rpi.RenderMesh(linkMesh);
             prog.Stop();
         }
     }
