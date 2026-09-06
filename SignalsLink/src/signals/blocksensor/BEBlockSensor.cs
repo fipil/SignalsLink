@@ -34,6 +34,14 @@ namespace SignalsLink.src.signals.blocksensor
         BlockPos scannedPosition;
         IBlockSensorScanner activeScanner;
 
+        // What the cached scanner was chosen for. DefaultScanner is the fallback and its CanScan
+        // accepts everything, so once it gets selected (typically because the watched spot was
+        // air) it would keep handling that spot forever - even after a container appears there.
+        // Comparing the watched block / block entity / input signal each tick catches that.
+        private Block lastScannedBlock;
+        private BlockEntity lastScannedBlockEntity;
+        private byte lastScannerInputSignal;
+
         private string conditionsText = null;
         private PaperConditionsEvaluator conditionsEvaluator = new PaperConditionsEvaluator();
 
@@ -127,6 +135,17 @@ namespace SignalsLink.src.signals.blocksensor
 
             Block block = Api.World.BlockAccessor.GetBlock(ScannedPosition);
             BlockEntity blockEntity = Api.World.BlockAccessor.GetBlockEntity(ScannedPosition);
+
+            // Drop the cached scanner as soon as anything it was chosen for changed.
+            if (!ReferenceEquals(block, lastScannedBlock)
+                || !ReferenceEquals(blockEntity, lastScannedBlockEntity)
+                || lastScannerInputSignal != inputSignal)
+            {
+                activeScanner = null;
+                lastScannedBlock = block;
+                lastScannedBlockEntity = blockEntity;
+                lastScannerInputSignal = inputSignal;
+            }
 
             if(activeScanner?.CanScan(block, blockEntity, inputSignal) != true)
             {
