@@ -29,6 +29,9 @@ namespace SignalsLink.src.signals.managedchute.transporting
             TransferOperationResult fromPile = TryTakeFromGroundStorageColumn();
             if (fromPile.Success) return fromPile;
 
+            TransferOperationResult fromLayers = TryTakeFromLayeredBlock();
+            if (fromLayers.Success) return fromLayers;
+
             if (TryGetPlacedLiquidContainer(out ItemStack containerStack))
             {
                 return TryMovePlacedLiquidContainer(containerStack);
@@ -125,6 +128,185 @@ namespace SignalsLink.src.signals.managedchute.transporting
             if (movedTotal <= 0) return TransferOperationResult.None;
             return new TransferOperationResult(movedTotal, movedTotal, false);
         }
+
+        #region Layered blocks (charcoal)
+
+        /// <summary>
+        /// Takes charcoal — or anything else built as a layered block — off the top of the column
+        /// standing on the source position.
+        ///
+        /// A layered block is not a pile and needs its own path: charcoalpile has no block entity
+        /// and no inventory at all, only a variant group counting its layers
+        /// (<c>attributes.layerGroupCode</c>), which is why neither the ground-storage nor the
+        /// item-entity route can see it. A layer is the unit that can be removed, so <c>amount N</c>
+        /// — which counts PIECES — is converted into whole layers here, and a layer is never broken
+        /// apart: it is taken whole or left alone, so nothing is lost when the target runs out of
+        /// room halfway through one.
+        /// </summary>
+        private TransferOperationResult TryTakeFromLayeredBlock()
+        {
+            List<BlockPos> column = GetLayeredColumnTopDown(out Block block, out string layerGroup);
+            if (column.Count == 0) return TransferOperationResult.None;
+
+            ItemStack layerStack = GetLayerDrop(block);
+            if (layerStack?.Collectible == null || layerStack.StackSize <= 0) return TransferOperationResult.None;
+
+            if (!TryGetMatchedDirectives(layerStack, out PaperConditionDirectives directives)) return TransferOperationResult.None;
+            if (!directives.Evaluate(BuildDirectiveContext())) return TransferOperationResult.None;
+
+            int perLayer = layerStack.StackSize;
+            int requested = perLayer; // no directive: one layer per attempt, so it drains gradually
+
+            if (directives.Amount.HasValue)
+            {
+                requested = (int)decimal.Truncate(directives.Amount.Value);
+                if (requested < 1) requested = 1;
+
+                // Atomic on the source, like the ground-storage column: the whole batch or nothing.
+                int available = 0;
+                foreach (BlockPos p in column) available += GetLayerCount(api.World.BlockAccessor.GetBlock(p), layerGroup) * perLayer;
+                if (available < requested) return TransferOperationResult.None;
+            }
+
+            byte targetSignal = directives.TargetSlot ?? targetSlotSignal;
+            int movedTotal = 0;
+
+            foreach (BlockPos pos in column)
+            {
+                while (movedTotal < requested)
+                {
+                    Block cur = api.World.BlockAccessor.GetBlock(pos);
+                    int layers = GetLayerCount(cur, layerGroup);
+                    if (layers <= 0) break;
+
+                    if (RoomFor(layerStack, targetSignal) < perLayer) return LayerResult(movedTotal);
+
+                    int moved = TryPutIntoInventory(layerStack, targetSignal, perLayer);
+                    if (moved <= 0) return LayerResult(movedTotal);
+
+                    movedTotal += moved;
+                    RemoveOneLayer(pos, cur, layers, layerGroup);
+                }
+
+                if (movedTotal >= requested) break;
+            }
+
+            return LayerResult(movedTotal);
+        }
+
+        private static TransferOperationResult LayerResult(int movedTotal)
+        {
+            return movedTotal > 0 ? new TransferOperationResult(movedTotal, movedTotal, false) : TransferOperationResult.None;
+        }
+
+        /// <summary>
+        /// The contiguous column of one and the same layered block standing on the source position,
+        /// topmost first — a stack is taken from the top. <paramref name="block"/> is the bottom
+        /// one, which is what the drops and the layer group are read from.
+        /// </summary>
+        private List<BlockPos> GetLayeredColumnTopDown(out Block block, out string layerGroup)
+        {
+            block = null;
+            layerGroup = null;
+
+            IBlockAccessor ba = api.World.BlockAccessor;
+            List<BlockPos> column = new List<BlockPos>();
+
+            for (int dy = 0; dy < 64; dy++)
+            {
+                BlockPos pos = sourcePos.AddCopy(0, dy, 0);
+                Block cur = ba.GetBlock(pos);
+                string group = cur?.Attributes?["layerGroupCode"].AsString(null);
+                if (group == null) break;
+
+                if (block == null)
+                {
+                    block = cur;
+                    layerGroup = group;
+                }
+                else if (cur.FirstCodePart() != block.FirstCodePart())
+                {
+                    break; // a different material ends the column; one batch never mixes items
+                }
+
+                column.Add(pos);
+            }
+
+            column.Reverse();
+            return column;
+        }
+
+        private static int GetLayerCount(Block block, string layerGroup)
+        {
+            string value = block?.Variant?[layerGroup];
+            return value != null && int.TryParse(value, out int layers) ? layers : 0;
+        }
+
+        /// <summary>
+        /// What one layer is worth. The JSON drops of a layered block describe a single layer — the
+        /// game multiplies them by the layer count when the whole block is broken — so one entry
+        /// taken as-is is exactly one layer of yield.
+        /// </summary>
+        private static ItemStack GetLayerDrop(Block block)
+        {
+            BlockDropItemStack[] drops = block?.Drops;
+            if (drops == null || drops.Length == 0) return null;
+
+            return drops[0].GetNextItemStack();
+        }
+
+        /// <summary>
+        /// Peels one layer off, or removes the block once its last layer is gone. SetBlock notifies
+        /// the neighbours, so anything resting on top (charcoal carries UnstableFalling) collapses
+        /// down by itself — which is what keeps a column feeding the endpoint below it.
+        /// </summary>
+        private void RemoveOneLayer(BlockPos pos, Block block, int layers, string layerGroup)
+        {
+            IBlockAccessor ba = api.World.BlockAccessor;
+
+            if (layers <= 1)
+            {
+                ba.SetBlock(0, pos);
+                ba.MarkBlockDirty(pos);
+                return;
+            }
+
+            Block thinner = api.World.GetBlock(block.CodeWithVariant(layerGroup, (layers - 1).ToString()));
+            if (thinner == null) return;
+
+            ba.SetBlock(thinner.BlockId, pos);
+            ba.MarkBlockDirty(pos);
+        }
+
+        /// <summary>
+        /// How many pieces the target could still take. Asked BEFORE a layer is removed, because a
+        /// layer cannot be put back once it is gone.
+        /// </summary>
+        private int RoomFor(ItemStack stack, byte effectiveTargetSlotSignal)
+        {
+            if (effectiveTargetSlotSignal > 0)
+            {
+                int index = effectiveTargetSlotSignal - 1;
+                if (index < 0 || index >= targetInv.Count) return 0;
+                return RoomInSlot(targetInv[index], stack);
+            }
+
+            int room = 0;
+            for (int i = 0; i < targetInv.Count; i++) room += RoomInSlot(targetInv[i], stack);
+            return room;
+        }
+
+        private int RoomInSlot(ItemSlot slot, ItemStack stack)
+        {
+            if (slot == null || stack?.Collectible == null) return 0;
+            if (!slot.CanHold(new DummySlot(stack))) return 0;
+            if (slot.Empty) return stack.Collectible.MaxStackSize;
+            if (!slot.Itemstack.Equals(api.World, stack, GlobalConstants.IgnoredStackAttributes)) return 0;
+
+            return System.Math.Max(0, slot.Itemstack.Collectible.MaxStackSize - slot.StackSize);
+        }
+
+        #endregion
 
         /// <summary>The contiguous ground-storage column standing on the source position, topmost
         /// pile first - items are taken off the top of a stack.</summary>
