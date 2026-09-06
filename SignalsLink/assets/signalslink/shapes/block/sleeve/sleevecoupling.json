@@ -10,7 +10,8 @@
 		"copper1": [16,16],
 		"oak-dark": [16,16],
 		"tech-powergenerator": [16,16],
-		"normal3": [16,16]
+		"normal3": [16,16],
+		"col51": [16,16]
 	},
 	"textures": {
 		"copper1": "block/copper1",

@@ -148,6 +148,31 @@ public class PaperConditionsEvaluator
         return compiled.RunFirst(stack, ctx, execute);
     }
 
+    /// <summary>
+    /// Walks blocks top-down with the selection predicate (see
+    /// <see cref="CompiledConditions.RunFirstMatching"/>) and stops at the first one whose action
+    /// actually did work.
+    /// </summary>
+    public bool RunFirstMatching(ItemStack stack, IDictionary<string, object> ctx, System.Func<PaperConditionMatchResult, bool> execute)
+    {
+        if (string.IsNullOrWhiteSpace(conditionsText))
+        {
+            errors.Clear();
+            compiled = null;
+            lastParsedText = null;
+            return false;
+        }
+
+        if (compiled == null || !string.Equals(lastParsedText, conditionsText, StringComparison.Ordinal))
+        {
+            ParseInternal(conditionsText);
+        }
+
+        if (compiled == null) return false;
+
+        return compiled.RunFirstMatching(stack, ctx, execute);
+    }
+
     public IReadOnlyList<IConditionAction> GetMatchingActions(ItemStack stack, IDictionary<string, object> ctx)
     {
         if (string.IsNullOrWhiteSpace(conditionsText))

@@ -19,11 +19,21 @@ namespace SignalsLink.src.signals.link
 
         public bool handleDrop;
 
+        /// <summary>
+        /// Treat a floor placement as a mount on the vertical face of the air block away from the
+        /// player, instead of a mount on the floor itself. The damper wants this: it makes a
+        /// damper on the ground the very same block as one on a wall — same variant, same
+        /// rotation, same cargo block — rather than a floor case with its own rotation rules.
+        /// The valve does not: for it, side=down is the drain, which really does sit on the floor.
+        /// </summary>
+        public bool floorAsWall;
+
         public BlockBehaviorLinkCover(Block block) : base(block) { }
 
         public override void Initialize(JsonObject properties)
         {
             handleDrop = properties["handleDrop"].AsBool(true);
+            floorAsWall = properties["floorAsWall"].AsBool(false);
             base.Initialize(properties);
         }
 
@@ -78,17 +88,24 @@ namespace SignalsLink.src.signals.link
 
         public Block GetOrientedBlock(IWorldAccessor world, IPlayer byPlayer, BlockSelection blockSel)
         {
-            // side = the face the valve mounts against (the host sits there).
+            // side = the face the block mounts against (the host sits there).
             BlockFacing side = blockSel.Face.Opposite;
 
             string orientation;
-            if (side == BlockFacing.DOWN)
+            if (side == BlockFacing.DOWN && floorAsWall)
+            {
+                // Standing on the floor is just a mount on the vertical face of the air block on the
+                // far side from the player: same variant as any wall mount, so no floor-specific
+                // rotation or cargo rule is needed anywhere. Physical support is still checked
+                // against the floor in CanPlaceBlock.
+                side = HorizontalFacing(byPlayer, blockSel);
+                orientation = "up";
+            }
+            else if (side == BlockFacing.DOWN)
             {
                 // Floor drain (výlevka): orient by the player's horizontal look direction, so it can
                 // be turned to pour into any of the four neighbouring blocks.
-                BlockFacing[] hv = Block.SuggestedHVOrientation(byPlayer, blockSel);
-                BlockFacing dir = hv != null && hv.Length > 0 && hv[0] != null ? hv[0] : BlockFacing.NORTH;
-                orientation = dir.Code;
+                orientation = HorizontalFacing(byPlayer, blockSel).Code;
             }
             else
             {
@@ -99,6 +116,13 @@ namespace SignalsLink.src.signals.link
             AssetLocation oBlock = block.CodeWithVariants(
                 new Dictionary<string, string> { { orientationCode, orientation }, { sideCode, side.Code } });
             return world.BlockAccessor.GetBlock(oBlock);
+        }
+
+        /// <summary>The horizontal direction the player is looking, i.e. away from them.</summary>
+        private static BlockFacing HorizontalFacing(IPlayer byPlayer, BlockSelection blockSel)
+        {
+            BlockFacing[] hv = Block.SuggestedHVOrientation(byPlayer, blockSel);
+            return hv != null && hv.Length > 0 && hv[0] != null ? hv[0] : BlockFacing.NORTH;
         }
     }
 }

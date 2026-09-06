@@ -49,6 +49,9 @@ namespace SignalsLink.src.signals.link
 
         public LinkNetworkData data = new LinkNetworkData();
 
+        // Watches placed sleeves for blocks growing into them (server side only).
+        LinkObstructionMonitor obstructionMonitor;
+
         ICoreAPI api;
         ICoreServerAPI sapi;
         ICoreClientAPI capi;
@@ -98,6 +101,8 @@ namespace SignalsLink.src.signals.link
 
             linkItems[LinkKind.Hose] = api.World.GetItem(new AssetLocation(HoseItemCode));
             linkItems[LinkKind.Sleeve] = api.World.GetItem(new AssetLocation(SleeveItemCode));
+
+            obstructionMonitor = new LinkObstructionMonitor(api, this);
         }
 
         private void OnBlockTexturesLoaded()
@@ -190,11 +195,19 @@ namespace SignalsLink.src.signals.link
             list.Add(con);
         }
 
+        /// <summary>
+        /// Bumped by every graph mutation and by every replacement of <c>data</c>. Consumers that
+        /// cache something derived from the graph (the obstruction monitor's occupancy map) compare
+        /// against it; a plain connection count would miss a remove plus an add in the same tick.
+        /// </summary>
+        public int DataVersion { get; private set; }
+
         /// <summary>Drops the anchor index; the next query rebuilds it.</summary>
         private void InvalidateIndex()
         {
             connectionIndex = null;
             indexedCount = -1;
+            DataVersion++;
         }
 
         /// <summary>Returns connections from the given anchor, oriented so that pos1 == the given position.</summary>
@@ -306,7 +319,7 @@ namespace SignalsLink.src.signals.link
 
         #region Mutations (server-authoritative)
 
-        public enum AddResult { Added, Duplicate, SameAnchor, SameBlock, AnchorOccupied, TooLong, KindMismatch }
+        public enum AddResult { Added, Duplicate, SameAnchor, SameBlock, AnchorOccupied, TooLong, KindMismatch, Blocked }
 
         /// <summary>Kind accepted by the anchor at this position, or -1 if there is no anchor there.</summary>
         private int GetAcceptedKind(NodePos pos)
@@ -347,6 +360,13 @@ namespace SignalsLink.src.signals.link
             if (GetSegmentLength(connection) > MaxLinkLength)
                 return AddResult.TooLong;
 
+            // A sleeve must not pass through blocks. Unknown (an unloaded chunk on the path) is
+            // refused too: at placement time the player is standing right there, so it means
+            // something is off rather than "probably fine".
+            if (connection.kind == LinkKind.Sleeve
+                && LinkPathChecker.Check(api.World, connection, out BlockPos _) != LinkPathResult.Clear)
+                return AddResult.Blocked;
+
             bool added = data.connections.Add(connection);
             if (!added) return AddResult.Duplicate;
 
@@ -382,6 +402,23 @@ namespace SignalsLink.src.signals.link
 
             Item item = ItemForKind(kind);
             if (item != null) byEntity.TryGiveItemStack(new ItemStack(item));
+        }
+
+        /// <summary>
+        /// Removes one segment because a block now stands in its way, dropping its item at the
+        /// obstruction. Only that one article falls: the rest of the run, through its couplings,
+        /// stays hung and simply leads nowhere until the player re-hangs this piece.
+        /// </summary>
+        public void BreakLinkAt(LinkConnection con, BlockPos dropPos)
+        {
+            if (api.Side == EnumAppSide.Client || con == null) return;
+            if (!data.connections.Remove(con)) return;
+
+            InvalidateIndex();
+            serverChannel?.BroadcastPacket(data);
+
+            Item item = ItemForKind(con.kind);
+            if (item != null) api.World.SpawnItemEntity(new ItemStack(item), dropPos ?? con.pos1.blockPos);
         }
 
         /// <summary>Removes every connection touching the given block (e.g. when it is destroyed).</summary>

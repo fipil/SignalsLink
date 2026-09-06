@@ -5,7 +5,6 @@ using Vintagestory.API.Common;
 using Vintagestory.API.Config;
 using Vintagestory.API.MathTools;
 using signals.src.signalNetwork;
-using SignalsLink.src.signals.hose;
 
 namespace SignalsLink.src.signals.link
 {
@@ -36,6 +35,7 @@ namespace SignalsLink.src.signals.link
             public Vec3f p1ExitDir;  // outward valve axis at anchor 1, if it is a valve
             public Vec3f p2ExitDir;  // outward valve axis at anchor 2, if it is a valve
             public Vec3f swayDir;    // unit horizontal direction along the line axis
+            public LinkProfile profile;
             public MeshRef meshRef;
             public float wobbleT = -1f; // < 0 = at rest
         }
@@ -48,8 +48,8 @@ namespace SignalsLink.src.signals.link
         readonly List<LinkRender> wobblers = new List<LinkRender>();
         bool dirty = true;
 
-        int textureId = -1;
-        readonly AssetLocation linkTexName = new AssetLocation("signalslink:block/leather.png");
+        // One texture per kind, bound once per group when rendering.
+        readonly int[] textureIds = new int[LinkKind.Count];
         readonly Matrixf ModelMat = new Matrixf();
 
         public HangingLinksRenderer(ICoreClientAPI capi, LinkNetworkMod mod)
@@ -129,7 +129,8 @@ namespace SignalsLink.src.signals.link
 
                 Vec3f p1ExitDir = GetAnchorExitDirection(a1, con.pos1);
                 Vec3f p2ExitDir = GetAnchorExitDirection(a2, con.pos2);
-                MeshData m = LinkMesh.MakeLinkMesh(new Vec3f(0, 0, 0), p2local, p1ExitDir, p2ExitDir);
+                LinkProfile profile = LinkProfile.For(con.kind);
+                MeshData m = LinkMesh.MakeLinkMesh(new Vec3f(0, 0, 0), p2local, p1ExitDir, p2ExitDir, profile);
                 m.SetMode(EnumDrawMode.Triangles);
 
                 links[con] = new LinkRender
@@ -140,6 +141,7 @@ namespace SignalsLink.src.signals.link
                     p1ExitDir = p1ExitDir,
                     p2ExitDir = p2ExitDir,
                     swayDir = swayDir,
+                    profile = profile,
                     meshRef = capi.Render.UploadMesh(m)
                 };
             }
@@ -147,13 +149,13 @@ namespace SignalsLink.src.signals.link
 
         private static Vec3f GetAnchorExitDirection(ILinkAnchor owner, NodePos anchor)
         {
-            if (owner is BlockHoseValve valve)
+            if (owner is BlockLinkEndpointBase endpoint)
             {
-                string sideCode = valve.Variant?["side"];
+                string sideCode = endpoint.Variant?["side"];
                 BlockFacing hostFace = sideCode != null ? BlockFacing.FromCode(sideCode) : null;
                 if (hostFace == BlockFacing.DOWN)
                 {
-                    string orientationCode = valve.Variant?["orientation"];
+                    string orientationCode = endpoint.Variant?["orientation"];
                     BlockFacing orientation = orientationCode != null ? BlockFacing.FromCode(orientationCode) : null;
                     if (orientation != null)
                     {
@@ -183,7 +185,7 @@ namespace SignalsLink.src.signals.link
 
         void UpdateLinkMesh(LinkRender h, float swayAmount)
         {
-            MeshData m = LinkMesh.MakeLinkMesh(new Vec3f(0, 0, 0), h.p2local, h.p1ExitDir, h.p2ExitDir, h.swayDir, swayAmount);
+            MeshData m = LinkMesh.MakeLinkMesh(new Vec3f(0, 0, 0), h.p2local, h.p1ExitDir, h.p2ExitDir, h.swayDir, swayAmount, h.profile);
             m.SetMode(EnumDrawMode.Triangles);
             capi.Render.UpdateMesh(h.meshRef, m);
         }
@@ -221,24 +223,36 @@ namespace SignalsLink.src.signals.link
             IStandardShaderProgram prog = rpi.PreparedStandardShader(0, 0, 0);
             prog.Use();
 
-            if (textureId < 0) textureId = capi.Render.GetOrLoadTexture(linkTexName);
-            rpi.BindTexture2d(textureId);
-
             prog.ProjectionMatrix = rpi.CurrentProjectionMatrix;
             prog.ViewMatrix = rpi.CameraMatrixOriginf;
 
             float maxRenderDistance = RenderRange + chunksize;
             float maxRenderDistanceSq = maxRenderDistance * maxRenderDistance;
 
-            foreach (LinkRender h in links.Values)
+            // Grouped by kind: each texture is bound once per frame rather than per line.
+            for (byte kind = 0; kind < LinkKind.Count; kind++)
             {
-                double cx = h.origin.X - camPos.X;
-                double cy = h.origin.Y - camPos.Y;
-                double cz = h.origin.Z - camPos.Z;
-                if (cx * cx + cy * cy + cz * cz > maxRenderDistanceSq) continue;
+                bool bound = false;
 
-                prog.ModelMatrix = ModelMat.Identity().Translate(cx, cy, cz).Values;
-                rpi.RenderMesh(h.meshRef);
+                foreach (LinkRender h in links.Values)
+                {
+                    if (h.con.kind != kind) continue;
+
+                    double cx = h.origin.X - camPos.X;
+                    double cy = h.origin.Y - camPos.Y;
+                    double cz = h.origin.Z - camPos.Z;
+                    if (cx * cx + cy * cy + cz * cz > maxRenderDistanceSq) continue;
+
+                    if (!bound)
+                    {
+                        if (textureIds[kind] <= 0) textureIds[kind] = capi.Render.GetOrLoadTexture(LinkProfile.For(kind).Texture);
+                        rpi.BindTexture2d(textureIds[kind]);
+                        bound = true;
+                    }
+
+                    prog.ModelMatrix = ModelMat.Identity().Translate(cx, cy, cz).Values;
+                    rpi.RenderMesh(h.meshRef);
+                }
             }
 
             prog.Stop();

@@ -53,9 +53,14 @@ Každý blok má právě jednu akci:
 |---|---|---|---|
 | ManagedChute | přenos předmětů | — (nemá výstupní pin) | ✅ |
 | ManagedHose (ventil) | přenos kapalin | ✅ | ✅ |
+| ManagedSleeve (klapka) | přenos předmětů | ✅ | ✅ |
 | Senzory | výstup signálu | ✅ (to je jeho výstup) | — |
 
-Explicitní akci musí daná třída podporovat: `output` má smysl jen tam, kde je výstupní pin (ManagedHose, senzory — **ne** ManagedChute); `do seal` jen tam, kde se pracuje se sudem (ManagedChute, ManagedHose — **ne** senzory).
+Explicitní akci musí daná třída podporovat: `output` má smysl jen tam, kde je výstupní pin (ManagedHose, senzory — **ne** ManagedChute); `do seal` jen tam, kde se pracuje se sudem (ManagedChute, ManagedHose, ManagedSleeve — **ne** senzory).
+
+`output` na klapce se chová stejně jako na ventilu: blok s `output X` nic nepřenáší a je platný jen tehdy, když pin opravdu změní. Pokud už pin hodnotu X má, blok nic neudělá a vyhodnocení propadne na další blok — takže `output 0` může sedět nad plnicími bloky jako reset. ManagedChute `output` nepodporuje, protože nemá výstupní pin (všechny tři její kotvy jsou vstupy).
+
+Klapka nemá piny Zdroj a Cíl, takže na ní **nejsou dostupné signálové režimy 1–14 pro výběr slotu ani režimy Cíle „polož blok / polož nádobu na zem"**. Výběr slotů se dělá direktivami `source N` / `target N` a režim na zem výhradně direktivou `target ground`.
 
 ### Fyzická platnost bloku
 

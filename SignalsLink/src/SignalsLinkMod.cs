@@ -33,7 +33,7 @@ namespace SignalsLink.src
             api.RegisterBlockBehaviorClass("BlockBehaviorPaperConditions", typeof(BlockBehaviorPaperConditions));
             api.RegisterBlockBehaviorClass("BlockBehaviorLinkCover", typeof(SignalsLink.src.signals.link.BlockBehaviorLinkCover));
             api.RegisterCollectibleBehaviorClass("LinkCutterBehavior", typeof(SignalsLink.src.signals.link.LinkCutterBehavior));
-            api.RegisterCollectibleBehaviorClass("WrenchBufferClear", typeof(SignalsLink.src.signals.WrenchBufferClearBehavior));
+            api.RegisterCollectibleBehaviorClass("WrenchActions", typeof(SignalsLink.src.signals.WrenchActionsBehavior));
 
             api.RegisterBlockClass("BlockSensor", typeof(BlockSensor));
             api.RegisterBlockClass("EntitySensor", typeof(EntitySensor));
@@ -45,6 +45,11 @@ namespace SignalsLink.src
             api.RegisterBlockClass("HoseCoupling", typeof(BlockHoseCoupling));
             api.RegisterBlockClass("HoseIntake", typeof(BlockHoseIntake));
 
+            // ManagedSleeve - rukav (predmety a bloky)
+            api.RegisterBlockClass("SleeveDamper", typeof(SignalsLink.src.signals.sleeve.BlockSleeveDamper));
+            api.RegisterBlockClass("SleeveCoupling", typeof(SignalsLink.src.signals.sleeve.BlockSleeveCoupling));
+
+            api.RegisterBlockEntityClass("BlockEntitySleeveDamper", typeof(SignalsLink.src.signals.sleeve.BlockEntitySleeveDamper));
             api.RegisterBlockEntityClass("BlockEntityHoseValve", typeof(BlockEntityHoseValve));
             api.RegisterBlockEntityClass("BlockEntityBlockSensor", typeof(BEBlockSensor));
             api.RegisterBlockEntityClass("BlockEntityEntitySensor", typeof(BEEntitySensor));

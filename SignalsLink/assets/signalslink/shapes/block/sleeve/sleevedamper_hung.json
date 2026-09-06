@@ -9,7 +9,8 @@
 	"textureSizes": {
 		"copper1": [16,16],
 		"oak-dark": [16,16],
-		"tech-powergenerator": [16,16]
+		"tech-powergenerator": [16,16],
+		"col51": [16,16]
 	},
 	"textures": {
 		"aged-ceramic2": "block/aged-ceramic2",

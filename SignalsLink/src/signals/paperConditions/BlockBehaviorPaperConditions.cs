@@ -88,6 +88,12 @@ namespace SignalsLink.src.signals.paperConditions
             // 2) Other item + Ctrl = export attributes into ConditionsText
             if (control)
             {
+                // ...except a wrench: there Ctrl means "cycle this block's mode" (see
+                // WrenchActionsBehavior), and overwriting the conditions instead would be both
+                // surprising and destructive. Asking for the behavior rather than for an item code
+                // keeps every wrench material covered, and anything else we patch it onto later.
+                if (stack.Collectible?.GetBehavior<WrenchActionsBehavior>() != null) return false;
+
                 string text = ItemConditionContextUtil.BuildHintText(world, stack);
                 if (string.IsNullOrWhiteSpace(text)) return false;
 

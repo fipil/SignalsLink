@@ -20,7 +20,7 @@ namespace SignalsLink.src.signals.hose
     /// tick, like the BlockSensor). Index 2 = hose anchor (handled by the block, not the BE).
     /// Liquid transfer, host detection and shape swap are added in step 5+.
     /// </summary>
-    public class BlockEntityHoseValve : BlockEntity, IBESignalReceptor, IPaperConditionsHost, ISignalBuffer
+    public class BlockEntityHoseValve : BlockEntity, IBESignalReceptor, IPaperConditionsHost, ISignalBuffer, ILinkMountHost
     {
         public const int INPUT = 0;
         public const int OUTPUT = 1;

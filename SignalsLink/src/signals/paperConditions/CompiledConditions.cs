@@ -84,6 +84,27 @@ namespace SignalsLink.src.signals.paperConditions
             return false;
         }
 
+        /// <summary>
+        /// The same top-down walk as <see cref="RunFirst"/>, but with the <b>selection</b> predicate
+        /// (<see cref="ConditionBlock.TryMatch"/>): a block also has to have a source-scoped
+        /// condition and its directives have to hold. That is what makes a chain of
+        /// <c>target N ifEmpty</c> blocks work — once a block's target slot fills up the block stops
+        /// matching and the walk carries on to the next one.
+        ///
+        /// Used where an item transfer needs both that behaviour and the chance to handle an
+        /// <c>output</c> block, which <see cref="TryMatch(ItemStack, IDictionary{string, object}, out PaperConditionMatchResult)"/>
+        /// cannot give at once because it stops at the first match.
+        /// </summary>
+        public bool RunFirstMatching(ItemStack stack, IDictionary<string, object> ctx, System.Func<PaperConditionMatchResult, bool> execute)
+        {
+            for (int i = 0; i < blocks.Count; i++)
+            {
+                if (!blocks[i].TryMatch(stack, ctx)) continue;
+                if (execute(blocks[i].CreateMatchResult())) return true;
+            }
+            return false;
+        }
+
         public IReadOnlyList<IConditionAction> GetMatchingActions(ItemStack stack, IDictionary<string, object> ctx)
         {
             List<IConditionAction> actions = null;

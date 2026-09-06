@@ -14,8 +14,8 @@ namespace SignalsLink.src.signals.link
     /// <b>authoritative validation (kind, length, anchor occupancy) runs server-side</b> in
     /// <c>LinkNetworkMod.TryToAddConnection</c>.
     ///
-    /// The ingame error messages are still hose-worded: their lang keys are translated into ten
-    /// languages, so the sleeve gets its own keys when it gets its own wording.
+    /// The ingame error messages come in one set per kind (ingameerror-hose-* / -sleeve-*), so a
+    /// sleeve never complains about a hose.
     /// </summary>
     public class PlacingLinksMod : ModSystem
     {
@@ -78,7 +78,7 @@ namespace SignalsLink.src.signals.link
             // even starting a second link on an occupied anchor. Client data is synced.
             if (linkMod != null && !anchor.AllowsMultipleLinks(pos) && linkMod.IsAnchorOccupied(pos))
             {
-                capi?.TriggerIngameError(this, "hoseoccupied", Lang.Get("signalslink:ingameerror-hose-anchor-occupied"));
+                capi?.TriggerIngameError(this, "linkoccupied", Lang.Get(ErrorKey(kind, "anchor-occupied")));
                 return false;
             }
 
@@ -87,7 +87,7 @@ namespace SignalsLink.src.signals.link
                 pendingNode = pos;
                 Vec3f offset = anchor.GetLinkAnchorPosInBlock(pos);
                 pendingRenderer?.Dispose();
-                pendingRenderer = new PendingLinkRenderer(capi, this, pos.blockPos, offset);
+                pendingRenderer = new PendingLinkRenderer(capi, this, pos.blockPos, offset, (byte)kind);
                 capi?.Logger.Debug("Link pending {0}:{1}", pos.blockPos, pos.index);
             }
             else
@@ -103,7 +103,7 @@ namespace SignalsLink.src.signals.link
                 // pending anchor so the player can still pick a different second anchor.
                 if (pendingNode.blockPos.Equals(pos.blockPos))
                 {
-                    capi?.TriggerIngameError(this, "hosesameblock", Lang.Get("signalslink:ingameerror-hose-same-block"));
+                    capi?.TriggerIngameError(this, "linksameblock", Lang.Get(ErrorKey(kind, "same-block")));
                     return false;
                 }
 
@@ -129,10 +129,15 @@ namespace SignalsLink.src.signals.link
             {
                 UseLink(fromPlayer, connection.kind, true);
             }
+            else if (result == LinkNetworkMod.AddResult.Blocked)
+            {
+                ((ICoreServerAPI)api).SendIngameError(fromPlayer, "linkblocked",
+                    Lang.Get("signalslink:ingameerror-sleeve-blocked"));
+            }
             else if (result == LinkNetworkMod.AddResult.TooLong)
             {
-                ((ICoreServerAPI)api).SendIngameError(fromPlayer, "hosetoolong",
-                    Lang.Get("signalslink:ingameerror-hose-too-long", LinkNetworkMod.MaxLinkLength));
+                ((ICoreServerAPI)api).SendIngameError(fromPlayer, "linktoolong",
+                    Lang.Get(ErrorKey(connection.kind, "too-long"), LinkNetworkMod.MaxLinkLength));
             }
             // Other outcomes do not consume the line item.
         }
@@ -143,6 +148,12 @@ namespace SignalsLink.src.signals.link
             ILinkAnchor anchor = api.World.BlockAccessor.GetBlock(pos.blockPos) as ILinkAnchor;
             if (anchor == null) return false;
             return anchor.CanAttachLink(api.World, pos);
+        }
+
+        /// <summary>Ingame error key for the given kind, so a sleeve never complains about a hose.</summary>
+        private static string ErrorKey(int kind, string suffix)
+        {
+            return "signalslink:ingameerror-" + (kind == LinkKind.Sleeve ? "sleeve" : "hose") + "-" + suffix;
         }
 
         /// <summary>Kind of line the player holds in the right hand, or -1 if it is not a line.</summary>

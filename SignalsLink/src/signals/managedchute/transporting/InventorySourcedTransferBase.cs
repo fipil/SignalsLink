@@ -26,6 +26,12 @@ namespace SignalsLink.src.signals.managedchute.transporting
             this.conditionsEvaluator = conditionsEvaluator;
         }
 
+        /// <summary>
+        /// The host's Output pin, when it has one. Null for the ManagedChute, which has none — and
+        /// with it null this class resolves conditions exactly as it always did.
+        /// </summary>
+        public IConditionOutputSink OutputSink { get; set; }
+
         public virtual bool UsesAmountAsTriggerOnly => false;
 
         protected virtual bool AllowsLiquidContainers => false;
@@ -118,11 +124,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
             ctx["inventory"] = sourceInv;
             AddConditionContext(ctx);
 
-            if (conditionsEvaluator.HasConditions)
-            {
-                return conditionsEvaluator.Evaluate(stack, ctx, out byte blockIndex, out directives);
-            }
-            return true;
+            return ConditionResolution.ResolveDirectives(conditionsEvaluator, OutputSink, stack, ctx, out directives);
         }
 
         protected virtual void AddConditionContext(IDictionary<string, object> ctx)

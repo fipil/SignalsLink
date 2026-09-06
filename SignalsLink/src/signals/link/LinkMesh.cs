@@ -8,18 +8,14 @@ namespace SignalsLink.src.signals.link
 {
     /// <summary>
     /// Builds the sagging catenary mesh of a link between two anchor points. Mirror of the
-    /// Signals <c>WireMesh</c>, but thicker and with a deeper sag (leather hose look). The sleeve
-    /// will need its own thickness/sag profile; today the constants below are hose-only.
+    /// Signals <c>WireMesh</c>, but thicker and with a deeper sag. Thickness, sag and texture come
+    /// from the <see cref="LinkProfile"/> of the line's kind, so a hose and a sleeve share the
+    /// geometry code but not their look.
     /// </summary>
     static class LinkMesh
     {
-        // Thicker than a wire (wire uses 0.015).
-        const float Thickness = 0.04f;
-        // Smaller catenary "a" => deeper sag (wire uses 2.0).
-        const float CatenaryA = 0.5f;
-
         // https://en.wikipedia.org/wiki/Catenary
-        static float Catenary(float x, float d = 1, float a = CatenaryA)
+        static float Catenary(float x, float d, float a)
         {
             return a * ((float)Math.Cosh((x - (d / 2)) / a) - (float)Math.Cosh((d / 2) / a));
         }
@@ -34,10 +30,11 @@ namespace SignalsLink.src.signals.link
             return rtn;
         }
 
-        static public MeshData MakeLinkMesh(Vec3f pos1, Vec3f pos2) => MakeLinkMesh(pos1, pos2, null, null, null, 0f);
+        static public MeshData MakeLinkMesh(Vec3f pos1, Vec3f pos2, LinkProfile profile)
+            => MakeLinkMesh(pos1, pos2, null, null, null, 0f, profile);
 
-        static public MeshData MakeLinkMesh(Vec3f pos1, Vec3f pos2, Vec3f p1ExitDir, Vec3f p2ExitDir)
-            => MakeLinkMesh(pos1, pos2, p1ExitDir, p2ExitDir, null, 0f);
+        static public MeshData MakeLinkMesh(Vec3f pos1, Vec3f pos2, Vec3f p1ExitDir, Vec3f p2ExitDir, LinkProfile profile)
+            => MakeLinkMesh(pos1, pos2, p1ExitDir, p2ExitDir, null, 0f, profile);
 
         /// <summary>
         /// Builds the hose mesh, optionally swaying the hanging part horizontally along
@@ -45,17 +42,18 @@ namespace SignalsLink.src.signals.link
         /// weighted by each sample's sag depth, so the anchored ends stay put and the lowest point
         /// swings the most — the "water pulsing through a garden hose" wobble.
         /// </summary>
-        static public MeshData MakeLinkMesh(Vec3f pos1, Vec3f pos2, Vec3f swayDir, float swayAmount)
-            => MakeLinkMesh(pos1, pos2, null, null, swayDir, swayAmount);
+        static public MeshData MakeLinkMesh(Vec3f pos1, Vec3f pos2, Vec3f swayDir, float swayAmount, LinkProfile profile)
+            => MakeLinkMesh(pos1, pos2, null, null, swayDir, swayAmount, profile);
 
         /// <summary>
         /// Builds a hanging hose with optional valve lead-ins. A lead-in leaves a valve along its
         /// mounting axis, then turns diagonally toward the hanging middle. Texture coordinates are
         /// based on distance travelled along the resulting path, rather than its end-to-end chord.
         /// </summary>
-        static public MeshData MakeLinkMesh(Vec3f pos1, Vec3f pos2, Vec3f p1ExitDir, Vec3f p2ExitDir, Vec3f swayDir, float swayAmount)
+        static public MeshData MakeLinkMesh(Vec3f pos1, Vec3f pos2, Vec3f p1ExitDir, Vec3f p2ExitDir, Vec3f swayDir, float swayAmount, LinkProfile profile)
         {
-            float t = Thickness;
+            float t = profile.Thickness;
+            float catenaryA = profile.CatenaryA;
             float dist = pos2.DistanceTo(pos1);
             Vec3f chord = dist > 1e-6f ? (pos2 - pos1) * (1f / dist) : new Vec3f(0, 0, 1);
 
@@ -116,7 +114,7 @@ namespace SignalsLink.src.signals.link
                 float y = dPos.Y / nSec * j;
                 float z = dPos.Z / nSec * j;
                 float l = (float)Math.Sqrt(x * x + y * y + z * z);
-                float dy = middleDist > 1e-6f ? Catenary(l / middleDist, 1, CatenaryA) : 0f;
+                float dy = middleDist > 1e-6f ? Catenary(l / middleDist, 1, catenaryA) : 0f;
                 dyArr.Add(dy);
                 if (dy < minDy) minDy = dy;
                 positions.Add(middleStart + new Vec3f(x, y + dy, z));
@@ -167,11 +165,12 @@ namespace SignalsLink.src.signals.link
                 b = GetCrossSectionAxis(direction, preferredB);
                 a = CrossProduct(direction, b * -1);
 
-                // 2× makes the texture tile twice as often along the length → half the lengthwise
-                // stretch (the leather pattern reads finer instead of being pulled long).
-                float u = pathLength[j] * 2f;
+                // Repeats per block comes from the profile: the across-the-line density is fixed
+                // by the thickness (a face is 2t wide and spans uv_v of the texture), so tying the
+                // lengthwise density to the thickness as well is what keeps the weave square.
+                float u = pathLength[j] * profile.TextureRepeatsPerBlock;
                 int color = 1;
-                float uv_v = 3f / 16;
+                float uv_v = profile.TextureVSpan;
 
                 // The leather texture has a horizontal seam across its middle. ONE side face
                 // (mesh_side) straddles that middle, so the seam runs lengthwise along the hose.

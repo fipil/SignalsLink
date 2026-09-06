@@ -265,6 +265,11 @@ namespace SignalsLink.src.signals.managedchute.transporting
             return TryGetMatchedDirectives(stack, out _);
         }
 
+        /// <summary>
+        /// The host's Output pin, when it has one. Null for the ManagedChute, which has none.
+        /// </summary>
+        public IConditionOutputSink OutputSink { get; set; }
+
         private bool TryGetMatchedDirectives(ItemStack stack, out PaperConditionDirectives directives, IInventory sourceInv = null)
         {
             directives = PaperConditionDirectives.Empty;
@@ -277,7 +282,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
                 ctx["sourceInventory"] = sourceInv;
                 ctx["inventory"] = sourceInv;
             }
-            return conditionsEvaluator.Evaluate(stack, ctx, out byte _, out directives);
+            return ConditionResolution.ResolveDirectives(conditionsEvaluator, OutputSink, stack, ctx, out directives);
         }
 
         private IDictionary<string, object> BuildDirectiveContext()

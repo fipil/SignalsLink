@@ -1,0 +1,268 @@
+{
+ "code": "sleevedamperroof",
+ "class": "SleeveDamper",
+ "entityclass": "BlockEntitySleeveDamper",
+ "behaviors": [
+  {
+   "name": "BlockBehaviorLinkCover",
+   "properties": {
+    "handleDrop": false
+   }
+  },
+  {
+   "name": "BlockBehaviorPaperConditions"
+  }
+ ],
+ "entityBehaviors": [
+  {
+   "name": "BEBehaviorSignalConnector",
+   "properties": {
+    "signalNodes": [
+     {
+      "index": 0,
+      "isSource": false
+     },
+     {
+      "index": 1,
+      "isSource": true,
+      "output": 0
+     }
+    ]
+   }
+  }
+ ],
+ "variantgroups": [
+  {
+   "code": "orientation",
+   "states": [
+    "north",
+    "east",
+    "south",
+    "west",
+    "up",
+    "down"
+   ]
+  },
+  {
+   "code": "side",
+   "states": [
+    "north",
+    "east",
+    "south",
+    "west",
+    "up",
+    "down"
+   ]
+  }
+ ],
+ "attributes": {
+  "item-checkrateMs": 200,
+  "sleeve-items-per-tick": 1,
+  "handbook": {
+   "extraSections": [
+    {
+     "title": "signalslink:block-handbooktitle-signalslink",
+     "text": "signalslink:block-handbooktext-sleevedamper"
+    }
+   ]
+  },
+  "signalNodes": [
+   {
+    "index": 0,
+    "name": "con-input",
+    "x1": 0.1875,
+    "y1": 0.375,
+    "z1": 0.8125,
+    "x2": 0.3125,
+    "y2": 0.5625,
+    "z2": 0.9375,
+    "rotateXbytype": {
+     "*-*-north": 90,
+     "*-*-south": 270,
+     "@*-up-(east|west)": 90,
+     "@*-down-(east|west)": 270,
+     "@*-south-(east|west)": 180
+    },
+    "rotateYbytype": {
+     "@*-east-(up|down|north|south)": 270,
+     "@*-south-(up|down)": 180,
+     "@*-west-(up|down|north|south)": 90,
+     "@*-(down-north|up-south)": 180
+    },
+    "rotateZbyType": {
+     "*-*-up": 180,
+     "*-*-east": 90,
+     "*-*-west": 270
+    }
+   },
+   {
+    "index": 1,
+    "name": "con-output",
+    "x1": 0.6875,
+    "y1": 0.375,
+    "z1": 0.8125,
+    "x2": 0.8125,
+    "y2": 0.5625,
+    "z2": 0.9375,
+    "rotateXbytype": {
+     "*-*-north": 90,
+     "*-*-south": 270,
+     "@*-up-(east|west)": 90,
+     "@*-down-(east|west)": 270,
+     "@*-south-(east|west)": 180
+    },
+    "rotateYbytype": {
+     "@*-east-(up|down|north|south)": 270,
+     "@*-south-(up|down)": 180,
+     "@*-west-(up|down|north|south)": 90,
+     "@*-(down-north|up-south)": 180
+    },
+    "rotateZbyType": {
+     "*-*-up": 180,
+     "*-*-east": 90,
+     "*-*-west": 270
+    }
+   }
+  ],
+  "linkNodes": [
+   {
+    "index": 2,
+    "name": "con-sleeve",
+    "x1": 0.3125,
+    "y1": 0.5,
+    "z1": 0.3125,
+    "x2": 0.6875,
+    "y2": 0.59375,
+    "z2": 0.6875,
+    "rotateXbytype": {
+     "*-*-north": 90,
+     "*-*-south": 270,
+     "@*-up-(east|west)": 90,
+     "@*-down-(east|west)": 270,
+     "@*-south-(east|west)": 180
+    },
+    "rotateYbytype": {
+     "@*-east-(up|down|north|south)": 270,
+     "@*-south-(up|down)": 180,
+     "@*-west-(up|down|north|south)": 90,
+     "@*-(down-north|up-south)": 180
+    },
+    "rotateZbyType": {
+     "*-*-up": 180,
+     "*-*-east": 90,
+     "*-*-west": 270
+    }
+   }
+  ]
+ },
+ "shape": {
+  "base": "block/sleeve/sleevedamper_roof",
+  "rotateXbytype": {
+   "*-*-north": 90,
+   "*-*-south": 270,
+   "@*-up-(east|west)": 90,
+   "@*-down-(east|west)": 270,
+   "@*-south-(east|west)": 180
+  },
+  "rotateYbytype": {
+   "@*-east-(up|down|north|south)": 270,
+   "@*-south-(up|down)": 180,
+   "@*-west-(up|down|north|south)": 90,
+   "@*-(down-north|up-south)": 180
+  },
+  "rotateZbyType": {
+   "*-*-up": 180,
+   "*-*-east": 90,
+   "*-*-west": 270
+  }
+ },
+ "shapeInventory": {
+  "base": "block/sleeve/sleevedamper_gui"
+ },
+ "guiTransform": {
+  "origin": {
+   "x": 0.5,
+   "y": 0.5,
+   "z": 0.5
+  },
+  "rotation": {
+   "x": -22.6,
+   "y": 135.0,
+   "z": 0.0
+  },
+  "scale": 1.6
+ },
+ "blockmaterial": "Metal",
+ "lightAbsorption": 0,
+ "drawtype": "json",
+ "replaceable": 500,
+ "resistance": 1.75,
+ "sidesolid": {
+  "all": false
+ },
+ "sideopaque": {
+  "all": false
+ },
+ "drops": [
+  {
+   "type": "block",
+   "code": "sleevedamper-north-down"
+  }
+ ],
+ "selectionBoxes": [
+  {
+    "x1": 0.0,
+    "y1": 0.0,
+    "z1": 0.0,
+    "x2": 1.0,
+    "y2": 0.375,
+    "z2": 1.0,
+    "rotateXbytype": {
+    "*-*-north": 90,
+    "*-*-south": 270,
+    "@*-up-(east|west)": 90,
+    "@*-down-(east|west)": 270,
+    "@*-south-(east|west)": 180
+   },
+   "rotateYbytype": {
+    "@*-east-(up|down|north|south)": 270,
+    "@*-south-(up|down)": 180,
+    "@*-west-(up|down|north|south)": 90,
+    "@*-(down-north|up-south)": 180
+   },
+   "rotateZbyType": {
+    "*-*-up": 180,
+    "*-*-east": 90,
+    "*-*-west": 270
+   }
+  }
+ ],
+ "collisionBoxes": [
+  {
+    "x1": 0.0,
+    "y1": 0.0,
+    "z1": 0.0,
+    "x2": 1.0,
+    "y2": 0.375,
+    "z2": 1.0,
+    "rotateXbytype": {
+    "*-*-north": 90,
+    "*-*-south": 270,
+    "@*-up-(east|west)": 90,
+    "@*-down-(east|west)": 270,
+    "@*-south-(east|west)": 180
+   },
+   "rotateYbytype": {
+    "@*-east-(up|down|north|south)": 270,
+    "@*-south-(up|down)": 180,
+    "@*-west-(up|down|north|south)": 90,
+    "@*-(down-north|up-south)": 180
+   },
+   "rotateZbyType": {
+    "*-*-up": 180,
+    "*-*-east": 90,
+    "*-*-west": 270
+   }
+  }
+ ]
+}

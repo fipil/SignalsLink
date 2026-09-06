@@ -7,7 +7,26 @@ namespace SignalsLink.src.signals.managedchute.transporting
     public static class ItemTransferFactory
     {
         // Zjednodu�en� API: vytvo� p�enos podle toho, co je na input/output pozici.
-        public static IItemTransfer CreateTransfer(ICoreAPI api, BlockPos inputPos, BlockPos outputPos, byte inputSlotSignal, byte outputSlotSignal, PaperConditionsEvaluator conditionsEvaluator)
+        /// <summary>
+        /// Builds the transfer for a pair of positions. <paramref name="outputSink"/> is the host's
+        /// Output pin; pass it only from a host that has one (the Damper), and paper conditions may
+        /// then drive it with <c>output N</c>. Left null — as the ManagedChute leaves it — condition
+        /// resolution stays exactly as it has always been.
+        /// </summary>
+        public static IItemTransfer CreateTransfer(ICoreAPI api, BlockPos inputPos, BlockPos outputPos, byte inputSlotSignal, byte outputSlotSignal, PaperConditionsEvaluator conditionsEvaluator, IConditionOutputSink outputSink = null)
+        {
+            IItemTransfer transfer = CreateCore(api, inputPos, outputPos, inputSlotSignal, outputSlotSignal, conditionsEvaluator);
+
+            switch (transfer)
+            {
+                case InventorySourcedTransferBase inventorySourced: inventorySourced.OutputSink = outputSink; break;
+                case WorldToInventoryTransfer worldSourced: worldSourced.OutputSink = outputSink; break;
+            }
+
+            return transfer;
+        }
+
+        private static IItemTransfer CreateCore(ICoreAPI api, BlockPos inputPos, BlockPos outputPos, byte inputSlotSignal, byte outputSlotSignal, PaperConditionsEvaluator conditionsEvaluator)
         {
             var blockAccess = api.World.BlockAccessor;
 
