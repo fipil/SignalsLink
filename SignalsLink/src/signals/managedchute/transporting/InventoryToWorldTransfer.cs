@@ -35,6 +35,12 @@ namespace SignalsLink.src.signals.managedchute.transporting
                 return FirepitConstruction.Matches(api.World.BlockAccessor.GetBlock(targetPos), slot?.Itemstack);
             }
 
+            // A column with nowhere left to put anything is not a valid target. Without this the
+            // block would keep winning the evaluation after the column filled up, and every block
+            // below it on the paper — an `output` that reports the column is full, say — would
+            // never be reached.
+            if (directives.TargetGround) return HasGroundRoom(slot, directives);
+
             // ManagedChute may place a filled bucket, but must never eject the liquid portions
             // stored in barrels and other liquid inventories.
             return !IsLiquidContainer(slot?.Itemstack) || slot.Itemstack.Block is BlockLiquidContainerBase;
@@ -42,9 +48,54 @@ namespace SignalsLink.src.signals.managedchute.transporting
 
         protected override void AddConditionContext(IDictionary<string, object> ctx)
         {
-            // No target inventory here - the target is the world - but block-state conditions
-            // (isBurning) still want to know which block is being aimed at.
-            if (targetPos != null) ctx["targetBlockPos"] = targetPos;
+            if (targetPos == null) return;
+
+            // Block-state conditions (isBurning) want to know which block is being aimed at.
+            ctx["targetBlockPos"] = targetPos;
+
+            // And the ground column standing there is offered as the target inventory, so the
+            // ordinary conditions work against it: `in target game:firewood 96` counts the WHOLE
+            // column, not the one pile the chute happens to point at. Same trick the anvil uses to
+            // expose its work item - a throw-away inventory, read-only as far as conditions go.
+            IInventory column = BuildGroundColumnInventory();
+            if (column != null) ctx["targetInventory"] = column;
+        }
+
+        // Rebuilt only when the number of piles changes; the stacks inside are the live ones, so a
+        // pile filling up is seen without rebuilding anything.
+        private InventoryGeneric groundColumnInventory;
+
+        private IInventory BuildGroundColumnInventory()
+        {
+            List<BlockEntityGroundStorage> piles = new List<BlockEntityGroundStorage>();
+            IBlockAccessor ba = api.World.BlockAccessor;
+
+            for (int dy = 0; dy < 64; dy++)
+            {
+                if (ba.GetBlockEntity(targetPos.AddCopy(0, dy, 0)) is not BlockEntityGroundStorage pile) break;
+                piles.Add(pile);
+            }
+
+            // No piles is not "no answer", it is "nothing there" - and the difference decides
+            // whether `in target game:firewood 95-` can fire. Handing back null makes every target
+            // condition fail, so an Output pin set while the column was full would stay stuck at
+            // that value once the column is gone (a charcoal pit turning the firewood into charcoal
+            // blocks does exactly that). An empty inventory reads as zero, which is the truth.
+            int slots = System.Math.Max(1, piles.Count);
+
+            if (groundColumnInventory == null || groundColumnInventory.Count != slots)
+            {
+                // NOTE: the inventory id MUST contain a dash - VS derives className/instanceId from
+                // it by splitting on '-', and an id without one throws IndexOutOfRangeException.
+                groundColumnInventory = new InventoryGeneric(slots, "signalslink-groundcolumn", api);
+            }
+
+            for (int i = 0; i < slots; i++)
+            {
+                groundColumnInventory[i].Itemstack = i < piles.Count ? piles[i].Inventory?[0]?.Itemstack : null;
+            }
+
+            return groundColumnInventory;
         }
 
         public int TryMoveOneItem(ItemStackMoveOperation opTemplate)
@@ -283,6 +334,42 @@ namespace SignalsLink.src.signals.managedchute.transporting
             }
 
             return list;
+        }
+
+        /// <summary>
+        /// Is there still somewhere in the column to put this? Either a pile of the same thing that
+        /// is not full yet, or a free cell with a footing where a new pile can be started — within
+        /// the height `target ground N` allows.
+        /// </summary>
+        private bool HasGroundRoom(ItemSlot slot, PaperConditionDirectives directives)
+        {
+            if (slot?.Itemstack == null || targetPos == null) return false;
+
+            int maxHeight = System.Math.Max(1, directives.TargetGroundHeight);
+            IBlockAccessor ba = api.World.BlockAccessor;
+
+            for (int dy = 0; dy < maxHeight; dy++)
+            {
+                BlockPos pos = targetPos.AddCopy(0, dy, 0);
+
+                if (ba.GetBlockEntity(pos) is BlockEntityGroundStorage pile)
+                {
+                    ItemSlot pileSlot = pile.Inventory?[0];
+                    bool sameThing = pileSlot == null || pileSlot.Empty
+                        || pileSlot.Itemstack.Equals(api.World, slot.Itemstack, GlobalConstants.IgnoredStackAttributes);
+
+                    if (sameThing && pile.TotalStackSize < pile.Capacity) return true;
+                    continue; // full, or holding something else - try the next one up
+                }
+
+                // Not a pile: an open cell with something to stand on can become one.
+                Block block = ba.GetBlock(pos);
+                if (block != null && block.Replaceable >= 6000 && GroundSupport.HasFooting(api.World, pos)) return true;
+
+                return false; // something solid is in the way; the column ends here
+            }
+
+            return false; // the height limit is reached and every pile below it is full
         }
 
         private bool HasGroundSupport(BlockPos pos)

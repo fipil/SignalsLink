@@ -42,8 +42,15 @@ namespace SignalsLink.src.signals.managedchute.transporting
         /// fills and the walk moves on to the next block — a chain of them filling slot after slot
         /// is the whole point of the directive, and it breaks the instant the two paths disagree.
         /// </summary>
+        /// <param name="canUse">
+        /// Physical validity of a transfer block: would it actually move anything? A block that
+        /// cannot did no work, so it is not the block that wins and the walk carries on to the next
+        /// one — the same rule an `output` block follows when the pin already holds its value.
+        /// Ignored on the sink-less path, where the caller checks it afterwards instead.
+        /// </param>
         public static bool ResolveDirectives(PaperConditionsEvaluator evaluator, IConditionOutputSink sink,
-            ItemStack stack, IDictionary<string, object> ctx, out PaperConditionDirectives directives)
+            ItemStack stack, IDictionary<string, object> ctx, out PaperConditionDirectives directives,
+            System.Func<PaperConditionDirectives, bool> canUse = null)
         {
             directives = PaperConditionDirectives.Empty;
             if (evaluator == null || !evaluator.HasConditions) return true;
@@ -62,6 +69,8 @@ namespace SignalsLink.src.signals.managedchute.transporting
                     if (match.OutputValue > 15) return false; // not a signal value; skip the block
                     return sink.TrySetOutput(match.OutputValue);
                 }
+
+                if (canUse != null && !canUse(match.Directives)) return false;
 
                 transferDirectives = match.Directives;
                 return true;

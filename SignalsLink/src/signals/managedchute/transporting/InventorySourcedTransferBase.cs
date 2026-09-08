@@ -87,7 +87,35 @@ namespace SignalsLink.src.signals.managedchute.transporting
                 }
             }
 
+            RunOutputOnlyPass();
             return null;
+        }
+
+        /// <summary>
+        /// Conditions are normally evaluated against a source stack, one slot at a time — so when
+        /// there is nothing left to carry, nothing gets evaluated and the Output pin freezes on
+        /// whatever it last said. That is wrong for a block that reports on its TARGET: an emptied
+        /// column should be able to announce that it is empty even though the source ran dry too.
+        ///
+        /// So when no slot yielded a transfer, the blocks get one more pass with no stack at all.
+        /// Only <c>output</c> blocks can win it — there is nothing to move, which is exactly what
+        /// the always-false predicate says.
+        /// </summary>
+        public void EvaluateOutputs()
+        {
+            RunOutputOnlyPass();
+        }
+
+        private void RunOutputOnlyPass()
+        {
+            if (OutputSink == null || conditionsEvaluator == null || !conditionsEvaluator.HasConditions) return;
+
+            var ctx = ItemConditionContextUtil.BuildContext(api.World, null);
+            ctx["sourceInventory"] = sourceInv;
+            ctx["inventory"] = sourceInv;
+            AddConditionContext(ctx);
+
+            ConditionResolution.ResolveDirectives(conditionsEvaluator, OutputSink, null, ctx, out _, _ => false);
         }
 
         protected bool IsLiquidContainer(ItemStack stack)
@@ -118,13 +146,18 @@ namespace SignalsLink.src.signals.managedchute.transporting
 
         protected bool TryGetMatchedDirectives(ItemStack stack, out PaperConditionDirectives directives)
         {
+            return TryGetMatchedDirectives(stack, null, out directives);
+        }
+
+        protected bool TryGetMatchedDirectives(ItemStack stack, System.Func<PaperConditionDirectives, bool> canUse, out PaperConditionDirectives directives)
+        {
             directives = PaperConditionDirectives.Empty;
             var ctx = ItemConditionContextUtil.BuildContext(api.World, stack);
             ctx["sourceInventory"] = sourceInv;
             ctx["inventory"] = sourceInv;
             AddConditionContext(ctx);
 
-            return ConditionResolution.ResolveDirectives(conditionsEvaluator, OutputSink, stack, ctx, out directives);
+            return ConditionResolution.ResolveDirectives(conditionsEvaluator, OutputSink, stack, ctx, out directives, canUse);
         }
 
         protected virtual void AddConditionContext(IDictionary<string, object> ctx)
@@ -137,17 +170,27 @@ namespace SignalsLink.src.signals.managedchute.transporting
 
             if (slot == null || slot.Empty) return false;
             if (IsLiquidContainer(slot.Itemstack) && !AllowsLiquidContainers) return false;
-            if (!TryGetMatchedDirectives(slot.Itemstack, out PaperConditionDirectives directives)) return false;
-            if (requireExplicitSource)
+
+            bool CanUse(PaperConditionDirectives d)
             {
-                if (directives.SourceSlot != slotIndex + 1) return false;
+                if (requireExplicitSource)
+                {
+                    if (d.SourceSlot != slotIndex + 1) return false;
+                }
+                else if (d.SourceSlot.HasValue)
+                {
+                    return false;
+                }
+
+                if (!d.Evaluate(BuildDirectiveContext())) return false;
+                return CanTransferSelection(slot, d);
             }
-            else if (directives.SourceSlot.HasValue)
-            {
-                return false;
-            }
-            if (!directives.Evaluate(BuildDirectiveContext())) return false;
-            if (!CanTransferSelection(slot, directives)) return false;
+
+            // Handed to the walk so a block that cannot move anything falls through to the next one
+            // instead of killing the whole slot. The sink-less path (ManagedChute) does not walk, so
+            // there the same checks run once, afterwards, exactly as they always did.
+            if (!TryGetMatchedDirectives(slot.Itemstack, CanUse, out PaperConditionDirectives directives)) return false;
+            if (OutputSink == null && !CanUse(directives)) return false;
 
             selection = new TransferSelection(slot, directives);
             return true;

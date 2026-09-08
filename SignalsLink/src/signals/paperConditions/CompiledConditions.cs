@@ -153,7 +153,11 @@ namespace SignalsLink.src.signals.paperConditions
 
         public bool TryMatch(ItemStack stack, IDictionary<string, object> ctx)
         {
-            if (!CanSelectSource) return false;
+            // A source-scoped condition is what picks the slot to move FROM, so a transfer block
+            // without one is meaningless. A block that only sets the Output pin moves nothing and
+            // needs no slot — requiring one there made `in target … output N` impossible to write,
+            // because every condition in it is scoped to the target.
+            if (!HasExplicitOutput && !CanSelectSource) return false;
 
             foreach (var c in conditions)
             {
@@ -238,13 +242,21 @@ namespace SignalsLink.src.signals.paperConditions
 
         private IInventory ResolveInventory(IDictionary<string, object> ctx)
         {
+            if (ctx == null) return null;
+
             string key = Scope == InventoryConditionScope.Target ? "targetInventory" : "sourceInventory";
-            if (ctx != null && ctx.TryGetValue(key, out var obj) && obj is IInventory inventory)
+            if (ctx.TryGetValue(key, out var obj) && obj is IInventory inventory)
             {
                 return inventory;
             }
 
-            if (ctx != null && ctx.TryGetValue("inventory", out obj) && obj is IInventory fallbackInventory)
+            // The plain "inventory" key is only a fallback for hosts that know of ONE inventory at
+            // all - the BlockSensor watching a single container. In a transfer it is the source, so
+            // handing it to a target-scoped condition would quietly measure the wrong end: an
+            // `in target` count would report what is in the chest. Better no inventory than the
+            // other one.
+            bool hasSides = ctx.ContainsKey("sourceInventory") || ctx.ContainsKey("targetInventory");
+            if (!hasSides && ctx.TryGetValue("inventory", out obj) && obj is IInventory fallbackInventory)
             {
                 return fallbackInventory;
             }

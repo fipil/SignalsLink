@@ -208,6 +208,15 @@ namespace SignalsLink.src.signals.sleeve
         private void MoveItems(float dt)
         {
             if (Api is not ICoreServerAPI) return;
+
+            // Blocks with an `output` action are evaluated on EVERY tick, before anything else and
+            // whatever the Input pin says. That is the whole point of the damper having an Output
+            // pin: it is meant to be able to watch its own end of the line and report on it, the
+            // way a BlockSensor does. Hanging that off a transfer meant the pin froze the moment
+            // there was nothing to carry — no Input, no sleeve, an empty source, a full target, or
+            // simply waiting for its turn on the line.
+            EvaluateOutputs();
+
             if (!HasInput) { noWorkStreak = 0; tickSkip = 0; return; } // truly idle → cheap no-op
 
             // A damper whose conditions produce an `output` has to stay responsive so the pin can
@@ -230,6 +239,35 @@ namespace SignalsLink.src.signals.sleeve
         }
 
         /// <summary>
+        /// Runs the paper conditions purely for their <c>output</c> blocks. Nothing is moved and no
+        /// buffer is spent; the transfer is built only so the conditions see the same two ends they
+        /// would during a real attempt.
+        /// </summary>
+        private void EvaluateOutputs()
+        {
+            if (conditionsEvaluator == null || !conditionsEvaluator.HasAnyOutput) return;
+
+            LinkNetworkMod linkMod = Api.ModLoader.GetModSystem<LinkNetworkMod>();
+            if (linkMod == null) return;
+
+            BlockPos myCargoPos = GetCargoPos(Api.World, Pos);
+            if (myCargoPos == null) return;
+
+            List<LinkSource> sources = linkMod.GetOtherEndpoints(Api.World, new NodePos(Pos, SLEEVE));
+            if (sources.Count == 0) return;
+
+            // Whichever source the rotation is on, so `in source` means the same thing here as it
+            // would in a transfer.
+            int index = sources.FindIndex(s => s.Endpoint == currentSource);
+            BlockPos farCargoPos = GetCargoPos(Api.World, sources[index < 0 ? 0 : index].Endpoint.blockPos);
+            if (farCargoPos == null) return;
+
+            ItemTransferFactory
+                .CreateTransfer(Api, farCargoPos, myCargoPos, 0, 0, ConditionsEvaluator, this)
+                ?.EvaluateOutputs();
+        }
+
+        /// <summary>
         /// One pull attempt. The damper may have several sleeves on its anchor; it round-robins over
         /// the connected sources, staying on one for as long as it keeps delivering.
         /// </summary>
@@ -241,11 +279,7 @@ namespace SignalsLink.src.signals.sleeve
 
             NodePos myAnchor = new NodePos(Pos, SLEEVE);
             List<LinkSource> sources = linkMod.GetOtherEndpoints(Api.World, myAnchor);
-            if (sources.Count == 0)
-            {
-                PullLog("no sleeve endpoints reachable");
-                return 1;
-            }
+            if (sources.Count == 0) return 1;
 
             BlockPos myCargoPos = GetCargoPos(Api.World, Pos);
             if (myCargoPos == null) return 1;
@@ -312,15 +346,8 @@ namespace SignalsLink.src.signals.sleeve
             bool moved = false;
             decimal movedTotal = 0;
 
-            if (transfer == null)
+            if (transfer != null)
             {
-                PullLog("no transfer for source " + farCargoPos + " -> target " + myCargoPos
-                    + "; source block is " + (farCargoPos == null ? "n/a" : Api.World.BlockAccessor.GetBlock(farCargoPos)?.Code?.ToString() ?? "null"));
-            }
-            else
-            {
-                PullLog("pulling " + farCargoPos + " -> " + myCargoPos + " via " + transfer.GetType().Name);
-
                 ItemStackMoveOperation op = new ItemStackMoveOperation(
                     Api.World, EnumMouseButton.Left, 0, EnumMergePriority.DirectMerge, 1);
 
@@ -362,21 +389,6 @@ namespace SignalsLink.src.signals.sleeve
             }
 
             return moved ? 0 : 1;
-        }
-
-        // TEMPORARY DIAGNOSTIC - remove together with the one in WorldToInventoryTransfer.
-        private const bool LogPull = true;
-        private long lastPullLogMs; // per damper: a shared one let the busiest block hide the rest
-
-        private void PullLog(string message)
-        {
-            if (!LogPull || Api?.Side != EnumAppSide.Server) return;
-
-            long now = Api.World.ElapsedMilliseconds;
-            if (now - lastPullLogMs < 2000) return;
-            lastPullLogMs = now;
-
-            Api.Logger.Notification("[SignalsLink] damper @ {0}: {1}", Pos, message);
         }
 
         /// <summary>Is the far endpoint another damper that currently has Input (i.e. contends for the line)?</summary>

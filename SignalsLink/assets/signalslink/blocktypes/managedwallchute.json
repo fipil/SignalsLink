@@ -23,6 +23,10 @@
           {
             "index": 2,
             "isSource": false
+          },
+          {
+            "index": 3,
+            "isSource": true
           }
         ]
       }
@@ -40,10 +44,10 @@
         "name": "con-input",
         "x1": 0.0625,
         "y1": 0.78125,
-        "z1": 0.4375,
+        "z1": 0.35625,
         "x2": 0.1875,
         "y2": 0.96875,
-        "z2": 0.5625,
+        "z2": 0.48125,
         "rotateXbytype": {
           "*-*-north": 90,
           "*-*-south": 270,
@@ -68,10 +72,10 @@
         "name": "con-target",
         "x1": 0.0625,
         "y1": 0.78125,
-        "z1": 0.59375,
+        "z1": 0.66875,
         "x2": 0.1875,
         "y2": 0.96875,
-        "z2": 0.71875,
+        "z2": 0.79375,
         "rotateXbytype": {
           "*-*-north": 90,
           "*-*-south": 270,
@@ -96,10 +100,38 @@
         "name": "con-source",
         "x1": 0.0625,
         "y1": 0.78125,
-        "z1": 0.28125,
+        "z1": 0.2,
         "x2": 0.1875,
         "y2": 0.96875,
-        "z2": 0.40625,
+        "z2": 0.325,
+        "rotateXbytype": {
+          "*-*-north": 90,
+          "*-*-south": 270,
+          "@*-up-(east|west)": 90,
+          "@*-down-(east|west)": 270,
+          "@*-south-(east|west)": 180
+        },
+        "rotateYbytype": {
+          "@*-east-(up|down|north|south)": 270,
+          "@*-south-(up|down)": 180,
+          "@*-west-(up|down|north|south)": 90,
+          "@*-(down-north|up-south)": 180
+        },
+        "rotateZbyType": {
+          "*-*-up": 180,
+          "*-*-east": 90,
+          "*-*-west": 270
+        }
+      },
+			{
+        "index": 3,
+        "name": "con-output",
+        "x1": 0.0625,
+        "y1": 0.78125,
+        "z1": 0.5125,
+        "x2": 0.1875,
+        "y2": 0.96875,
+        "z2": 0.6375,
         "rotateXbytype": {
           "*-*-north": 90,
           "*-*-south": 270,
