@@ -241,6 +241,11 @@ namespace SignalsLink.src.signals.managedchute.transporting
 
         protected bool TryGetMatchedDirectives(ItemStack stack, System.Func<PaperConditionDirectives, bool> canUse, out PaperConditionDirectives directives)
         {
+            directives = PaperConditionDirectives.Empty;
+
+            // With no paper everything is accepted, so there is no context worth building.
+            if (conditionsEvaluator == null || !conditionsEvaluator.HasConditions) return true;
+
             return ConditionResolution.ResolveActionDirectives(
                 conditionsEvaluator, stack, BuildConditionContext(stack), out directives, canUse);
         }

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using SignalsLink.src.signals.managedchute.transporting;
 using SignalsLink.src.signals.paperConditions;
 using Vintagestory.API.Common;
@@ -17,72 +18,79 @@ namespace SignalsLink.Tests
     /// and a chest holding 4 medium and 8 large hides. The first block matched the medium, could
     /// never gather its 12, and nothing moved — the second block was never asked. Taking the four
     /// medium hides out of the chest made it work.
+    ///
+    /// **What these tests do NOT cover:** gathering the batch across several slots of the SAME
+    /// material. That path compares candidates with ItemStack.Equals, which walks into game code
+    /// that a hand-built item cannot survive, so it is out of reach here and belongs to the
+    /// in-game rig tests. It is also the path on which the first attempt at this fix recursed
+    /// endlessly and took the server down — which is exactly why the call graph is now split so
+    /// that the recursion cannot be written by accident (see CanReachTarget).
     /// </summary>
     public class AtomicAmountTests
     {
         [Fact]
         public void A_block_that_cannot_gather_its_amount_is_not_selectable()
         {
-            IInventory source = TestStacks.Inventory(
-                4,
-                TestStacks.Item("game:hide-scraped-medium", 4),
-                TestStacks.Item("game:hide-scraped-large", 8));
+            var chute = Chute(
+                "game:hide-scraped-medium\ntarget 1 ifEmpty\namount 12\n",
+                Medium(4), Large(8));
 
-            var transfer = new TestTransfer(source, TestStacks.Inventory(4));
-
-            // 12 wanted, 4 in the chest: this block can do nothing.
-            Assert.False(transfer.CanTransfer(source[0], Directives(targetSlot: 1, amount: 12)));
+            // 12 wanted, 4 in the chest: this block can do nothing, so it must not win the pass.
+            Assert.False(chute.FirstBlockAccepts(0));
         }
 
         [Fact]
         public void A_block_that_can_gather_its_amount_is_selectable()
         {
-            IInventory source = TestStacks.Inventory(
-                4,
-                TestStacks.Item("game:hide-scraped-medium", 4),
-                TestStacks.Item("game:hide-scraped-large", 8));
+            var chute = Chute(
+                "game:hide-scraped-large\ntarget 1 ifEmpty\namount 8\n",
+                Medium(4), Large(8));
 
-            var transfer = new TestTransfer(source, TestStacks.Inventory(4));
-
-            Assert.True(transfer.CanTransfer(source[1], Directives(targetSlot: 1, amount: 8)));
+            Assert.True(chute.FirstBlockAccepts(1));
         }
-
-        // NOTE: gathering the batch across SEVERAL slots of the same material cannot be tested
-        // here. That path compares the candidates with ItemStack.Equals(world, ...), which
-        // resolves the stacks through the item registry, and a hand-built Item is not in it. It
-        // belongs to the in-game rig tests.
 
         [Fact]
         public void A_block_without_an_amount_is_unaffected()
         {
-            IInventory source = TestStacks.Inventory(4, TestStacks.Item("game:hide-scraped-medium", 4));
+            var chute = Chute("game:hide-scraped-medium\ntarget 1 ifEmpty\n", Medium(4));
 
-            var transfer = new TestTransfer(source, TestStacks.Inventory(4));
-
-            Assert.True(transfer.CanTransfer(source[0], Directives(targetSlot: 1, amount: null)));
+            Assert.True(chute.FirstBlockAccepts(0));
         }
 
         // ---------------------------------------------------------------- plumbing
 
-        private static PaperConditionDirectives Directives(byte targetSlot, decimal? amount)
+        private static ItemStack Medium(int size) => TestStacks.Item("game:hide-scraped-medium", size);
+        private static ItemStack Large(int size) => TestStacks.Item("game:hide-scraped-large", size);
+
+        private static TestChute Chute(string paper, params ItemStack[] chest)
         {
-            return new PaperConditionDirectives(null, targetSlot, false, amount, true);
+            var evaluator = new PaperConditionsEvaluator();
+            evaluator.SetConditionsText(paper);
+
+            return new TestChute(TestStacks.Inventory(4, chest), TestStacks.Inventory(4), evaluator);
         }
 
         /// <summary>
-        /// The transfer, with the protected selection check opened up. There is no world here: the
-        /// check only looks at the two inventories, which is what makes it testable at all.
+        /// The transfer with its protected selection check opened up. There is no world here: the
+        /// check reads only the two inventories, which is what makes it testable at all.
         /// </summary>
-        private sealed class TestTransfer : InventoryToInventoryTransfer
+        private sealed class TestChute : InventoryToInventoryTransfer
         {
-            public TestTransfer(IInventory source, IInventory target)
-                : base(null, source, target, null, 0, 0, new PaperConditionsEvaluator())
+            private readonly IInventory source;
+            private readonly PaperConditionsEvaluator evaluator;
+
+            public TestChute(IInventory source, IInventory target, PaperConditionsEvaluator evaluator)
+                : base(null, source, target, null, 0, 0, evaluator)
             {
+                this.source = source;
+                this.evaluator = evaluator;
             }
 
-            public bool CanTransfer(ItemSlot slot, PaperConditionDirectives directives)
+            /// <summary>Would the paper's first block accept what is in this slot?</summary>
+            public bool FirstBlockAccepts(int slotIndex)
             {
-                return CanTransferSelection(slot, directives);
+                IReadOnlyList<ConditionBlock> blocks = evaluator.GetBlocks();
+                return CanTransferSelection(source[slotIndex], blocks[0].Directives);
             }
         }
     }

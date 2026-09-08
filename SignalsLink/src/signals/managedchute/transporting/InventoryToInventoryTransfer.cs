@@ -36,10 +36,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
 
         protected override bool CanTransferSelection(ItemSlot slot, PaperConditionDirectives directives)
         {
-            if (slot?.Itemstack?.Collectible?.GetType().Name == "ItemLiquidPortion") return false;
-
-            byte effectiveTargetSlotSignal = directives.TargetSlot ?? outputSlotSignal;
-            if (GetGenericTargetSlot(slot, effectiveTargetSlotSignal) == null) return false;
+            if (!CanReachTarget(slot, directives)) return false;
 
             // An `amount N` batch is atomic - N pieces or nothing - so a block that cannot gather N
             // from the slots holding the same thing does no work at all, and a block that does no
@@ -54,6 +51,23 @@ namespace SignalsLink.src.signals.managedchute.transporting
             }
 
             return true;
+        }
+
+        /// <summary>
+        /// Whether this slot has anywhere to go — the half of the check that says nothing about
+        /// amounts.
+        ///
+        /// The gathering loop must ask THIS and never the full check: gathering is how the
+        /// available amount gets counted in the first place, so calling back into a check that
+        /// counts it would be endless. Splitting it in two is what makes that impossible rather
+        /// than merely avoided.
+        /// </summary>
+        private bool CanReachTarget(ItemSlot slot, PaperConditionDirectives directives)
+        {
+            if (slot?.Itemstack?.Collectible?.GetType().Name == "ItemLiquidPortion") return false;
+
+            byte effectiveTargetSlotSignal = directives.TargetSlot ?? outputSlotSignal;
+            return GetGenericTargetSlot(slot, effectiveTargetSlotSignal) != null;
         }
 
         public TransferOperationResult TryMove(ItemStackMoveOperation opTemplate)
@@ -221,11 +235,12 @@ namespace SignalsLink.src.signals.managedchute.transporting
 
                 ItemStack stack = slot.Itemstack;
                 if (stack?.Collectible != initialStack.Collectible) continue;
+
                 if (!stack.Equals(api.World, initialStack, GlobalConstants.IgnoredStackAttributes)) continue;
                 if (IsLiquidContainer(stack) && !AllowsLiquidContainers) continue;
                 if (!TryGetMatchedDirectives(stack, out PaperConditionDirectives candidateDirectives)) continue;
                 if (candidateDirectives.SourceSlot != directives.SourceSlot || candidateDirectives.TargetSlot != directives.TargetSlot || candidateDirectives.TargetGround != directives.TargetGround || candidateDirectives.TargetGroundHeight != directives.TargetGroundHeight || candidateDirectives.Amount != directives.Amount || candidateDirectives.RequireTargetEmpty != directives.RequireTargetEmpty) continue;
-                if (!CanTransferSelection(slot, candidateDirectives)) continue;
+                if (!CanReachTarget(slot, candidateDirectives)) continue;
 
                 result.Add(slot);
             }

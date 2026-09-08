@@ -21,12 +21,14 @@ namespace SignalsLink.src.signals.managedchute.transporting
             IInventory sourceInventory = null, BlockPos sourcePos = null,
             IInventory targetInventory = null, BlockPos targetPos = null)
         {
+            IWorldAccessor world = api?.World;
+
             IDictionary<string, object> ctx =
-                ItemConditionContextUtil.BuildContext(api.World, stack) ?? new Dictionary<string, object>();
+                ItemConditionContextUtil.BuildContext(world, stack) ?? new Dictionary<string, object>();
 
             // Directives that ask about a block (`target firepit`) and block-state conditions
             // (`isBurning`) need the world itself.
-            ctx["world"] = api.World;
+            if (world != null) ctx["world"] = world;
 
             if (sourceInventory != null)
             {
@@ -63,7 +65,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
             if (ctx.ContainsKey("targetBlockEntity")) return;
             if (!ctx.TryGetValue("targetBlockPos", out object posObj) || posObj is not BlockPos pos) return;
 
-            if (api.World.BlockAccessor.GetBlockEntity(pos) is BlockEntityBarrel barrel)
+            if (api?.World?.BlockAccessor?.GetBlockEntity(pos) is BlockEntityBarrel barrel)
             {
                 ctx["targetBlockEntity"] = barrel;
             }

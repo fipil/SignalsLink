@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Vintagestory.API.Common;
+using Vintagestory.API.Datastructures;
 
 namespace SignalsLink.Tests
 {
@@ -23,7 +24,13 @@ namespace SignalsLink.Tests
                 items[code] = item;
             }
 
-            return new ItemStack(item, stackSize);
+            ItemStack stack = new ItemStack(item, stackSize);
+
+            // A stack built by the game always carries an attribute tree; comparing two stacks
+            // walks it, so without one the comparison falls over.
+            stack.Attributes ??= new TreeAttribute();
+
+            return stack;
         }
 
         /// <summary>An inventory of <paramref name="slotCount"/> slots holding the given stacks in order.</summary>
