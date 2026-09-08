@@ -364,20 +364,12 @@ namespace SignalsLink.src.signals.hose
 
         private IDictionary<string, object> BuildContext(ItemStack sourceLiquid, IInventory sourceInv)
         {
-            // Item context (temperature, stackSize, …) only when there IS a source liquid;
-            // actions like `do seal` are target-scoped and work without it.
-            IDictionary<string, object> ctx = sourceLiquid != null
-                ? (ItemConditionContextUtil.BuildContext(api.World, sourceLiquid) ?? new Dictionary<string, object>())
-                : new Dictionary<string, object>();
+            IDictionary<string, object> ctx =
+                ConditionContext.Build(api, sourceLiquid, sourceInv, srcHostPos, targetInv, targetPos);
 
-            if (sourceInv != null) ctx["sourceInventory"] = sourceInv;
-            ctx["targetInventory"] = targetInv;
-            ctx["inventory"] = sourceInv ?? targetInv;
-            ctx["targetBlockPos"] = targetPos;
-            if (srcHostPos != null) ctx["sourceBlockPos"] = srcHostPos;
-
-            if (api.World.BlockAccessor.GetBlockEntity(targetPos) is BlockEntityBarrel barrel)
-                ctx["targetBlockEntity"] = barrel;
+            // An intake is world water, so there is no source inventory to be the single one a
+            // bare `inventory` means. The target is then the only one there is.
+            if (sourceInv == null && targetInv != null) ctx["inventory"] = targetInv;
 
             return ctx;
         }

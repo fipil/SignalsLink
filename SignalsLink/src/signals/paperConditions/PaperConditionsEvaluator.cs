@@ -9,9 +9,24 @@ public class PaperConditionsEvaluator
     private string conditionsText;
     private string lastParsedText;
     private CompiledConditions compiled;
-    private readonly List<string> errors = new List<string>();
+    private readonly List<PaperConditionError> errors = new List<PaperConditionError>();
 
-    public IReadOnlyList<string> Errors => errors;
+    /// <summary>Mistakes found in the current paper, with line numbers. Empty when it is clean.</summary>
+    public IReadOnlyList<PaperConditionError> Errors
+    {
+        get
+        {
+            // Errors are filled while parsing, so a paper that has not been looked at yet would
+            // report none at all - which is exactly when the player is asking.
+            if (!string.IsNullOrWhiteSpace(conditionsText)
+                && (compiled == null || !string.Equals(lastParsedText, conditionsText, StringComparison.Ordinal)))
+            {
+                ParseInternal(conditionsText);
+            }
+
+            return errors;
+        }
+    }
 
     /// <summary>
     /// Nastaví nový conditions text. Při změně invaliduje cache.

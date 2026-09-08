@@ -54,7 +54,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
             // falls through to the regular inventory -> inventory transfer below.
             if (beOut?.Inventory != null && WorldToInventoryTransfer.IsPortablePlacedContainer(blockAccess, inputPos))
             {
-                return new WorldToInventoryTransfer(api, inputPos, beOut.Inventory, outputSlotSignal, conditionsEvaluator);
+                return new WorldToInventoryTransfer(api, inputPos, beOut.Inventory, outputSlotSignal, conditionsEvaluator, outputPos);
             }
 
             // A ground-storage pile on the output side is handled by the world transfer, not by the
@@ -69,7 +69,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
             // single pile the chute happens to point at, and refresh/remove the pile afterwards.
             if (beOut?.Inventory != null && blockAccess.GetBlockEntity(inputPos) is BlockEntityGroundStorage)
             {
-                return new WorldToInventoryTransfer(api, inputPos, beOut.Inventory, outputSlotSignal, conditionsEvaluator);
+                return new WorldToInventoryTransfer(api, inputPos, beOut.Inventory, outputSlotSignal, conditionsEvaluator, outputPos);
             }
 
             if (beIn?.Inventory != null && beOut?.Inventory != null)
@@ -97,7 +97,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
             if (beIn == null && beOut?.Inventory != null)
             {
                 // sv�t -> invent�� (WorldToInventoryTransfer)
-                return new WorldToInventoryTransfer(api, inputPos, beOut.Inventory, outputSlotSignal, conditionsEvaluator);
+                return new WorldToInventoryTransfer(api, inputPos, beOut.Inventory, outputSlotSignal, conditionsEvaluator, outputPos);
             }
 
             return null;

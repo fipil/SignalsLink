@@ -10,12 +10,12 @@ namespace SignalsLink.src.signals.paperConditions
     {
         private static readonly Regex inventoryAmountRegex = new Regex("^(?<pattern>@\\S+|\\S*[\\*\\?]\\S*|[A-Za-z0-9_]+:\\S+)\\s+(?<amount>\\d+(?:[\\.,]\\d+)?)(?<mode>[+-]?)$", RegexOptions.Compiled);
 
-        public static CompiledConditions Parse(string text, List<string> errors = null)
+        public static CompiledConditions Parse(string text, List<PaperConditionError> errors = null)
         {
-            var paragraphs = Regex.Split(text, "\\n\\s*\\n");
+            PaperErrorSink sink = errors != null ? new PaperErrorSink(errors) : null;
             var blocks = new List<ConditionBlock>();
 
-            foreach (var p in paragraphs)
+            foreach (var p in SplitIntoParagraphs(text))
             {
                 var conditions = new List<ScopedCondition>();
                 var actions = new List<IConditionAction>();
@@ -29,22 +29,32 @@ namespace SignalsLink.src.signals.paperConditions
                 bool requireTargetEmpty = false;
                 decimal? amount = null;
                 InventoryConditionScope currentScope = InventoryConditionScope.Source;
+                int explicitSourceLine = 0;
+                string explicitSourceText = null;
 
-                foreach (var rawLine in p.Split('\n'))
+                foreach (PaperLine paperLine in p)
                 {
-                    var line = rawLine.Trim();
-                    if (line.Length == 0) continue;
+                    string line = paperLine.Text;
+                    if (sink != null) sink.CurrentLine = paperLine.Number;
+
                     if (line.StartsWith("#") || line.StartsWith("//")) continue;
 
                     if (TryParseScopeDirective(line, out InventoryConditionScope parsedScope))
                     {
                         currentScope = parsedScope;
+
+                        if (parsedScope == InventoryConditionScope.Source)
+                        {
+                            explicitSourceLine = paperLine.Number;
+                            explicitSourceText = line;
+                        }
+
                         continue;
                     }
 
                     if (line.StartsWith("in ", StringComparison.OrdinalIgnoreCase))
                     {
-                        errors?.Add(line);
+                        sink?.Add(line, "scope");
                         continue;
                     }
 
@@ -69,7 +79,7 @@ namespace SignalsLink.src.signals.paperConditions
                             continue;
                         }
 
-                        errors?.Add(line);
+                        sink?.Add(line, "output");
                         continue;
                     }
 
@@ -81,7 +91,7 @@ namespace SignalsLink.src.signals.paperConditions
 
                     if (line.StartsWith("source ", StringComparison.OrdinalIgnoreCase))
                     {
-                        errors?.Add(line);
+                        sink?.Add(line, "source");
                         continue;
                     }
 
@@ -97,7 +107,7 @@ namespace SignalsLink.src.signals.paperConditions
 
                     if (line.StartsWith("target ", StringComparison.OrdinalIgnoreCase))
                     {
-                        errors?.Add(line);
+                        sink?.Add(line, "target");
                         continue;
                     }
 
@@ -109,7 +119,7 @@ namespace SignalsLink.src.signals.paperConditions
 
                     if (line.StartsWith("amount ", StringComparison.OrdinalIgnoreCase))
                     {
-                        errors?.Add(line);
+                        sink?.Add(line, "amount");
                         continue;
                     }
 
@@ -121,11 +131,20 @@ namespace SignalsLink.src.signals.paperConditions
 
                     if (line.StartsWith("do ", StringComparison.OrdinalIgnoreCase))
                     {
-                        errors?.Add(line);
+                        sink?.Add(line, "action");
                         continue;
                     }
 
-                    conditions.Add(new ScopedCondition(ParseLine(line, errors), currentScope));
+                    conditions.Add(new ScopedCondition(ParseLine(line, sink), currentScope));
+                }
+
+                // `in source` in an output block: the output rail runs when nothing is being
+                // carried, so there is no source stack for it to be about. It is answered against
+                // the target instead - almost certainly what was meant - but the line is a mistake
+                // worth naming rather than silently reinterpreting.
+                if (hasExplicitOutput && explicitSourceLine > 0)
+                {
+                    errors?.Add(new PaperConditionError(explicitSourceLine, explicitSourceText, "outputsource"));
                 }
 
                 if (conditions.Count > 0 || actions.Count > 0)
@@ -138,6 +157,39 @@ namespace SignalsLink.src.signals.paperConditions
             }
 
             return new CompiledConditions(blocks);
+        }
+
+        /// <summary>
+        /// Splits the paper into blocks on blank lines, keeping the line numbers so that an error
+        /// can name the line the player is looking at. Blank and whitespace-only lines separate;
+        /// several in a row are one separator.
+        /// </summary>
+        private static List<List<PaperLine>> SplitIntoParagraphs(string text)
+        {
+            var paragraphs = new List<List<PaperLine>>();
+            var current = new List<PaperLine>();
+
+            string[] lines = text.Split('\n');
+
+            for (int i = 0; i < lines.Length; i++)
+            {
+                string trimmed = lines[i].Trim();
+
+                if (trimmed.Length == 0)
+                {
+                    if (current.Count > 0)
+                    {
+                        paragraphs.Add(current);
+                        current = new List<PaperLine>();
+                    }
+                    continue;
+                }
+
+                current.Add(new PaperLine(i + 1, trimmed));
+            }
+
+            if (current.Count > 0) paragraphs.Add(current);
+            return paragraphs;
         }
 
         private static bool TryParseScopeDirective(string line, out InventoryConditionScope scope)
@@ -246,12 +298,21 @@ namespace SignalsLink.src.signals.paperConditions
 
         private static readonly Regex validNameRegex = new Regex("^[A-Za-z0-9_]+$", RegexOptions.Compiled);
 
+        private static bool ContainsWhitespace(string line)
+        {
+            for (int i = 0; i < line.Length; i++)
+            {
+                if (char.IsWhiteSpace(line[i])) return true;
+            }
+            return false;
+        }
+
         private static bool IsValidName(string name)
         {
             return validNameRegex.IsMatch(name);
         }
 
-        private static ICondition ParseLine(string line, List<string> errors)
+        private static ICondition ParseLine(string line, PaperErrorSink sink)
         {
             // NOT prefix: !something  -> handled first
             if (line.StartsWith("!"))
@@ -266,7 +327,7 @@ namespace SignalsLink.src.signals.paperConditions
                     return new BlockBurningCondition(false);
                 }
 
-                var inner = ParseLine(negated, errors);
+                var inner = ParseLine(negated, sink);
                 return new NotCondition(inner);
             }
 
@@ -304,12 +365,12 @@ namespace SignalsLink.src.signals.paperConditions
                     string nestedLine = rest.Trim();
                     if (nestedLine.Length > 0)
                     {
-                        var nested = ParseLine(nestedLine, errors);
+                        var nested = ParseLine(nestedLine, sink);
                         return new InventoryAnyCondition(nested);
                     }
                 }
 
-                errors?.Add(line);
+                sink?.Add(line, "condition");
                 return FalseCondition.Instance;
             }
 
@@ -331,6 +392,12 @@ namespace SignalsLink.src.signals.paperConditions
             // Glob pattern
             if (line.Contains("*") || line.Contains("?"))
             {
+                // A code never contains a space, so a pattern that does can match nothing at all -
+                // and since a block ANDs its conditions, one such line kills the whole block in
+                // silence. `game:planks *` is the classic: it looks like "planks, any amount", but
+                // it is a pattern for a code with a space in it.
+                if (ContainsWhitespace(line)) sink?.Add(line, "pattern-space");
+
                 return new CodeGlobCondition(line);
             }
 
@@ -341,7 +408,7 @@ namespace SignalsLink.src.signals.paperConditions
                 string name = m.Groups[1].Value;
                 if (!IsValidName(name))
                 {
-                    errors?.Add(line);
+                    sink?.Add(line, "condition");
                     return FalseCondition.Instance;
                 }
 
@@ -355,7 +422,7 @@ namespace SignalsLink.src.signals.paperConditions
             // Boolean / truthy attribute: isBaked, temperature, etc.
             if (!IsValidName(line))
             {
-                errors?.Add(line);
+                sink?.Add(line, "condition");
                 return FalseCondition.Instance;
             }
 

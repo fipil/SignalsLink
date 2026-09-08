@@ -251,20 +251,23 @@ namespace SignalsLink.src.signals.managedchute.transporting
 
         private IDictionary<string, object> BuildConditionContext(ItemStack stack)
         {
-            var ctx = ItemConditionContextUtil.BuildContext(api.World, stack);
-            ctx["sourceInventory"] = sourceInv;
-            ctx["inventory"] = sourceInv;
+            IDictionary<string, object> ctx = ConditionContext.Build(api, stack, sourceInv);
+
+            // The subclass knows what its target end is; everything that follows from it is derived.
             AddConditionContext(ctx);
+            ConditionContext.Complete(api, ctx);
+
             return ctx;
         }
 
+        /// <summary>
+        /// Directives are answered against the same context as conditions. They used to get a
+        /// smaller one of their own, which is the kind of difference that makes a paper mean two
+        /// things at once.
+        /// </summary>
         protected IDictionary<string, object> BuildDirectiveContext()
         {
-            var ctx = new Dictionary<string, object>();
-            // Directives that ask about a block (target firepit) need something to ask with.
-            ctx["world"] = api.World;
-            AddConditionContext(ctx);
-            return ctx;
+            return BuildConditionContext(null);
         }
     }
 }

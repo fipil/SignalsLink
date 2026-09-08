@@ -15,35 +15,87 @@ namespace SignalsLink.src.signals.managedchute.transporting
         private readonly byte targetSlotSignal;
         private readonly PaperConditionsEvaluator conditionsEvaluator;
 
-        public WorldToInventoryTransfer(ICoreAPI api, BlockPos sourcePos, IInventory targetInv, byte targetSlotSignal, PaperConditionsEvaluator conditionsEvaluator)
+        // Where the target inventory lives. Optional only because a caller may not know it; with
+        // it, `in target isBurning` and `do seal` work in this direction too.
+        private readonly BlockPos targetPos;
+
+        public WorldToInventoryTransfer(ICoreAPI api, BlockPos sourcePos, IInventory targetInv, byte targetSlotSignal, PaperConditionsEvaluator conditionsEvaluator, BlockPos targetPos = null)
         {
             this.api = api;
             this.sourcePos = sourcePos;
             this.targetInv = targetInv;
             this.targetSlotSignal = targetSlotSignal;
             this.conditionsEvaluator = conditionsEvaluator;
+            this.targetPos = targetPos;
         }
 
+        /// <summary>
+        /// One evaluation pass. The paper is the outer loop and the ways of picking something up
+        /// out of the world are the inner one, so a block higher on the paper gets to try every
+        /// pickup before a block below it is asked at all — the same order of priority the other
+        /// devices follow.
+        /// </summary>
         public TransferOperationResult TryMove(ItemStackMoveOperation opTemplate)
         {
-            RunOutputRail();
+            IReadOnlyList<ConditionBlock> blocks = conditionsEvaluator?.GetBlocks();
 
-            TransferOperationResult fromPile = TryTakeFromGroundStorageColumn();
+            if (blocks == null || blocks.Count == 0)
+            {
+                OutputSink?.ApplyOutput(0, 0);   // no paper, nothing can drive the pin
+                return TryPickUp(null);
+            }
+
+            TransferOperationResult moved = TransferOperationResult.None;
+            IDictionary<string, object> outputCtx = null;
+
+            DriverResult result = ConditionDriver.Run(
+                blocks,
+                false,
+                block =>
+                {
+                    outputCtx ??= BuildOutputContext();
+                    bool holds = block.OutputConditionsHold(outputCtx);
+
+                    if (ConditionDebug.Enabled)
+                    {
+                        ConditionDebug.Log("  output block value=" + block.OutputValue + " holds=" + holds
+                            + " | " + ConditionDebug.Describe(outputCtx, "targetInventory"));
+                    }
+
+                    return holds;
+                },
+                block =>
+                {
+                    moved = TryPickUp(block);
+                    return moved.Success;
+                });
+
+            OutputSink?.ApplyOutput(0, result.GetOutput());
+            return moved;
+        }
+
+        /// <summary>
+        /// Every way of taking something out of the world, tried in turn for ONE block of the
+        /// paper. <paramref name="block"/> null means there is no paper at all.
+        /// </summary>
+        private TransferOperationResult TryPickUp(ConditionBlock block)
+        {
+            TransferOperationResult fromPile = TryTakeFromGroundStorageColumn(block);
             if (fromPile.Success) return fromPile;
 
-            TransferOperationResult fromLayers = TryTakeFromLayeredBlock();
+            TransferOperationResult fromLayers = TryTakeFromLayeredBlock(block);
             if (fromLayers.Success) return fromLayers;
 
             if (TryGetPlacedLiquidContainer(out ItemStack containerStack))
             {
-                return TryMovePlacedLiquidContainer(containerStack);
+                return TryMovePlacedLiquidContainer(containerStack, block);
             }
 
-            EntityItem entity = FindItemEntityNearSource();
+            EntityItem entity = FindItemEntityNearSource(block);
             if (entity == null || entity.Itemstack == null || entity.Itemstack.StackSize <= 0) return TransferOperationResult.None;
 
             ItemStack stack = entity.Itemstack;
-            if (!TryGetMatchedDirectives(stack, out PaperConditionDirectives directives) || !directives.Evaluate(BuildDirectiveContext())) return TransferOperationResult.None;
+            if (!TryGetMatchedDirectives(stack, out PaperConditionDirectives directives, null, block) || !directives.Evaluate(BuildDirectiveContext())) return TransferOperationResult.None;
 
             int moved = TryPutOneIntoInventory(stack, directives.TargetSlot ?? targetSlotSignal);
             if (moved <= 0) return TransferOperationResult.None;
@@ -67,7 +119,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
         /// bottom block of the column. Also refreshes the pile mesh (otherwise the pile keeps
         /// rendering its old size) and removes the block once it runs empty.
         /// </summary>
-        private TransferOperationResult TryTakeFromGroundStorageColumn()
+        private TransferOperationResult TryTakeFromGroundStorageColumn(ConditionBlock block)
         {
             List<BlockEntityGroundStorage> column = GetColumnTopDown();
             if (column.Count == 0) return TransferOperationResult.None;
@@ -77,7 +129,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
             if (topSlot == null || topSlot.Empty) return TransferOperationResult.None;
 
             ItemStack stack = topSlot.Itemstack;
-            if (!TryGetMatchedDirectives(stack, out PaperConditionDirectives directives, top.Inventory)) return TransferOperationResult.None;
+            if (!TryGetMatchedDirectives(stack, out PaperConditionDirectives directives, top.Inventory, block)) return TransferOperationResult.None;
             if (!directives.Evaluate(BuildDirectiveContext())) return TransferOperationResult.None;
 
             // `amount N` takes a whole batch at once, spanning several piles of the column if needed
@@ -145,7 +197,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
         /// apart: it is taken whole or left alone, so nothing is lost when the target runs out of
         /// room halfway through one.
         /// </summary>
-        private TransferOperationResult TryTakeFromLayeredBlock()
+        private TransferOperationResult TryTakeFromLayeredBlock(ConditionBlock paperBlock)
         {
             List<BlockPos> column = GetLayeredColumnTopDown(out Block block, out string layerGroup);
             if (column.Count == 0) return TransferOperationResult.None;
@@ -153,7 +205,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
             ItemStack layerStack = GetLayerDrop(block);
             if (layerStack?.Collectible == null || layerStack.StackSize <= 0) return TransferOperationResult.None;
 
-            if (!TryGetMatchedDirectives(layerStack, out PaperConditionDirectives directives)) return TransferOperationResult.None;
+            if (!TryGetMatchedDirectives(layerStack, out PaperConditionDirectives directives, null, paperBlock)) return TransferOperationResult.None;
             if (!directives.Evaluate(BuildDirectiveContext())) return TransferOperationResult.None;
 
             int perLayer = layerStack.StackSize;
@@ -327,9 +379,9 @@ namespace SignalsLink.src.signals.managedchute.transporting
             return piles;
         }
 
-        private TransferOperationResult TryMovePlacedLiquidContainer(ItemStack containerStack)
+        private TransferOperationResult TryMovePlacedLiquidContainer(ItemStack containerStack, ConditionBlock block)
         {
-            if (!TryGetMatchedDirectives(containerStack, out PaperConditionDirectives directives) || !directives.Evaluate(BuildDirectiveContext())) return TransferOperationResult.None;
+            if (!TryGetMatchedDirectives(containerStack, out PaperConditionDirectives directives, null, block) || !directives.Evaluate(BuildDirectiveContext())) return TransferOperationResult.None;
 
             int moved = TryPutOneIntoInventory(containerStack, directives.TargetSlot ?? targetSlotSignal);
             if (moved <= 0) return TransferOperationResult.None;
@@ -348,6 +400,9 @@ namespace SignalsLink.src.signals.managedchute.transporting
         {
             RunOutputRail();
         }
+
+        // NOTE: TryMove runs the output rail as part of its own pass; RunOutputRail below is for
+        // the ticks where the host cannot carry anything at all.
 
         /// <summary>
         /// The output rail of one evaluation pass. Picking things up out of the world is not slot
@@ -392,16 +447,20 @@ namespace SignalsLink.src.signals.managedchute.transporting
 
         private IDictionary<string, object> BuildOutputContext()
         {
-            var ctx = ItemConditionContextUtil.BuildContext(api.World, null);
-            ctx["targetInventory"] = targetInv;
-
-            // The source here is a spot in the world, so block-state conditions (isBurning) asked
-            // `in source` have something to look at.
-            if (sourcePos != null) ctx["sourceBlockPos"] = sourcePos;
-            return ctx;
+            return BuildConditionContext(null, null);
         }
 
-        private EntityItem FindItemEntityNearSource()
+        /// <summary>
+        /// The two ends as the conditions see them. The source here is a spot in the world rather
+        /// than an inventory, which is why it is given as a position - block-state conditions
+        /// (`isBurning`) asked `in source` then have something to look at.
+        /// </summary>
+        private IDictionary<string, object> BuildConditionContext(ItemStack stack, IInventory sourceInv)
+        {
+            return ConditionContext.Build(api, stack, sourceInv, sourcePos, targetInv, targetPos);
+        }
+
+        private EntityItem FindItemEntityNearSource(ConditionBlock block)
         {
             IWorldAccessor world = api.World;
 
@@ -416,7 +475,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
 
                 var stack = itemEntity.Itemstack;
                 if (stack == null || stack.StackSize <= 0) return false;
-                if (IsLiquidContainer(stack) || !IsConditionMet(stack)) return false;
+                if (IsLiquidContainer(stack) || !IsConditionMet(stack, block)) return false;
 
                 found = itemEntity;
                 return true;
@@ -501,9 +560,9 @@ namespace SignalsLink.src.signals.managedchute.transporting
             return false;
         }
 
-        private bool IsConditionMet(ItemStack stack)
+        private bool IsConditionMet(ItemStack stack, ConditionBlock block)
         {
-            return TryGetMatchedDirectives(stack, out _);
+            return TryGetMatchedDirectives(stack, out _, null, block);
         }
 
         /// <summary>
@@ -511,31 +570,27 @@ namespace SignalsLink.src.signals.managedchute.transporting
         /// </summary>
         public IConditionOutputSink OutputSink { get; set; }
 
-        private bool TryGetMatchedDirectives(ItemStack stack, out PaperConditionDirectives directives, IInventory sourceInv = null)
+        /// <param name="block">
+        /// The block of the paper currently being tried. The driver has already chosen it, so the
+        /// question here is only whether it accepts this particular candidate. Null means there is
+        /// no paper at all, and everything is accepted.
+        /// </param>
+        private bool TryGetMatchedDirectives(ItemStack stack, out PaperConditionDirectives directives, IInventory sourceInv = null, ConditionBlock block = null)
         {
             directives = PaperConditionDirectives.Empty;
-            if (!conditionsEvaluator.HasConditions) return true;
+            if (!conditionsEvaluator.HasConditions || block == null) return true;
 
-            var ctx = ItemConditionContextUtil.BuildContext(api.World, stack);
-            ctx["targetInventory"] = targetInv;
+            IDictionary<string, object> ctx = BuildConditionContext(stack, sourceInv);
 
-            // The source here is a spot in the world, so block-state conditions (isBurning) asked
-            // `in source` have something to look at.
-            if (sourcePos != null) ctx["sourceBlockPos"] = sourcePos;
-            if (sourceInv != null)
-            {
-                ctx["sourceInventory"] = sourceInv;
-                ctx["inventory"] = sourceInv;
-            }
-            return ConditionResolution.ResolveActionDirectives(conditionsEvaluator, stack, ctx, out directives);
+            if (block.IsOutputBlock || !block.TryMatch(stack, ctx)) return false;
+
+            directives = block.Directives;
+            return true;
         }
 
         private IDictionary<string, object> BuildDirectiveContext()
         {
-            return new Dictionary<string, object>
-            {
-                ["targetInventory"] = targetInv
-            };
+            return BuildConditionContext(null, null);
         }
     }
 }

@@ -255,25 +255,9 @@ namespace SignalsLink.src.signals.managedchute.transporting
 
         private IDictionary<string, object> BuildActionContext()
         {
-            var ctx = new Dictionary<string, object>
-            {
-                ["sourceInventory"] = sourceInv,
-                ["targetInventory"] = targetInv,
-                ["inventory"] = sourceInv
-            };
-
-            if (targetPos != null)
-            {
-                ctx["targetBlockPos"] = targetPos;
-                BlockEntityBarrel barrel = api.World.BlockAccessor.GetBlockEntity(targetPos) as BlockEntityBarrel;
-                if (barrel != null)
-                {
-                    ctx["targetBlockEntity"] = barrel;
-                }
-            }
-
-            AddConditionContext(ctx);
-            return ctx;
+            // Actions see exactly what conditions see - there is no reason for `do seal` to be
+            // answered against a different picture of the world than the block it sits in.
+            return BuildDirectiveContext();
         }
     }
 }
