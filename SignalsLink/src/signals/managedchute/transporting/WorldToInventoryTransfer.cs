@@ -26,6 +26,8 @@ namespace SignalsLink.src.signals.managedchute.transporting
 
         public TransferOperationResult TryMove(ItemStackMoveOperation opTemplate)
         {
+            RunOutputRail();
+
             TransferOperationResult fromPile = TryTakeFromGroundStorageColumn();
             if (fromPile.Success) return fromPile;
 
@@ -342,21 +344,53 @@ namespace SignalsLink.src.signals.managedchute.transporting
             return (int)TryMove(opTemplate).MovedAmount;
         }
 
-        /// <summary>
-        /// Conditions here are normally evaluated against whatever is being picked up, so with
-        /// nothing to pick up nothing is evaluated. Blocks that only set the Output pin need no
-        /// such thing, so they get a pass of their own.
-        /// </summary>
         public void EvaluateOutputs()
         {
-            if (OutputSink == null || conditionsEvaluator == null || !conditionsEvaluator.HasConditions) return;
+            RunOutputRail();
+        }
 
+        /// <summary>
+        /// The output rail of one evaluation pass. Picking things up out of the world is not slot
+        /// based, so the action rail below is still the older per-candidate walk (see the note in
+        /// paper-conditions-rules-v2.md); the pin, however, is computed the v2 way — from the
+        /// current state on every pass, reading 0 when no output block holds, instead of freezing
+        /// on whatever last moved it.
+        /// </summary>
+        private void RunOutputRail()
+        {
+            if (OutputSink == null) return;
+
+            IReadOnlyList<ConditionBlock> blocks = conditionsEvaluator?.GetBlocks();
+            if (blocks == null || blocks.Count == 0)
+            {
+                OutputSink.ApplyOutput(0, 0);
+                return;
+            }
+
+            IDictionary<string, object> ctx = null;
+
+            DriverResult result = ConditionDriver.Run(
+                blocks,
+                true,   // the action rail lives outside the driver here
+                block =>
+                {
+                    ctx ??= BuildOutputContext();
+                    return block.OutputConditionsHold(ctx);
+                },
+                null);
+
+            OutputSink.ApplyOutput(0, result.GetOutput());
+        }
+
+        private IDictionary<string, object> BuildOutputContext()
+        {
             var ctx = ItemConditionContextUtil.BuildContext(api.World, null);
             ctx["targetInventory"] = targetInv;
-            if (sourcePos != null) ctx["sourceBlockPos"] = sourcePos;
 
-            // Nothing can move without a stack, so only output blocks can win this pass.
-            ConditionResolution.ResolveDirectives(conditionsEvaluator, OutputSink, null, ctx, out _, _ => false);
+            // The source here is a spot in the world, so block-state conditions (isBurning) asked
+            // `in source` have something to look at.
+            if (sourcePos != null) ctx["sourceBlockPos"] = sourcePos;
+            return ctx;
         }
 
         private EntityItem FindItemEntityNearSource()
@@ -485,7 +519,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
                 ctx["sourceInventory"] = sourceInv;
                 ctx["inventory"] = sourceInv;
             }
-            return ConditionResolution.ResolveDirectives(conditionsEvaluator, OutputSink, stack, ctx, out directives);
+            return ConditionResolution.ResolveActionDirectives(conditionsEvaluator, stack, ctx, out directives);
         }
 
         private IDictionary<string, object> BuildDirectiveContext()

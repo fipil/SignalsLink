@@ -218,15 +218,38 @@ namespace SignalsLink.src.signals.managedchute.transporting
             return result;
         }
 
+        /// <summary>
+        /// Explicit actions (`do seal`). These used to run for EVERY matching block, which made
+        /// them a third rail of their own outside the model. They are now what the action rail
+        /// says they are: the first block whose action actually does work wins, and the rest are
+        /// left alone.
+        /// </summary>
         private void ExecuteMatchingActions()
         {
             if (!conditionsEvaluator.HasConditions) return;
 
+            IReadOnlyList<ConditionBlock> blocks = conditionsEvaluator.GetBlocks();
+            if (blocks == null || blocks.Count == 0) return;
+
             var ctx = BuildActionContext();
-            var actions = conditionsEvaluator.GetMatchingActions(null, ctx);
-            for (int i = 0; i < actions.Count; i++)
+
+            for (int i = 0; i < blocks.Count; i++)
             {
-                actions[i].Execute(ctx);
+                ConditionBlock block = blocks[i];
+
+                if (block.IsOutputBlock || !block.HasActions) continue;
+
+                // No stack is being carried here, so conditions are asked the plain "is this true
+                // of the inventory?" question rather than the slot-selection one.
+                if (!block.MatchesActionContext(null, ctx)) continue;
+
+                bool did = false;
+                for (int j = 0; j < block.Actions.Count; j++)
+                {
+                    if (block.Actions[j].Execute(ctx)) did = true;
+                }
+
+                if (did) return;
             }
         }
 

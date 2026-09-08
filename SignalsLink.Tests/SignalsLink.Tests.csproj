@@ -1,10 +1,21 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+    <IsPackable>false</IsPackable>
+    <RootNamespace>SignalsLink.Tests</RootNamespace>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4" />
+  </ItemGroup>
+
+  <!-- Reference items are not transitive, so the game assemblies have to be named here too.
+       Same relative paths SignalsLink.csproj uses. -->
   <ItemGroup>
     <Reference Include="Newtonsoft.Json">
       <HintPath>..\..\..\..\..\VintageStory\1.22\Lib\Newtonsoft.Json.dll</HintPath>
@@ -27,15 +38,14 @@
     <Reference Include="VSSurvivalMod">
       <HintPath>..\..\..\..\..\VintageStory\1.22\Mods\VSSurvivalMod.dll</HintPath>
     </Reference>
-    <Reference Include="0Harmony">
-      <HintPath>..\..\..\..\..\VintageStory\1.22\Lib\0Harmony.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
   </ItemGroup>
 
-  <Target Name="PostBuild" BeforeTargets="PostBuildEvent">
-    <Exec ContinueOnError="true" Command="copy &quot;$(TargetPath)&quot; &quot;c:\Develope\VintageStory\Projects\SignalsLink\Publish\&quot;" />
-    <Exec ContinueOnError="true" Command="copy &quot;$(TargetDir)\$(TargetName).pdb&quot; &quot;c:\Develope\VintageStory\Projects\SignalsLink\Publish\&quot;" />
-  </Target>
+  <ItemGroup>
+    <ProjectReference Include="..\SignalsLink\SignalsLink.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
 
 </Project>

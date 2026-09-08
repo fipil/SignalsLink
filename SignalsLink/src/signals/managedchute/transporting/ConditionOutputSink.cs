@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using SignalsLink.src.signals.paperConditions;
 using Vintagestory.API.Common;
@@ -5,81 +6,67 @@ using Vintagestory.API.Common;
 namespace SignalsLink.src.signals.managedchute.transporting
 {
     /// <summary>
-    /// Something with an Output pin that an <c>output N</c> block on paper can drive. Item
-    /// transfers get one only when their host actually has such a pin — the Damper does, the
-    /// ManagedChute does not (all three of its anchors are inputs).
+    /// Something with an Output pin that <c>output</c> blocks on paper drive.
     /// </summary>
     public interface IConditionOutputSink
     {
         /// <summary>
-        /// An <c>output N</c> block matched. Return true if the pin really changed, i.e. the block
-        /// did work; false means it did nothing and evaluation should fall through to the next block.
+        /// The value one evaluation pass computed for a pin. Called once per pass and ALWAYS: a
+        /// pass in which no output block held reports 0, because the pin is a function of the
+        /// current state, not of whatever last changed it. That is the whole point of the v2 rules
+        /// — the old contract ("did the pin move?") let the pin freeze on a stale value whenever
+        /// the pass was skipped.
+        ///
+        /// <paramref name="pin"/> is 0 on every device today; see <see cref="IDriverBlock.OutputPin"/>.
         /// </summary>
-        bool TrySetOutput(byte value);
+        void ApplyOutput(int pin, byte value);
     }
 
     /// <summary>
-    /// Resolves which block on paper applies to one item stack, shared by every item transfer so
+    /// Picks the block on paper that applies to one item stack, shared by every item transfer so
     /// they cannot drift apart.
     /// </summary>
     public static class ConditionResolution
     {
         /// <summary>
-        /// Finds the directives of the first block whose conditions hold <b>and</b> whose action is
-        /// a transfer.
+        /// The directives of the first <b>action</b> block that accepts this stack.
         ///
-        /// With no <paramref name="sink"/> this is the plain first-match the transfers have always
-        /// done — the host has no Output pin, so an <c>output</c> block is meaningless to it.
+        /// Output blocks are skipped here on purpose: the output rail belongs to
+        /// <see cref="ConditionDriver"/>, which walks the paper once per pass. This is the
+        /// question a transfer asks when it needs to know how to move a stack it already has in
+        /// hand, not when it is choosing what to do this tick.
         ///
-        /// With a sink, the same walk runs but an <c>output</c> block is understood: it transfers
-        /// nothing, so it wins only while it actually changes the pin. Once the pin already holds
-        /// that value the block does no work and evaluation falls through to the next one — the
-        /// same rule as a transfer that moves nothing, and what lets a plain <c>output 0</c> sit
-        /// above the filling blocks as a reset.
-        ///
-        /// Both paths use the same block predicate on purpose. Matching a block includes checking
-        /// its directives, so a <c>target N ifEmpty</c> block stops matching the moment its slot
-        /// fills and the walk moves on to the next block — a chain of them filling slot after slot
-        /// is the whole point of the directive, and it breaks the instant the two paths disagree.
+        /// Matching a block includes checking its directives, so a <c>target N ifEmpty</c> block
+        /// stops matching the moment its slot fills and the walk moves on to the next one — a
+        /// chain of them filling slot after slot is the whole point of the directive.
         /// </summary>
         /// <param name="canUse">
-        /// Physical validity of a transfer block: would it actually move anything? A block that
-        /// cannot did no work, so it is not the block that wins and the walk carries on to the next
-        /// one — the same rule an `output` block follows when the pin already holds its value.
-        /// Ignored on the sink-less path, where the caller checks it afterwards instead.
+        /// Physical validity: would this block actually move anything? A block that cannot did no
+        /// work, so the walk carries on to the next one.
         /// </param>
-        public static bool ResolveDirectives(PaperConditionsEvaluator evaluator, IConditionOutputSink sink,
-            ItemStack stack, IDictionary<string, object> ctx, out PaperConditionDirectives directives,
+        public static bool ResolveActionDirectives(PaperConditionsEvaluator evaluator, ItemStack stack,
+            IDictionary<string, object> ctx, out PaperConditionDirectives directives,
             System.Func<PaperConditionDirectives, bool> canUse = null)
         {
             directives = PaperConditionDirectives.Empty;
             if (evaluator == null || !evaluator.HasConditions) return true;
 
-            if (sink == null)
+            IReadOnlyList<ConditionBlock> blocks = evaluator.GetBlocks();
+            if (blocks == null || blocks.Count == 0) return true;
+
+            for (int i = 0; i < blocks.Count; i++)
             {
-                return evaluator.Evaluate(stack, ctx, out byte _, out directives);
+                ConditionBlock block = blocks[i];
+
+                if (block.IsOutputBlock) continue;
+                if (!block.TryMatch(stack, ctx)) continue;
+                if (canUse != null && !canUse(block.Directives)) continue;
+
+                directives = block.Directives;
+                return true;
             }
 
-            PaperConditionDirectives transferDirectives = null;
-
-            evaluator.RunFirstMatching(stack, ctx, match =>
-            {
-                if (match.HasExplicitOutput)
-                {
-                    if (match.OutputValue > 15) return false; // not a signal value; skip the block
-                    return sink.TrySetOutput(match.OutputValue);
-                }
-
-                if (canUse != null && !canUse(match.Directives)) return false;
-
-                transferDirectives = match.Directives;
-                return true;
-            });
-
-            if (transferDirectives == null) return false;
-
-            directives = transferDirectives;
-            return true;
+            return false;
         }
     }
 }

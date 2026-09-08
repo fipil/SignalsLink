@@ -245,16 +245,20 @@ namespace SignalsLink.src.signals.sleeve
         /// </summary>
         private void EvaluateOutputs()
         {
-            if (conditionsEvaluator == null || !conditionsEvaluator.HasAnyOutput) return;
+            // No `output` block on the paper means the pin is a constant zero, and a damper with
+            // nothing on the other end of the sleeve has nothing to report either. Both are
+            // written out rather than skipped: a pin that is merely left alone is how it used to
+            // freeze on a stale value.
+            if (conditionsEvaluator == null || !conditionsEvaluator.HasAnyOutput) { SetOutput(0); return; }
 
             LinkNetworkMod linkMod = Api.ModLoader.GetModSystem<LinkNetworkMod>();
-            if (linkMod == null) return;
+            if (linkMod == null) { SetOutput(0); return; }
 
             BlockPos myCargoPos = GetCargoPos(Api.World, Pos);
-            if (myCargoPos == null) return;
+            if (myCargoPos == null) { SetOutput(0); return; }
 
             List<LinkSource> sources = linkMod.GetOtherEndpoints(Api.World, new NodePos(Pos, SLEEVE));
-            if (sources.Count == 0) return;
+            if (sources.Count == 0) { SetOutput(0); return; }
 
             // Whichever source the rotation is on, so `in source` means the same thing here as it
             // would in a transfer.
@@ -472,15 +476,13 @@ namespace SignalsLink.src.signals.sleeve
         }
 
         /// <summary>
-        /// An `output N` block on paper matched. It is valid only while it actually moves the pin —
-        /// once the pin already holds N the block does no work and evaluation falls through, which
-        /// is what lets an `output 0` reset block sit above the transferring ones.
+        /// What one evaluation pass computed for the pin, including the 0 of a pass in which no
+        /// `output` block held. See <see cref="IConditionOutputSink"/>: the pin is a function of
+        /// the current state, so it is written on every pass and never left holding a stale value.
         /// </summary>
-        public bool TrySetOutput(byte value)
+        public void ApplyOutput(int pin, byte value)
         {
-            if (outputState == value) return false;
             SetOutput(value);
-            return true;
         }
 
         private void OnSignalNetworkTick()

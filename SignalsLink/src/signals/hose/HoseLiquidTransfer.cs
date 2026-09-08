@@ -25,9 +25,6 @@ namespace SignalsLink.src.signals.hose
         private readonly PaperConditionsEvaluator conditions;
         private readonly LiquidTransferService liquid;
         private readonly bool discard;
-        // The valve's current Output pin value, so an `output N` block can fall through when the
-        // pin is already at N (it would change nothing).
-        private readonly byte currentOutput;
         // Upper bound on litres this move may transfer (the remaining Input buffer). An `amount M`
         // directive is capped by it, so the buffer is a hard "litres left to move" limit
         // (buffer 3 + amount 6 → move only 3). decimal.MaxValue = unlimited (signal 15).
@@ -42,7 +39,7 @@ namespace SignalsLink.src.signals.hose
         /// out (particles) and consumed instead of stored. <paramref name="targetInv"/> is null and
         /// <paramref name="targetPos"/> is the valve's own position (used for the particles).
         /// </param>
-        public HoseLiquidTransfer(ICoreAPI api, IInventory targetInv, BlockPos targetPos, NodePos farEndpoint, PaperConditionsEvaluator conditions, bool discard = false, byte currentOutput = 0, decimal maxTransfer = decimal.MaxValue)
+        public HoseLiquidTransfer(ICoreAPI api, IInventory targetInv, BlockPos targetPos, NodePos farEndpoint, PaperConditionsEvaluator conditions, bool discard = false, decimal maxTransfer = decimal.MaxValue)
         {
             this.api = api;
             this.targetInv = targetInv;
@@ -50,7 +47,6 @@ namespace SignalsLink.src.signals.hose
             this.farEndpoint = farEndpoint;
             this.conditions = conditions;
             this.discard = discard;
-            this.currentOutput = currentOutput;
             this.maxTransfer = maxTransfer;
             this.liquid = new LiquidTransferService(api, targetInv, targetPos);
         }
@@ -58,8 +54,14 @@ namespace SignalsLink.src.signals.hose
         public struct Result
         {
             public TransferOperationResult Transfer;
-            public bool HasExplicitOutput;
-            public byte OutputValue;
+
+            /// <summary>
+            /// True once an evaluation pass has run, which is whenever the valve is alive. The pin
+            /// then takes <see cref="Output"/> unconditionally - the 0 of a pass in which no
+            /// `output` block held included.
+            /// </summary>
+            public bool OutputComputed;
+            public byte Output;
             // In drain mode, the liquid that was poured out (used by the BE to spawn mouth
             // particles tinted with the liquid's colour). Null unless a drain actually happened.
             public ItemStack DrainedLiquid;
@@ -67,7 +69,12 @@ namespace SignalsLink.src.signals.hose
             public static Result None => new Result { Transfer = TransferOperationResult.None };
         }
 
-        public Result TryMove(decimal litresRequested)
+        /// <param name="actionsBlocked">
+        /// Closes the action rail: the valve has no input credit, or is waiting for its turn on
+        /// the line. The pass still runs, so the Output pin keeps reporting the current state
+        /// instead of freezing on the last thing that moved it.
+        /// </param>
+        public Result TryMove(decimal litresRequested, bool actionsBlocked = false)
         {
             // Resolve the source liquid at the far endpoint (remote valve host, or intake water).
             ItemStack sourceLiquid = ResolveSource(out ItemSlot srcSlot, out BlockPos worldWaterPos, out IInventory sourceInv);
@@ -75,26 +82,42 @@ namespace SignalsLink.src.signals.hose
             // Target-aware context (valid even when there is nothing to pull).
             IDictionary<string, object> ctx = BuildContext(sourceLiquid, sourceInv);
 
-            Result result;
+            Result result = Result.None;
 
-            // No conditions → default action (transfer, or discard in drain mode).
-            if (conditions == null || !conditions.HasConditions)
+            IReadOnlyList<ConditionBlock> blocks = conditions?.GetBlocks();
+
+            // No paper at all: the default action, and a pin nothing can drive, so it reads 0.
+            if (blocks == null || blocks.Count == 0)
             {
-                if (sourceLiquid == null) return Result.None;
-                result = new Result { Transfer = DefaultAction(sourceLiquid, srcSlot, worldWaterPos, PaperConditionDirectives.Empty, litresRequested, ctx) };
+                if (!actionsBlocked && sourceLiquid != null)
+                {
+                    result.Transfer = DefaultAction(sourceLiquid, srcSlot, worldWaterPos, PaperConditionDirectives.Empty, litresRequested, ctx);
+                }
+
+                result.OutputComputed = true;
+                result.Output = 0;
             }
             else
             {
-                // Unified rule (docs/paper-conditions.md): run the FIRST block whose conditions hold
-                // and whose action actually does work. A block's action is either the default
-                // (transfer) or an explicit action that replaces it (`output N`, `do seal`).
-                result = Result.None;
-                conditions.RunFirst(sourceLiquid, ctx, match =>
-                {
-                    Result? r = ExecuteBlock(match, sourceLiquid, srcSlot, worldWaterPos, litresRequested, ctx);
-                    if (r.HasValue) { result = r.Value; return true; }
-                    return false;
-                });
+                // The unified pass (paper-conditions-rules-v2.md): one walk in paper order that
+                // carries the output rail and the action rail at the same time.
+                Result acted = Result.None;
+
+                DriverResult driven = ConditionDriver.Run(
+                    blocks,
+                    actionsBlocked,
+                    block => block.OutputConditionsHold(ctx),
+                    block =>
+                    {
+                        Result? r = ExecuteBlock(block, sourceLiquid, srcSlot, worldWaterPos, litresRequested, ctx);
+                        if (!r.HasValue) return false;
+                        acted = r.Value;
+                        return true;
+                    });
+
+                result = acted;
+                result.OutputComputed = true;
+                result.Output = driven.GetOutput();
             }
 
             // Tell the BE which liquid was poured out, so it can render mouth particles.
@@ -103,35 +126,44 @@ namespace SignalsLink.src.signals.hose
         }
 
         /// <summary>
-        /// Tries to perform one block's action. Returns the result if the action did work (this
-        /// block wins), or null if it did nothing (evaluation falls through to the next block).
+        /// Tries to perform one action block. Returns the result if the action did work (the rail
+        /// then closes), or null if it did nothing (the walk falls through to the next block).
+        ///
+        /// The predicate here is deliberately not the one the item transfers use: they also demand
+        /// a source-scoped condition, because that is what picks the slot to take from. A valve has
+        /// no slot to pick, the far end of the hose IS the source, so demanding one would kill
+        /// perfectly ordinary papers such as `in target / *water* 50-`.
         /// </summary>
-        private Result? ExecuteBlock(PaperConditionMatchResult match, ItemStack sourceLiquid, ItemSlot srcSlot, BlockPos worldWaterPos, decimal litresRequested, IDictionary<string, object> ctx)
+        private Result? ExecuteBlock(ConditionBlock block, ItemStack sourceLiquid, ItemSlot srcSlot, BlockPos worldWaterPos, decimal litresRequested, IDictionary<string, object> ctx)
         {
-            // 1) Explicit action `do seal` — replaces the transfer.
-            if (match.Actions.Count > 0)
+            // `source N` names the slot to draw from at the far end, so it has to be resolved
+            // before the conditions are asked - they are asked about that liquid, not about
+            // whichever one the default rule happened to find first. Used to be ignored here in
+            // silence, which is the worst way for a directive to not work.
+            if (block.Directives.SourceSlot.HasValue)
+            {
+                sourceLiquid = ResolveSource(out srcSlot, out worldWaterPos, out IInventory blockSourceInv, block.Directives.SourceSlot);
+                ctx = BuildContext(sourceLiquid, blockSourceInv);
+            }
+
+            if (!block.ConditionsHold(sourceLiquid, ctx)) return null;
+
+            // Directive validity is block validity: a `target N ifEmpty` block stops matching once
+            // its slot fills and the walk moves on. The older liquid path skipped this, which is
+            // why the same paper behaved differently on a valve than on a damper.
+            if (!block.Directives.Evaluate(ctx)) return null;
+
+            // 1) Explicit action `do seal` - replaces the transfer.
+            if (block.HasActions)
             {
                 bool did = false;
-                for (int i = 0; i < match.Actions.Count; i++) if (match.Actions[i].Execute(ctx)) did = true;
+                for (int i = 0; i < block.Actions.Count; i++) if (block.Actions[i].Execute(ctx)) did = true;
                 return did ? new Result { Transfer = TransferOperationResult.None } : (Result?)null;
             }
 
-            // 2) Explicit action `output N` — replaces the transfer (the valve has an Output pin).
-            //    Like any action it only "does work" if it actually CHANGES something: if the pin
-            //    is already at N this block did nothing, so evaluation falls through to the next
-            //    block. That lets e.g. `in target / *water* 0 / output 0` sit ABOVE a fill block —
-            //    it resets a stale signal once, then stops blocking the transfer below it.
-            //    The `output .` sentinel (255) is sensor-only → never work here → next block.
-            if (match.HasExplicitOutput)
-            {
-                if (match.OutputValue > 15) return null;
-                if (match.OutputValue == currentOutput) return null; // no change → fall through
-                return new Result { Transfer = TransferOperationResult.None, HasExplicitOutput = true, OutputValue = match.OutputValue };
-            }
-
-            // 3) Default action — transfer liquid (or discard in drain mode), shaped by directives.
+            // 2) Default action - transfer liquid (or discard in drain mode), shaped by directives.
             if (sourceLiquid == null) return null;
-            TransferOperationResult res = DefaultAction(sourceLiquid, srcSlot, worldWaterPos, match.Directives, litresRequested, ctx);
+            TransferOperationResult res = DefaultAction(sourceLiquid, srcSlot, worldWaterPos, block.Directives, litresRequested, ctx);
             return res.Success ? new Result { Transfer = res } : (Result?)null;
         }
 
@@ -223,7 +255,11 @@ namespace SignalsLink.src.signals.hose
             return new TransferOperationResult(movedLitres, triggerCost, true);
         }
 
-        private ItemStack ResolveSource(out ItemSlot srcSlot, out BlockPos worldWaterPos, out IInventory sourceInv)
+        /// <param name="sourceSlot">
+        /// The `source N` directive, when a block carries one: draw from exactly that slot of the
+        /// far host and from no other. An intake (world water) has no slots, so it ignores this.
+        /// </param>
+        private ItemStack ResolveSource(out ItemSlot srcSlot, out BlockPos worldWaterPos, out IInventory sourceInv, byte? sourceSlot = null)
         {
             srcSlot = null;
             worldWaterPos = null;
@@ -248,7 +284,7 @@ namespace SignalsLink.src.signals.hose
             if (farInv == null) return null;
             sourceInv = farInv;
 
-            ItemSlot liquidSlot = FindLiquidSlot(farInv);
+            ItemSlot liquidSlot = sourceSlot.HasValue ? GetLiquidSlotAt(farInv, sourceSlot.Value) : FindLiquidSlot(farInv);
             if (liquidSlot == null || liquidSlot.Empty) return null;
             srcSlot = liquidSlot;
             return liquid.GetLiquidStackForTransfer(liquidSlot.Itemstack);
@@ -287,6 +323,16 @@ namespace SignalsLink.src.signals.hose
         private void MarkSourceDirty()
         {
             if (srcHostPos != null) api.World.BlockAccessor.GetBlockEntity(srcHostPos)?.MarkDirty(true);
+        }
+
+        /// <summary>The far host slot a `source N` directive names, or null if it holds no liquid.</summary>
+        private static ItemSlot GetLiquidSlotAt(IInventory inv, byte slotNumber)
+        {
+            int index = slotNumber - 1;
+            if (index < 0 || index >= inv.Count) return null;
+
+            ItemSlot slot = inv[index];
+            return slot != null && !slot.Empty && slot.Itemstack.Collectible.IsLiquid() ? slot : null;
         }
 
         private static ItemSlot FindLiquidSlot(IInventory inv)

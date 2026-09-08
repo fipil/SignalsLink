@@ -14,6 +14,13 @@ namespace SignalsLink.src.signals.paperConditions
             this.blocks = blocks;
         }
 
+        /// <summary>
+        /// The blocks in the order they stand on the paper. This is what the unified
+        /// <see cref="ConditionDriver"/> walks; everything else here is the older per-entry-point
+        /// API kept until the last host is migrated.
+        /// </summary>
+        public IReadOnlyList<ConditionBlock> Blocks => blocks;
+
         /// <summary>True if any block specifies an <c>output</c> action.</summary>
         public bool HasAnyOutput
         {
@@ -67,44 +74,6 @@ namespace SignalsLink.src.signals.paperConditions
             return false;
         }
 
-        /// <summary>
-        /// Unified evaluation driver (see docs/paper-conditions.md → "Model vyhodnocení bloků").
-        /// Walks blocks top-down; for each block whose <b>conditions</b> hold, calls
-        /// <paramref name="execute"/> with that block. Stops at the first block for which
-        /// <paramref name="execute"/> returns true (i.e. its action actually did work — physical
-        /// validity). Returns true if some block executed.
-        /// </summary>
-        public bool RunFirst(ItemStack stack, IDictionary<string, object> ctx, System.Func<PaperConditionMatchResult, bool> execute)
-        {
-            for (int i = 0; i < blocks.Count; i++)
-            {
-                if (!blocks[i].ConditionsHold(stack, ctx)) continue;
-                if (execute(blocks[i].CreateMatchResult())) return true;
-            }
-            return false;
-        }
-
-        /// <summary>
-        /// The same top-down walk as <see cref="RunFirst"/>, but with the <b>selection</b> predicate
-        /// (<see cref="ConditionBlock.TryMatch"/>): a block also has to have a source-scoped
-        /// condition and its directives have to hold. That is what makes a chain of
-        /// <c>target N ifEmpty</c> blocks work — once a block's target slot fills up the block stops
-        /// matching and the walk carries on to the next one.
-        ///
-        /// Used where an item transfer needs both that behaviour and the chance to handle an
-        /// <c>output</c> block, which <see cref="TryMatch(ItemStack, IDictionary{string, object}, out PaperConditionMatchResult)"/>
-        /// cannot give at once because it stops at the first match.
-        /// </summary>
-        public bool RunFirstMatching(ItemStack stack, IDictionary<string, object> ctx, System.Func<PaperConditionMatchResult, bool> execute)
-        {
-            for (int i = 0; i < blocks.Count; i++)
-            {
-                if (!blocks[i].TryMatch(stack, ctx)) continue;
-                if (execute(blocks[i].CreateMatchResult())) return true;
-            }
-            return false;
-        }
-
         public IReadOnlyList<IConditionAction> GetMatchingActions(ItemStack stack, IDictionary<string, object> ctx)
         {
             List<IConditionAction> actions = null;
@@ -122,7 +91,7 @@ namespace SignalsLink.src.signals.paperConditions
         }
     }
 
-    public class ConditionBlock
+    public class ConditionBlock : IDriverBlock
     {
         private readonly List<ScopedCondition> conditions;
         private readonly List<IConditionAction> actions;
@@ -141,6 +110,12 @@ namespace SignalsLink.src.signals.paperConditions
         public IReadOnlyList<IConditionAction> Actions => actions;
         public bool HasActions => actions.Count > 0;
         public bool CanSelectSource => conditions.Any(condition => condition.Scope == InventoryConditionScope.Source);
+
+        // --- IDriverBlock: the little the unified driver needs to know about a block.
+        public bool IsOutputBlock => HasExplicitOutput;
+
+        /// <summary>Every device has a single Output pin today; see IDriverBlock.OutputPin.</summary>
+        public int OutputPin => 0;
 
         public ConditionBlock(List<ScopedCondition> conditions, byte outputValue, bool hasExplicitOutput, PaperConditionDirectives directives, List<IConditionAction> actions)
         {
@@ -170,6 +145,28 @@ namespace SignalsLink.src.signals.paperConditions
             // (Directives.Evaluate returns true).
             if (!Directives.Evaluate(ctx)) return false;
 
+            return true;
+        }
+
+        /// <summary>
+        /// Do this block's conditions hold as an <b>output</b> block?
+        ///
+        /// Two things differ from the action rail, and both follow from there being no item in
+        /// hand: nothing is being selected, and there is no source stack to select it from. So
+        /// every condition is asked about the <b>target</b> — the end the device itself sits on —
+        /// and asked in the plain "is this true of that inventory?" form.
+        ///
+        /// Without this an amount condition written with no scope prefix could never hold in an
+        /// output block: the source-scoped selection path starts by demanding a stack, and an
+        /// output block has none. `game:firewood 96 / output 5` was silently dead while the same
+        /// block without the 96 worked.
+        /// </summary>
+        public bool OutputConditionsHold(IDictionary<string, object> ctx)
+        {
+            foreach (var c in conditions)
+            {
+                if (!c.EvaluateAsOutput(ctx)) return false;
+            }
             return true;
         }
 
@@ -224,15 +221,29 @@ namespace SignalsLink.src.signals.paperConditions
 
         public bool Evaluate(ItemStack stack, IDictionary<string, object> ctx, bool isSelectionEvaluation)
         {
-            IInventory inventory = ResolveInventory(ctx);
+            return Evaluate(stack, ctx, isSelectionEvaluation, Scope);
+        }
+
+        /// <summary>
+        /// Evaluation for the output rail: no stack, nothing being selected, and the target scope
+        /// regardless of what the line says. See <see cref="ConditionBlock.OutputConditionsHold"/>.
+        /// </summary>
+        public bool EvaluateAsOutput(IDictionary<string, object> ctx)
+        {
+            return Evaluate(null, ctx, false, InventoryConditionScope.Target);
+        }
+
+        private bool Evaluate(ItemStack stack, IDictionary<string, object> ctx, bool isSelectionEvaluation, InventoryConditionScope scope)
+        {
+            IInventory inventory = ResolveInventory(ctx, scope);
             IDictionary<string, object> scopedCtx = BuildScopedContext(ctx, inventory);
 
             if (Condition is IInventoryCondition inventoryCondition)
             {
-                return inventoryCondition.Evaluate(stack, inventory, scopedCtx, Scope, isSelectionEvaluation);
+                return inventoryCondition.Evaluate(stack, inventory, scopedCtx, scope, isSelectionEvaluation);
             }
 
-            if (isSelectionEvaluation && Scope == InventoryConditionScope.Source && stack?.Collectible != null)
+            if (isSelectionEvaluation && scope == InventoryConditionScope.Source && stack?.Collectible != null)
             {
                 return Condition.Evaluate(stack, scopedCtx);
             }
@@ -240,11 +251,11 @@ namespace SignalsLink.src.signals.paperConditions
             return InventoryConditionResolver.AnyMatch(inventory, scopedCtx, Condition);
         }
 
-        private IInventory ResolveInventory(IDictionary<string, object> ctx)
+        private IInventory ResolveInventory(IDictionary<string, object> ctx, InventoryConditionScope scope)
         {
             if (ctx == null) return null;
 
-            string key = Scope == InventoryConditionScope.Target ? "targetInventory" : "sourceInventory";
+            string key = scope == InventoryConditionScope.Target ? "targetInventory" : "sourceInventory";
             if (ctx.TryGetValue(key, out var obj) && obj is IInventory inventory)
             {
                 return inventory;

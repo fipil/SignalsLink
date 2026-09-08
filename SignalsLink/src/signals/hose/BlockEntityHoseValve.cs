@@ -175,6 +175,12 @@ namespace SignalsLink.src.signals.hose
         private void MoveLiquid(float dt)
         {
             if (Api is not ICoreServerAPI) return;
+
+            // Blocks with an `output` action are evaluated on EVERY tick, whatever the Input pin
+            // says. That is what makes the pin a reading of the current state rather than a memory
+            // of the last thing that moved it.
+            EvaluateOutputs();
+
             if (!HasInput) { noWorkStreak = 0; tickSkip = 0; return; } // truly idle → cheap no-op
 
             // A valve whose conditions produce an `output` acts like a sensor — it must stay
@@ -197,6 +203,46 @@ namespace SignalsLink.src.signals.hose
             else if (status == 1) noWorkStreak = System.Math.Min(noWorkStreak + 1, 64); // blocked → back off
             // status == 2 (waiting for our arbitration turn): keep the current rate so two facing
             // valves keep alternating without lag.
+        }
+
+        /// <summary>
+        /// One evaluation pass with the action rail closed, run every tick so the Output pin keeps
+        /// reporting the current state. A valve that cannot see anything to report on says 0
+        /// rather than being left alone: a pin that is merely not written is how it used to freeze
+        /// on a stale value.
+        /// </summary>
+        private void EvaluateOutputs()
+        {
+            if (conditionsEvaluator == null || !conditionsEvaluator.HasAnyOutput) { SetOutput(0); return; }
+
+            LinkNetworkMod linkMod = Api.ModLoader.GetModSystem<LinkNetworkMod>();
+            if (linkMod == null) { SetOutput(0); return; }
+
+            List<LinkSource> sources = linkMod.GetOtherEndpoints(Api.World, new NodePos(Pos, HOSE));
+            if (sources.Count == 0) { SetOutput(0); return; }
+
+            bool discard = GetSideFace() == BlockFacing.DOWN;
+            IInventory hostInv = null;
+            BlockPos hostPos;
+
+            if (discard)
+            {
+                hostPos = Pos.AddCopy(GetOrientationFace());
+            }
+            else
+            {
+                hostInv = GetHostInventory(out hostPos);
+                if (hostInv == null) { SetOutput(0); return; }
+            }
+
+            // Whichever source the rotation is on, so `in source` means the same thing here as it
+            // would during a real pull.
+            int index = sources.FindIndex(s => s.Endpoint == currentSource);
+            NodePos far = sources[index < 0 ? 0 : index].Endpoint;
+
+            var transfer = new HoseLiquidTransfer(Api, hostInv, hostPos, far, conditionsEvaluator, discard);
+            HoseLiquidTransfer.Result result = transfer.TryMove(0m, actionsBlocked: true);
+            if (result.OutputComputed) SetOutput(result.Output);
         }
 
         /// <summary>
@@ -279,10 +325,10 @@ namespace SignalsLink.src.signals.hose
             // `amount M` block never moves more than what's left). Unlimited → no cap.
             decimal bufferCap = unlimited ? decimal.MaxValue : remaining;
 
-            var transfer = new HoseLiquidTransfer(Api, hostInv, hostPos, far, conditionsEvaluator, discard, outputState, bufferCap);
+            var transfer = new HoseLiquidTransfer(Api, hostInv, hostPos, far, conditionsEvaluator, discard, bufferCap);
             HoseLiquidTransfer.Result result = transfer.TryMove(litres);
 
-            if (result.HasExplicitOutput) SetOutput(result.OutputValue);
+            if (result.OutputComputed) SetOutput(result.Output);
 
             bool moved = result.Transfer.Success;
 
