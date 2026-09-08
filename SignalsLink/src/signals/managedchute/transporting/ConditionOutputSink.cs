@@ -29,6 +29,35 @@ namespace SignalsLink.src.signals.managedchute.transporting
     public static class ConditionResolution
     {
         /// <summary>
+        /// The output rail on its own, for a host that has something to report on but nothing to
+        /// carry — a solid block on its own end, say. The pin reports on what the device can SEE,
+        /// which is not the same question as what it can move.
+        /// </summary>
+        public static byte RunOutputRail(PaperConditionsEvaluator evaluator, IDictionary<string, object> ctx)
+        {
+            IReadOnlyList<ConditionBlock> blocks = evaluator?.GetBlocks();
+            if (blocks == null || blocks.Count == 0) return 0;
+
+            DriverResult result = ConditionDriver.Run(
+                blocks,
+                true,   // there is no action rail here at all
+                block =>
+                {
+                    bool holds = block.OutputConditionsHold(ctx);
+
+                    if (ConditionDebug.Enabled)
+                    {
+                        ConditionDebug.Log("  output block value=" + block.OutputValue + " holds=" + holds);
+                    }
+
+                    return holds;
+                },
+                null);
+
+            return result.GetOutput();
+        }
+
+        /// <summary>
         /// The directives of the first <b>action</b> block that accepts this stack.
         ///
         /// Output blocks are skipped here on purpose: the output rail belongs to

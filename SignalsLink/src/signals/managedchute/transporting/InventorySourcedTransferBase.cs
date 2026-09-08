@@ -80,6 +80,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
             {
                 // No paper at all: nothing can drive the pin, so it reads 0, and the slot is picked
                 // by the Source pin alone, exactly as it always was.
+                if (ConditionDebug.Enabled) ConditionDebug.Log("pass: no paper -> output 0");
                 if (!actionsBlocked) selection = SelectWithoutPaper();
                 ApplyOutput(DriverResult.Nothing);
                 return DriverResult.Nothing;
@@ -97,7 +98,15 @@ namespace SignalsLink.src.signals.managedchute.transporting
                     // Output blocks report on the target and are asked with no stack at all -
                     // there is nothing being carried when the action rail is closed.
                     outputCtx ??= BuildConditionContext(null);
-                    return block.OutputConditionsHold(outputCtx);
+                    bool holds = block.OutputConditionsHold(outputCtx);
+
+                    if (ConditionDebug.Enabled)
+                    {
+                        ConditionDebug.Log("  output block value=" + block.OutputValue + " holds=" + holds
+                            + " | " + ConditionDebug.Describe(outputCtx, "targetInventory"));
+                    }
+
+                    return holds;
                 },
                 block =>
                 {
@@ -110,6 +119,14 @@ namespace SignalsLink.src.signals.managedchute.transporting
                 });
 
             selection = picked;
+
+            if (ConditionDebug.Enabled)
+            {
+                ConditionDebug.Log("pass actionsBlocked=" + actionsBlocked + " blocks=" + blocks.Count
+                    + " -> output=" + result.GetOutput() + " claimed=" + result.HasOutput()
+                    + " selection=" + (picked == null ? "<none>" : picked.SourceSlot?.Itemstack?.Collectible?.Code?.ToString() ?? "?"));
+            }
+
             ApplyOutput(result);
             return result;
         }

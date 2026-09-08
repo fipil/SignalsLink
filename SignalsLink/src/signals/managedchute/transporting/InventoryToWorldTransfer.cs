@@ -59,43 +59,21 @@ namespace SignalsLink.src.signals.managedchute.transporting
             // expose its work item - a throw-away inventory, read-only as far as conditions go.
             IInventory column = BuildGroundColumnInventory();
             if (column != null) ctx["targetInventory"] = column;
+
+            if (ConditionDebug.Enabled)
+            {
+                ConditionDebug.Log("  ground column at " + targetPos + " block="
+                    + (api.World.BlockAccessor.GetBlock(targetPos)?.Code?.ToString() ?? "?")
+                    + " -> " + ConditionDebug.Describe(column));
+            }
         }
 
-        // Rebuilt only when the number of piles changes; the stacks inside are the live ones, so a
-        // pile filling up is seen without rebuilding anything.
-        private InventoryGeneric groundColumnInventory;
-
+        // Deliberately the ground-storage view and not the general one: this class PLACES things,
+        // and it may only ever grow a column of piles. Reading a layered block here would invite it
+        // to stack firewood on top of a charcoal pile.
         private IInventory BuildGroundColumnInventory()
         {
-            List<BlockEntityGroundStorage> piles = new List<BlockEntityGroundStorage>();
-            IBlockAccessor ba = api.World.BlockAccessor;
-
-            for (int dy = 0; dy < 64; dy++)
-            {
-                if (ba.GetBlockEntity(targetPos.AddCopy(0, dy, 0)) is not BlockEntityGroundStorage pile) break;
-                piles.Add(pile);
-            }
-
-            // No piles is not "no answer", it is "nothing there" - and the difference decides
-            // whether `in target game:firewood 95-` can fire. Handing back null makes every target
-            // condition fail, so an Output pin set while the column was full would stay stuck at
-            // that value once the column is gone (a charcoal pit turning the firewood into charcoal
-            // blocks does exactly that). An empty inventory reads as zero, which is the truth.
-            int slots = System.Math.Max(1, piles.Count);
-
-            if (groundColumnInventory == null || groundColumnInventory.Count != slots)
-            {
-                // NOTE: the inventory id MUST contain a dash - VS derives className/instanceId from
-                // it by splitting on '-', and an id without one throws IndexOutOfRangeException.
-                groundColumnInventory = new InventoryGeneric(slots, "signalslink-groundcolumn", api);
-            }
-
-            for (int i = 0; i < slots; i++)
-            {
-                groundColumnInventory[i].Itemstack = i < piles.Count ? piles[i].Inventory?[0]?.Itemstack : null;
-            }
-
-            return groundColumnInventory;
+            return TargetInventoryResolver.ResolveGroundColumn(api, targetPos);
         }
 
         public int TryMoveOneItem(ItemStackMoveOperation opTemplate)

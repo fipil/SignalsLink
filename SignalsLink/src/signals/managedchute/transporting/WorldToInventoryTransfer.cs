@@ -375,7 +375,15 @@ namespace SignalsLink.src.signals.managedchute.transporting
                 block =>
                 {
                     ctx ??= BuildOutputContext();
-                    return block.OutputConditionsHold(ctx);
+                    bool holds = block.OutputConditionsHold(ctx);
+
+                    if (ConditionDebug.Enabled)
+                    {
+                        ConditionDebug.Log("  output block value=" + block.OutputValue + " holds=" + holds
+                            + " | " + ConditionDebug.Describe(ctx, "targetInventory"));
+                    }
+
+                    return holds;
                 },
                 null);
 

@@ -245,30 +245,116 @@ namespace SignalsLink.src.signals.sleeve
         /// </summary>
         private void EvaluateOutputs()
         {
-            // No `output` block on the paper means the pin is a constant zero, and a damper with
-            // nothing on the other end of the sleeve has nothing to report either. Both are
-            // written out rather than skipped: a pin that is merely left alone is how it used to
-            // freeze on a stale value.
-            if (conditionsEvaluator == null || !conditionsEvaluator.HasAnyOutput) { SetOutput(0); return; }
+            bool trace = ConditionDebug.IsMarked(conditionsText);
+            if (trace) ConditionDebug.Begin(Api.Logger, "damper@" + Pos);
+
+            try
+            {
+                EvaluateOutputsCore(trace);
+            }
+            finally
+            {
+                if (trace) ConditionDebug.End();
+            }
+        }
+
+        private void EvaluateOutputsCore(bool trace)
+        {
+            // No `output` block on the paper means the pin is a constant zero, and a damper that
+            // cannot see its own end has nothing to report either. Every one of these is written
+            // out rather than skipped: a pin that is merely left alone is how it froze on a stale
+            // value.
+            if (conditionsEvaluator == null || !conditionsEvaluator.HasAnyOutput)
+            {
+                if (trace) ConditionDebug.Log("no output block on paper -> pin 0");
+                SetOutput(0);
+                return;
+            }
 
             LinkNetworkMod linkMod = Api.ModLoader.GetModSystem<LinkNetworkMod>();
             if (linkMod == null) { SetOutput(0); return; }
 
             BlockPos myCargoPos = GetCargoPos(Api.World, Pos);
-            if (myCargoPos == null) { SetOutput(0); return; }
+            if (myCargoPos == null)
+            {
+                if (trace) ConditionDebug.Log("no cargo position -> pin 0");
+                SetOutput(0);
+                return;
+            }
 
             List<LinkSource> sources = linkMod.GetOtherEndpoints(Api.World, new NodePos(Pos, SLEEVE));
-            if (sources.Count == 0) { SetOutput(0); return; }
+            if (sources.Count == 0)
+            {
+                if (trace) ConditionDebug.Log("no sleeve connected -> pin 0");
+                SetOutput(0);
+                return;
+            }
 
             // Whichever source the rotation is on, so `in source` means the same thing here as it
             // would in a transfer.
             int index = sources.FindIndex(s => s.Endpoint == currentSource);
             BlockPos farCargoPos = GetCargoPos(Api.World, sources[index < 0 ? 0 : index].Endpoint.blockPos);
-            if (farCargoPos == null) return;
+            if (farCargoPos == null)
+            {
+                if (trace) ConditionDebug.Log("far end has no cargo position -> pin 0");
+                SetOutput(0);
+                return;
+            }
 
-            ItemTransferFactory
-                .CreateTransfer(Api, farCargoPos, myCargoPos, 0, 0, ConditionsEvaluator, this)
-                ?.EvaluateOutputs();
+            IItemTransfer transfer = ItemTransferFactory.CreateTransfer(
+                Api, farCargoPos, myCargoPos, 0, 0, ConditionsEvaluator, this);
+
+            if (trace)
+            {
+                ConditionDebug.Log("cargo=" + myCargoPos + " block=" + (Api.World.BlockAccessor.GetBlock(myCargoPos)?.Code?.ToString() ?? "?")
+                    + " far=" + farCargoPos + " farBlock=" + (Api.World.BlockAccessor.GetBlock(farCargoPos)?.Code?.ToString() ?? "?")
+                    + " transfer=" + (transfer == null ? "<null>" : transfer.GetType().Name)
+                    + " hasInput=" + HasInput + " pin=" + outputState);
+            }
+
+            if (transfer == null)
+            {
+                // Nothing here can be carried in either direction - a solid block on our own end,
+                // a burnt-out charcoal pile for instance. The pin still reports on it: what a
+                // damper can SEE is a different question from what it can move, and freezing on
+                // whatever was true before the pile turned to charcoal is the one answer that is
+                // certainly wrong.
+                SetOutput(ReadOutputWithoutTransfer(myCargoPos, farCargoPos, trace));
+                return;
+            }
+
+            transfer.EvaluateOutputs();
+        }
+
+        /// <summary>
+        /// The output rail run straight against both ends, for when no transfer can be built. Both
+        /// ends are resolved the same way a transfer would see them, so the same paper means the
+        /// same thing whether or not anything can move.
+        /// </summary>
+        private byte ReadOutputWithoutTransfer(BlockPos myCargoPos, BlockPos farCargoPos, bool trace)
+        {
+            IDictionary<string, object> ctx = ItemConditionContextUtil.BuildContext(Api.World, null);
+            ctx["world"] = Api.World;
+            ctx["targetBlockPos"] = myCargoPos;
+            ctx["sourceBlockPos"] = farCargoPos;
+
+            IInventory target = TargetInventoryResolver.Resolve(Api, myCargoPos);
+            if (target != null) ctx["targetInventory"] = target;
+
+            IInventory source = TargetInventoryResolver.Resolve(Api, farCargoPos);
+            if (source != null)
+            {
+                ctx["sourceInventory"] = source;
+                ctx["inventory"] = source;
+            }
+
+            if (trace)
+            {
+                ConditionDebug.Log("no transfer; reading the ends directly | "
+                    + ConditionDebug.Describe(ctx, "targetInventory"));
+            }
+
+            return ConditionResolution.RunOutputRail(ConditionsEvaluator, ctx);
         }
 
         /// <summary>
