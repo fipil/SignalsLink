@@ -39,7 +39,21 @@ namespace SignalsLink.src.signals.managedchute.transporting
             if (slot?.Itemstack?.Collectible?.GetType().Name == "ItemLiquidPortion") return false;
 
             byte effectiveTargetSlotSignal = directives.TargetSlot ?? outputSlotSignal;
-            return GetGenericTargetSlot(slot, effectiveTargetSlotSignal) != null;
+            if (GetGenericTargetSlot(slot, effectiveTargetSlotSignal) == null) return false;
+
+            // An `amount N` batch is atomic - N pieces or nothing - so a block that cannot gather N
+            // from the slots holding the same thing does no work at all, and a block that does no
+            // work must not win the pass. This used to be checked only when the move was already
+            // under way, by which time the block had won and the ones below it were never asked:
+            // four medium hides in the chest were enough for `amount 12` to select the block, move
+            // nothing, and starve the `amount 8` block below it of its turn.
+            if (directives.HasAmountOverride
+                && GetAvailableMatchingSourceQuantity(slot, directives) < GetItemTransferQuantity(directives.Amount.Value))
+            {
+                return false;
+            }
+
+            return true;
         }
 
         public TransferOperationResult TryMove(ItemStackMoveOperation opTemplate)

@@ -9,9 +9,20 @@ namespace SignalsLink.Tests
     /// </summary>
     public static class TestStacks
     {
+        // One Item instance per code, the way the game registry hands out one instance per item.
+        // Without this, two stacks of the same code hold two different Collectible objects and the
+        // transfer code - which compares them by reference before anything else - reads them as
+        // different materials.
+        private static readonly Dictionary<string, Item> items = new Dictionary<string, Item>();
+
         public static ItemStack Item(string code, int stackSize = 1)
         {
-            Item item = new Item { Code = new AssetLocation(code) };
+            if (!items.TryGetValue(code, out Item item))
+            {
+                item = new Item { Code = new AssetLocation(code) };
+                items[code] = item;
+            }
+
             return new ItemStack(item, stackSize);
         }
 
