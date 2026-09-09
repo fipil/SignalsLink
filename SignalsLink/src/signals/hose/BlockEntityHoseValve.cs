@@ -40,6 +40,10 @@ namespace SignalsLink.src.signals.hose
         /// <summary>Does this valve currently have Input credit (a batch, or continuous)?</summary>
         public bool HasInput => unlimited || remaining > 0;
 
+        // The far end of the hose IS the source, so there is no slot to pick and a block needs no
+        // source-scoped condition to be a valid transfer.
+        public bool RequiresTransferSelector => false;
+
         // Output anchor (index 1) — holds its last value until paper conditions override it.
         public byte outputState;
         private byte? lastPushedOutput;

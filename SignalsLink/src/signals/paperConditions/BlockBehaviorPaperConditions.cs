@@ -21,6 +21,15 @@ namespace SignalsLink.src.signals.paperConditions
     {
         string ConditionsText { get; set; }
         int SignalInputsCount { get; }
+
+        /// <summary>
+        /// True for a device that picks what it carries out of a source inventory, and therefore
+        /// needs every transfer block to say WHAT to carry. False where there is nothing to pick:
+        /// a valve whose source is the far end of a hose, or a sensor, which carries nothing at
+        /// all. It decides only whether a block without a source-scoped condition is reported as
+        /// a mistake in the paper.
+        /// </summary>
+        bool RequiresTransferSelector => true;
     }
 
 
@@ -71,7 +80,7 @@ namespace SignalsLink.src.signals.paperConditions
                 {
                     be.ConditionsText = paperText;
                     slot.MarkDirty();
-                    ReportPaperErrors(world, byPlayer, paperText);
+                    ReportPaperErrors(world, byPlayer, paperText, be);
                     handling = EnumHandling.PreventDefault;
                     return true;
                 }
@@ -112,13 +121,36 @@ namespace SignalsLink.src.signals.paperConditions
         /// The mistakes in a paper, or an empty list. Parsed on the spot: this is asked for by a
         /// player looking at a block, not on a tick.
         /// </summary>
-        private static IReadOnlyList<PaperConditionError> FindErrors(string conditionsText)
+        public static IReadOnlyList<PaperConditionError> FindErrors(string conditionsText, IPaperConditionsHost host)
         {
             if (string.IsNullOrWhiteSpace(conditionsText)) return Array.Empty<PaperConditionError>();
 
             var errors = new List<PaperConditionError>();
-            PaperConditionsParser.Parse(conditionsText, errors);
+            CompiledConditions compiled = PaperConditionsParser.Parse(conditionsText, errors);
+
+            AddBlocksWithNothingToSelect(compiled, host, errors);
             return errors;
+        }
+
+        /// <summary>
+        /// A transfer block has to say what to carry. One built only from `in target` conditions
+        /// never picks anything, so it quietly does nothing forever — which is the hardest kind of
+        /// mistake to find, because the paper looks perfectly reasonable.
+        ///
+        /// Only reported where it is actually a mistake: a valve needs no selector (the far end of
+        /// the hose is its source) and a sensor carries nothing, so both are left alone.
+        /// </summary>
+        private static void AddBlocksWithNothingToSelect(CompiledConditions compiled, IPaperConditionsHost host, List<PaperConditionError> errors)
+        {
+            if (compiled == null || host == null || !host.RequiresTransferSelector) return;
+
+            foreach (ConditionBlock block in compiled.Blocks)
+            {
+                if (block.IsOutputBlock) continue;   // an output block carries nothing anyway
+                if (block.CanSelectSource) continue;
+
+                errors.Add(new PaperConditionError(block.FirstLine, "", "noselector"));
+            }
         }
 
         /// <summary>
@@ -126,9 +158,9 @@ namespace SignalsLink.src.signals.paperConditions
         /// out by watching a device do nothing, which is the worst possible way to be told about a
         /// typo. The paper is still accepted - only the bad lines never hold.
         /// </summary>
-        private static void ReportPaperErrors(IWorldAccessor world, IPlayer byPlayer, string conditionsText)
+        private static void ReportPaperErrors(IWorldAccessor world, IPlayer byPlayer, string conditionsText, IPaperConditionsHost be)
         {
-            IReadOnlyList<PaperConditionError> errors = FindErrors(conditionsText);
+            IReadOnlyList<PaperConditionError> errors = FindErrors(conditionsText, be);
             if (errors.Count == 0) return;
 
             var message = new StringBuilder(Lang.Get("signalslink:papererror-header"));
@@ -156,9 +188,9 @@ namespace SignalsLink.src.signals.paperConditions
         /// And keeps saying it, at the very top of the block info, so it is still findable long
         /// after the message that appeared when the paper went on.
         /// </summary>
-        private static void AppendPaperErrors(StringBuilder dsc, string conditionsText)
+        private static void AppendPaperErrors(StringBuilder dsc, string conditionsText, IPaperConditionsHost host)
         {
-            IReadOnlyList<PaperConditionError> errors = FindErrors(conditionsText);
+            IReadOnlyList<PaperConditionError> errors = FindErrors(conditionsText, host);
             if (errors.Count == 0) return;
 
             dsc.AppendLine("<font color=\"#ff8080\">" + Lang.Get("signalslink:papererror-header") + "</font>");
@@ -196,7 +228,7 @@ namespace SignalsLink.src.signals.paperConditions
 
             string[] lines = escaped.Split('\n');
 
-            AppendPaperErrors(dsc, be.ConditionsText);
+            AppendPaperErrors(dsc, be.ConditionsText, be);
 
             dsc.AppendLine($"{Lang.Get("signalslink:managedchute-conditions")}:");
 

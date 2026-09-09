@@ -98,6 +98,12 @@ namespace SignalsLink.src.signals.paperConditions
 
         public const byte DefaultOutputValue = byte.MaxValue;
 
+        /// <summary>
+        /// The line this block starts on, counted as the player sees the paper. Only used to point
+        /// at the block when reporting a mistake.
+        /// </summary>
+        public int FirstLine { get; }
+
         public byte OutputValue { get; }
         /// <summary>
         /// True if `output` (N or `.`) was actually specified in this block.
@@ -109,7 +115,11 @@ namespace SignalsLink.src.signals.paperConditions
         public PaperConditionDirectives Directives { get; }
         public IReadOnlyList<IConditionAction> Actions => actions;
         public bool HasActions => actions.Count > 0;
-        public bool CanSelectSource => conditions.Any(condition => condition.Scope == InventoryConditionScope.Source);
+        // A block needs something that says WHAT to carry. A condition naming a slot only says
+        // when, so it does not qualify - a block gated on slot 5 and nothing else would otherwise
+        // quietly carry anything at all.
+        public bool CanSelectSource => conditions.Any(condition =>
+            condition.Scope == InventoryConditionScope.Source && !condition.IsGate);
 
         // --- IDriverBlock: the little the unified driver needs to know about a block.
         public bool IsOutputBlock => HasExplicitOutput;
@@ -117,8 +127,9 @@ namespace SignalsLink.src.signals.paperConditions
         /// <summary>Every device has a single Output pin today; see IDriverBlock.OutputPin.</summary>
         public int OutputPin => 0;
 
-        public ConditionBlock(List<ScopedCondition> conditions, byte outputValue, bool hasExplicitOutput, PaperConditionDirectives directives, List<IConditionAction> actions)
+        public ConditionBlock(List<ScopedCondition> conditions, byte outputValue, bool hasExplicitOutput, PaperConditionDirectives directives, List<IConditionAction> actions, int firstLine = 0)
         {
+            FirstLine = firstLine;
             this.conditions = conditions ?? new List<ScopedCondition>();
             OutputValue = outputValue;
             HasExplicitOutput = hasExplicitOutput;
@@ -212,6 +223,19 @@ namespace SignalsLink.src.signals.paperConditions
     {
         public ICondition Condition { get; }
         public InventoryConditionScope Scope { get; }
+
+        /// <summary>
+        /// True if this condition only gates a block rather than describing what it carries — a
+        /// question about one named slot of the inventory. Negation does not change that.
+        /// </summary>
+        public bool IsGate
+        {
+            get
+            {
+                ICondition condition = Condition is NotCondition negated ? negated.Inner : Condition;
+                return condition is InventoryAmountCondition { SlotNumber: not null };
+            }
+        }
 
         public ScopedCondition(ICondition condition, InventoryConditionScope scope)
         {

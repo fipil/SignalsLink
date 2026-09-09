@@ -11,11 +11,18 @@ namespace SignalsLink.src.signals.paperConditions
         private readonly decimal expectedAmount;
         private readonly InventoryAmountComparison comparison;
 
-        public InventoryAmountCondition(ICondition innerCondition, decimal expectedAmount, InventoryAmountComparison comparison)
+        /// <summary>
+        /// The slot this condition asks about (1-based, as everywhere else in a paper), or null
+        /// for the whole inventory.
+        /// </summary>
+        public int? SlotNumber { get; }
+
+        public InventoryAmountCondition(ICondition innerCondition, decimal expectedAmount, InventoryAmountComparison comparison, int? slotNumber = null)
         {
             this.innerCondition = innerCondition ?? FalseCondition.Instance;
             this.expectedAmount = expectedAmount;
             this.comparison = comparison;
+            SlotNumber = slotNumber;
         }
 
         public bool Evaluate(ItemStack stack, IDictionary<string, object> ctx)
@@ -27,6 +34,16 @@ namespace SignalsLink.src.signals.paperConditions
         {
             if (inventory == null) return false;
 
+            // A condition naming a slot asks about the INVENTORY, never about the item being
+            // carried, so it takes no part in choosing what to carry. It is a gate: "while slot 5
+            // holds at least ten planks". Without this exemption a source-scoped `slot N` line
+            // would demand that the candidate match its code too, and a paper that asks about one
+            // material while moving another could never fire.
+            if (SlotNumber.HasValue)
+            {
+                return Compare(InventoryConditionResolver.GetSlotAmount(inventory, SlotNumber.Value, ctx, innerCondition));
+            }
+
             if (isSelectionEvaluation && scope == InventoryConditionScope.Source)
             {
                 if (stack?.Collectible == null) return false;
@@ -35,6 +52,11 @@ namespace SignalsLink.src.signals.paperConditions
 
             decimal actualAmount = InventoryConditionResolver.GetMatchingAmount(inventory, ctx, innerCondition);
 
+            return Compare(actualAmount);
+        }
+
+        private bool Compare(decimal actualAmount)
+        {
             return comparison switch
             {
                 InventoryAmountComparison.AtLeast => actualAmount >= expectedAmount,
@@ -80,6 +102,38 @@ namespace SignalsLink.src.signals.paperConditions
             }
 
             return false;
+        }
+
+        /// <summary>
+        /// How much of what the condition asks for sits in ONE slot. A slot number out of range
+        /// reads as zero rather than as "unknown": an inventory simply does not have that slot,
+        /// and the honest answer to "how much is in it" is none.
+        /// </summary>
+        public static decimal GetSlotAmount(IInventory inventory, int slotNumber, IDictionary<string, object> ctx, ICondition condition)
+        {
+            if (inventory == null || condition == null) return 0;
+
+            int index = slotNumber - 1;
+            if (index < 0 || index >= inventory.Count) return 0;
+
+            ItemSlot slot = inventory[index];
+            if (slot?.Empty != false) return 0;
+
+            ItemStack slotStack = slot.Itemstack;
+            if (slotStack?.Collectible == null) return 0;
+
+            if (condition.Evaluate(slotStack, ctx)) return GetStackAmount(slotStack);
+
+            if (slotStack.Block is BlockLiquidContainerBase liquidContainer)
+            {
+                ItemStack contentStack = liquidContainer.GetContent(slotStack);
+                if (contentStack?.Collectible != null && condition.Evaluate(contentStack, ctx))
+                {
+                    return GetStackAmount(contentStack);
+                }
+            }
+
+            return 0;
         }
 
         public static decimal GetMatchingAmount(IInventory inventory, IDictionary<string, object> ctx, ICondition condition)

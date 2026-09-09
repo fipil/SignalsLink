@@ -69,6 +69,9 @@ namespace SignalsLink.src.signals.blocksensor
 
         public int SignalInputsCount => 2;
 
+        // A sensor carries nothing, so no block of its paper needs to say what to carry.
+        public bool RequiresTransferSelector => false;
+
         public BEBlockSensor()
         {
         }

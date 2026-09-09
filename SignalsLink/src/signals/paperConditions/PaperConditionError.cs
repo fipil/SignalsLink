@@ -31,7 +31,13 @@ namespace SignalsLink.src.signals.paperConditions
 
         public string Describe()
         {
-            return Lang.Get("signalslink:papererror-line", Line, Lang.Get("signalslink:papererror-" + Reason), Text);
+            string reason = Lang.Get("signalslink:papererror-" + Reason);
+
+            // Some mistakes are about a whole block rather than about one line, so there is no
+            // offending text to quote back.
+            return string.IsNullOrEmpty(Text)
+                ? Lang.Get("signalslink:papererror-lineonly", Line, reason)
+                : Lang.Get("signalslink:papererror-line", Line, reason, Text);
         }
 
         public override string ToString()

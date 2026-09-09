@@ -302,6 +302,50 @@ game:water-* 50
 *weaktannin* 20+
 ```
 
+### Množství v konkrétním slotu: `slot N`
+
+Za množství můžeš připsat `slot N` a ptát se jen na **jeden slot** místo na celý inventář. Sloty
+se počítají **od jedničky**, stejně jako u `target N` a `source N`.
+
+```text
+in target
+game:firewood 96+ slot 2
+```
+
+Slot mimo rozsah inventáře se čte jako **prázdný**, ne jako „nevím" — inventář ten slot prostě
+nemá a poctivá odpověď na „kolik je v něm" je nula.
+
+Rozdíl proti dotazu na celý inventář je podstatný:
+
+```text
+# dva sloty po padesáti: dohromady sto, ale ani v jednom není 96
+in target
+game:firewood 96+          # platí
+game:firewood 96+ slot 1   # neplatí
+```
+
+**Podmínka se slotem je hlídka, ne výběr.** Ptá se na inventář, ne na nesený předmět, takže:
+
+- neúčastní se pravidla „kandidátní předmět musí sedět na kód" (viz níže),
+- a **sama o sobě blok nekvalifikuje k přenosu** — kdyby v bloku stála jediná, nebylo by podle
+  čeho vybrat, co se má nést. Takový blok je neplatný.
+
+Díky tomu jde jedním blokem přenášet jednu věc a podmiňovat to jinou:
+
+```text
+# ber polena, ale jen dokud je ve slotu 5 aspoň deset prken
+game:firewood 23+
+game:plank 10+ slot 5
+target 1
+```
+
+Bez `slot 5` by ten druhý řádek žádal, aby nesený předmět byl zároveň poleno i prkno — a blok by
+nikdy neplatil.
+
+Nejvíc se to hodí v rozsahu `in target`, kde se dá podle obsahu konkrétních slotů poznat, **v jaké
+fázi** vícekrokového postupu zařízení právě je (co se zrovna vaří v hrnci, jestli už je hotový
+meziprodukt odebraný, a tak dál).
+
 ## Direktivy rozsahu: `in source` a `in target`
 
 Direktiva rozsahu mění inventář vyhodnocovaný následujícími podmínkami ve stejném bloku.
@@ -625,7 +669,12 @@ Chyby v papíru: řádek 6: target bere číslo slotu 1-14 (volitelně s ifEmpty
 „ground“, „ground N“ nebo „firepit“ („target sideways“)
 ```
 
-Hlásí se neznámý rozsah, špatný `output` / `source` / `target` / `amount`, neznámá akce, nesrozumitelná podmínka, `in source` v output bloku, a **vzor kódu s mezerou** (`game:planks *`), který by jinak tiše zabil celý blok.
+Hlásí se neznámý rozsah, špatný `output` / `source` / `target` / `amount` / `slot`, neznámá akce, nesrozumitelná podmínka a `in source` v output bloku.
+
+Dvě hlášení stojí za zvláštní zmínku, protože obě odhalují papír, který **vypadá správně a přitom tiše nedělá nic**:
+
+- **vzor kódu s mezerou** (`game:planks *`) — nesedí na žádný kód, a protože se v bloku ANDuje, zabije celý blok;
+- **blok, který neříká, co má přenášet** — postavený jen z `in target` podmínek nemá podle čeho vybrat náklad. Hlásí se jen tam, kde to je chyba: ventil žádný výběr nepotřebuje (zdrojem je vzdálený konec hadice) a senzor nic nepřenáší, takže ty se nehlásí.
 
 ## Omezení a důležité poznámky
 
@@ -633,6 +682,8 @@ Hlásí se neznámý rozsah, špatný `output` / `source` / `target` / `amount`,
 - **Neplatí-li žádný output blok, pin je 0.** Pin je obraz stavu, ne paměť poslední změny.
 - Blok, který má u žlabu nebo klapky provést **přenos**, musí obsahovat aspoň jednu podmínku v rozsahu `in source` — jinak není podle čeho vybrat slot. U ventilu to neplatí (zdrojem je vzdálený konec hadice) a u output bloků taky ne.
 - **Output bloky se ptají vždy na cíl**, ať už prefix napíšeš nebo ne.
+- `slot N` u množství se ptá na jeden slot a je to **hlídka, ne výběr** — sama takový řádek blok
+  k přenosu nekvalifikuje.
 - `target`, `amount`, `ifEmpty` jsou **direktivy** — tvarují defaultní přenos, nejsou to samy o sobě podmínky.
 - `do seal` je **akce** — nahrazuje defaultní akci bloku. Provede ji první platný blok, ne všechny.
 - `amount` je velikost jedné dávky; vstupní signál 1–7 naplní buffer v kusech/litrech, který se čerpá o skutečně přenesené množství (ne o počet dávek). Signál `15` = průběžně.

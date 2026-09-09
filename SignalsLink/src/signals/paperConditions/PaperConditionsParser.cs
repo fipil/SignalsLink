@@ -8,7 +8,8 @@ namespace SignalsLink.src.signals.paperConditions
 {
     public static class PaperConditionsParser
     {
-        private static readonly Regex inventoryAmountRegex = new Regex("^(?<pattern>@\\S+|\\S*[\\*\\?]\\S*|[A-Za-z0-9_]+:\\S+)\\s+(?<amount>\\d+(?:[\\.,]\\d+)?)(?<mode>[+-]?)$", RegexOptions.Compiled);
+        // `game:firewood 96+` and, with a slot named, `game:firewood 96+ slot 5`.
+        private static readonly Regex inventoryAmountRegex = new Regex("^(?<pattern>@\\S+|\\S*[\\*\\?]\\S*|[A-Za-z0-9_]+:\\S+)\\s+(?<amount>\\d+(?:[\\.,]\\d+)?)(?<mode>[+-]?)(?:\\s+slot\\s+(?<slot>\\d+))?$", RegexOptions.Compiled);
 
         public static CompiledConditions Parse(string text, List<PaperConditionError> errors = null)
         {
@@ -152,7 +153,7 @@ namespace SignalsLink.src.signals.paperConditions
                     // OutputValue keeps the effective default 15 when `output` is not
                     // specified — for the BlockSensor (no behavior change). HasExplicitOutput
                     // records whether `output` was actually specified; ManagedHose reads it (see spec §6).
-                    blocks.Add(new ConditionBlock(conditions, outputValue ?? 15, hasExplicitOutput, new PaperConditionDirectives(sourceSlot, targetSlot, targetGround, amount, requireTargetEmpty, targetGroundHeight, targetFirepit), actions));
+                    blocks.Add(new ConditionBlock(conditions, outputValue ?? 15, hasExplicitOutput, new PaperConditionDirectives(sourceSlot, targetSlot, targetGround, amount, requireTargetEmpty, targetGroundHeight, targetFirepit), actions, p[0].Number));
                 }
             }
 
@@ -331,7 +332,7 @@ namespace SignalsLink.src.signals.paperConditions
                 return new NotCondition(inner);
             }
 
-            if (TryParseInventoryAmountCondition(line, out ICondition inventoryAmountCondition))
+            if (TryParseInventoryAmountCondition(line, sink, out ICondition inventoryAmountCondition))
             {
                 return inventoryAmountCondition;
             }
@@ -429,7 +430,7 @@ namespace SignalsLink.src.signals.paperConditions
             return new AttributeExistsCondition(line);
         }
 
-        private static bool TryParseInventoryAmountCondition(string line, out ICondition condition)
+        private static bool TryParseInventoryAmountCondition(string line, PaperErrorSink sink, out ICondition condition)
         {
             condition = null;
 
@@ -458,7 +459,24 @@ namespace SignalsLink.src.signals.paperConditions
                 _ => InventoryAmountComparison.Exact
             };
 
-            condition = new InventoryAmountCondition(codeCondition, amount, comparison);
+            int? slotNumber = null;
+            Group slotGroup = match.Groups["slot"];
+
+            if (slotGroup.Success)
+            {
+                if (!int.TryParse(slotGroup.Value, out int parsedSlot) || parsedSlot < 1)
+                {
+                    // Slots are numbered from one everywhere else in a paper; `slot 0` is a
+                    // mistake worth naming rather than quietly reading as the first slot.
+                    sink?.Add(line, "slot");
+                    condition = FalseCondition.Instance;
+                    return true;
+                }
+
+                slotNumber = parsedSlot;
+            }
+
+            condition = new InventoryAmountCondition(codeCondition, amount, comparison, slotNumber);
             return true;
         }
 

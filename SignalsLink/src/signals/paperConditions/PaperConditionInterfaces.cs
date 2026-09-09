@@ -17,6 +17,10 @@ namespace SignalsLink.src.signals.paperConditions
     {
         private readonly ICondition inner;
 
+        /// <summary>What is being negated. Read to see through the negation - a negated gate is
+        /// still a gate.</summary>
+        public ICondition Inner => inner;
+
         public NotCondition(ICondition inner)
         {
             this.inner = inner;
