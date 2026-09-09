@@ -18,7 +18,7 @@
     <br><br>
     Pro přepravu kapalin slouží <a href="handbook://block-signalslink:hosevalve-north-down">Řízený ventil</a>. Připojte jej <a href="handbook://item-signalslink:hose">hadicí</a> k druhému ventilu nebo k <a href="handbook://block-signalslink:hoseintake">sání</a> ve vodě; delší vedení sestavíte pomocí <a href="handbook://block-signalslink:hosecoupling-north-down">hadicových spojek</a>.
     <br><br>
-    Oheň na dálku zapálí <a href="handbook://block-signalslink:igniter-fwd-north-down">Zapalovač</a>. Signálem vystřelí dávku jisker a zapálí, na co míří, takže dokáže roztopit ohniště nebo zažehnout milíř bez toho, abyste u toho stáli.
+    Oheň na dálku zapálí <a href="handbook://block-signalslink:igniter-fwd-north-down">Zapalovač</a>. Signálem vystřelí dávku jisker a zapálí, na co míří, takže dokáže roztopit ohniště, aniž byste u toho stáli.
     <br><br>
     Chování všech těchto zařízení řídíte <a href="handbook://signalslink:usageinfo-paperconditions">Podmínkami na papíře</a>, které jsou pro všechna společné.
 </translation>
@@ -115,7 +115,7 @@
     Když je hromádka plná, směrnice <strong>target ground N</strong> dovolí pokračovat o blok výš, a to až do výšky N bloků nad cílovou pozicí. Sloupec se zastaví na pevném bloku nebo když pod novou hromádkou chybí opora. Bez čísla se plní jen cílový blok.<br>
     Sbírání ze země probíhá obráceně: trubka bere z <strong>vrcholu</strong> sloupce a vyprázdněné hromádky odstraňuje, takže se sloupec rozebírá odshora dolů.<br>
     Obojí umí pracovat po dávkách, viz <strong>amount N</strong> níže.<br><br>
-    Sbírat umí i vypálený milíř: hromada dřevěného uhlí není hromádka položek, ale vrstvený blok, a trubka ji rozebírá po vrstvách odshora. Podmínkám se takový sloup ukazuje jako inventář, takže se na jeho obsah dá ptát stejně jako na truhlu.<br><br>
+    Sbírat umí i vrstvené bloky, tedy třeba vypálené dřevěné uhlí. To není hromádka položek, a trubka ji proto rozebírá po vrstvách odshora. Podmínkám se takový sloup ukazuje jako inventář, takže se na jeho obsah dá ptát stejně jako na truhlu.<br><br>
     Pokud je zdrojový blok vzduch, trubka bude sbírat plovoucí položky z prostoru 3x3 bloků, kde prostředním blokem této krychle je blok před ústím trubky. Umí také zvednout vědro stojící přímo před ústím a vložit jej do cílového inventáře včetně jeho obsahu.<br><br>
     <font size="20" color="6082B6">Stavba ohniště</font><br>
     Direktiva <strong>target firepit</strong> na cílové pozici ohniště nestaví z hotového bloku, ale postupně, jak by to dělal hráč: nejdřív suchá tráva, pak klacky a nakonec dřevo. Trubka pokaždé vezme jen ten materiál, který další fáze stavby opravdu potřebuje, takže do rozestavěného ohniště nenacpe polena dřív, než je čím zapálit.<br>
@@ -141,14 +141,12 @@
     Všechny podmínky v jednom bloku musí platit zároveň (AND). Bloky se procházejí shora dolů.<br>
     <strong>Pozor na AND.</strong> Dvě podmínky na stejný kód se nepřebíjejí, musí platit obě. To je užitečné: <strong>game:planks 5+</strong> a <strong>game:planks 20-</strong> v jednom bloku znamená mezi pěti a dvaceti. Znamená to ale také, že jediný nesplnitelný řádek zabije celý blok. Klasickým případem je <strong>game:planks *</strong> s mezerou: vypadá to jako prkna v libovolném množství, ale je to vzor pro kód, který obsahuje mezeru, a takový neexistuje. Na tohle vás papír upozorní, viz Chyby v papíru níže.<br><br>
     <font size="20" color="6082B6">Jak se papír vyhodnocuje</font><br>
-    Jeden průchod shora dolů, který nese <strong>dvě koleje najednou</strong>:<br>
-    • <strong>output kolej</strong> určí hodnotu Výstupu,<br>
-    • <strong>akční kolej</strong> provede akci, tedy přenos nebo <strong>do seal</strong>.<br>
-    Jeden průchod tedy může zároveň nastavit Výstup i něco přenést. Blok s direktivou <strong>output</strong> patří do první koleje a nic nepřenáší, každý ostatní do druhé.<br>
+    Jeden průchod shora dolů, který dělá <strong>dvě věci zároveň</strong>: určuje hodnotu Výstupu a provádí akci, tedy přenos nebo <strong>do seal</strong>.<br>
+    Podle toho se dělí i bloky. Blok s direktivou <strong>output</strong> je <strong>output blok</strong> a nic nepřenáší; každý jiný je <strong>akční blok</strong>. Jeden průchod tedy může zároveň nastavit Výstup i něco přenést.<br>
     Platí tři pravidla:<br>
     • Vyhrává <strong>první platný output blok</strong>, další se přeskočí.<br>
-    • Když neplatí žádný output blok, <strong>Výstup je 0</strong>. Pin je obraz aktuálního stavu, ne paměť poslední změny. Papír bez jediného output bloku tedy drží Výstup trvale na nule.<br>
-    • Akční kolej provede <strong>jednu akci za průchod</strong>, a to první blok, jehož akce opravdu odvede práci. Blok, který by nic nepřesunul (prázdný zdroj, plný cíl, neplatné <strong>ifEmpty</strong>), propadne na další blok. Na tom stojí řetěz bloků s <strong>target N ifEmpty</strong>, které plní slot za slotem.<br>
+    • Když neplatí žádný output blok, <strong>Výstup je 0</strong>. Výstup je obraz aktuálního stavu. Papír bez jediného output bloku tedy drží Výstup trvale na nule.<br>
+    • Provede se <strong>jedna akce za průchod</strong>, a to první akční blok, jehož akce opravdu odvede práci. Blok, který by nic nepřesunul (prázdný zdroj, plný cíl, neplatné <strong>ifEmpty</strong>), propadne na další blok. Na tom stojí řetěz bloků s <strong>target N ifEmpty</strong>, které plní slot za slotem.<br>
     <strong>Na pořadí záleží.</strong> Akce mění stav cíle, takže tentýž output blok nad akcí a pod akcí odpoví v témž tiku jinak. Je na vás, kam ho napíšete.<br>
     Stejně tak pořadí bloků poráží pořadí slotů: blok výš na papíře prohledá všechny sloty, které smí, a teprve pak pustí ke slovu blok pod sebou. O prioritě rozhoduje papír, ne rozložení truhly.<br>
     Průchod běží při <strong>každém pracovním tiku</strong> zařízení, i když zrovna nemá vstupní signál, nemá co přenášet nebo čeká, až na něj přijde řada. Díky tomu se každé zařízení s output blokem chová i jako senzor.<br><br>
@@ -160,7 +158,7 @@
     <font size="20" color="6082B6">Podmínky kódu a atributů</font><br>
     Přesný kód: <strong>game:resin</strong>. Hvězdička <strong>*</strong> nahrazuje libovolný počet znaků, otazník <strong>?</strong> jeden znak: <strong>game:log-placed-*</strong>, <strong>game:ingot-?</strong>. Regulární výraz začíná <strong>@</strong>, například <strong>@^game:log-placed-(oak|maple)-.*$</strong>. Předpona <strong>!</strong> obrátí <strong>celý řádek</strong>, například <strong>!game:resin</strong> nebo <strong>!game:firewood 96+</strong>.<br>
     Platný název atributu ověří jeho pravdivost. Porovnání používají <strong>&gt;, &gt;=, &lt;, &lt;=, =, ==</strong>: <strong>temperature&gt;1100</strong>, <strong>stackSize&gt;=16</strong>, <strong>durabilityRatio&gt;=0.75</strong>. K dispozici jsou také <strong>temperature</strong>, <strong>durability</strong>, <strong>durabilityMax</strong>, <strong>freshHoursLeft</strong> a <strong>isSpoiling</strong>.<br>
-    Podmínka <strong>isBurning</strong> se ptá na blok, ne na jeho obsah: platí, když daný konec hoří, tedy zapálené ohniště nebo doutnající milíř. Funguje v obou rozsazích a hodí se právě na řízení pálení.<br>
+    Podmínka <strong>isBurning</strong> se ptá na blok, ne na jeho obsah: platí, když daný konec hoří, tedy třeba zapálené ohniště nebo doutnající hromada polen. Funguje v obou rozsazích.<br>
     Vědro a jiné kapalné nádoby poskytují <strong>isLiquidContainer</strong>, <strong>liquidContainerEmpty</strong>, <strong>liquidContainerFilled</strong>, <strong>liquidCode</strong> a <strong>liquidLitres</strong>. Například plné desetilitrové vědro vody vybere <strong>liquidContainerFilled</strong>, <strong>liquidCode=game:waterportion</strong> a <strong>liquidLitres=10</strong>.<br>
     U kapalin fungují vzory světového bloku i interní části kapaliny, například <strong>game:water-*</strong>, <strong>game:water-still-7</strong>, <strong>*weaktannin*</strong> nebo <strong>game:waterportion</strong>.<br><br>
     <font size="20" color="6082B6">Inventář a množství</font><br>
@@ -196,18 +194,17 @@
     <strong>do seal</strong><br>
     Nejprve naplní prázdný slot 2 vodou. Jakmile už slot není prázdný, první blok propadne a druhý zapečetí sud.<br><br>
     <strong>game:water-*</strong><br>
-    <strong>in target</strong><br>
-    <strong>inventoryAny *tannin*</strong><br>
-    <strong>in source</strong><br>
     <strong>amount 5</strong><br>
-    Přenese vodu jen tehdy, pokud cíl už obsahuje tanin.<br><br>
-    <strong>game:firewood</strong><br>
+    <strong>in target</strong><br>
+    <strong>inventoryAny game:log-placed-*</strong><br>
+    Nalije po pěti litrech vody do sudu, ale jen když v něm už leží kláda — tedy přesně na tanin.<br><br>
+    <strong>game:ingot-copper</strong><br>
     <strong>target ground 3</strong><br>
     <strong>amount 32</strong><br><br>
     <strong>in target</strong><br>
-    <strong>game:firewood 96</strong><br>
+    <strong>game:ingot-copper 192</strong><br>
     <strong>output 15</strong><br>
-    Skládá polena do sloupce vysokého tři bloky a na Výstupu hlásí 15, jakmile je sloupec plný. Až dřevo shoří na uhlí, první blok nemá co dělat a Výstup sám spadne na nulu. Tímhle signálem se dá spustit <a href="handbook://block-signalslink:igniter-fwd-north-down">Zapalovač</a> nebo naplnit další sloupec milíře.<br><br>
+    Skládá měděné ingoty do sloupce vysokého tři bloky a na Výstupu hlásí 15, jakmile je sloupec plný; do jedné hromádky se jich vejde 64, do tří tedy 192. Jakmile z hromady někdo začne brát, Výstup sám spadne na nulu.<br><br>
     <font size="20" color="6082B6">Nastavení podmínek</font><br>
     Podmínky napíšete na <a href="handbook://item-paper-parchment">pergamen</a>. Pergamen nepodepisujte, abyste text mohli znovu upravovat.<br>
     Podmínky přenesete do bloku, který to podporuje, tak, že klepnete tímto pergamenem pravou myší na daný blok. Podmínky se tak uloží do bloku a uvidíte je v informačním okně, když se na blok podíváte. <br>
@@ -246,7 +243,7 @@
     Aktuální režim uvidíte v informačním okně, když se na klapku podíváte.
 </translation>
 <translation key="signalslink:block-handbooktext-igniter">
-    Zapalovač zapaluje oheň na dálku. Signálem vystřelí dávku žhavých jisker směrem, kterým míří, a zapálí to, na co dopadnou — ohniště, hromadu polen připravenou na milíř nebo jiné hořlavé místo.<br>
+    Zapalovač zapaluje oheň na dálku. Signálem vystřelí dávku žhavých jisker směrem, kterým míří, a zapálí to, na co dopadnou — ohniště, hromadu polen nebo jiné hořlavé místo.<br>
     Ke svému provozu potřebuje nabití <strong>časovými kolečky</strong> (Temporal gears). Kolečko do něj vložíte klepnutím; kolik dávek v něm ještě zbývá, uvidíte v informačním okně. Každý výstřel stojí stejně, ať zapálí nebo mine.<br><br>
     <font size="20" color="6082B6">Konektory</font><br>
     • <strong>Vstup</strong> spouští výstřel. Reaguje se na <strong>náběžnou hranu</strong>, tedy na přechod z nuly na nenulovou hodnotu: každý signál znamená právě jednu dávku jisker. Trvalý režim zapalovač schválně nemá, aby signál zapomenutý na patnáctce nevypálil celou zásobu koleček.<br>
@@ -255,9 +252,7 @@
     Zapalovač se umisťuje volně, podobně jako <a href="handbook://block-signalslink:blocksensor-off-fwd-north-down">Senzor bloků</a>, a klepnutím na něj přepínáte směr míření:<br>
     • <strong>rovně</strong> — jiskry letí přímo před hlaveň;<br>
     • <strong>šikmo</strong> — jiskry letí do strany pod úhlem, což se hodí, když se před zapalovač nedá postavit.<br>
-    Jiskry mají svůj oblouk a chvíli letí, takže zapalovač dosáhne i na místo o kus níž. Až jiskry dopadnou, mod znovu ověří, co na místě dopadu skutečně je — než tam doletí, mohlo se to změnit.<br><br>
-    <font size="20" color="6082B6">Automatický milíř</font><br>
-    Nejčastější použití je uzavřený milíř. <a href="handbook://block-signalslink:managedchute-north-down">Řízenou trubkou</a> nebo <a href="handbook://block-signalslink:sleevedamper-north-down">Řízenou klapkou</a> naskládáte polena, jejich Výstup vám poví, kdy je hromada plná, a tím signálem spustíte zapalovač.
+    Jiskry mají svůj oblouk a chvíli letí, takže zapalovač dosáhne i na místo o kus níž. Až jiskry dopadnou, mod znovu ověří, co na místě dopadu skutečně je — než tam doletí, mohlo se to změnit.
 </translation>
 <translation key="signalslink:block-handbooktext-hoseintake">
     Sání je pasivní zdroj vody nebo slané vody. Umístěte jej do vody a připojte <a href="handbook://item-signalslink:hose">hadicí</a> k <a href="handbook://block-signalslink:hosevalve-north-down">Řízenému ventilu</a>, který z něj kapalinu odčerpá. Delší vedení prodloužíte <a href="handbook://block-signalslink:hosecoupling-north-down">hadicovými spojkami</a>.

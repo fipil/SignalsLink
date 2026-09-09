@@ -41,12 +41,11 @@ Pro komentář použijte na začátku řádku `#` nebo `//`.
 
 ## Model vyhodnocení bloků
 
-Jeden průchod papírem odshora dolů, který nese **dvě koleje najednou**:
+Jeden průchod papírem odshora dolů, který dělá **dvě věci zároveň**: určuje hodnotu výstupního pinu a provádí akci (přenos, `do seal`).
 
-- **Output kolej** — určí hodnotu výstupního pinu.
-- **Akční kolej** — provede akci (přenos, `do seal`).
+Podle toho se dělí i bloky. Blok s direktivou `output` je **output blok** a nic nepřenáší; každý jiný je **akční blok**.
 
-Jeden průchod tedy může **zároveň** nastavit výstup i něco přenést. Nejsou to dva oddělené průchody: bloky se procházejí **v pořadí, jak jsou napsané**, a každý se zařadí do jedné z kolejí podle toho, jestli má direktivu `output`.
+Jeden průchod tedy může **zároveň** nastavit výstup i něco přenést. Nejsou to dva oddělené průchody: bloky se procházejí **v pořadí, jak jsou napsané**.
 
 - **Output blok** — blok s direktivou `output`. Nic nepřenáší.
 - **Akční blok** — blok bez `output`. Provádí defaultní akci své třídy, tvarovanou direktivami (`target`, `amount`, `ifEmpty`), nebo explicitní akci `do seal`.
@@ -55,9 +54,9 @@ Jeden průchod tedy může **zároveň** nastavit výstup i něco přenést. Nej
 
 **Vyhrává první platný output blok.** Jakmile nějaký platí, další output bloky se přeskočí.
 
-**Když neplatí žádný output blok, pin je 0.** Pin je **obraz aktuálního stavu**, ne paměť poslední změny. Papír bez jediného `output` bloku znamená pin trvale na nule.
+**Když neplatí žádný output blok, pin je 0.** Pin je **obraz aktuálního stavu**. Papír bez jediného `output` bloku znamená pin trvale na nule.
 
-**Akční kolej provede jednu akci za průchod** — první blok, jehož akce opravdu odvede práci. Blok, jehož přenos nic nepřesune (prázdný zdroj, plný cíl, neplatné `ifEmpty`), **propadne na další blok**. Na tom stojí řetěz `target N ifEmpty` bloků, které plní slot za slotem.
+**Provede se jedna akce za průchod** — první akční blok, jehož akce opravdu odvede práci. Blok, jehož přenos nic nepřesune (prázdný zdroj, plný cíl, neplatné `ifEmpty`), **propadne na další blok**. Na tom stojí řetěz `target N ifEmpty` bloků, které plní slot za slotem.
 
 ### Na pořadí záleží
 
@@ -67,7 +66,7 @@ Stejně tak **pořadí bloků poráží pořadí slotů**: blok výš na papíř
 
 ### Jak často
 
-Průchod běží **při každém pracovním tiku** zařízení, a to **nezávisle** na vstupním signálu, na tokenu střídání i na zpomalení při nečinnosti. Tyhle tři věci zavírají jen **akční kolej** — pin se počítá dál.
+Průchod běží **při každém pracovním tiku** zařízení, a to **nezávisle** na vstupním signálu, na tokenu střídání i na zpomalení při nečinnosti. Tyhle tři věci zastaví jen **akční bloky** — pin se počítá dál.
 
 Díky tomu se zařízení s `output` blokem chová jako senzor: hlásí stav svého konce, i když zrovna nemá kredit, nemá co přenášet nebo čeká, až na něj přijde řada.
 
@@ -463,7 +462,7 @@ output 3
 
 Funguje i s vykřičníkem: `!isBurning`.
 
-Hoření se nezjišťuje podle seznamu typů, ale podle toho, jestli block entity (nebo některý její behavior) vystavuje `IsBurning` / `Lit`. Chytne tedy ohniště, hromádku na zemi, hromadu uhlí i milíř — a bez úprav i bloky z jiných modů, které to takhle pojmenovaly. Samotný blok ohně se počítá jako hořící vždycky.
+Hoření se nezjišťuje podle seznamu typů, ale podle toho, jestli block entity (nebo některý její behavior) vystavuje `IsBurning` / `Lit`. Chytne tedy ohniště, hromádku na zemi, hromadu uhlí i doutnající hromadu polen — a bez úprav i bloky z jiných modů, které to takhle pojmenovaly. Samotný blok ohně se počítá jako hořící vždycky.
 
 ### `target ground` / `target ground N`
 
@@ -518,7 +517,7 @@ Chování na konci/okrajích se liší podle média:
 
 Blok s `output X` nastaví **výstupní pin** zařízení na hodnotu X a nic nepřenáší. Přípustné hodnoty jsou **0 až 15**.
 
-**Output bloky se ptají vždy na cíl** — tedy na ten konec, na kterém zařízení samo sedí. Prefix `in target` v nich psát nemusíš (a `in source` v nich nedává smysl; papír to nahlásí). Důvod je prostý: output kolej běží i tehdy, když se zrovna nic nepřenáší, takže není žádný předmět ze zdroje, kterého by se šlo zeptat.
+**Output bloky se ptají vždy na cíl** — tedy na ten konec, na kterém zařízení samo sedí. Prefix `in target` v nich psát nemusíš (a `in source` v nich nedává smysl; papír to nahlásí). Důvod je prostý: output bloky se vyhodnocují i tehdy, když se zrovna nic nepřenáší, takže není žádný předmět ze zdroje, kterého by se šlo zeptat.
 
 ```text
 in target
@@ -529,11 +528,11 @@ output 5
 
 Blok nastaví výstup na 5, jakmile je v cíli aspoň 5 kůží a 30 vody.
 
-Output bloky **nebrání přenosu**. Jeden průchod obslouží obě koleje, takže si zařízení může současně něco přenést a hlásit stav. Na tom, kam output blok napíšeš, přesto záleží — akce mění stav cíle, a output blok nad ní a pod ní odpoví v témž tiku jinak.
+Output bloky **nebrání přenosu**. Jeden průchod zvládne obojí, takže si zařízení může současně něco přenést a hlásit stav. Na tom, kam output blok napíšeš, přesto záleží — akce mění stav cíle, a output blok nad ní a pod ní odpoví v témž tiku jinak.
 
 ### Nulování je automatické
 
-Když v daném průchodu **neplatí žádný** output blok, pin je **0**. Nemusíš tedy psát resetovací `output 0` nad plnicí bloky, jak to vyžadovala starší verze — pin je obraz stavu, ne paměť poslední změny.
+Když v daném průchodu **neplatí žádný** output blok, pin je **0** — pin je obraz aktuálního stavu. Resetovací `output 0` nad plnicími bloky tedy není potřeba.
 
 ```text
 # hlásí 15, dokud je v cíli plný sloup polen; jinak sám spadne na 0
@@ -592,14 +591,13 @@ target 2 ifEmpty
 amount 12
 ```
 
-### Přesuň vodu, jen pokud cíl již obsahuje tanin
+### Nalij vodu, jen když je v sudu kláda
 
 ```text
 game:water-*
-in target
-inventoryAny *tannin*
-in source
 amount 5
+in target
+inventoryAny game:log-placed-*
 ```
 
 ### Přesuň položku pouze tehdy, když zdroj obsahuje přesný počet
@@ -653,8 +651,6 @@ output 5
 
 Po naplnění (30 vody a aspoň 5 kůže v cíli) nastaví druhý blok výstupní pin na 5 — třeba pro spuštění další hadice přes Signals. Dokud podmínky neplatí, pin sám drží 0.
 
-Přesně na tomhle stojí automatizovaný milíř: každý sloup má svou plnicí klapku, output jedné jde na input další, a ohniště se zapálí teprve když prostřední sloup hlásí 15, tedy 96 polen.
-
 ## Chyby v papíru
 
 Papír s chybou se **přijme**, nikdy neodmítne — jedna překlepnutá řádka nesmí zastavit celý stroj, když zbytek papíru ještě píšeš. Vadné řádky se chovají jako neplatné a hlásí se dvěma kanály:
@@ -678,8 +674,8 @@ Dvě hlášení stojí za zvláštní zmínku, protože obě odhalují papír, k
 
 ## Omezení a důležité poznámky
 
-- Jeden průchod, **dvě koleje**: output a akční. Output kolej vezme první platný output blok; akční kolej první akční blok, jehož akce odvede práci.
-- **Neplatí-li žádný output blok, pin je 0.** Pin je obraz stavu, ne paměť poslední změny.
+- Jeden průchod dělá **obojí**: vezme první platný output blok a provede první akční blok, jehož akce odvede práci.
+- **Neplatí-li žádný output blok, pin je 0.** Pin je obraz aktuálního stavu.
 - Blok, který má u žlabu nebo klapky provést **přenos**, musí obsahovat aspoň jednu podmínku v rozsahu `in source` — jinak není podle čeho vybrat slot. U ventilu to neplatí (zdrojem je vzdálený konec hadice) a u output bloků taky ne.
 - **Output bloky se ptají vždy na cíl**, ať už prefix napíšeš nebo ne.
 - `slot N` u množství se ptá na jeden slot a je to **hlídka, ne výběr** — sama takový řádek blok

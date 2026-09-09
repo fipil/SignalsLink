@@ -1,4 +1,4 @@
-{
+﻿{
  "code": "igniter",
  "class": "Igniter",
  "entityclass": "BlockEntityIgniter",
@@ -67,7 +67,7 @@
   }
  ],
  "attributes": {
-  "chargePerIgnition": 1000,
+  "chargePerIgnition": 4800,
   "sparkFallDistance": 3,
   "handbook": {
    "extraSections": [
@@ -221,19 +221,6 @@
     "*-*-west": 270
    }
   }
- },
- "guiTransform": {
-  "origin": {
-   "x": 0.5,
-   "y": 0.5,
-   "z": 0.5
-  },
-  "rotation": {
-   "x": -22.6,
-   "y": 135.0,
-   "z": 0.0
-  },
-  "scale": 1.5
  },
  "blockmaterial": "Metal",
  "lightAbsorption": 0,

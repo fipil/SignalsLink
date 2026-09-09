@@ -1,16 +1,21 @@
 name: Localize SignalsLink
 
+# Vypnuto: preklady se delaji lokalne pres scripts/localizeSignalsLink.py, at je videt
+# vysledek jeste pred commitem. Workflow zustava a da se kdykoli spustit rucne z zalozky
+# Actions (Run workflow). Zpet na automatiku staci odkomentovat blok push nize.
 on:
-  push:
-    branches:
-      - main
-      - master
-      - managedHose
-    paths:
-      - "SignalsLink/assets/signalslink/lang/cs.json"
-      - "SignalsLink/assets/signalslink/lang/signalslink.html"
-      - ".github/prompts/localize-signalslink.md"
-      - ".github/scripts/localize-signalslink.mjs"
+  workflow_dispatch:
+
+  # push:
+  #   branches:
+  #     - main
+  #     - master
+  #     - managedHose
+  #   paths:
+  #     - "SignalsLink/assets/signalslink/lang/cs.json"
+  #     - "SignalsLink/assets/signalslink/lang/signalslink.html"
+  #     - ".github/prompts/localize-signalslink.md"
+  #     - ".github/scripts/localize-signalslink.mjs"
 
 permissions:
   contents: write
