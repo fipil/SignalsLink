@@ -39,7 +39,7 @@ CS_PATH = LANG_DIR / "cs.json"
 PROMPT_PATH = Path(__file__).resolve().parent.parent / ".github" / "prompts" / "localize-signalslink.md"
 
 DEFAULT_LANGS = ["de", "en", "es", "fr", "it", "pl", "pt", "ru", "sk"]
-DEFAULT_MODEL = os.environ.get("OPENAI_MODEL", "gpt-5.6-luna")
+DEFAULT_MODEL = os.environ.get("OPENAI_MODEL", "gpt-5.6-terra")
 DEFAULT_CHUNK = 30
 
 API_URL = "https://api.openai.com/v1/chat/completions"
