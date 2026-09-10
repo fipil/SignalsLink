@@ -168,7 +168,14 @@ namespace SignalsLink.src.signals.sleeve
 
         private string DesiredBlockCode(string side)
         {
-            if (side == "up") return "sleevedamperroof";                      // ceiling → collar shape
+            if (side == "up") return "sleevedamperroof";  // ceiling → collar shape
+
+            // Set down on top of its host: the player chose that mount deliberately, so it keeps
+            // the mounted shape whatever happens underneath. Growing legs the moment the chest is
+            // carried away - and losing them again when it comes back - would be a shape changing
+            // under the player for no reason they asked for.
+            if (side == "down") return "sleevedamper";
+
             return HasContainerHost() ? "sleevedamper" : "sleevedamperstand"; // hung / stand
         }
 

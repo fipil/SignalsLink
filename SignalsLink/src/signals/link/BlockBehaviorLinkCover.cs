@@ -26,6 +26,10 @@ namespace SignalsLink.src.signals.link
         /// rotation, same cargo block — rather than a floor case with its own rotation rules.
         /// The valve does not: for it, side=down is the drain, which really does sit on the floor.
         /// </summary>
+        /// <summary>
+        /// Floor placement offers two mounts on this block, chosen by the player at placement time
+        /// with Ctrl. Off for the valve, whose floor placement is the drain and nothing else.
+        /// </summary>
         public bool floorAsWall;
 
         public BlockBehaviorLinkCover(Block block) : base(block) { }
@@ -82,8 +86,27 @@ namespace SignalsLink.src.signals.link
                 return true;
             }
 
+            // Standing on top of something needs a footing, not a face to bolt onto. A chest
+            // declares no solid side at all, and setting a damper down on one to feed it from above
+            // is exactly what this is for.
+            if (floorAsWall && blockSel.Face == BlockFacing.UP && CanStandOn(attachBlock))
+            {
+                return true;
+            }
+
             failureCode = "requireattachable";
             return false;
+        }
+
+        /// <summary>A real block underneath, rather than air, grass or water.</summary>
+        private static bool CanStandOn(Block block)
+        {
+            return block != null && block.Id != 0 && block.Replaceable < 6000;
+        }
+
+        private static bool HoldsCtrl(IPlayer byPlayer)
+        {
+            return byPlayer?.Entity?.Controls?.CtrlKey == true;
         }
 
         public Block GetOrientedBlock(IWorldAccessor world, IPlayer byPlayer, BlockSelection blockSel)
@@ -92,14 +115,22 @@ namespace SignalsLink.src.signals.link
             BlockFacing side = blockSel.Face.Opposite;
 
             string orientation;
-            if (side == BlockFacing.DOWN && floorAsWall)
+            if (side == BlockFacing.DOWN && floorAsWall && HoldsCtrl(byPlayer))
             {
-                // Standing on the floor is just a mount on the vertical face of the air block on the
-                // far side from the player: same variant as any wall mount, so no floor-specific
-                // rotation or cargo rule is needed anywhere. Physical support is still checked
-                // against the floor in CanPlaceBlock.
+                // Ctrl on the floor: mount it on the vertical face of the air block on the far side
+                // from the player instead. Same variant as any wall mount, so no floor-specific
+                // rotation or cargo rule is needed anywhere, and what it works with is the block it
+                // faces - which is how it becomes a ground endpoint.
                 side = HorizontalFacing(byPlayer, blockSel);
                 orientation = "up";
+            }
+            else if (side == BlockFacing.DOWN && floorAsWall)
+            {
+                // Sitting on top of the block below, which is then what it works with: a damper set
+                // down on a chest feeds it from above. Turned to face the player, so the Signals
+                // anchors end up on the side you are standing on and you can wire it without
+                // walking round the chest.
+                orientation = HorizontalFacing(byPlayer, blockSel).Opposite.Code;
             }
             else if (side == BlockFacing.DOWN)
             {

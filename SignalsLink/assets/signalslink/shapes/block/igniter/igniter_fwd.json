@@ -76,7 +76,7 @@
 					"to": [ 5.0707, 5.0, 0.0707 ],
 					"rotationOrigin": [ 3.0707, 5.0, 3.0707 ],
 					"faces": {
-						"north": { "texture": "#steel4hole", "uv": [ 2.0, 1.5, 14.5, 14.0 ], "autoUv": false },
+						"north": { "texture": "#steel4hole", "uv": [ 2.0, 1.5, 14.5, 14.0 ], "autoUv": false, "windMode": [-1,-1,-1,-1], "reflectiveMode": 3 },
 						"east": { "texture": "#steel4holes", "uv": [ 3.0, 3.0, 13.0, 13.0 ], "autoUv": false },
 						"south": { "texture": "#steel4holes", "uv": [ 3.0, 6.0, 13.5, 12.5 ], "autoUv": false },
 						"west": { "texture": "#steel4holes", "uv": [ 3.0, 3.0, 13.0, 13.0 ], "autoUv": false },
