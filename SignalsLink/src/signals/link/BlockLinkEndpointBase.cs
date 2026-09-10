@@ -27,6 +27,15 @@ namespace SignalsLink.src.signals.link
         /// <summary>Lang key shown in the tooltip when the player looks at the line anchor.</summary>
         protected abstract string AnchorLangKey { get; }
 
+        /// <summary>
+        /// Which way the line leaves this endpoint when it is mounted on the floor (side = down).
+        ///
+        /// False, the normal case: straight up, along the mount normal — the mirror image of a
+        /// ceiling mount, whose line leaves straight down. True only for something that lies on
+        /// the ground and points at the block beside it, which is what a drain does.
+        /// </summary>
+        public virtual bool FloorMountExitsSideways => false;
+
         public abstract byte AcceptedLinkKind { get; }
 
         public override void OnLoaded(ICoreAPI api)

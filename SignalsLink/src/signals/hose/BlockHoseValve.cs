@@ -15,5 +15,10 @@ namespace SignalsLink.src.signals.hose
         protected override string AnchorLangKey => "signalslink:con-hose";
 
         public override byte AcceptedLinkKind => LinkKind.Hose;
+
+        // A valve on the floor is the drain: it pours sideways into the block it faces, and the
+        // hose follows that. A damper on the floor sits on its host instead, so its sleeve leaves
+        // straight up.
+        public override bool FloorMountExitsSideways => true;
     }
 }

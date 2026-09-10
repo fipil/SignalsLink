@@ -153,7 +153,7 @@ namespace SignalsLink.src.signals.link
             {
                 string sideCode = endpoint.Variant?["side"];
                 BlockFacing hostFace = sideCode != null ? BlockFacing.FromCode(sideCode) : null;
-                if (hostFace == BlockFacing.DOWN)
+                if (hostFace == BlockFacing.DOWN && endpoint.FloorMountExitsSideways)
                 {
                     string orientationCode = endpoint.Variant?["orientation"];
                     BlockFacing orientation = orientationCode != null ? BlockFacing.FromCode(orientationCode) : null;
