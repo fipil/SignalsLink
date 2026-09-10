@@ -4,8 +4,24 @@ namespace SignalsLink.src.signals.paperConditions
     {
         public static readonly PaperConditionDirectives Empty = new PaperConditionDirectives(null, null, false, null, false, 1, false);
 
-        public byte? SourceSlot { get; }
-        public byte? TargetSlot { get; }
+        /// <summary>
+        /// Slot numbers are 1-based and have no upper bound: a composite inventory of several
+        /// wagons is hundreds of slots, so the old 1-14 cap - which only ever mirrored what a
+        /// four-bit signal pin can count to - would have quietly cut them off.
+        /// </summary>
+        public int? SourceSlot { get; }
+        public int? TargetSlot { get; }
+
+        /// <summary>
+        /// `source last` / `target last` - the last slot of the inventory, whatever its size.
+        ///
+        /// Named rather than numbered on purpose. The Source PIN uses 15 for "last", so writing
+        /// `source 15` on paper would mean slot fifteen while 15 on the wire means the last one:
+        /// the same number meaning two things in two channels. With a word, numbers on paper are
+        /// always literal and the pin encoding needs no change.
+        /// </summary>
+        public bool SourceLast { get; }
+        public bool TargetLast { get; }
         public bool TargetGround { get; }
         /// <summary>How many blocks up the ground column may grow, counting the target block
         /// itself. 1 = only the target block (plain `target ground`), N = `target ground N`.</summary>
@@ -21,13 +37,15 @@ namespace SignalsLink.src.signals.paperConditions
         /// </summary>
         public bool TargetFirepit { get; }
 
-        public bool HasTargetOverride => TargetSlot.HasValue || TargetGround || TargetFirepit;
+        public bool HasTargetOverride => TargetSlot.HasValue || TargetLast || TargetGround || TargetFirepit;
         public bool HasAmountOverride => Amount.HasValue;
 
-        public PaperConditionDirectives(byte? sourceSlot, byte? targetSlot, bool targetGround, decimal? amount, bool requireTargetEmpty, int targetGroundHeight = 1, bool targetFirepit = false)
+        public PaperConditionDirectives(int? sourceSlot, int? targetSlot, bool targetGround, decimal? amount, bool requireTargetEmpty, int targetGroundHeight = 1, bool targetFirepit = false, bool sourceLast = false, bool targetLast = false)
         {
             SourceSlot = sourceSlot;
             TargetSlot = targetSlot;
+            SourceLast = sourceLast;
+            TargetLast = targetLast;
             TargetGround = targetGround;
             TargetGroundHeight = targetGroundHeight < 1 ? 1 : targetGroundHeight;
             Amount = amount;

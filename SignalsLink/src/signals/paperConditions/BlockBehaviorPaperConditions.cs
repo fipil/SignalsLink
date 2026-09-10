@@ -1,4 +1,4 @@
-﻿using Newtonsoft.Json.Converters;
+using Newtonsoft.Json.Converters;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -30,6 +30,21 @@ namespace SignalsLink.src.signals.paperConditions
         /// a mistake in the paper.
         /// </summary>
         bool RequiresTransferSelector => true;
+
+        /// <summary>
+        /// True for a device that has two ends of its own and therefore needs the player to say
+        /// which way a block is going — a header of <c>unload</c> or <c>load</c>. False everywhere
+        /// else, where a header would have nothing to mean and is reported as a mistake.
+        /// </summary>
+        bool SupportsSections => false;
+
+        /// <summary>
+        /// True for a device where a block without a header has nowhere to go: it knows two ends
+        /// and neither of them is the obvious one. Reading such a paper as <c>unload</c> would be a
+        /// silent guess at what the player meant, which is exactly the kind of thing nobody ever
+        /// debugs.
+        /// </summary>
+        bool RequiresSections => false;
     }
 
 
@@ -129,6 +144,9 @@ namespace SignalsLink.src.signals.paperConditions
             CompiledConditions compiled = PaperConditionsParser.Parse(conditionsText, errors);
 
             AddBlocksWithNothingToSelect(compiled, host, errors);
+            AddUnsupportedSections(compiled, host, errors);
+            AddMissingSections(compiled, host, errors);
+            AddHeadersNamingNoEnd(compiled, host, errors);
             return errors;
         }
 
@@ -140,6 +158,52 @@ namespace SignalsLink.src.signals.paperConditions
         /// Only reported where it is actually a mistake: a valve needs no selector (the far end of
         /// the hose is its source) and a sensor carries nothing, so both are left alone.
         /// </summary>
+        /// <summary>
+        /// A header on a device that has only one way to move things says nothing, so it is
+        /// reported rather than ignored - an ignored header would look like it was doing something.
+        /// </summary>
+        private static void AddUnsupportedSections(CompiledConditions compiled, IPaperConditionsHost host, List<PaperConditionError> errors)
+        {
+            if (compiled == null || host == null || host.SupportsSections) return;
+            if (!compiled.HasExplicitSections) return;
+
+            foreach (ConditionSection section in compiled.Sections)
+            {
+                if (section.IsImplicit) continue;
+                errors.Add(new PaperConditionError(section.FirstLine, section.Header, "sectionunsupported"));
+            }
+        }
+
+        /// <summary>
+        /// The other way round: a device that knows two ends cannot do anything with a block that
+        /// does not say which way it goes. Reported once, on the first such block, rather than on
+        /// every one of them - the paper has one thing wrong with it, not five.
+        /// </summary>
+        private static void AddMissingSections(CompiledConditions compiled, IPaperConditionsHost host, List<PaperConditionError> errors)
+        {
+            if (compiled == null || host == null || !host.RequiresSections) return;
+            if (compiled.HasExplicitSections || compiled.Blocks.Count == 0) return;
+
+            errors.Add(new PaperConditionError(compiled.Blocks[0].FirstLine, "", "sectionmissing"));
+        }
+
+        /// <summary>
+        /// A header has to name at least one other party. <c>unload</c> on its own, or <c>from</c>
+        /// with nothing after <c>to</c>, says "from me to me" — which is nothing at all, and would
+        /// otherwise sit there doing nothing with no explanation.
+        /// </summary>
+        private static void AddHeadersNamingNoEnd(CompiledConditions compiled, IPaperConditionsHost host, List<PaperConditionError> errors)
+        {
+            if (compiled == null || host == null || !host.SupportsSections) return;
+
+            foreach (ConditionSection section in compiled.Sections)
+            {
+                if (section.IsImplicit || section.EndsAreComplete) continue;
+
+                errors.Add(new PaperConditionError(section.FirstLine, section.Header, "sectionends"));
+            }
+        }
+
         private static void AddBlocksWithNothingToSelect(CompiledConditions compiled, IPaperConditionsHost host, List<PaperConditionError> errors)
         {
             if (compiled == null || host == null || !host.RequiresTransferSelector) return;

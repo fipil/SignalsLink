@@ -53,11 +53,25 @@ namespace SignalsLink.src
             api.RegisterBlockClass("SleeveDamper", typeof(SignalsLink.src.signals.sleeve.BlockSleeveDamper));
             api.RegisterBlockClass("SleeveCoupling", typeof(SignalsLink.src.signals.sleeve.BlockSleeveCoupling));
 
+
+            // Skladova plocha - dlazdice a cedule se jmenem
+            api.RegisterBlockClass("ManagedDock", typeof(SignalsLink.src.signals.manageddock.BlockManagedDock));
+            api.RegisterBlockEntityClass("BlockEntityManagedDock", typeof(SignalsLink.src.signals.manageddock.BEManagedDock));
+            api.RegisterBlockClass("YardTile", typeof(SignalsLink.src.signals.yard.BlockYardTile));
+            api.RegisterBlockClass("YardSign", typeof(SignalsLink.src.signals.yard.BlockYardSign));
+            api.RegisterBlockEntityClass("YardSign", typeof(SignalsLink.src.signals.yard.BEYardSign));
+
             api.RegisterBlockEntityClass("BlockEntitySleeveDamper", typeof(SignalsLink.src.signals.sleeve.BlockEntitySleeveDamper));
             api.RegisterBlockEntityClass("BlockEntityHoseValve", typeof(BlockEntityHoseValve));
             api.RegisterBlockEntityClass("BlockEntityBlockSensor", typeof(BEBlockSensor));
             api.RegisterBlockEntityClass("BlockEntityEntitySensor", typeof(BEEntitySensor));
             api.RegisterBlockEntityClass("BlockEntityManagedChute", typeof(BEManagedChute));
+
+            // The kinds of the other party a device can exchange goods with. Registered rather
+            // than switched on, so that another mod adds a vehicle without either side knowing
+            // about the other.
+            api.ModLoader.GetModSystem<SignalsLink.src.signals.cargo.CargoHolderRegistry>()
+                ?.Register(new SignalsLink.src.signals.yard.YardCargoHolderFinder());
         }
 
         public override void StartClientSide(ICoreClientAPI api)

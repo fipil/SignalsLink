@@ -66,8 +66,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
         {
             if (slot?.Itemstack?.Collectible?.GetType().Name == "ItemLiquidPortion") return false;
 
-            byte effectiveTargetSlotSignal = directives.TargetSlot ?? outputSlotSignal;
-            return GetGenericTargetSlot(slot, effectiveTargetSlotSignal) != null;
+            return GetGenericTargetSlot(slot, EffectiveTargetSlot(directives)) != null;
         }
 
         public TransferOperationResult TryMove(ItemStackMoveOperation opTemplate)
@@ -78,7 +77,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
             ItemSlot src = selection?.SourceSlot;
             if (src == null || src.Empty) return TransferOperationResult.None;
 
-            byte effectiveTargetSlotSignal = selection.Directives?.TargetSlot ?? outputSlotSignal;
+            int effectiveTargetSlotSignal = EffectiveTargetSlot(selection.Directives);
             ItemSlot dst = GetGenericTargetSlot(src, effectiveTargetSlotSignal);
             if (dst == null) return TransferOperationResult.None;
 
@@ -118,7 +117,15 @@ namespace SignalsLink.src.signals.managedchute.transporting
             return (int)TryMove(opTemplate).MovedAmount;
         }
 
-        private ItemSlot GetGenericTargetSlot(ItemSlot sourceSlot, byte targetSlotSignal)
+        /// <summary>Which target slot a block asks for: `target last`, `target N`, or the pin.</summary>
+        private int EffectiveTargetSlot(PaperConditionDirectives directives)
+        {
+            if (directives == null) return outputSlotSignal;
+            if (directives.TargetLast) return targetInv.Count;
+            return directives.TargetSlot ?? outputSlotSignal;
+        }
+
+        private ItemSlot GetGenericTargetSlot(ItemSlot sourceSlot, int targetSlotSignal)
         {
             ItemStack stack = sourceSlot?.Itemstack;
             if (stack == null) return null;

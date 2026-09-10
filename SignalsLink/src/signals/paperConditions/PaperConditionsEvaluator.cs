@@ -110,6 +110,35 @@ public class PaperConditionsEvaluator
         return result.HasOutput();
     }
 
+    /// <summary>The paper's sections, or null when there is no paper at all.</summary>
+    public IReadOnlyList<ConditionSection> GetSections()
+    {
+        if (string.IsNullOrWhiteSpace(conditionsText)) return null;
+
+        if (compiled == null || !string.Equals(lastParsedText, conditionsText, StringComparison.Ordinal))
+        {
+            ParseInternal(conditionsText);
+        }
+
+        return compiled?.Sections;
+    }
+
+    /// <summary>True if the player wrote a section header.</summary>
+    public bool HasExplicitSections
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(conditionsText)) return false;
+
+            if (compiled == null || !string.Equals(lastParsedText, conditionsText, StringComparison.Ordinal))
+            {
+                ParseInternal(conditionsText);
+            }
+
+            return compiled?.HasExplicitSections ?? false;
+        }
+    }
+
     public void ClearCache()
     {
         lastParsedText = null;

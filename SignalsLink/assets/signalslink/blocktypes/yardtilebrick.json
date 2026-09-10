@@ -1,0 +1,64 @@
+{
+ "code": "yardtilebrick",
+ "class": "YardTile",
+ "variantgroups": [
+  {
+   "code": "rock",
+   "loadFromProperties": "block/rock"
+  }
+ ],
+ "creativeinventory": {
+  "general": [
+   "*"
+  ],
+  "signalslink": [
+   "*"
+  ]
+ },
+ "attributes": {
+  "yardTile": true,
+  "handbook": {
+   "extraSections": [
+    {
+     "title": "signalslink:block-handbooktitle-signalslink",
+     "text": "signalslink:block-handbooktext-yardtile"
+    }
+   ]
+  }
+ },
+ "shape": {
+  "base": "block/yard/yardtile"
+ },
+ "textures": {
+  "tile": {
+   "base": "game:block/stone/brick/{rock}1"
+  }
+ },
+ "blockmaterial": "Stone",
+ "drawtype": "json",
+ "replaceable": 0,
+ "resistance": 5.5,
+ "lightAbsorption": 0,
+ "sidesolid": {
+  "all": true
+ },
+ "sideopaque": {
+  "all": true
+ },
+ "collisionSelectionBoxes": [
+  {
+   "x1": 0,
+   "y1": 0,
+   "z1": 0,
+   "x2": 1,
+   "y2": 1,
+   "z2": 1
+  }
+ ],
+ "sounds": {
+  "place": "game:block/loosestone",
+  "break": "game:block/loosestone",
+  "hit": "game:block/rock-hit-pickaxe",
+  "walk": "game:walk/stone"
+ }
+}

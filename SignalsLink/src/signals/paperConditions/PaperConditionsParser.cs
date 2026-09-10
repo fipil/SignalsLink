@@ -15,15 +15,45 @@ namespace SignalsLink.src.signals.paperConditions
         {
             PaperErrorSink sink = errors != null ? new PaperErrorSink(errors) : null;
             var blocks = new List<ConditionBlock>();
+            var sections = new List<ConditionSection>();
+
+            // A paper with no header at all is one section without one, so every device that knows
+            // nothing about sections sees exactly what it always saw.
+            ConditionSection current = null;
+            var orphans = new List<ConditionBlock>();
+            var orphanParagraphs = new List<List<PaperLine>>();
+            int firstOrphanLine = 0;
 
             foreach (var p in SplitIntoParagraphs(text))
             {
+                if (TryTakeSectionHeader(p, out ConditionSection header))
+                {
+                    // Two sections written with the same header are one section; the second run of
+                    // blocks simply continues the first.
+                    ConditionSection existing = sections.Find(s =>
+                        string.Equals(s.Header, header.Header, StringComparison.OrdinalIgnoreCase));
+
+                    if (existing != null)
+                    {
+                        current = existing;
+                    }
+                    else
+                    {
+                        sections.Add(header);
+                        current = header;
+                    }
+
+                    continue;
+                }
+
                 var conditions = new List<ScopedCondition>();
                 var actions = new List<IConditionAction>();
                 byte? outputValue = null;
                 bool hasExplicitOutput = false;
-                byte? sourceSlot = null;
-                byte? targetSlot = null;
+                int? sourceSlot = null;
+                int? targetSlot = null;
+                bool sourceLast = false;
+                bool targetLast = false;
                 bool targetGround = false;
                 bool targetFirepit = false;
                 int targetGroundHeight = 1;
@@ -84,9 +114,10 @@ namespace SignalsLink.src.signals.paperConditions
                         continue;
                     }
 
-                    if (TryParseSourceDirective(line, out byte parsedSourceSlot))
+                    if (TryParseSourceDirective(line, out int? parsedSourceSlot, out bool parsedSourceLast))
                     {
                         sourceSlot = parsedSourceSlot;
+                        sourceLast = parsedSourceLast;
                         continue;
                     }
 
@@ -96,19 +127,32 @@ namespace SignalsLink.src.signals.paperConditions
                         continue;
                     }
 
-                    if (TryParseTargetDirective(line, out byte? parsedTargetSlot, out bool parsedTargetGround, out bool parsedRequireTargetEmpty, out int parsedTargetGroundHeight, out bool parsedTargetFirepit))
+                    if (TryParseTargetDirective(line, out int? parsedTargetSlot, out bool parsedTargetGround, out bool parsedRequireTargetEmpty, out int parsedTargetGroundHeight, out bool parsedTargetFirepit, out bool parsedTargetLast))
                     {
                         targetSlot = parsedTargetSlot;
                         targetGround = parsedTargetGround;
                         targetGroundHeight = parsedTargetGroundHeight;
                         targetFirepit = parsedTargetFirepit;
                         requireTargetEmpty = parsedRequireTargetEmpty;
+                        targetLast = parsedTargetLast;
                         continue;
                     }
 
                     if (line.StartsWith("target ", StringComparison.OrdinalIgnoreCase))
                     {
                         sink?.Add(line, "target");
+                        continue;
+                    }
+
+                    if (TryParseHeightDirective(line, out int parsedHeight))
+                    {
+                        targetGroundHeight = parsedHeight;
+                        continue;
+                    }
+
+                    if (line.StartsWith("height ", StringComparison.OrdinalIgnoreCase))
+                    {
+                        sink?.Add(line, "height");
                         continue;
                     }
 
@@ -153,11 +197,62 @@ namespace SignalsLink.src.signals.paperConditions
                     // OutputValue keeps the effective default 15 when `output` is not
                     // specified — for the BlockSensor (no behavior change). HasExplicitOutput
                     // records whether `output` was actually specified; ManagedHose reads it (see spec §6).
-                    blocks.Add(new ConditionBlock(conditions, outputValue ?? 15, hasExplicitOutput, new PaperConditionDirectives(sourceSlot, targetSlot, targetGround, amount, requireTargetEmpty, targetGroundHeight, targetFirepit), actions, p[0].Number));
+                    ConditionBlock block = new ConditionBlock(conditions, outputValue ?? 15, hasExplicitOutput, new PaperConditionDirectives(sourceSlot, targetSlot, targetGround, amount, requireTargetEmpty, targetGroundHeight, targetFirepit, sourceLast, targetLast), actions, p[0].Number);
+                    blocks.Add(block);
+
+                    if (current != null)
+                    {
+                        current.Add(block);
+                        current.AddParagraph(p);
+                    }
+                    else
+                    {
+                        // Held aside: whether these are orphans or a perfectly ordinary paper is
+                        // not known until the whole text has been read.
+                        orphans.Add(block);
+                        orphanParagraphs.Add(p);
+                        if (firstOrphanLine == 0) firstOrphanLine = p[0].Number;
+                    }
                 }
             }
 
-            return new CompiledConditions(blocks);
+            if (sections.Count == 0)
+            {
+                // No header anywhere: one implicit section holding everything.
+                ConditionSection implicitSection = new ConditionSection("", null, null, null, 0);
+                foreach (ConditionBlock block in orphans) implicitSection.Add(block);
+                foreach (List<PaperLine> paragraph in orphanParagraphs) implicitSection.AddParagraph(paragraph);
+                sections.Add(implicitSection);
+            }
+            else if (orphans.Count > 0)
+            {
+                // Blocks above the first header. Reading them as "unload" would be a silent guess
+                // about what the player meant, so they are reported and left out.
+                errors?.Add(new PaperConditionError(firstOrphanLine, "", "sectionorphan"));
+                foreach (ConditionBlock block in orphans) blocks.Remove(block);
+            }
+
+            return new CompiledConditions(blocks, sections);
+        }
+
+        /// <summary>
+        /// A section header stands on a paragraph of its own — one line, comments aside. That rule
+        /// keeps it apart from a condition line that happens to begin with the same word.
+        /// </summary>
+        private static bool TryTakeSectionHeader(List<PaperLine> paragraph, out ConditionSection section)
+        {
+            section = null;
+
+            PaperLine? only = null;
+            foreach (PaperLine line in paragraph)
+            {
+                if (line.Text.StartsWith("#") || line.Text.StartsWith("//")) continue;
+                if (only != null) return false;
+                only = line;
+            }
+
+            if (only == null) return false;
+            return ConditionSection.TryParseHeader(only.Value.Text, only.Value.Number, out section);
         }
 
         /// <summary>
@@ -230,22 +325,66 @@ namespace SignalsLink.src.signals.paperConditions
             return false;
         }
 
-        private static bool TryParseSourceDirective(string line, out byte sourceSlot)
+        private static bool TryParseSourceDirective(string line, out int? sourceSlot, out bool sourceLast)
         {
-            sourceSlot = 0;
+            sourceSlot = null;
+            sourceLast = false;
             if (!line.StartsWith("source ", StringComparison.OrdinalIgnoreCase)) return false;
 
             var parts = line.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
-            return parts.Length == 2 && byte.TryParse(parts[1], out sourceSlot) && sourceSlot >= 1 && sourceSlot <= 14;
+            if (parts.Length != 2) return false;
+
+            if (parts[1].Equals("last", StringComparison.OrdinalIgnoreCase))
+            {
+                sourceLast = true;
+                return true;
+            }
+
+            if (int.TryParse(parts[1], out int parsed) && parsed >= 1)
+            {
+                sourceSlot = parsed;
+                return true;
+            }
+
+            return false;
         }
 
-        private static bool TryParseTargetDirective(string line, out byte? targetSlot, out bool targetGround, out bool requireTargetEmpty, out int targetGroundHeight, out bool targetFirepit)
+        /// <summary>
+        /// <c>height N</c> - how high a column of goods may be stacked.
+        ///
+        /// It stands on its own rather than hanging off <c>target ground</c>, because with a
+        /// section header the ground is already implied and there is nothing to hang it on. Height
+        /// is a property of the CARGO, not of the place: logs stack five high, barrels want one
+        /// layer so that they can be reached.
+        ///
+        /// A ceiling, not a promise - ground storage has its own limits per kind of item, so some
+        /// things fill up sooner.
+        /// </summary>
+        private static bool TryParseHeightDirective(string line, out int height)
+        {
+            height = 1;
+
+            if (!line.StartsWith("height ", StringComparison.OrdinalIgnoreCase)) return false;
+
+            var parts = line.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+
+            if (parts.Length != 2 || !int.TryParse(parts[1], out int parsed) || parsed < 1 || parsed > 255)
+            {
+                return false;
+            }
+
+            height = parsed;
+            return true;
+        }
+
+        private static bool TryParseTargetDirective(string line, out int? targetSlot, out bool targetGround, out bool requireTargetEmpty, out int targetGroundHeight, out bool targetFirepit, out bool targetLast)
         {
             targetSlot = null;
             targetGround = false;
             requireTargetEmpty = false;
             targetGroundHeight = 1;
             targetFirepit = false;
+            targetLast = false;
 
             if (!line.StartsWith("target ", StringComparison.OrdinalIgnoreCase)) return false;
 
@@ -271,13 +410,28 @@ namespace SignalsLink.src.signals.paperConditions
                 return true;
             }
 
-            if (parts.Length == 2 && byte.TryParse(parts[1], out byte parsedTargetSlot) && parsedTargetSlot >= 1 && parsedTargetSlot <= 14)
+            if (parts.Length == 2 && parts[1].Equals("last", StringComparison.OrdinalIgnoreCase))
+            {
+                targetLast = true;
+                return true;
+            }
+
+            if (parts.Length == 3 && parts[1].Equals("last", StringComparison.OrdinalIgnoreCase)
+                && parts[2].Equals("ifEmpty", StringComparison.OrdinalIgnoreCase))
+            {
+                targetLast = true;
+                requireTargetEmpty = true;
+                return true;
+            }
+
+            if (parts.Length == 2 && int.TryParse(parts[1], out int parsedTargetSlot) && parsedTargetSlot >= 1)
             {
                 targetSlot = parsedTargetSlot;
                 return true;
             }
 
-            if (parts.Length == 3 && byte.TryParse(parts[1], out parsedTargetSlot) && parsedTargetSlot >= 1 && parsedTargetSlot <= 14 && parts[2].Equals("ifEmpty", StringComparison.OrdinalIgnoreCase))
+            if (parts.Length == 3 && int.TryParse(parts[1], out parsedTargetSlot) && parsedTargetSlot >= 1
+                && parts[2].Equals("ifEmpty", StringComparison.OrdinalIgnoreCase))
             {
                 targetSlot = parsedTargetSlot;
                 requireTargetEmpty = true;

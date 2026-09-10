@@ -274,3 +274,51 @@
     Ventil nepřenáší lávu a horkou vodu v cíli ochladí na okolní teplotu. Podmínky na papíře mohou přenos filtrovat, změnit velikost dávky, zapečetit cílový sud nebo nastavit Výstup.<br>
     Ventil rozumí i direktivám <strong>source N</strong>, kterou určíte slot kapaliny na vzdáleném konci vedení, a <strong>target N ifEmpty</strong>, kterou se plní jen prázdný cílový slot.
 </translation>
+<translation key="signalslink:block-handbooktext-yardtile">
+    Dlaždice skladové plochy je obyčejná dlažba, na kterou se skládá zboží. Sama nic neřídí a nemá žádný vlastní stav; zboží leží <strong>na ní</strong> jako běžné hromádky na zemi.<br>
+    Souvislá plocha z těchto dlaždic tvoří <strong>skladovou plochu</strong> — jeden celek, se kterým zařízení pracuje najednou, místo aby se muselo ukazovat na každou hromádku zvlášť.<br><br>
+    <font size="20" color="6082B6">Tvar a velikost</font><br>
+    Tvar může být libovolný, dokud dlaždice na sebe navazují stranami — obdélník, L, kolem koleje i kolem budovy. Dlaždice, které se dotýkají jen rohem, do plochy nepatří.<br>
+    Plocha musí mít <strong>aspoň 4 dlaždice</strong> a nejvýše <strong>400</strong>. Když se strop překročí, plocha se považuje za neplatnou a napíše se to — nic se neusekne v půlce.<br>
+    Dvě plochy, které se někde dotknou, se slijí v jednu. Pokud chcete dvě oddělené, nechte mezi nimi mezeru.<br><br>
+    <font size="20" color="6082B6">Jak poznáte, co jste postavili</font><br>
+    Po vnějším okraji plochy se na horní straně zesvětlí pruh, takže je vidět, kam plocha sahá.<br>
+    Když se na dlaždici podíváte, v informačním okně stojí, kolik dlaždic plocha má. To číslo je důležité — hned podle něj poznáte, že se vám dvě plochy omylem slily v jednu.<br><br>
+    <font size="20" color="6082B6">Pojmenování</font><br>
+    Postavte na plochu <a href="handbook://block-signalslink:yardsign-north">ceduli skladové plochy</a> a napište na ni jméno. Plocha se pak dá vybírat jménem, což se hodí, když jich máte na nádraží víc vedle sebe.<br><br>
+    <font size="20" color="6082B6">Kolik se toho vejde</font><br>
+    Na každé dlaždici může stát sloupec hromádek. Jak vysoko, se řídí nákladem, ne plochou: klády se dají skládat vysoko, sudy chcete v jedné vrstvě, aby se k nim dalo. Vintage Story má navíc vlastní omezení podle druhu předmětu, takže některé věci se tak vysoko naskládat nedají a sloupec se naplní dřív.
+</translation>
+<translation key="signalslink:block-handbooktext-yardsign">
+    Cedule na sloupku, kterou pojmenujete <a href="handbook://block-signalslink:yardtileplank-oak">skladovou plochu</a>. Postavte ji na některou dlaždici plochy a napište na ni jméno.<br>
+    Na psaní nepotřebujete inkoust ani brk — po položení se rovnou otevře formulář a jméno kdykoli změníte klepnutím. Jméno se vejde nejvýše 24 znaků, aby zůstalo čitelné z dálky.<br>
+    Plocha se jmenuje podle <strong>první cedule, která na ní stojí</strong>. Víc cedulí na jedné ploše tedy nevadí, ale jméno určuje jen jedna z nich.<br>
+    Cedule je zároveň obyčejná značka — nic neřídí a nemá žádné konektory.
+</translation>
+<translation key="signalslink:block-handbooktext-manageddock">
+    Překladiště je bedna, která nakládá a vykládá to, co stojí vedle ní. Je to první zařízení SignalsLinku, které má <strong>dva vlastní konce</strong>: jedním je ono samo, druhým protistrana, kterou vedle sebe najde.<br>
+    Má jeden nedělený inventář o 48 slotech. Každý slot přijme předměty i kapalinu, takže se nemusíte starat o to, co kam patří — <a href="handbook://signalslink:usageinfo-paperconditions">Podmínky na papíře</a> vybírají podle obsahu, ne podle místa.<br><br>
+    <font size="20" color="6082B6">Papír musí říct, odkud kam</font><br>
+    Každý blok na papíře stojí pod hlavičkou, která pojmenuje <strong>oba konce</strong>:<br>
+    • <strong>from X to Y</strong> — zboží jde z X rovnou do Y. Překladiště je jen ten, kdo to přendá; bednou nic procházet nemusí.<br>
+    • <strong>unload X</strong> — zkratka pro „z X do bedny".<br>
+    • <strong>load X</strong> — zkratka pro „z bedny do X".<br>
+    Nedopsaná hlavička je chyba: <strong>from train</strong> bez <strong>to</strong> se nebere jako <strong>unload train</strong>, protože domýšlet za tebe, cos chtěl, je ta nejhůř dohledatelná vlastnost.<br>
+    Hlavička stojí na vlastním odstavci a platí pro všechny bloky pod sebou, až do další hlavičky. Papír bez hlavičky překladiště nepřijme a řekne vám to — samo si domýšlet, co jste mysleli, by byla ta nejhůř dohledatelná chyba.<br>
+    Za směrem se píše, o kterou protistranu jde. Dnes je to <strong>yard</strong>, tedy <a href="handbook://block-signalslink:yardtileplank-oak">skladová plocha</a>, a za ní světová strana a případně jméno z <a href="handbook://block-signalslink:yardsign-north">cedule</a>:<br>
+    <strong>unload yard</strong><br><strong>load yard north</strong><br><strong>load yard north severní halda</strong><br><strong>from train to yard north</strong><br><br>
+    <font size="20" color="6082B6">Jak se hledá protistrana</font><br>
+    Plocha se hledá <strong>do deseti bloků</strong> od překladiště. Bez směru a při vodorovném směru se hledá ve dvou úrovních — na úrovni překladiště a o blok níž. Plocha je rovná a překladiště stojí buď na ní, nebo vedle ní na téže zemi, takže jinde vodorovně být nemůže.<br>
+    Světová strana (<strong>north</strong>, <strong>south</strong>, <strong>east</strong>, <strong>west</strong>) omezí hledání na tu půlku okolí. <strong>up</strong> a <strong>down</strong> hledají <strong>svisle</strong>, taky do deseti bloků: <strong>up</strong> pro překladiště zakopané pod nástupištěm, nad kterým plocha leží, <strong>down</strong> pro překladiště nad kolejí nebo na půdě skladiště, jehož podlahu plocha tvoří. Bez směru se hledá kolem dokola.<br>
+    Když je ploch v dosahu víc, rozhodne <strong>jméno</strong> z cedule; bez jména se vezme ta nejbližší. Hledá se od nejbližšího okolí ven, takže plocha hned vedle stojí prakticky nic.<br>
+    Celá plocha se papíru ukáže jako <strong>jeden inventář</strong>, poskládaný ze sloupců hromádek od nejbližší dlaždice k nejvzdálenější. Proto se plní od vašeho konce: nejbližší sloupec do výšky, teprve pak další.<br><br>
+    <font size="20" color="6082B6">Kolik se přenese</font><br>
+    Bez direktivy <strong>amount</strong> přenese jeden zásah <strong>všechno, co odpovídá</strong>. To je proti ostatním zařízením obráceně a je to schválně: „vylož celý vagon" jinak trvá věčnost. Direktiva <strong>amount N</strong> platí beze změny, tedy atomicky N kusů nebo nic.<br>
+    Direktivou <strong>height N</strong> řeknete, jak vysoko se smí skládat sloupec. Výška patří k nákladu, ne k ploše: klády naskládáte vysoko, sudy chcete v jedné vrstvě, aby se k nim dalo. Je to strop, ne záruka — některé věci se tak vysoko naskládat nedají a sloupec se naplní dřív.<br><br>
+    <font size="20" color="6082B6">Konektory</font><br>
+    • <strong>Vstup</strong> dává kredit. Signály 1 až 7 přidávají 1, 2, 4, 8, 16, 32 nebo 64 přenosů, signál 15 pracuje trvale. Jeden přenos stojí jeden kredit, ať odveze kus nebo celý stack.<br>
+    • <strong>Výstup</strong> hlásí, co překladiště na svých koncích vidí; hodnotu mu dávají bloky s direktivou <strong>output</strong>. Ty se vyhodnocují napříč celým papírem a platí <strong>první</strong>, který sedí, bez ohledu na to, v které sekci je napsaný.<br>
+    Nevyčerpaný kredit zrušíte přidřepnutím a klepnutím <strong>hasákem</strong>.<br><br>
+    <font size="20" color="6082B6">Umístění</font><br>
+    Překladiště se pokládá otočené, jako bedna nebo truhla — postaví se pracovním rohem s konektory k vám. Bez signálu na Vstupu se jen rozhlíží a nic nedělá.
+</translation>

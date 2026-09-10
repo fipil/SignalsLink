@@ -8,11 +8,23 @@ namespace SignalsLink.src.signals.paperConditions
     public class CompiledConditions
     {
         private readonly List<ConditionBlock> blocks;
+        private readonly List<ConditionSection> sections;
 
-        public CompiledConditions(List<ConditionBlock> blocks)
+        public CompiledConditions(List<ConditionBlock> blocks, List<ConditionSection> sections = null)
         {
             this.blocks = blocks;
+            this.sections = sections ?? new List<ConditionSection>();
         }
+
+        /// <summary>
+        /// The paper split by its headers. A paper without headers has exactly one section, the
+        /// implicit one, so a device that never asks about sections is unaffected either way.
+        /// </summary>
+        public IReadOnlyList<ConditionSection> Sections => sections;
+
+        /// <summary>True if the player actually wrote a header. Devices that do not support
+        /// sections report that as a mistake in the paper.</summary>
+        public bool HasExplicitSections => sections.Count > 0 && !sections[0].IsImplicit;
 
         /// <summary>
         /// The blocks in the order they stand on the paper. This is what the unified

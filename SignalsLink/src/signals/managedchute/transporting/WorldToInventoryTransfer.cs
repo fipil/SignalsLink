@@ -97,7 +97,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
             ItemStack stack = entity.Itemstack;
             if (!TryGetMatchedDirectives(stack, out PaperConditionDirectives directives, null, block) || !directives.Evaluate(BuildDirectiveContext())) return TransferOperationResult.None;
 
-            int moved = TryPutOneIntoInventory(stack, directives.TargetSlot ?? targetSlotSignal);
+            int moved = TryPutOneIntoInventory(stack, EffectiveTargetSlot(directives));
             if (moved <= 0) return TransferOperationResult.None;
 
             stack.StackSize -= moved;
@@ -145,7 +145,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
                 if (available < batch) return TransferOperationResult.None;
             }
 
-            byte targetSignal = directives.TargetSlot ?? targetSlotSignal;
+            int targetSignal = EffectiveTargetSlot(directives);
             int movedTotal = 0;
 
             foreach (BlockEntityGroundStorage pile in column)
@@ -222,7 +222,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
                 if (available < requested) return TransferOperationResult.None;
             }
 
-            byte targetSignal = directives.TargetSlot ?? targetSlotSignal;
+            int targetSignal = EffectiveTargetSlot(directives);
             int movedTotal = 0;
 
             foreach (BlockPos pos in column)
@@ -336,7 +336,15 @@ namespace SignalsLink.src.signals.managedchute.transporting
         /// How many pieces the target could still take. Asked BEFORE a layer is removed, because a
         /// layer cannot be put back once it is gone.
         /// </summary>
-        private int RoomFor(ItemStack stack, byte effectiveTargetSlotSignal)
+        /// <summary>Which target slot a block asks for: `target last`, `target N`, or the pin.</summary>
+        private int EffectiveTargetSlot(PaperConditionDirectives directives)
+        {
+            if (directives == null) return targetSlotSignal;
+            if (directives.TargetLast) return targetInv?.Count ?? 0;
+            return directives.TargetSlot ?? targetSlotSignal;
+        }
+
+        private int RoomFor(ItemStack stack, int effectiveTargetSlotSignal)
         {
             if (effectiveTargetSlotSignal > 0)
             {
@@ -383,7 +391,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
         {
             if (!TryGetMatchedDirectives(containerStack, out PaperConditionDirectives directives, null, block) || !directives.Evaluate(BuildDirectiveContext())) return TransferOperationResult.None;
 
-            int moved = TryPutOneIntoInventory(containerStack, directives.TargetSlot ?? targetSlotSignal);
+            int moved = TryPutOneIntoInventory(containerStack, EffectiveTargetSlot(directives));
             if (moved <= 0) return TransferOperationResult.None;
 
             api.World.BlockAccessor.SetBlock(0, sourcePos);
@@ -484,7 +492,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
             return found;
         }
 
-        private int TryPutOneIntoInventory(ItemStack fromStack, byte effectiveTargetSlotSignal)
+        private int TryPutOneIntoInventory(ItemStack fromStack, int effectiveTargetSlotSignal)
         {
             return TryPutIntoInventory(fromStack, effectiveTargetSlotSignal, 1);
         }
@@ -494,7 +502,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
         /// does not fit one slot (a chest slot caps at the item's max stack size), so without a
         /// specific target slot it is spread over as many slots as needed.
         /// </summary>
-        private int TryPutIntoInventory(ItemStack fromStack, byte effectiveTargetSlotSignal, int maxCount)
+        private int TryPutIntoInventory(ItemStack fromStack, int effectiveTargetSlotSignal, int maxCount)
         {
             if (fromStack == null || maxCount < 1) return 0;
 

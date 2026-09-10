@@ -24,6 +24,17 @@ namespace SignalsLink.src.signals.managedchute.transporting
 
         protected override bool AllowsLiquidContainers => true;
 
+        /// <summary>
+        /// The target IS the ground, whether or not the paper says so.
+        ///
+        /// Set by a device whose other end is a place rather than a container - a storage yard,
+        /// where a section header has already said that goods go on the ground and there is
+        /// nothing left for `target ground` to add. Without it a block would only ever top up a
+        /// pile that happened to be there already, never start one.
+        /// </summary>
+        public bool GroundImplied { get; set; }
+
+
         protected override bool CanTransferSelection(ItemSlot slot, PaperConditionDirectives directives)
         {
             // A firepit stage wants one particular material, and the source is walked slot by slot.
@@ -39,7 +50,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
             // block would keep winning the evaluation after the column filled up, and every block
             // below it on the paper — an `output` that reports the column is full, say — would
             // never be reached.
-            if (directives.TargetGround) return HasGroundRoom(slot, directives);
+            if (directives.TargetGround || GroundImplied) return HasGroundRoom(slot, directives);
 
             // ManagedChute may place a filled bucket, but must never eject the liquid portions
             // stored in barrels and other liquid inventories.
@@ -99,7 +110,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
                 return 1;
             }
 
-            bool targetGround = selection.Directives.TargetGround;
+            bool targetGround = selection.Directives.TargetGround || GroundImplied;
 
             // `amount N` batches the ground placement (without it a single item is placed, as before).
             // Like the chute's item batches it is atomic on the source, but the batch is gathered from

@@ -34,7 +34,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
             return liquidContainer?.GetContent(sourceStack);
         }
 
-        public bool HasAnyLiquidTargetSlot(byte targetSlotSignal)
+        public bool HasAnyLiquidTargetSlot(int targetSlotSignal)
         {
             if (targetSlotSignal > 0)
             {
@@ -51,7 +51,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
             return false;
         }
 
-        public ItemSlot GetTargetSlot(ItemStack sourceStack, byte targetSlotSignal)
+        public ItemSlot GetTargetSlot(ItemStack sourceStack, int targetSlotSignal)
         {
             ItemStack liquidStack = GetLiquidStackForTransfer(sourceStack);
             if (liquidStack == null) return null;

@@ -1,0 +1,196 @@
+{
+ "code": "manageddock",
+ "class": "ManagedDock",
+ "entityclass": "BlockEntityManagedDock",
+ "behaviors": [
+  {
+   "name": "Lockable"
+  },
+  {
+   "name": "Container"
+  },
+  {
+   "name": "BlockBehaviorPaperConditions"
+  }
+ ],
+ "entityBehaviors": [
+  {
+   "name": "BEBehaviorSignalConnector",
+   "properties": {
+    "signalNodes": [
+     {
+      "index": 0,
+      "isSource": false
+     },
+     {
+      "index": 1,
+      "isSource": true,
+      "output": 0
+     }
+    ]
+   }
+  }
+ ],
+ "attributes": {
+  "inventoryClassName": "manageddock",
+  "reinforcable": true,
+  "handbook": {
+   "extraSections": [
+    {
+     "title": "signalslink:block-handbooktitle-signalslink",
+     "text": "signalslink:block-handbooktext-manageddock"
+    }
+   ]
+  },
+  "signalNodes": [
+   {
+    "index": 0,
+    "name": "con-input",
+    "x1": 0.0625,
+    "y1": 0.78125,
+    "z1": 0.34375,
+    "x2": 0.1875,
+    "y2": 0.90625,
+    "z2": 0.46875,
+    "rotateYbytype": {
+     "*-north": 270,
+     "*-east": 180,
+     "*-south": 90
+    }
+   },
+   {
+    "index": 1,
+    "name": "con-output",
+    "x1": 0.0625,
+    "y1": 0.78125,
+    "z1": 0.53125,
+    "x2": 0.1875,
+    "y2": 0.90625,
+    "z2": 0.65625,
+    "rotateYbytype": {
+     "*-north": 270,
+     "*-east": 180,
+     "*-south": 90
+    }
+   }
+  ]
+ },
+ "variantgroups": [
+  {
+   "code": "side",
+   "loadFromProperties": "abstract/horizontalorientation"
+  }
+ ],
+ "creativeinventory": {
+  "general": [
+   "*-north"
+  ],
+  "signalslink": [
+   "*-north"
+  ]
+ },
+ "shapebytype": {
+  "*-north": {
+   "base": "block/dock/manageddock",
+   "rotateY": 270
+  },
+  "*-east": {
+   "base": "block/dock/manageddock",
+   "rotateY": 180
+  },
+  "*-south": {
+   "base": "block/dock/manageddock",
+   "rotateY": 90
+  },
+  "*-west": {
+   "base": "block/dock/manageddock",
+   "rotateY": 0
+  }
+ },
+ "textures": {
+  "mat": {
+   "base": "game:block/wood/crate/oak-sides"
+  },
+  "aged-ceramic2": {
+   "base": "block/aged-ceramic2"
+  },
+  "terminal": {
+   "base": "block/normal3"
+  },
+  "brace": {
+   "base": "game:block/wood/crate/east"
+  }
+ },
+ "blockmaterial": "Wood",
+ "drawtype": "json",
+ "replaceable": 0,
+ "resistance": 3.5,
+ "lightAbsorption": 0,
+ "sidesolid": {
+  "all": false
+ },
+ "sideopaque": {
+  "all": false
+ },
+ "collisionSelectionBoxes": [
+  {
+   "x1": 0.25,
+   "y1": 0.0,
+   "z1": 0.0,
+   "x2": 1.0,
+   "y2": 1.0,
+   "z2": 1.0,
+   "rotateYByType": {
+    "*-north": 270,
+    "*-east": 180,
+    "*-south": 90
+   }
+  },
+  {
+   "x1": 0.0,
+   "y1": 0.0,
+   "z1": 0.0,
+   "x2": 0.25,
+   "y2": 0.75,
+   "z2": 1.0,
+   "rotateYByType": {
+    "*-north": 270,
+    "*-east": 180,
+    "*-south": 90
+   }
+  },
+  {
+   "x1": 0.0,
+   "y1": 0.75,
+   "z1": 0.0,
+   "x2": 0.25,
+   "y2": 1.0,
+   "z2": 0.3125,
+   "rotateYByType": {
+    "*-north": 270,
+    "*-east": 180,
+    "*-south": 90
+   }
+  },
+  {
+   "x1": 0.0,
+   "y1": 0.75,
+   "z1": 0.6875,
+   "x2": 0.25,
+   "y2": 1.0,
+   "z2": 1.0,
+   "rotateYByType": {
+    "*-north": 270,
+    "*-east": 180,
+    "*-south": 90
+   }
+  }
+ ],
+ "sounds": {
+  "place": "game:block/planks",
+  "break": "game:block/planks",
+  "hit": "game:block/planks",
+  "walk": "game:walk/wood"
+ },
+ "materialDensity": 600
+}

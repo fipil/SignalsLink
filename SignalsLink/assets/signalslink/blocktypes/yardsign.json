@@ -1,0 +1,124 @@
+{
+ "code": "yardsign",
+ "class": "YardSign",
+ "entityclass": "YardSign",
+ "creativeinventory": {
+  "general": [
+   "*-north"
+  ],
+  "signalslink": [
+   "*-north"
+  ]
+ },
+ "attributes": {
+  "maxWidth": 200,
+  "maxHeight": 96,
+  "fontSize": 20,
+  "textVoxelOffsetX": 0,
+  "textVoxelOffsetY": 0,
+  "textVoxelOffsetZ": 0,
+  "textVoxelWidth": 13,
+  "textVoxelHeight": 7,
+  "handbook": {
+   "extraSections": [
+    {
+     "title": "signalslink:block-handbooktitle-signalslink",
+     "text": "signalslink:block-handbooktext-yardsign"
+    }
+   ]
+  }
+ },
+ "variantgroups": [
+  {
+   "code": "side",
+   "loadFromProperties": "abstract/horizontalorientation"
+  }
+ ],
+ "shapebytype": {
+  "*-north": {
+   "base": "block/yard/yardsign",
+   "rotateY": 0
+  },
+  "*-east": {
+   "base": "block/yard/yardsign",
+   "rotateY": 270
+  },
+  "*-south": {
+   "base": "block/yard/yardsign",
+   "rotateY": 180
+  },
+  "*-west": {
+   "base": "block/yard/yardsign",
+   "rotateY": 90
+  }
+ },
+ "textures": {
+  "post": {
+   "base": "game:block/wood/debarked/oak"
+  },
+  "board": {
+   "base": "game:block/wood/sign/front"
+  }
+ },
+ "blockmaterial": "Wood",
+ "drawtype": "json",
+ "replaceable": 500,
+ "resistance": 1.5,
+ "lightAbsorption": 0,
+ "sidesolid": {
+  "all": false
+ },
+ "sideopaque": {
+  "all": false
+ },
+ "collisionSelectionBoxesByType": {
+  "*-north": [
+   {
+    "x1": 0.0625,
+    "y1": 0.0,
+    "z1": 0.4375,
+    "x2": 0.9375,
+    "y2": 0.8125,
+    "z2": 0.59375
+   }
+  ],
+  "*-south": [
+   {
+    "x1": 0.0625,
+    "y1": 0.0,
+    "z1": 0.4375,
+    "x2": 0.9375,
+    "y2": 0.8125,
+    "z2": 0.59375
+   }
+  ],
+  "*-east": [
+   {
+    "x1": 0.4375,
+    "y1": 0.0,
+    "z1": 0.0625,
+    "x2": 0.59375,
+    "y2": 0.8125,
+    "z2": 0.9375
+   }
+  ],
+  "*-west": [
+   {
+    "x1": 0.40625,
+    "y1": 0.0,
+    "z1": 0.0625,
+    "x2": 0.5625,
+    "y2": 0.8125,
+    "z2": 0.9375
+   }
+  ]
+ },
+ "sounds": {
+  "place": "game:block/planks",
+  "break": "game:block/planks",
+  "hit": "game:block/planks",
+  "walk": "game:walk/wood"
+ },
+ "materialDensity": 600,
+ "resistanceToDamage": 0.5
+}

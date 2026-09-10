@@ -187,7 +187,7 @@ namespace SignalsLink.src.signals.hose
             // `target N ifEmpty` is part of transfer feasibility.
             if (!directives.Evaluate(ctx)) return TransferOperationResult.None;
 
-            byte targetSlotSignal = directives.TargetSlot ?? 0;
+            int targetSlotSignal = directives.TargetLast ? (targetInv?.Count ?? 0) : (directives.TargetSlot ?? 0);
             ItemSlot dst = liquid.GetTargetSlot(sourceLiquid, targetSlotSignal);
             if (dst == null) return TransferOperationResult.None;
 
@@ -259,7 +259,7 @@ namespace SignalsLink.src.signals.hose
         /// The `source N` directive, when a block carries one: draw from exactly that slot of the
         /// far host and from no other. An intake (world water) has no slots, so it ignores this.
         /// </param>
-        private ItemStack ResolveSource(out ItemSlot srcSlot, out BlockPos worldWaterPos, out IInventory sourceInv, byte? sourceSlot = null)
+        private ItemStack ResolveSource(out ItemSlot srcSlot, out BlockPos worldWaterPos, out IInventory sourceInv, int? sourceSlot = null)
         {
             srcSlot = null;
             worldWaterPos = null;
@@ -326,7 +326,7 @@ namespace SignalsLink.src.signals.hose
         }
 
         /// <summary>The far host slot a `source N` directive names, or null if it holds no liquid.</summary>
-        private static ItemSlot GetLiquidSlotAt(IInventory inv, byte slotNumber)
+        private static ItemSlot GetLiquidSlotAt(IInventory inv, int slotNumber)
         {
             int index = slotNumber - 1;
             if (index < 0 || index >= inv.Count) return null;

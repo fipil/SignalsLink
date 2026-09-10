@@ -136,6 +136,13 @@ namespace SignalsLink.src.signals.managedchute.transporting
         /// </summary>
         private IEnumerable<int> CandidateSlots(PaperConditionDirectives directives)
         {
+            // `source last` names the end of the inventory, whatever its size.
+            if (directives.SourceLast)
+            {
+                if (sourceInv.Count > 0) yield return sourceInv.Count - 1;
+                yield break;
+            }
+
             // `source N` names one slot and overrides the Source pin.
             if (directives.SourceSlot.HasValue)
             {
