@@ -57,6 +57,36 @@ namespace SignalsLink.Tests
             Assert.True(chute.FirstBlockAccepts(0));
         }
 
+        // ---------------------------------------------------------------- the two marks
+
+        [Fact]
+        public void A_ceiling_never_waits()
+        {
+            // `amount 12-` says twelve at the most, and four is fewer than twelve. This is the one
+            // form that does not hold out for the whole number.
+            var chute = Chute("game:hide-scraped-medium\ntarget 1 ifEmpty\namount 12-\n", Medium(4));
+
+            Assert.True(chute.FirstBlockAccepts(0));
+        }
+
+        [Fact]
+        public void A_floor_waits_exactly_as_a_plain_amount_does()
+        {
+            // `amount 12+` is still a number that has to be reached; it only changes what happens
+            // once it is.
+            var chute = Chute("game:hide-scraped-medium\ntarget 1 ifEmpty\namount 12+\n", Medium(4));
+
+            Assert.False(chute.FirstBlockAccepts(0));
+        }
+
+        [Fact]
+        public void A_floor_that_is_met_is_selectable()
+        {
+            var chute = Chute("game:hide-scraped-large\ntarget 1 ifEmpty\namount 8+\n", Medium(4), Large(8));
+
+            Assert.True(chute.FirstBlockAccepts(1));
+        }
+
         // ---------------------------------------------------------------- plumbing
 
         private static ItemStack Medium(int size) => TestStacks.Item("game:hide-scraped-medium", size);

@@ -287,7 +287,9 @@
     <font size="20" color="6082B6">Pojmenování</font><br>
     Postavte na plochu <a href="handbook://block-signalslink:yardsign-north">ceduli skladové plochy</a> a napište na ni jméno. Plocha se pak dá vybírat jménem, což se hodí, když jich máte na nádraží víc vedle sebe.<br><br>
     <font size="20" color="6082B6">Kolik se toho vejde</font><br>
-    Na každé dlaždici může stát sloupec hromádek. Jak vysoko, se řídí nákladem, ne plochou: klády se dají skládat vysoko, sudy chcete v jedné vrstvě, aby se k nim dalo. Vintage Story má navíc vlastní omezení podle druhu předmětu, takže některé věci se tak vysoko naskládat nedají a sloupec se naplní dřív.
+    Na každé dlaždici stojí <strong>jeden sloupec a v něm jeden druh zboží</strong> — sloupec je pro papír jeden slot, takže se do něj nemíchá. Když na dlaždici leží něco jiného, zařízení ji přeskočí a zkusí další.<br>
+    Na plochu patří jen to, co se dá <strong>skládat na hromádku</strong>. Co se skládat nedá, tam zařízení nedá vůbec — leželo by to na dlaždici jako položený blok a už by to nešlo sebrat.<br>
+    Jak vysoko sloupec roste, se řídí nákladem, ne plochou: klády se dají skládat vysoko, sudy chcete v jedné vrstvě, aby se k nim dalo. Vintage Story má navíc vlastní omezení podle druhu předmětu, takže některé věci se tak vysoko naskládat nedají a sloupec se naplní dřív.
 </translation>
 <translation key="signalslink:block-handbooktext-yardsign">
     Cedule na sloupku, kterou pojmenujete <a href="handbook://block-signalslink:yardtileplank-oak">skladovou plochu</a>. Postavte ji na některou dlaždici plochy a napište na ni jméno.<br>
@@ -314,6 +316,7 @@
     Celá plocha se papíru ukáže jako <strong>jeden inventář</strong>, poskládaný ze sloupců hromádek od nejbližší dlaždice k nejvzdálenější. Proto se plní od vašeho konce: nejbližší sloupec do výšky, teprve pak další.<br><br>
     <font size="20" color="6082B6">Kolik se přenese</font><br>
     Bez direktivy <strong>amount</strong> přenese jeden zásah <strong>všechno, co odpovídá</strong>. To je proti ostatním zařízením obráceně a je to schválně: „vylož celý vagon" jinak trvá věčnost. Direktiva <strong>amount N</strong> platí beze změny, tedy atomicky N kusů nebo nic.<br>
+    Direktiva <strong>amount N</strong> je atomická — přenese se N kusů, nebo nic. Když chceš dávkovat, ale nezastavit se, až bude zboží docházet, napiš <strong>amount N-</strong> (nejvýš N, a co je míň, to se přenese taky). Když chceš naopak počkat na plnou dávku a pak odvézt všechno najednou, napiš <strong>amount N+</strong> (nejmíň N). Značky znamenají totéž co u podmínek.<br>
     Direktivou <strong>height N</strong> řeknete, jak vysoko se smí skládat sloupec. Výška patří k nákladu, ne k ploše: klády naskládáte vysoko, sudy chcete v jedné vrstvě, aby se k nim dalo. Je to strop, ne záruka — některé věci se tak vysoko naskládat nedají a sloupec se naplní dřív.<br><br>
     <font size="20" color="6082B6">Konektory</font><br>
     • <strong>Vstup</strong> dává kredit. Signály 1 až 7 přidávají 1, 2, 4, 8, 16, 32 nebo 64 přenosů, signál 15 pracuje trvale. Jeden přenos stojí jeden kredit, ať odveze kus nebo celý stack.<br>

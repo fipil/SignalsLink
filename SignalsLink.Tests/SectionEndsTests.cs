@@ -150,6 +150,41 @@ namespace SignalsLink.Tests
             Assert.DoesNotContain(Errors("unload yard\n\ngame:firewood\n"), e => e.Reason == "sectionends");
         }
 
+        // ---------------------------------------------------------------- what the device says
+
+        [Fact]
+        public void A_holder_the_device_does_not_know_is_a_paper_error()
+        {
+            // The one that got away: `load Dva` names a yard without the word yard. While only
+            // one kind of holder existed the missing keyword was filled in silently; the moment a
+            // second one was registered it became a mistake - and nothing said so, because the
+            // header was only ever judged at run time. The paper read perfectly and the device
+            // stood there doing nothing.
+            var host = new Host { Rejects = "Dva" };
+
+            IReadOnlyList<PaperConditionError> errors = Errors("load Dva\n\ngame:firewood\n", host);
+
+            Assert.Equal("holderunknown", Assert.Single(errors).Reason);
+        }
+
+        [Fact]
+        public void It_is_reported_on_the_header_line()
+        {
+            var host = new Host { Rejects = "Dva" };
+
+            IReadOnlyList<PaperConditionError> errors = Errors("# a paper\n\nload Dva\n\ngame:firewood\n", host);
+
+            Assert.Equal(3, Assert.Single(errors).Line);
+        }
+
+        [Fact]
+        public void A_device_with_nothing_to_say_reports_nothing()
+        {
+            IReadOnlyList<PaperConditionError> errors = Errors("load yard\n\ngame:firewood\n", new Host());
+
+            Assert.Empty(errors);
+        }
+
         // ---------------------------------------------------------------- plumbing
 
         private static ConditionSection Header(string line)
@@ -158,9 +193,9 @@ namespace SignalsLink.Tests
             return section;
         }
 
-        private static IReadOnlyList<PaperConditionError> Errors(string paper)
+        private static IReadOnlyList<PaperConditionError> Errors(string paper, Host host = null)
         {
-            return BlockBehaviorPaperConditions.FindErrors(paper, new Host());
+            return BlockBehaviorPaperConditions.FindErrors(paper, host ?? new Host());
         }
 
         private sealed class Host : IPaperConditionsHost
@@ -170,6 +205,19 @@ namespace SignalsLink.Tests
             public bool RequiresTransferSelector => false;
             public bool SupportsSections => true;
             public bool RequiresSections => true;
+
+            /// <summary>A word this pretend device has never heard of.</summary>
+            public string Rejects { get; set; }
+
+            public void CheckHeader(ConditionSection section, PaperErrorSink errors)
+            {
+                if (Rejects == null) return;
+
+                foreach (string token in section.TargetTokens)
+                {
+                    if (token == Rejects) errors.Add(section.Header, "holderunknown");
+                }
+            }
         }
     }
 }

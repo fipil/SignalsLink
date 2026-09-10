@@ -1,5 +1,17 @@
 using SignalsLink.src.signals.cargo;
+using SignalsLink.YTT.src.probe;
+using SignalsLink.YTT.src.train;
 using Vintagestory.API.Common;
+
+// A loose DLL in the mods folder has no modinfo.json beside it, so the game reads this instead.
+// Without it the assembly is refused before anything in it runs - which is what the server was
+// complaining about. It has to say the same as modinfo.json, which is what the zip carries.
+[assembly: ModInfo("Signals Link YTT", "signalslinkytt",
+    Description = "Lets the Signals Link freight dock load and unload the trains of Yang's Transport Tycoon.",
+    Website = "",
+    Version = "0.1.0",
+    Authors = new[] { "fipil" }
+)]
 
 namespace SignalsLink.YTT.src
 {
@@ -30,9 +42,11 @@ namespace SignalsLink.YTT.src
         /// </summary>
         public bool Enabled { get; private set; }
 
-        public override void Start(ICoreAPI api)
+        public YttSurface Surface { get; private set; }
+
+        public override void StartServerSide(Vintagestory.API.Server.ICoreServerAPI api)
         {
-            base.Start(api);
+            base.StartServerSide(api);
 
             if (!api.ModLoader.IsModEnabled(YttModId))
             {
@@ -42,17 +56,38 @@ namespace SignalsLink.YTT.src
                 return;
             }
 
+            // Startup is the right moment to find out: it is the last one at which the answer can
+            // still be "do nothing" rather than "lose somebody's cargo".
+            Surface = YttSurface.Probe(api);
+            Surface.Report(api, VersionOf(api));
+
+            if (!Surface.CanCarry) return;
+
+            CargoHolderRegistry registry = api.ModLoader.GetModSystem<CargoHolderRegistry>();
+
+            if (registry == null)
+            {
+                api.Logger.Warning("[SignalsLink.YTT] Signals Link has no cargo holder registry;"
+                    + " this bridge needs a newer version of it.");
+                return;
+            }
+
+            YttPersistence persistence = new YttPersistence(api, Surface.StoragePointsField.DeclaringType.Assembly);
+            registry.Register(new TrainCargoHolderFinder(Surface, persistence));
+
             Enabled = true;
+            api.Logger.Notification("[SignalsLink.YTT] trains can be loaded and unloaded.");
         }
 
-        /// <summary>
-        /// Registers what this bridge adds to Signals Link. Nothing yet — the train holder, the
-        /// reflection layer and the probe come next.
-        /// </summary>
-        private void Register(ICoreAPI api)
+        /// <summary>The other mod's version, for the log line that matters when something breaks.</summary>
+        private static string VersionOf(ICoreAPI api)
         {
-            CargoHolderRegistry registry = api.ModLoader.GetModSystem<CargoHolderRegistry>();
-            if (registry == null) return;
+            foreach (Mod mod in api.ModLoader.Mods)
+            {
+                if (mod.Info?.ModID == YttModId) return mod.Info.Version ?? "?";
+            }
+
+            return "?";
         }
     }
 }

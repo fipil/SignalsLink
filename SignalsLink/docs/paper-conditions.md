@@ -464,6 +464,27 @@ Funguje i s vykřičníkem: `!isBurning`.
 
 Hoření se nezjišťuje podle seznamu typů, ale podle toho, jestli block entity (nebo některý její behavior) vystavuje `IsBurning` / `Lit`. Chytne tedy ohniště, hromádku na zemi, hromadu uhlí i doutnající hromadu polen — a bez úprav i bloky z jiných modů, které to takhle pojmenovaly. Samotný blok ohně se počítá jako hořící vždycky.
 
+### `amount N-` a `amount N+`
+
+Holé `amount N` je **atomické**: přenese se N kusů, nebo nic. To je dobré, když chceš dvanáct kůží
+na recept — devět ti k ničemu nejsou a má se počkat. Pro dvě jiné situace se to ale nehodí, a od
+téhle verze se dají napsat:
+
+| zápis | znamená |
+|---|---|
+| `amount 10` | **přesně deset**, jinak nic. Beze změny. |
+| `amount 10-` | **nejvýš deset**, a co je míň, to se přenese taky. Nikdy nečeká. |
+| `amount 10+` | **nejmíň deset**, a když je toho víc, vezme se **všechno najednou**. |
+
+Značky `+` a `-` znamenají totéž co u podmínek: `game:firewood 96+` je „devadesát šest a víc".
+Tady je to jen pokyn místo otázky.
+
+`amount 10-` je tedy strop na jeden zásah — hodí se, když chceš dávkovat po deseti a nezastavit se,
+až bude zboží docházet. `amount 10+` je naopak práh: dokud není deset, nesahá se na to; jakmile je,
+odveze se celá hromada.
+
+U kapalin platí totéž, jen se počítá v litrech.
+
 ### `target ground` / `target ground N`
 
 Platí pro ManagedChute, když její cíl míří do vzduchu. Ignoruje signál na pinu Cíl a pokusí se položit vybraný blok, vědro včetně obsahu nebo položku, která umí vytvořit hromádku na zemi. Pokud na cíli není pevná zem nebo položku nelze umístit, blok podmínek neprovede přenos a může propadnout na další blok.

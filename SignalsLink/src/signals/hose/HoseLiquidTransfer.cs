@@ -195,8 +195,8 @@ namespace SignalsLink.src.signals.hose
             decimal litres = System.Math.Min(directives.Amount ?? litresRequested, maxTransfer);
 
             TransferOperationResult res = srcSlot != null
-                ? liquid.TryMoveFromItemSlot(srcSlot, dst, litres, directives.HasAmountOverride)
-                : liquid.TryMoveFromWorldSource(worldWaterPos, dst, litres, directives.HasAmountOverride);
+                ? liquid.TryMoveFromItemSlot(srcSlot, dst, litres, directives.IsAtomicAmount)
+                : liquid.TryMoveFromWorldSource(worldWaterPos, dst, litres, directives.IsAtomicAmount);
 
             if (res.Success)
             {

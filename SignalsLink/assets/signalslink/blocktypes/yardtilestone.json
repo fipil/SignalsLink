@@ -1,7 +1,18 @@
 {
- "code": "yardtilepolished",
+ "code": "yardtilestone",
  "class": "YardTile",
  "variantgroups": [
+  {
+   "code": "finish",
+   "states": [
+    "brick",
+    "agedbrick",
+    "crackedbrick",
+    "cobblestone",
+    "drystone",
+    "polished"
+   ]
+  },
   {
    "code": "rock",
    "loadFromProperties": "block/rock"
@@ -29,9 +40,36 @@
  "shape": {
   "base": "block/yard/yardtile"
  },
- "textures": {
-  "tile": {
-   "base": "game:block/stone/polishedrock/{rock}"
+ "texturesbytype": {
+  "*-brick-*": {
+   "tile": {
+    "base": "game:block/stone/brick/{rock}1"
+   }
+  },
+  "*-agedbrick-*": {
+   "tile": {
+    "base": "game:block/stone/agedbrick/{rock}1"
+   }
+  },
+  "*-crackedbrick-*": {
+   "tile": {
+    "base": "game:block/stone/crackedbrick/{rock}1"
+   }
+  },
+  "*-cobblestone-*": {
+   "tile": {
+    "base": "game:block/stone/cobblestone/{rock}1"
+   }
+  },
+  "*-drystone-*": {
+   "tile": {
+    "base": "game:block/stone/drystone/{rock}1"
+   }
+  },
+  "*-polished-*": {
+   "tile": {
+    "base": "game:block/stone/polishedrock/{rock}"
+   }
   }
  },
  "blockmaterial": "Stone",

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Text.RegularExpressions;
@@ -26,6 +26,15 @@ namespace SignalsLink.src.signals.paperConditions
 
             foreach (var p in SplitIntoParagraphs(text))
             {
+                // A header written without the blank line under it. Recognised here so that the
+                // player is told what to do about it, instead of being told that the header line
+                // is a condition nobody understands - which is true and no help at all.
+                if (LooksLikeACrowdedHeader(p))
+                {
+                    errors?.Add(new PaperConditionError(p[0].Number, p[0].Text, "sectionheaderalone"));
+                    continue;
+                }
+
                 if (TryTakeSectionHeader(p, out ConditionSection header))
                 {
                     // Two sections written with the same header are one section; the second run of
@@ -59,6 +68,7 @@ namespace SignalsLink.src.signals.paperConditions
                 int targetGroundHeight = 1;
                 bool requireTargetEmpty = false;
                 decimal? amount = null;
+                AmountMode amountMode = AmountMode.Exactly;
                 InventoryConditionScope currentScope = InventoryConditionScope.Source;
                 int explicitSourceLine = 0;
                 string explicitSourceText = null;
@@ -156,13 +166,15 @@ namespace SignalsLink.src.signals.paperConditions
                         continue;
                     }
 
-                    if (TryParseAmountDirective(line, out decimal parsedAmount))
+                    if (TryParseAmountDirective(line, out decimal parsedAmount, out AmountMode parsedAmountMode))
                     {
                         amount = parsedAmount;
+                        amountMode = parsedAmountMode;
                         continue;
                     }
 
-                    if (line.StartsWith("amount ", StringComparison.OrdinalIgnoreCase))
+                    if (line.StartsWith("amount", StringComparison.OrdinalIgnoreCase)
+                        && (line.Length == 6 || line[6] == ' '))
                     {
                         sink?.Add(line, "amount");
                         continue;
@@ -197,7 +209,7 @@ namespace SignalsLink.src.signals.paperConditions
                     // OutputValue keeps the effective default 15 when `output` is not
                     // specified — for the BlockSensor (no behavior change). HasExplicitOutput
                     // records whether `output` was actually specified; ManagedHose reads it (see spec §6).
-                    ConditionBlock block = new ConditionBlock(conditions, outputValue ?? 15, hasExplicitOutput, new PaperConditionDirectives(sourceSlot, targetSlot, targetGround, amount, requireTargetEmpty, targetGroundHeight, targetFirepit, sourceLast, targetLast), actions, p[0].Number);
+                    ConditionBlock block = new ConditionBlock(conditions, outputValue ?? 15, hasExplicitOutput, new PaperConditionDirectives(sourceSlot, targetSlot, targetGround, amount, requireTargetEmpty, targetGroundHeight, targetFirepit, sourceLast, targetLast, amountMode), actions, p[0].Number);
                     blocks.Add(block);
 
                     if (current != null)
@@ -239,6 +251,25 @@ namespace SignalsLink.src.signals.paperConditions
         /// A section header stands on a paragraph of its own — one line, comments aside. That rule
         /// keeps it apart from a condition line that happens to begin with the same word.
         /// </summary>
+        /// <summary>
+        /// Does this paragraph begin with a header and then carry on regardless?
+        /// </summary>
+        private static bool LooksLikeACrowdedHeader(List<PaperLine> paragraph)
+        {
+            PaperLine? first = null;
+            int lines = 0;
+
+            foreach (PaperLine line in paragraph)
+            {
+                if (line.Text.StartsWith("#") || line.Text.StartsWith("//")) continue;
+
+                first ??= line;
+                lines++;
+            }
+
+            return lines > 1 && first != null && ConditionSection.TryParseHeader(first.Value.Text, first.Value.Number, out _);
+        }
+
         private static bool TryTakeSectionHeader(List<PaperLine> paragraph, out ConditionSection section)
         {
             section = null;
@@ -441,14 +472,41 @@ namespace SignalsLink.src.signals.paperConditions
             return false;
         }
 
-        private static bool TryParseAmountDirective(string line, out decimal amount)
+        /// <summary>
+        /// <c>amount 10</c>, <c>amount 10-</c>, <c>amount 10+</c>.
+        ///
+        /// The mark may be written against the number or after a space - somebody will write it
+        /// either way, and refusing one of them would teach nobody anything.
+        /// </summary>
+        private static bool TryParseAmountDirective(string line, out decimal amount, out AmountMode mode)
         {
             amount = 0;
+            mode = AmountMode.Exactly;
 
             if (!line.StartsWith("amount ", StringComparison.OrdinalIgnoreCase)) return false;
 
             var parts = line.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
-            return parts.Length == 2 && decimal.TryParse(parts[1], NumberStyles.Number, CultureInfo.InvariantCulture, out amount);
+            if (parts.Length < 2 || parts.Length > 3) return false;
+
+            string number = parts[1];
+            string mark = parts.Length == 3 ? parts[2] : "";
+
+            if (mark.Length == 0 && number.Length > 1 && (number.EndsWith("+") || number.EndsWith("-")))
+            {
+                mark = number.Substring(number.Length - 1);
+                number = number.Substring(0, number.Length - 1);
+            }
+
+            if (mark == "+") mode = AmountMode.AtLeast;
+            else if (mark == "-") mode = AmountMode.AtMost;
+            else if (mark.Length > 0) return false;
+
+            // Signs are the marks' business, not the number's: with NumberStyles.Number a leading
+            // or trailing sign is swallowed as part of the figure, and `amount +5` or `amount 10++`
+            // would quietly mean five and ten.
+            const NumberStyles plainNumber = NumberStyles.AllowDecimalPoint | NumberStyles.AllowThousands;
+
+            return decimal.TryParse(number, plainNumber, CultureInfo.InvariantCulture, out amount) && amount >= 0;
         }
 
         private static readonly Regex validNameRegex = new Regex("^[A-Za-z0-9_]+$", RegexOptions.Compiled);

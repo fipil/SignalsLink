@@ -1,5 +1,24 @@
 namespace SignalsLink.src.signals.paperConditions
 {
+    /// <summary>
+    /// What the number after <c>amount</c> is: a figure, a ceiling, or a floor.
+    ///
+    /// The marks are not new vocabulary. A condition has read <c>game:firewood 96+</c> as
+    /// "ninety-six or more" from the start, so the same mark on an amount says the same thing
+    /// about the same number - only as an instruction rather than a question.
+    /// </summary>
+    public enum AmountMode
+    {
+        /// <summary><c>amount 10</c> - ten, or nothing at all.</summary>
+        Exactly,
+
+        /// <summary><c>amount 10-</c> - ten at the most, and whatever is there will do.</summary>
+        AtMost,
+
+        /// <summary><c>amount 10+</c> - ten at the least, and if there is more, all of it at once.</summary>
+        AtLeast,
+    }
+
     public sealed class PaperConditionDirectives
     {
         public static readonly PaperConditionDirectives Empty = new PaperConditionDirectives(null, null, false, null, false, 1, false);
@@ -27,6 +46,26 @@ namespace SignalsLink.src.signals.paperConditions
         /// itself. 1 = only the target block (plain `target ground`), N = `target ground N`.</summary>
         public int TargetGroundHeight { get; }
         public decimal? Amount { get; }
+
+        /// <summary>How the number is meant: exactly, at most, or at least. See <see cref="AmountMode"/>.</summary>
+        public AmountMode AmountMode { get; }
+
+        /// <summary>
+        /// Must the whole amount be there before anything moves?
+        ///
+        /// True for <c>amount N</c> and <c>amount N+</c>, which both name a floor - a recipe that
+        /// wants four hides wants four hides, and waiting is the point of writing it. False only
+        /// for <c>amount N-</c>, which names a ceiling: fewer than ten is fewer than ten.
+        /// </summary>
+        public bool IsAtomicAmount => HasAmountOverride && AmountMode != AmountMode.AtMost;
+
+        /// <summary>
+        /// Does the number stop at itself, or is it a floor to reach past? Only <c>amount N+</c>
+        /// takes everything it can once the floor is met - that is what makes it "clear the lot in
+        /// one go" rather than "ten at a time".
+        /// </summary>
+        public bool TakesEverythingAvailable => HasAmountOverride && AmountMode == AmountMode.AtLeast;
+
         public bool RequireTargetEmpty { get; }
 
         /// <summary>
@@ -40,8 +79,9 @@ namespace SignalsLink.src.signals.paperConditions
         public bool HasTargetOverride => TargetSlot.HasValue || TargetLast || TargetGround || TargetFirepit;
         public bool HasAmountOverride => Amount.HasValue;
 
-        public PaperConditionDirectives(int? sourceSlot, int? targetSlot, bool targetGround, decimal? amount, bool requireTargetEmpty, int targetGroundHeight = 1, bool targetFirepit = false, bool sourceLast = false, bool targetLast = false)
+        public PaperConditionDirectives(int? sourceSlot, int? targetSlot, bool targetGround, decimal? amount, bool requireTargetEmpty, int targetGroundHeight = 1, bool targetFirepit = false, bool sourceLast = false, bool targetLast = false, AmountMode amountMode = AmountMode.Exactly)
         {
+            AmountMode = amountMode;
             SourceSlot = sourceSlot;
             TargetSlot = targetSlot;
             SourceLast = sourceLast;

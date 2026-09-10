@@ -7,9 +7,6 @@
    "name": "Lockable"
   },
   {
-   "name": "Container"
-  },
-  {
    "name": "BlockBehaviorPaperConditions"
   }
  ],
@@ -46,36 +43,54 @@
    {
     "index": 0,
     "name": "con-input",
-    "x1": 0.0625,
-    "y1": 0.78125,
-    "z1": 0.34375,
-    "x2": 0.1875,
-    "y2": 0.90625,
-    "z2": 0.46875,
+    "x1": 0.3125,
+    "y1": 0.84375,
+    "z1": 0.0625,
+    "x2": 0.4375,
+    "y2": 0.96875,
+    "z2": 0.1875,
     "rotateYbytype": {
-     "*-north": 270,
-     "*-east": 180,
-     "*-south": 90
+     "*-*-east": 270,
+     "*-*-south": 180,
+     "*-*-west": 90
     }
    },
    {
     "index": 1,
     "name": "con-output",
-    "x1": 0.0625,
-    "y1": 0.78125,
-    "z1": 0.53125,
-    "x2": 0.1875,
-    "y2": 0.90625,
-    "z2": 0.65625,
+    "x1": 0.5625,
+    "y1": 0.84375,
+    "z1": 0.0625,
+    "x2": 0.6875,
+    "y2": 0.96875,
+    "z2": 0.1875,
     "rotateYbytype": {
-     "*-north": 270,
-     "*-east": 180,
-     "*-south": 90
+     "*-*-east": 270,
+     "*-*-south": 180,
+     "*-*-west": 90
     }
    }
   ]
  },
  "variantgroups": [
+  {
+   "code": "wood",
+   "states": [
+    "aged",
+    "birch",
+    "oak",
+    "maple",
+    "pine",
+    "acacia",
+    "kapok",
+    "baldcypress",
+    "larch",
+    "redwood",
+    "ebony",
+    "walnut",
+    "purpleheart"
+   ]
+  },
   {
    "code": "side",
    "loadFromProperties": "abstract/horizontalorientation"
@@ -90,35 +105,205 @@
   ]
  },
  "shapebytype": {
-  "*-north": {
+  "*-*-north": {
+   "base": "block/dock/manageddock",
+   "rotateY": 0
+  },
+  "*-*-east": {
    "base": "block/dock/manageddock",
    "rotateY": 270
   },
-  "*-east": {
+  "*-*-south": {
    "base": "block/dock/manageddock",
    "rotateY": 180
   },
-  "*-south": {
+  "*-*-west": {
    "base": "block/dock/manageddock",
    "rotateY": 90
-  },
-  "*-west": {
-   "base": "block/dock/manageddock",
-   "rotateY": 0
   }
  },
- "textures": {
-  "mat": {
-   "base": "game:block/wood/crate/oak-sides"
+ "texturesbytype": {
+  "*-aged-*": {
+   "sides": {
+    "base": "game:block/wood/crate/aged-sides"
+   },
+   "frame-generic": {
+    "base": "game:block/wood/crate/frame-generic"
+   },
+   "plate": {
+    "base": "block/aged-ceramic2"
+   },
+   "terminal": {
+    "base": "block/normal3"
+   }
   },
-  "aged-ceramic2": {
-   "base": "block/aged-ceramic2"
+  "*-birch-*": {
+   "sides": {
+    "base": "game:block/wood/crate/birch-sides"
+   },
+   "frame-generic": {
+    "base": "game:block/wood/crate/frame-generic"
+   },
+   "plate": {
+    "base": "block/aged-ceramic2"
+   },
+   "terminal": {
+    "base": "block/normal3"
+   }
   },
-  "terminal": {
-   "base": "block/normal3"
+  "*-oak-*": {
+   "sides": {
+    "base": "game:block/wood/crate/oak-sides"
+   },
+   "frame-generic": {
+    "base": "game:block/wood/crate/frame-generic"
+   },
+   "plate": {
+    "base": "block/aged-ceramic2"
+   },
+   "terminal": {
+    "base": "block/normal3"
+   }
   },
-  "brace": {
-   "base": "game:block/wood/crate/east"
+  "*-maple-*": {
+   "sides": {
+    "base": "game:block/wood/crate/maple-sides"
+   },
+   "frame-generic": {
+    "base": "game:block/wood/crate/frame-generic"
+   },
+   "plate": {
+    "base": "block/aged-ceramic2"
+   },
+   "terminal": {
+    "base": "block/normal3"
+   }
+  },
+  "*-pine-*": {
+   "sides": {
+    "base": "game:block/wood/crate/pine-sides"
+   },
+   "frame-generic": {
+    "base": "game:block/wood/crate/frame-generic"
+   },
+   "plate": {
+    "base": "block/aged-ceramic2"
+   },
+   "terminal": {
+    "base": "block/normal3"
+   }
+  },
+  "*-acacia-*": {
+   "sides": {
+    "base": "game:block/wood/crate/acacia-sides"
+   },
+   "frame-generic": {
+    "base": "game:block/wood/crate/frame-generic"
+   },
+   "plate": {
+    "base": "block/aged-ceramic2"
+   },
+   "terminal": {
+    "base": "block/normal3"
+   }
+  },
+  "*-kapok-*": {
+   "sides": {
+    "base": "game:block/wood/crate/kapok-sides"
+   },
+   "frame-generic": {
+    "base": "game:block/wood/crate/frame-generic"
+   },
+   "plate": {
+    "base": "block/aged-ceramic2"
+   },
+   "terminal": {
+    "base": "block/normal3"
+   }
+  },
+  "*-baldcypress-*": {
+   "sides": {
+    "base": "game:block/wood/crate/baldcypress-sides"
+   },
+   "frame-generic": {
+    "base": "game:block/wood/crate/frame-generic"
+   },
+   "plate": {
+    "base": "block/aged-ceramic2"
+   },
+   "terminal": {
+    "base": "block/normal3"
+   }
+  },
+  "*-larch-*": {
+   "sides": {
+    "base": "game:block/wood/crate/larch-sides"
+   },
+   "frame-generic": {
+    "base": "game:block/wood/crate/frame-generic"
+   },
+   "plate": {
+    "base": "block/aged-ceramic2"
+   },
+   "terminal": {
+    "base": "block/normal3"
+   }
+  },
+  "*-redwood-*": {
+   "sides": {
+    "base": "game:block/wood/crate/redwood-sides"
+   },
+   "frame-generic": {
+    "base": "game:block/wood/crate/frame-generic"
+   },
+   "plate": {
+    "base": "block/aged-ceramic2"
+   },
+   "terminal": {
+    "base": "block/normal3"
+   }
+  },
+  "*-ebony-*": {
+   "sides": {
+    "base": "game:block/wood/crate/ebony-sides"
+   },
+   "frame-generic": {
+    "base": "game:block/wood/crate/frame-generic"
+   },
+   "plate": {
+    "base": "block/aged-ceramic2"
+   },
+   "terminal": {
+    "base": "block/normal3"
+   }
+  },
+  "*-walnut-*": {
+   "sides": {
+    "base": "game:block/wood/crate/walnut-sides"
+   },
+   "frame-generic": {
+    "base": "game:block/wood/crate/frame-generic"
+   },
+   "plate": {
+    "base": "block/aged-ceramic2"
+   },
+   "terminal": {
+    "base": "block/normal3"
+   }
+  },
+  "*-purpleheart-*": {
+   "sides": {
+    "base": "game:block/wood/crate/purpleheart-sides"
+   },
+   "frame-generic": {
+    "base": "game:block/wood/crate/frame-generic"
+   },
+   "plate": {
+    "base": "block/aged-ceramic2"
+   },
+   "terminal": {
+    "base": "block/normal3"
+   }
   }
  },
  "blockmaterial": "Wood",
@@ -134,55 +319,55 @@
  },
  "collisionSelectionBoxes": [
   {
-   "x1": 0.25,
+   "x1": 0.0,
    "y1": 0.0,
+   "z1": 0.0,
+   "x2": 1.0,
+   "y2": 0.8125,
+   "z2": 1.0,
+   "rotateYByType": {
+    "*-*-east": 270,
+    "*-*-south": 180,
+    "*-*-west": 90
+   }
+  },
+  {
+   "x1": 0.0,
+   "y1": 0.8125,
+   "z1": 0.0,
+   "x2": 0.25,
+   "y2": 1.0,
+   "z2": 1.0,
+   "rotateYByType": {
+    "*-*-east": 270,
+    "*-*-south": 180,
+    "*-*-west": 90
+   }
+  },
+  {
+   "x1": 0.75,
+   "y1": 0.8125,
    "z1": 0.0,
    "x2": 1.0,
    "y2": 1.0,
    "z2": 1.0,
    "rotateYByType": {
-    "*-north": 270,
-    "*-east": 180,
-    "*-south": 90
+    "*-*-east": 270,
+    "*-*-south": 180,
+    "*-*-west": 90
    }
   },
   {
-   "x1": 0.0,
-   "y1": 0.0,
-   "z1": 0.0,
-   "x2": 0.25,
-   "y2": 0.75,
-   "z2": 1.0,
-   "rotateYByType": {
-    "*-north": 270,
-    "*-east": 180,
-    "*-south": 90
-   }
-  },
-  {
-   "x1": 0.0,
-   "y1": 0.75,
-   "z1": 0.0,
-   "x2": 0.25,
-   "y2": 1.0,
-   "z2": 0.3125,
-   "rotateYByType": {
-    "*-north": 270,
-    "*-east": 180,
-    "*-south": 90
-   }
-  },
-  {
-   "x1": 0.0,
-   "y1": 0.75,
-   "z1": 0.6875,
-   "x2": 0.25,
+   "x1": 0.25,
+   "y1": 0.8125,
+   "z1": 0.28125,
+   "x2": 0.75,
    "y2": 1.0,
    "z2": 1.0,
    "rotateYByType": {
-    "*-north": 270,
-    "*-east": 180,
-    "*-south": 90
+    "*-*-east": 270,
+    "*-*-south": 180,
+    "*-*-west": 90
    }
   }
  ],

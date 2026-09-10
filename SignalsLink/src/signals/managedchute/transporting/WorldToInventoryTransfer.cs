@@ -132,8 +132,9 @@ namespace SignalsLink.src.signals.managedchute.transporting
             if (!TryGetMatchedDirectives(stack, out PaperConditionDirectives directives, top.Inventory, block)) return TransferOperationResult.None;
             if (!directives.Evaluate(BuildDirectiveContext())) return TransferOperationResult.None;
 
-            // `amount N` takes a whole batch at once, spanning several piles of the column if needed
-            // (mirrors the placing side). It is atomic on the source: the column must hold all of N.
+            // `amount N` takes a whole batch at once, spanning several piles of the column if
+            // needed (mirrors the placing side). Whether it waits for the whole of N is what the
+            // mark says: a plain amount and `N+` are floors, `N-` is a ceiling and never waits.
             int batch = 1;
             if (directives.Amount.HasValue)
             {
@@ -142,7 +143,9 @@ namespace SignalsLink.src.signals.managedchute.transporting
 
                 int available = 0;
                 foreach (BlockEntityGroundStorage p in column) available += p.TotalStackSize;
-                if (available < batch) return TransferOperationResult.None;
+
+                if (directives.IsAtomicAmount && available < batch) return TransferOperationResult.None;
+                if (directives.TakesEverythingAvailable && available > batch) batch = available;
             }
 
             int targetSignal = EffectiveTargetSlot(directives);
@@ -216,10 +219,12 @@ namespace SignalsLink.src.signals.managedchute.transporting
                 requested = (int)decimal.Truncate(directives.Amount.Value);
                 if (requested < 1) requested = 1;
 
-                // Atomic on the source, like the ground-storage column: the whole batch or nothing.
+                // Same three forms as everywhere else; see PaperConditionDirectives.AmountMode.
                 int available = 0;
                 foreach (BlockPos p in column) available += GetLayerCount(api.World.BlockAccessor.GetBlock(p), layerGroup) * perLayer;
-                if (available < requested) return TransferOperationResult.None;
+
+                if (directives.IsAtomicAmount && available < requested) return TransferOperationResult.None;
+                if (directives.TakesEverythingAvailable && available > requested) requested = available;
             }
 
             int targetSignal = EffectiveTargetSlot(directives);

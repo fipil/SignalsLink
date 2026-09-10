@@ -107,5 +107,15 @@ namespace SignalsLink.src.signals.cargo
 
         /// <summary>Finds what the selector asked for, seen from the device at <paramref name="devicePos"/>.</summary>
         bool TryFind(IWorldAccessor world, BlockPos devicePos, ICargoSelector selector, out ICargoHolder holder);
+
+        /// <summary>
+        /// May a device hold on to what this found?
+        ///
+        /// True for something that does not move — paving stays where it was put, and searching for
+        /// it every tick is waste. False for anything that can drive away: a train's inventories
+        /// must not outlive the tick they were read in, and whether it has come to a stop can only
+        /// be answered by looking afresh.
+        /// </summary>
+        bool Cacheable => true;
     }
 }

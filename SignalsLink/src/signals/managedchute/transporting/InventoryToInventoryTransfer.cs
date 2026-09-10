@@ -44,7 +44,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
             // under way, by which time the block had won and the ones below it were never asked:
             // four medium hides in the chest were enough for `amount 12` to select the block, move
             // nothing, and starve the `amount 8` block below it of its turn.
-            if (directives.HasAmountOverride
+            if (directives.IsAtomicAmount
                 && GetAvailableMatchingSourceQuantity(slot, directives) < GetItemTransferQuantity(directives.Amount.Value))
             {
                 return false;
@@ -84,9 +84,20 @@ namespace SignalsLink.src.signals.managedchute.transporting
             decimal requestedAmount = selection.Directives.Amount ?? opTemplate.RequestedQuantity;
 
             int requestedQuantity = GetItemTransferQuantity(requestedAmount);
-            if (selection.Directives.HasAmountOverride && GetAvailableMatchingSourceQuantity(src, selection.Directives) < requestedQuantity)
+            int available = GetAvailableMatchingSourceQuantity(src, selection.Directives);
+
+            // A floor - `amount N` or `amount N+` - waits until the whole of it is there. A ceiling
+            // - `amount N-` - never waits; fewer than ten is fewer than ten.
+            if (selection.Directives.IsAtomicAmount && available < requestedQuantity)
             {
                 return TransferOperationResult.None;
+            }
+
+            // And past the floor, `amount N+` reaches for everything: that is what makes it "clear
+            // the lot in one go" rather than "ten at a time".
+            if (selection.Directives.TakesEverythingAvailable && available > requestedQuantity)
+            {
+                requestedQuantity = available;
             }
 
             ItemStackMoveOperation op = new ItemStackMoveOperation(

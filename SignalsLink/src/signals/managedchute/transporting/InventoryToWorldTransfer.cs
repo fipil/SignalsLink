@@ -34,6 +34,20 @@ namespace SignalsLink.src.signals.managedchute.transporting
         /// </summary>
         public bool GroundImplied { get; set; }
 
+        /// <summary>
+        /// This column belongs to a storage yard, which holds it to two rules a loose
+        /// <c>target ground</c> is not held to.
+        ///
+        /// <b>One kind of goods per column.</b> A column is what the paper reads as a single slot,
+        /// and a slot holds one thing. Without this, growing a column steps over a pile of
+        /// something else and starts a new pile on top of it - ingots, ingots, planks.
+        ///
+        /// <b>Stacking goods only.</b> Anything else gets PLACED as a block on the tile, one per
+        /// tile, and can then never be picked up again: reading a yard understands piles and
+        /// nothing else. Better not to accept it in the first place.
+        /// </summary>
+        public bool YardColumn { get; set; }
+
 
         protected override bool CanTransferSelection(ItemSlot slot, PaperConditionDirectives directives)
         {
@@ -123,14 +137,25 @@ namespace SignalsLink.src.signals.managedchute.transporting
                 groundBatch = (int)decimal.Truncate(amountDirective.Value);
                 if (groundBatch < 1) groundBatch = 1;
             }
-            bool groundAtomic = amountDirective.HasValue;
+
+            // `amount N+` reaches past its floor, so the batch is everything the source can muster;
+            // the floor itself is still checked, atomically, below.
+            if (selection.Directives.TakesEverythingAvailable)
+            {
+                int available = 0;
+                foreach (ItemSlot s in GetMatchingSourceSlots(src)) available += s.StackSize;
+
+                if (available > groundBatch) groundBatch = available;
+            }
+
+            bool groundAtomic = selection.Directives.IsAtomicAmount;
 
             // Without `target ground` we still top up an existing ground-storage pile at the target.
             // That is what the plain inventory route did before piles were sent here, so keeping it
             // avoids a regression; creating new piles and growing the column needs the directive.
             if (!targetGround && api.World.BlockAccessor.GetBlockEntity(targetPos) is BlockEntityGroundStorage)
             {
-                int toppedUp = TryGroundStorageStack(src, 1, createNew: false, maxItems: groundBatch, atomic: groundAtomic);
+                int toppedUp = TryGroundStorageStack(src, 1, createNew: false, maxItems: groundBatch, atomic: groundAtomic, atomicFloor: (int)decimal.Truncate(amountDirective ?? 0));
                 if (toppedUp > 0)
                 {
                     src.MarkDirty();
@@ -143,13 +168,16 @@ namespace SignalsLink.src.signals.managedchute.transporting
             {
                 if (!hasSolidBelow) return 0;
 
-                if (TryPlaceBlockOnGround(src, targetPos) || TryStackOnGround(src, targetPos))
+                // On a yard, goods that cannot be stacked into a pile are refused rather than set
+                // down as a block: a block on a tile can never be picked up again, because reading
+                // a yard understands piles and nothing else.
+                if (!YardColumn && (TryPlaceBlockOnGround(src, targetPos) || TryStackOnGround(src, targetPos)))
                 {
                     src.MarkDirty();
                     return 1;
                 }
 
-                int placed = TryGroundStorageStack(src, selection.Directives.TargetGroundHeight, createNew: true, maxItems: groundBatch, atomic: groundAtomic);
+                int placed = TryGroundStorageStack(src, selection.Directives.TargetGroundHeight, createNew: true, maxItems: groundBatch, atomic: groundAtomic, atomicFloor: (int)decimal.Truncate(amountDirective ?? 0));
                 if (placed > 0)
                 {
                     src.MarkDirty();
@@ -251,13 +279,17 @@ namespace SignalsLink.src.signals.managedchute.transporting
         /// climbs up to <paramref name="maxHeight"/> blocks, creating new piles on the way.
         /// The legacy ItemPileable path (coal, ore) is handled by TryStackOnGround instead.
         /// </summary>
-        private int TryGroundStorageStack(ItemSlot src, int maxHeight, bool createNew, int maxItems, bool atomic)
+        private int TryGroundStorageStack(ItemSlot src, int maxHeight, bool createNew, int maxItems, bool atomic, int atomicFloor = 0)
         {
+            if (atomicFloor <= 0) atomicFloor = maxItems;
+
             ItemStack stack = src.Itemstack;
             if (stack?.Collectible == null) return 0;
 
             GroundStorageProperties props = stack.Collectible.GetBehavior<CollectibleBehaviorGroundStorable>()?.StorageProps;
             if (props == null || props.Layout != EnumGroundStorageLayout.Stacking) return 0;
+
+            if (YardColumn && ColumnHoldsSomethingElse(stack, maxHeight)) return 0;
 
             if (maxItems < 1) maxItems = 1;
 
@@ -267,7 +299,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
             {
                 int available = 0;
                 foreach (ItemSlot s in srcSlots) available += s.StackSize;
-                if (available < maxItems) return 0; // all of it or nothing
+                if (available < atomicFloor) return 0; // all of it or nothing
             }
 
             IBlockAccessor ba = api.World.BlockAccessor;
@@ -335,6 +367,15 @@ namespace SignalsLink.src.signals.managedchute.transporting
             if (slot?.Itemstack == null || targetPos == null) return false;
 
             int maxHeight = System.Math.Max(1, directives.TargetGroundHeight);
+
+            if (YardColumn)
+            {
+                GroundStorageProperties props = slot.Itemstack.Collectible
+                    ?.GetBehavior<CollectibleBehaviorGroundStorable>()?.StorageProps;
+
+                if (props == null || props.Layout != EnumGroundStorageLayout.Stacking) return false;
+                if (ColumnHoldsSomethingElse(slot.Itemstack, maxHeight)) return false;
+            }
             IBlockAccessor ba = api.World.BlockAccessor;
 
             for (int dy = 0; dy < maxHeight; dy++)
@@ -359,6 +400,29 @@ namespace SignalsLink.src.signals.managedchute.transporting
             }
 
             return false; // the height limit is reached and every pile below it is full
+        }
+
+        /// <summary>
+        /// Is there a pile in this column holding something other than what is being carried?
+        ///
+        /// The whole column counts, not just the top of it: a yard column is one slot as far as the
+        /// paper is concerned, and half a slot of planks over ingots is not a slot of anything.
+        /// </summary>
+        private bool ColumnHoldsSomethingElse(ItemStack stack, int maxHeight)
+        {
+            IBlockAccessor ba = api.World.BlockAccessor;
+
+            for (int dy = 0; dy < System.Math.Max(1, maxHeight); dy++)
+            {
+                if (ba.GetBlockEntity(targetPos.AddCopy(0, dy, 0)) is not BlockEntityGroundStorage pile) break;
+
+                ItemSlot slot = pile.Inventory?[0];
+                if (slot == null || slot.Empty) continue;
+
+                if (!slot.Itemstack.Equals(api.World, stack, GlobalConstants.IgnoredStackAttributes)) return true;
+            }
+
+            return false;
         }
 
         private bool HasGroundSupport(BlockPos pos)

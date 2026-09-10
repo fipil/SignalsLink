@@ -25,121 +25,244 @@ namespace SignalsLink.src.signals.yard
             return block?.Attributes?["yardTile"].AsBool(false) == true;
         }
 
-        /// <summary>How much lighter the edge strip is drawn.</summary>
-        private const float EdgeBrightness = 1.45f;
+        /// <summary>
+        /// The top of the block, where a flattened kerb ends up.
+        ///
+        /// <b>The border is geometry, not colour.</b> Writing vertex colours in
+        /// <c>OnJsonTesselation</c> does not survive - the log showed white vertices before the
+        /// write, the right quads written, and nothing on screen. The mesh itself does survive, so
+        /// the shape carries a kerb on every border plate and the ones that are not on an open edge
+        /// are pressed flat here.
+        /// </summary>
+        private const float BlockTop = 1f;
 
         /// <summary>Where the border ends, in block space. Matches the shape's 3/16 plates.</summary>
         private const float Edge = 3f / 16f;
-
-        /// <summary>Anything at least this high is one of the thin top plates.</summary>
-        private const float PlateTop = 0.999f;
 
         public override void OnJsonTesselation(ref MeshData sourceMesh, ref int[] lightRgbsByCorner, BlockPos pos, Block[] chunkExtBlocks, int extIndex3d)
         {
             base.OnJsonTesselation(ref sourceMesh, ref lightRgbsByCorner, pos, chunkExtBlocks, extIndex3d);
 
+            // The mesh handed in is the one cached for this variant and shared by every tile of it,
+            // so it is replaced with a copy before a single vertex is touched. Writing into the
+            // shared one would paint the strip onto tiles that have no edge.
+            sourceMesh = sourceMesh?.Clone();
+
             // Whether a tile is on the edge is a purely LOCAL question - is there another tile that
             // way? - so no flood fill is needed here, and none would be possible: tesselation runs
             // off the main thread. Only assembling the inventory needs the whole area.
-            bool north = HasTileTowards(chunkExtBlocks, extIndex3d, BlockFacing.NORTH);
-            bool south = HasTileTowards(chunkExtBlocks, extIndex3d, BlockFacing.SOUTH);
-            bool west = HasTileTowards(chunkExtBlocks, extIndex3d, BlockFacing.WEST);
-            bool east = HasTileTowards(chunkExtBlocks, extIndex3d, BlockFacing.EAST);
+            layout = ExtendedChunkLayout.Of(chunkExtBlocks?.Length ?? 0, extIndex3d, pos, layout);
 
-            if (north && south && west && east) return;   // fully surrounded: no edge to draw
+            bool north = HasTileTowards(chunkExtBlocks, extIndex3d, layout, BlockFacing.NORTH);
+            bool south = HasTileTowards(chunkExtBlocks, extIndex3d, layout, BlockFacing.SOUTH);
+            bool west = HasTileTowards(chunkExtBlocks, extIndex3d, layout, BlockFacing.WEST);
+            bool east = HasTileTowards(chunkExtBlocks, extIndex3d, layout, BlockFacing.EAST);
 
-            TintOuterPlates(sourceMesh, north, south, west, east);
+            int tinted = FlattenInnerKerbs(sourceMesh, north, south, west, east);
+
+            Report(sourceMesh, chunkExtBlocks, extIndex3d, north, south, west, east, tinted, layout);
+        }
+
+        /// <summary>
+        /// The layout as last worked out. Kept because a block whose coordinates coincide cannot
+        /// tell the axes apart, and there is no reason to lose what the block before it proved.
+        /// </summary>
+        private static ExtendedChunkLayout layout;
+
+        private static bool reported;
+
+        /// <summary>
+        /// Says once per session what the first tile actually saw.
+        ///
+        /// Tesselation is off the main thread and per chunk, so there is nowhere to put a
+        /// breakpoint and nothing to print without drowning the log. One line, from the first tile
+        /// tesselated, is enough to tell a mesh with no colours from a neighbour lookup that reads
+        /// the wrong block - and those two look identical from the outside: no strip at all.
+        /// </summary>
+        private void Report(MeshData mesh, Block[] chunkExtBlocks, int extIndex3d,
+            bool north, bool south, bool west, bool east, int tinted, ExtendedChunkLayout layout)
+        {
+            if (reported) return;
+
+            reported = true;
+
+            api?.Logger?.Notification("[SignalsLink] yard tile mesh: vertices=" + (mesh?.VerticesCount ?? -1)
+                + " rgba=" + (mesh?.Rgba == null ? "null" : mesh.Rgba.Length.ToString())
+                + " xyz=" + (mesh?.xyz == null ? "null" : mesh.xyz.Length.ToString())
+                + " kerbsStanding=" + tinted
+                + " | neighbours n=" + north + " s=" + south + " w=" + west + " e=" + east
+                + " | ext=" + (chunkExtBlocks?.Length ?? -1) + " at " + extIndex3d
+                + " | layout " + (layout.Known ? "resolved, step east=" + layout.StepFor(BlockFacing.EAST)
+                    + " south=" + layout.StepFor(BlockFacing.SOUTH) : "UNRESOLVED"));
         }
 
         /// <summary>
         /// Is the neighbour one step in this direction another yard tile?
         ///
-        /// The step is worked out from the array itself rather than from an engine constant: the
-        /// extended chunk is a cube, so its side is the cube root of its length, and Vintage Story
-        /// lays such arrays out as ((y * side) + z) * side + x. One less undocumented helper to be
-        /// broken by a game update.
+        /// A neighbour that cannot be read is reported as PRESENT, which draws no border. Guessing
+        /// the other way would ring every tile in the world with a kerb, and a missing border is a
+        /// far quieter kind of wrong than a border that is everywhere.
         /// </summary>
-        private static bool HasTileTowards(Block[] chunkExtBlocks, int extIndex3d, BlockFacing facing)
+        private static bool HasTileTowards(Block[] chunkExtBlocks, int extIndex3d, ExtendedChunkLayout layout, BlockFacing facing)
         {
-            if (chunkExtBlocks == null || chunkExtBlocks.Length == 0) return true;
+            if (!layout.Known) return true;
 
-            int side = (int)System.Math.Round(System.Math.Cbrt(chunkExtBlocks.Length));
-            if (side < 3 || side * side * side != chunkExtBlocks.Length) return true;
-
-            int step = facing.Normali.X + facing.Normali.Z * side + facing.Normali.Y * side * side;
-            int index = extIndex3d + step;
-
+            int index = extIndex3d + layout.StepFor(facing);
             if (index < 0 || index >= chunkExtBlocks.Length) return true;
 
             return IsYardTile(chunkExtBlocks[index]);
         }
 
         /// <summary>
-        /// Lightens the vertices of the top plates that sit along an open edge.
+        /// How the extended chunk array is laid out - <b>worked out, not assumed.</b>
         ///
-        /// The top face is split into nine plates in the shape itself, so there is no surgery on
-        /// the mesh here — the quads already exist and only their vertex colour changes. Quads are
-        /// found by position rather than by index, which survives face culling and any reordering
-        /// of the shape's elements.
+        /// The array is 34 x 34 x 34 (a chunk and one block of its neighbours all round) and the
+        /// engine documents only "use extIndex3d + TileSideEnum.MoveIndex[side]", whose values are
+        /// nowhere to be read. Guessing which axis runs fastest is how this came to read random
+        /// cells for weeks: the border then appeared and disappeared by position, because whichever
+        /// block the wrong index landed on sometimes happened to be paving.
+        ///
+        /// There is no need to guess. The block's own position is known here as well as its index
+        /// in the array, and only one of the six ways of ordering three axes can turn one into the
+        /// other. So all six are tried and the one that reproduces the index is the layout - checked
+        /// afresh on every block that can tell the axes apart, which is nearly all of them.
         /// </summary>
-        private static void TintOuterPlates(MeshData mesh, bool north, bool south, bool west, bool east)
+        public readonly struct ExtendedChunkLayout
         {
-            if (mesh?.xyz == null || mesh.Rgba == null) return;
+            public bool Known { get; }
 
-            int vertexCount = mesh.VerticesCount;
+            public int StepX => stepX;
+            public int StepZ => stepZ;
 
-            for (int start = 0; start + 3 < vertexCount; start += 4)
+            private readonly int stepX;
+            private readonly int stepZ;
+
+            private ExtendedChunkLayout(int stepX, int stepZ)
             {
-                if (!IsTopQuad(mesh, start)) continue;
+                this.stepX = stepX;
+                this.stepZ = stepZ;
+                Known = true;
+            }
 
-                float centerX = 0f;
-                float centerZ = 0f;
+            public int StepFor(BlockFacing facing)
+            {
+                return facing.Normali.X * stepX + facing.Normali.Z * stepZ;
+            }
 
-                for (int i = 0; i < 4; i++)
+            /// <summary>
+            /// Works the layout out from one block, or hands back what was known before when this
+            /// particular block cannot tell the axes apart.
+            /// </summary>
+            public static ExtendedChunkLayout Of(int arrayLength, int extIndex3d, BlockPos pos, ExtendedChunkLayout last)
+            {
+                if (arrayLength == 0 || pos == null) return last;
+
+                int side = (int)System.Math.Round(System.Math.Cbrt(arrayLength));
+                if (side < 3 || side * side * side != arrayLength) return last;
+
+                const int border = 1;
+                int chunkSize = side - 2 * border;
+
+                // Where the block sits inside its own chunk, plus the border the array carries.
+                int[] local =
                 {
-                    centerX += mesh.xyz[(start + i) * 3];
-                    centerZ += mesh.xyz[(start + i) * 3 + 2];
+                    Wrap(pos.X, chunkSize) + border,
+                    Wrap(pos.Y, chunkSize) + border,
+                    Wrap(pos.Z, chunkSize) + border,
+                };
+
+                // Two axes at the same coordinate cannot be told apart; the next block will do.
+                if (local[0] == local[1] || local[1] == local[2] || local[0] == local[2]) return last;
+
+                foreach (int[] order in Orders)
+                {
+                    int index = (local[order[0]] * side + local[order[1]]) * side + local[order[2]];
+                    if (index != extIndex3d) continue;
+
+                    int[] weight = new int[3];
+                    weight[order[0]] = side * side;
+                    weight[order[1]] = side;
+                    weight[order[2]] = 1;
+
+                    return new ExtendedChunkLayout(weight[0], weight[2]);
                 }
 
-                centerX /= 4f;
-                centerZ /= 4f;
-
-                if (!IsOnOpenEdge(centerX, centerZ, north, south, west, east)) continue;
-
-                for (int i = 0; i < 4; i++) Lighten(mesh, start + i);
+                return last;   // nothing matched: leave whatever was known before
             }
-        }
 
-        private static bool IsTopQuad(MeshData mesh, int start)
-        {
-            for (int i = 0; i < 4; i++)
+            /// <summary>Slowest axis first, fastest last; the axes are 0 = x, 1 = y, 2 = z.</summary>
+            private static readonly int[][] Orders =
             {
-                if (mesh.xyz[(start + i) * 3 + 1] < PlateTop) return false;
-            }
+                new[] { 1, 2, 0 }, new[] { 1, 0, 2 }, new[] { 0, 1, 2 },
+                new[] { 0, 2, 1 }, new[] { 2, 0, 1 }, new[] { 2, 1, 0 },
+            };
 
-            return true;
+            /// <summary>Position within the chunk. Negative coordinates are the whole point.</summary>
+            private static int Wrap(int coordinate, int size)
+            {
+                int wrapped = coordinate % size;
+
+                return wrapped < 0 ? wrapped + size : wrapped;
+            }
         }
 
-        private static bool IsOnOpenEdge(float x, float z, bool north, bool south, bool west, bool east)
+        /// <summary>
+        /// Presses flat every kerb that is not along an open edge, leaving the border standing only
+        /// where the yard actually ends.
+        ///
+        /// The kerb is nine plates in the shape, so there is no surgery on the mesh here - the
+        /// quads already exist and only their height changes. Flattening a box that has side faces
+        /// leaves those faces zero high and therefore invisible; nothing has to be removed.
+        ///
+        /// Quads are found by position rather than by index, which survives face culling and any
+        /// reordering of the shape's elements.
+        /// </summary>
+        private static int FlattenInnerKerbs(MeshData mesh, bool north, bool south, bool west, bool east)
         {
+            if (mesh?.xyz == null) return -1;
+
+            int standing = 0;
+
+            for (int vertex = 0; vertex < mesh.VerticesCount; vertex++)
+            {
+                int at = vertex * 3;
+                if (mesh.xyz[at + 1] <= BlockTop) continue;   // not part of a kerb
+
+                if (StandsOnAnOpenEdge(mesh.xyz[at], mesh.xyz[at + 2], north, south, west, east))
+                {
+                    standing++;
+                    continue;
+                }
+
+                mesh.xyz[at + 1] = BlockTop;
+            }
+
+            return standing;
+        }
+
+        /// <summary>
+        /// Does this CORNER of the mesh belong to the rim?
+        ///
+        /// Asked of one vertex, not of a quad, and that is the whole point. Deciding by the middle
+        /// of a quad worked for the tops of the plates and was wrong for their inner walls: such a
+        /// wall lies exactly ON the line the border ends at, so the top of a plate stayed up while
+        /// the wall under it was pressed flat - and the gap between them was a hole you could look
+        /// through into the block.
+        ///
+        /// Per vertex it cannot happen: two quads that share a corner share its position, so they
+        /// always get the same answer. The band is inclusive for the same reason.
+        /// </summary>
+        private static bool StandsOnAnOpenEdge(float x, float z, bool north, bool south, bool west, bool east)
+        {
+            const float slack = 0.0001f;
+
             // North is -Z in Vintage Story.
-            if (!north && z < Edge) return true;
-            if (!south && z > 1f - Edge) return true;
-            if (!west && x < Edge) return true;
-            if (!east && x > 1f - Edge) return true;
+            if (!north && z <= Edge + slack) return true;
+            if (!south && z >= 1f - Edge - slack) return true;
+            if (!west && x <= Edge + slack) return true;
+            if (!east && x >= 1f - Edge - slack) return true;
 
             return false;
-        }
-
-        private static void Lighten(MeshData mesh, int vertex)
-        {
-            int at = vertex * 4;
-
-            for (int channel = 0; channel < 3; channel++)
-            {
-                int value = (int)(mesh.Rgba[at + channel] * EdgeBrightness);
-                mesh.Rgba[at + channel] = (byte)(value > 255 ? 255 : value);
-            }
         }
 
         /// <summary>

@@ -78,6 +78,19 @@ namespace SignalsLink.src.signals.manageddock
         public bool SupportsSections => true;
         public bool RequiresSections => true;
 
+        /// <summary>
+        /// Judges the two ends of a header while the paper is being read, so that a holder
+        /// nobody has ever heard of is a mistake the player is told about - not a dock that
+        /// stands there doing nothing with a paper that reads perfectly well.
+        /// </summary>
+        public void CheckHeader(ConditionSection section, PaperErrorSink errors)
+        {
+            if (registry == null) return;
+
+            if (section.SourceTokens.Count > 0) registry.TryResolve(section.SourceTokens, section.Header, errors, out _);
+            if (section.TargetTokens.Count > 0) registry.TryResolve(section.TargetTokens, section.Header, errors, out _);
+        }
+
         public BEManagedDock()
         {
             // NOTE: the id must contain a dash - VS splits className/instanceId on it.
@@ -150,10 +163,29 @@ namespace SignalsLink.src.signals.manageddock
         {
             if (Api?.World == null || Api is not ICoreServerAPI) return;
 
+            // `# debug` on the paper turns on the same per-device trace the damper has, and it
+            // starts BEFORE the early outs: a dock that does nothing because it has no credit is
+            // exactly the case somebody switches this on for.
+            bool trace = ConditionDebug.IsMarked(conditionsText);
+            if (trace) ConditionDebug.Begin(Api.Logger, "dock@" + Pos);
+
+            try
+            {
+                Tick();
+            }
+            finally
+            {
+                if (trace) ConditionDebug.End();
+            }
+        }
+
+        private void Tick()
+        {
             IReadOnlyList<ConditionSection> sections = ConditionsEvaluator.GetSections();
 
             if (sections == null || sections.Count == 0)
             {
+                if (ConditionDebug.Enabled) ConditionDebug.Log("no paper");
                 SetOutput(0);
                 SetTickRate(IdleRateMs);
                 return;
@@ -163,11 +195,17 @@ namespace SignalsLink.src.signals.manageddock
             // than a flood fill of the yard five times a second.
             if (!unlimited && remaining <= 0 && !ConditionsEvaluator.HasAnyOutput)
             {
+                if (ConditionDebug.Enabled) ConditionDebug.Log("no credit on the Input pin and no output block, so nothing to do");
                 SetOutput(0);
                 SetTickRate(IdleRateMs);
                 return;
             }
 
+            RunSections(sections);
+        }
+
+        private void RunSections(IReadOnlyList<ConditionSection> sections)
+        {
             bool sawHolder = false;
 
             byte output = DockPass.Run(sections,
@@ -193,10 +231,16 @@ namespace SignalsLink.src.signals.manageddock
             if (!section.EndsAreComplete) return null;       // half-written header: likewise
 
             IReadOnlyList<ICargoHold> sources = EndOf(section, section.SourceTokens, ref sawHolder);
-            if (sources == null) return null;
+            IReadOnlyList<ICargoHold> targets = sources == null ? null : EndOf(section, section.TargetTokens, ref sawHolder);
 
-            IReadOnlyList<ICargoHold> targets = EndOf(section, section.TargetTokens, ref sawHolder);
-            if (targets == null) return null;
+            if (ConditionDebug.Enabled)
+            {
+                ConditionDebug.Log("section '" + section.Header + "'"
+                    + " source=" + Describe(section.SourceTokens, sources)
+                    + " target=" + Describe(section.TargetTokens, targets));
+            }
+
+            if (sources == null || targets == null) return null;
 
             PaperConditionsEvaluator evaluator = EvaluatorFor(section);
             DriverResult output = RunOutputRail(evaluator, sources, targets);
@@ -205,6 +249,14 @@ namespace SignalsLink.src.signals.manageddock
             bool moved = !actionsBlocked && hasCredit && Move(evaluator, sources, targets);
 
             return new SectionPassResult(moved, output.HasOutput(), output.GetOutput());
+        }
+
+        /// <summary>How one end of a header turned out, for the trace.</summary>
+        private static string Describe(IReadOnlyList<string> tokens, IReadOnlyList<ICargoHold> holds)
+        {
+            string what = tokens.Count == 0 ? "<the crate>" : string.Join(" ", tokens);
+
+            return what + (holds == null ? " NOT FOUND" : " (" + holds.Count + " holds)");
         }
 
         /// <summary>
@@ -269,7 +321,7 @@ namespace SignalsLink.src.signals.manageddock
         private ICargoHolder FindHolder(ConditionSection section, IReadOnlyList<string> tokens)
         {
             long now = Api.World.ElapsedMilliseconds;
-            string key = section.Header + " " + string.Join(" ", tokens);
+            string key = section.Header + " " + string.Join(" ", tokens);
 
             if (holders.TryGetValue(key, out HolderSearch cached) && now - cached.FoundAt < HolderCacheMs)
             {
@@ -278,15 +330,20 @@ namespace SignalsLink.src.signals.manageddock
             }
 
             ICargoHolder holder = null;
+            bool cacheable = true;
 
             if (registry != null && registry.TryResolve(tokens, section.Header, null, out CargoHolderRequest request))
             {
                 request.Finder.TryFind(Api.World, Pos, request.Selector, out holder);
+                cacheable = request.Finder.Cacheable;
             }
 
-            // A search that found nothing is worth keeping too - that is exactly the case that
-            // would otherwise be repeated every tick forever.
-            holders[key] = new HolderSearch(holder, now);
+            // Something that can drive away is looked for again every tick, inventories and all:
+            // a remembered wagon is one the goods might be written into after it has left.
+            // Anything that stays put is remembered - and a search that found NOTHING is worth
+            // remembering too, since that is the case that would otherwise repeat every tick.
+            if (cacheable) holders[key] = new HolderSearch(holder, now);
+            else holders.Remove(key);
 
             return holder;
         }
@@ -371,15 +428,29 @@ namespace SignalsLink.src.signals.manageddock
             ItemStackMoveOperation op = new ItemStackMoveOperation(
                 Api.World, EnumMouseButton.Left, 0, EnumMergePriority.DirectMerge, EverythingThatMatches);
 
+            int tried = 0;
+
             foreach ((ICargoHold source, ICargoHold target) in DockPairs.Order(sources, targets, MaxPairsPerTick))
             {
                 if (ReferenceEquals(source, target)) continue;
 
+                tried++;
+
                 IItemTransfer transfer = TransferFor(source, target, evaluator);
-                if (transfer == null) continue;
+
+                if (transfer == null)
+                {
+                    if (ConditionDebug.Enabled) ConditionDebug.Log("  " + source.Code + " -> " + target.Code + ": no transfer for these two ends");
+                    continue;
+                }
 
                 TransferOperationResult result = transfer.TryMove(op);
-                if (!result.Success) continue;
+
+                if (!result.Success)
+                {
+                    if (ConditionDebug.Enabled) ConditionDebug.Log("  " + source.Code + " -> " + target.Code + ": " + transfer.GetType().Name + " moved nothing");
+                    continue;
+                }
 
                 source.MarkDirty();
                 target.MarkDirty();
@@ -392,6 +463,12 @@ namespace SignalsLink.src.signals.manageddock
 
                 MarkDirty();
                 return true;
+            }
+
+            if (ConditionDebug.Enabled)
+            {
+                ConditionDebug.Log("  nothing moved; " + tried + " pair(s) tried, "
+                    + sources.Count + " source hold(s), " + targets.Count + " target hold(s)");
             }
 
             return false;
@@ -446,7 +523,13 @@ namespace SignalsLink.src.signals.manageddock
         /// </summary>
         private static void Imply(IItemTransfer transfer, ICargoHold target)
         {
-            if (transfer is InventoryToWorldTransfer world && target is not DockHold) world.GroundImplied = true;
+            if (transfer is not InventoryToWorldTransfer world || target is DockHold) return;
+
+            world.GroundImplied = true;
+
+            // And it is a yard column, which holds it to two more rules: one kind of goods per
+            // column, and nothing that cannot be stacked into a pile. See InventoryToWorldTransfer.
+            world.YardColumn = true;
         }
 
         /// <summary>Big enough to mean "as much as there is", small enough not to overflow anything.</summary>
@@ -483,15 +566,41 @@ namespace SignalsLink.src.signals.manageddock
         /// </summary>
         public override bool OnPlayerRightClick(IPlayer byPlayer, BlockSelection blockSel)
         {
-            if (Api.Side == EnumAppSide.Client)
+            // The server has to be told the inventory is in use, or nothing that happens in the
+            // dialog reaches it.
+            if (Api.Side == EnumAppSide.Server)
             {
-                toggleInventoryDialogClient(byPlayer, () =>
-                {
-                    invDialog = new Vintagestory.API.Client.GuiDialogBlockEntityInventory(
-                        Lang.Get("signalslink:manageddock-title"), Inventory, Pos, 8, Api as Vintagestory.API.Client.ICoreClientAPI);
-                    return invDialog;
-                });
+                byPlayer.InventoryManager?.OpenInventory(Inventory);
+                return true;
             }
+
+            Vintagestory.API.Client.ICoreClientAPI capi = Api as Vintagestory.API.Client.ICoreClientAPI;
+            if (capi == null) return true;
+
+            if (invDialog == null)
+            {
+                invDialog = new Vintagestory.API.Client.GuiDialogBlockEntityInventory(
+                    Lang.Get("signalslink:manageddock-title"), Inventory, Pos, 8, capi);
+
+                invDialog.OnClosed += () =>
+                {
+                    invDialog = null;
+                    capi.Network.SendBlockEntityPacket(Pos, (int)Vintagestory.API.Client.EnumBlockEntityPacketId.Close);
+                    byPlayer.InventoryManager?.CloseInventory(Inventory);
+                };
+
+                invDialog.TryOpen();
+
+                capi.Network.SendPacketClient(Inventory.Open(byPlayer));
+                byPlayer.InventoryManager?.OpenInventory(Inventory);
+            }
+            else
+            {
+                invDialog.TryClose();
+            }
+
+            Api.Logger.Notification("[SignalsLink] dock dialog on " + Api.Side
+                + ": inventory=" + Inventory.Count + " slots, dialog=" + (invDialog == null ? "closed" : "open"));
 
             return true;
         }

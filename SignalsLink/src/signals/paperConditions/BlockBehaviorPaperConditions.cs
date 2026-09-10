@@ -45,6 +45,16 @@ namespace SignalsLink.src.signals.paperConditions
         /// debugs.
         /// </summary>
         bool RequiresSections => false;
+
+        /// <summary>
+        /// Lets the device judge the part of a header only it can: which other party the words name.
+        /// Whether `yard` or `train` means anything is known to the device's registry, not to the
+        /// parser - and until this existed, a header naming nothing that exists was accepted in
+        /// silence and the device simply never did anything.
+        /// </summary>
+        void CheckHeader(ConditionSection section, PaperErrorSink errors)
+        {
+        }
     }
 
 
@@ -147,6 +157,7 @@ namespace SignalsLink.src.signals.paperConditions
             AddUnsupportedSections(compiled, host, errors);
             AddMissingSections(compiled, host, errors);
             AddHeadersNamingNoEnd(compiled, host, errors);
+            AddHeadersTheDeviceRejects(compiled, host, errors);
             return errors;
         }
 
@@ -201,6 +212,26 @@ namespace SignalsLink.src.signals.paperConditions
                 if (section.IsImplicit || section.EndsAreComplete) continue;
 
                 errors.Add(new PaperConditionError(section.FirstLine, section.Header, "sectionends"));
+            }
+        }
+
+        /// <summary>
+        /// Asks the device about every header. This is where "load Dva" - a yard named without the
+        /// word yard, back when two kinds of holder were registered - finally says so, instead of
+        /// leaving a paper that reads perfectly and does nothing.
+        /// </summary>
+        private static void AddHeadersTheDeviceRejects(CompiledConditions compiled, IPaperConditionsHost host, List<PaperConditionError> errors)
+        {
+            if (compiled == null || host == null || !host.SupportsSections) return;
+
+            PaperErrorSink sink = new PaperErrorSink(errors);
+
+            foreach (ConditionSection section in compiled.Sections)
+            {
+                if (section.IsImplicit) continue;
+
+                sink.CurrentLine = section.FirstLine;
+                host.CheckHeader(section, sink);
             }
         }
 
@@ -313,6 +344,17 @@ namespace SignalsLink.src.signals.paperConditions
             }
 
             return dsc.ToString();
+        }
+
+        /// <summary>
+        /// Is this the writing the devices take their orders on?
+        ///
+        /// Public because a device with an interaction of its own has to know: holding paper
+        /// means the click is about the paper, and a crate that opened anyway would swallow it.
+        /// </summary>
+        public static bool IsPaperStack(ItemStack stack)
+        {
+            return stack?.Collectible?.Code?.Path?.Contains("paper") == true;
         }
 
         private bool IsPaper(ItemStack stack)
