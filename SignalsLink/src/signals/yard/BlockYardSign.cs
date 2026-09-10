@@ -16,15 +16,7 @@ namespace SignalsLink.src.signals.yard
         {
             if (!base.TryPlaceBlock(world, byPlayer, itemstack, blockSel, ref failureCode)) return false;
 
-            // Facing the player, the same way a sign does, so the name reads from where you stand.
-            //
-            // NOT the opposite: SuggestedHVOrientation already answers with the direction from the
-            // block TOWARDS whoever is placing it, so turning it round showed them the back of the
-            // sign - and the name came out mirrored, being drawn on the face pointing away.
-            BlockFacing[] horizontal = SuggestedHVOrientation(byPlayer, blockSel);
-            BlockFacing facing = horizontal != null && horizontal.Length > 0 && horizontal[0] != null
-                ? horizontal[0]
-                : BlockFacing.NORTH;
+            BlockFacing facing = FacingForPlacement(byPlayer, blockSel);
 
             Block oriented = world.BlockAccessor.GetBlock(CodeWithVariant("side", facing.Code));
             if (oriented != null) world.BlockAccessor.ExchangeBlock(oriented.BlockId, blockSel.Position);
@@ -33,6 +25,19 @@ namespace SignalsLink.src.signals.yard
             OpenDialog(world, blockSel.Position, byPlayer);
             return true;
         }
+
+        public static BlockFacing FacingForPlacement(IPlayer player, BlockSelection selection)
+        {
+            var target = selection.DidOffset ? selection.Position.AddCopy(selection.Face.Opposite) : selection.Position;
+            return FacingPlayer(
+                player.Entity.Pos.X + player.Entity.LocalEyePos.X - target.X - selection.HitPosition.X,
+                player.Entity.Pos.Z + player.Entity.LocalEyePos.Z - target.Z - selection.HitPosition.Z);
+        }
+        // Our model's named side is its front. Choose the direction towards the player
+        // explicitly rather than inheriting another block's orientation convention.
+        public static BlockFacing FacingPlayer(double dx, double dz) => Math.Abs(dx) > Math.Abs(dz)
+            ? (dx > 0 ? BlockFacing.EAST : BlockFacing.WEST)
+            : (dz > 0 ? BlockFacing.SOUTH : BlockFacing.NORTH);
 
         public override bool OnBlockInteractStart(IWorldAccessor world, IPlayer byPlayer, BlockSelection blockSel)
         {

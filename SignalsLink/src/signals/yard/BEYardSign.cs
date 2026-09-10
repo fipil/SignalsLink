@@ -35,7 +35,7 @@ namespace SignalsLink.src.signals.yard
             set
             {
                 yardName = Clamp(value);
-                renderer?.SetNewText(yardName, ColorUtil.BlackArgb);
+                renderer?.SetNewText(yardName, ColorUtil.WhiteArgb);
                 MarkDirty(true);
             }
         }
@@ -54,8 +54,8 @@ namespace SignalsLink.src.signals.yard
 
             if (api is ICoreClientAPI capi)
             {
-                renderer = new BlockEntitySignRenderer(Pos, capi, GetTextConfig());
-                renderer.SetNewText(yardName, ColorUtil.BlackArgb);
+                renderer = new YardSignRenderer(Pos, capi, Block, GetTextConfig());
+                renderer.SetNewText(yardName, ColorUtil.WhiteArgb);
             }
         }
 
@@ -72,11 +72,25 @@ namespace SignalsLink.src.signals.yard
                 MaxWidth = attributes?["maxWidth"].AsInt(200) ?? 200,
                 MaxHeight = attributes?["maxHeight"].AsInt(96) ?? 96,
                 FontSize = attributes?["fontSize"].AsFloat(20f) ?? 20f,
+                textVoxelWidth = attributes?["textVoxelWidth"].AsFloat(12f) ?? 12f,
+                textVoxelHeight = attributes?["textVoxelHeight"].AsFloat(5f) ?? 5f,
                 BoldFont = false,
                 VerticalAlign = EnumVerticalAlign.Middle,
             };
         }
 
+        public override void OnExchanged(Block block)
+        {
+            base.OnExchanged(block);
+            // Placement exchanges the inventory variant for the direction facing the player.
+            // Recreate the text plane as well, otherwise it keeps the previous orientation.
+            if (Api is ICoreClientAPI capi)
+            {
+                renderer?.Dispose();
+                renderer = new YardSignRenderer(Pos, capi, block, GetTextConfig());
+                renderer.SetNewText(yardName, ColorUtil.WhiteArgb);
+            }
+        }
         /// <summary>Opens the little form the player types the name into. Client side only.</summary>
         public void OpenNameDialog(IPlayer byPlayer)
         {
@@ -122,7 +136,7 @@ namespace SignalsLink.src.signals.yard
 
             // The name arrives on the client through this path, both on chunk load and on every
             // later change - so this is where the text gets rasterised, and nowhere near a frame.
-            renderer?.SetNewText(yardName, ColorUtil.BlackArgb);
+            renderer?.SetNewText(yardName, ColorUtil.WhiteArgb);
         }
 
         public override void ToTreeAttributes(ITreeAttribute tree)
