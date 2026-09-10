@@ -225,6 +225,7 @@
  "blockmaterial": "Metal",
  "lightAbsorption": 0,
  "drawtype": "json",
+ "renderpass": "OpaqueNoCull",
  "replaceable": 500,
  "resistance": 1.75,
  "sidesolid": {

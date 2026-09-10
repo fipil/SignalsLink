@@ -281,8 +281,8 @@
 	},
   "collisionSelectionBoxes": [
     {
-      "x1": 0.25, "y1": 0.0,  "z1": 0.0,
-      "x2": 1.0,  "y2": 1.0,  "z2": 1.0,
+      "x1": 0.75, "y1": 0.0, "z1": 0.0,
+      "x2": 1.0, "y2": 1.0, "z2": 1.0,
       "rotateXbytype": {
         "*-*-north": 90,
         "*-*-south": 270,
@@ -303,7 +303,51 @@
       }
     },
     {
-      "x1": 0.0,  "y1": 0.0,  "z1": 0.0,
+      "x1": 0.25, "y1": 0.0, "z1": 0.0,
+      "x2": 0.75, "y2": 1.0, "z2": 0.25,
+      "rotateXbytype": {
+        "*-*-north": 90,
+        "*-*-south": 270,
+        "@*-up-(east|west)": 90,
+        "@*-down-(east|west)": 270,
+        "@*-south-(east|west)": 180
+      },
+      "rotateYbytype": {
+        "@*-east-(up|down|north|south)": 270,
+        "@*-south-(up|down)": 180,
+        "@*-west-(up|down|north|south)": 90,
+        "@*-(down-north|up-south)": 180
+      },
+      "rotateZbyType": {
+        "*-*-up": 180,
+        "*-*-east": 90,
+        "*-*-west": 270
+      }
+    },
+    {
+      "x1": 0.25, "y1": 0.0, "z1": 0.75,
+      "x2": 0.75, "y2": 1.0, "z2": 1.0,
+      "rotateXbytype": {
+        "*-*-north": 90,
+        "*-*-south": 270,
+        "@*-up-(east|west)": 90,
+        "@*-down-(east|west)": 270,
+        "@*-south-(east|west)": 180
+      },
+      "rotateYbytype": {
+        "@*-east-(up|down|north|south)": 270,
+        "@*-south-(up|down)": 180,
+        "@*-west-(up|down|north|south)": 90,
+        "@*-(down-north|up-south)": 180
+      },
+      "rotateZbyType": {
+        "*-*-up": 180,
+        "*-*-east": 90,
+        "*-*-west": 270
+      }
+    },
+    {
+      "x1": 0.0, "y1": 0.0, "z1": 0.0,
       "x2": 0.25, "y2": 0.75, "z2": 1.0,
       "rotateXbytype": {
         "*-*-north": 90,
@@ -325,8 +369,8 @@
       }
     },
     {
-      "x1": 0.0,  "y1": 0.75, "z1": 0.0,
-      "x2": 0.25, "y2": 1.0,  "z2": 0.25,
+      "x1": 0.0, "y1": 0.75, "z1": 0.0,
+      "x2": 0.25, "y2": 1.0, "z2": 0.15625,
       "rotateXbytype": {
         "*-*-north": 90,
         "*-*-south": 270,
@@ -347,8 +391,8 @@
       }
     },
     {
-      "x1": 0.0,  "y1": 0.75, "z1": 0.75,
-      "x2": 0.25, "y2": 1.0,  "z2": 1.0,
+      "x1": 0.0, "y1": 0.75, "z1": 0.84375,
+      "x2": 0.25, "y2": 1.0, "z2": 1.0,
       "rotateXbytype": {
         "*-*-north": 90,
         "*-*-south": 270,
