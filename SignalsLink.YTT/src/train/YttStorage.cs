@@ -8,16 +8,9 @@ using Vintagestory.API.Common.Entities;
 namespace SignalsLink.YTT.src.train
 {
     /// <summary>
-    /// Reaches into a vehicle for its inventories.
-    ///
-    /// This is the whole of the reflection, and it is deliberately four lines of work behind a
-    /// probe that has already checked every member it touches. When the other mod publishes an
-    /// interface for this - which has been asked for - the inside of this class is what gets
-    /// thrown away, and nothing else has to change.
-    ///
-    /// Everything is wrapped: an exception from here would come from another mod's insides on a
-    /// server tick, and it must never be allowed to take the tick down. It is reported once and
-    /// the bridge stands down.
+    /// Reaches into a vehicle for its inventories. The whole of the reflection lives here, behind
+    /// a probe that has already checked every member it touches, and everything is wrapped: an
+    /// exception from another mod's insides must not take the server tick down.
     /// </summary>
     public class YttStorage
     {
@@ -33,10 +26,8 @@ namespace SignalsLink.YTT.src.train
         }
 
         /// <summary>
-        /// The vehicle's holds, or nothing at all when they cannot be reached or cannot be trusted
-        /// to save. Nothing is remembered between calls: a vehicle can leave or unload at any
-        /// moment, and a stale inventory object would be written into a wagon that is no longer
-        /// there.
+        /// The vehicle's holds, or nothing when they cannot be reached or trusted to save. Nothing
+        /// is remembered between calls - a stale inventory belongs to a wagon that has left.
         /// </summary>
         public IReadOnlyList<InventoryBase> InventoriesOf(Entity entity)
         {
@@ -55,8 +46,7 @@ namespace SignalsLink.YTT.src.train
                 {
                     if (surface.StoragePointInventoryField.GetValue(point) is not InventoryBase inventory) continue;
 
-                    // Before anything is written: is the other mod listening for the change, so
-                    // that it gets saved? See YttPersistence.
+                    // Is the other mod listening, so the change gets saved? See YttPersistence.
                     if (!persistence.IsWired(inventory)) return None;
 
                     inventories.Add(inventory);

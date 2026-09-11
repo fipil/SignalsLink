@@ -52,12 +52,8 @@ namespace SignalsLink.src.signals.manageddock
         /// igniter carry as well.
         ///
         /// <b>A wire first</b>, when one is being drawn: a click that landed on an anchor was aimed
-        /// at the anchor, and it has to be swallowed even when no wire ends up attached.
-        ///
-        /// <b>Then the behaviors</b>, which is where paper conditions live. Holding a written paper
-        /// means "take this", not "open the crate".
-        ///
-        /// <b>The crate last</b>, which is what an empty hand means.
+        /// at the anchor, and it has to be swallowed even when no wire ends up attached. Then the
+        /// behaviors, where paper conditions live. The crate last, which is what an empty hand means.
         /// </summary>
         public override bool OnBlockInteractStart(IWorldAccessor world, IPlayer byPlayer, BlockSelection blockSel)
         {
@@ -69,7 +65,6 @@ namespace SignalsLink.src.signals.manageddock
 
                 if (node != null && CanAttachWire(world, node, wires.GetPendingNode()))
                 {
-                    Trace(world, byPlayer, blockSel, "wire");
                     wires.ConnectWire(node, byPlayer, this);
                     return false;
                 }
@@ -80,47 +75,19 @@ namespace SignalsLink.src.signals.manageddock
                 EnumHandling handling = EnumHandling.PassThrough;
                 bool result = behavior.OnBlockInteractStart(world, byPlayer, blockSel, ref handling);
 
-                if (handling == EnumHandling.PreventDefault)
-                {
-                    Trace(world, byPlayer, blockSel, "behavior " + behavior.GetType().Name + " -> " + result);
-                    return result;
-                }
+                if (handling == EnumHandling.PreventDefault) return result;
             }
 
-            // Paper in hand means the click is about the paper, full stop - including the cases the
-            // behavior above declines, like empty paper held against a device that has no orders to
-            // copy out. Opening the crate on those would swallow the click and leave the player
-            // wondering why their paper did nothing.
-            if (IsAboutPaper(byPlayer))
-            {
-                Trace(world, byPlayer, blockSel, "paper, declined by the behavior");
-                return true;
-            }
+            // Paper in hand means the click is about the paper even when the behavior declined it
+            // - otherwise opening the crate swallows the click.
+            if (IsAboutPaper(byPlayer)) return true;
 
             if (world.BlockAccessor.GetBlockEntity(blockSel.Position) is BEManagedDock dock)
             {
-                Trace(world, byPlayer, blockSel, "opening the crate");
                 return dock.OnPlayerRightClick(byPlayer, blockSel);
             }
 
-            Trace(world, byPlayer, blockSel, "no block entity");
             return false;
-        }
-
-        /// <summary>
-        /// TEMPORARY. Says which way a click went, so that "the crate opens with paper in hand and
-        /// not without" can be traced to whoever is eating the click rather than guessed at. A few
-        /// lines per click, and only while this puzzle is open.
-        /// </summary>
-        private void Trace(IWorldAccessor world, IPlayer byPlayer, BlockSelection blockSel, string what)
-        {
-            ItemSlot slot = byPlayer?.InventoryManager?.ActiveHotbarSlot;
-
-            api?.Logger?.Notification("[SignalsLink] dock click on " + world.Side
-                + ": box=" + blockSel?.SelectionBoxIndex
-                + " holding=" + (slot?.Itemstack?.Collectible?.Code?.ToString() ?? "<nothing>")
-                + " ctrl=" + (byPlayer?.Entity?.Controls?.CtrlKey == true)
-                + " -> " + what);
         }
 
         /// <summary>

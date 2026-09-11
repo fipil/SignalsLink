@@ -7,16 +7,11 @@ using Vintagestory.API.Common.Entities;
 namespace SignalsLink.YTT.src.train
 {
     /// <summary>
-    /// The steam engine of a locomotive: its firebox and its water, as one inventory.
+    /// The steam engine's firebox and water, as one inventory.
     ///
-    /// <b>It does not save the way the wagons do.</b> A boxcar writes itself down whenever a slot
-    /// is marked dirty, so putting goods in one and marking the slot is the whole job. The engine
-    /// keeps its inventory in the vehicle's own attributes and only writes it out when it is
-    /// asked to, and the periodic write leaves the inventory OUT. Coal shovelled into the firebox
-    /// and left at that would be there until the next reload and no longer.
-    ///
-    /// So every change here is followed by an explicit ask. That difference is the reason this is
-    /// its own class rather than another case inside the storage one.
+    /// It does NOT save the way wagons do - a dirty slot is not enough, and the periodic write
+    /// leaves the inventory out. Every change here is followed by an explicit
+    /// <see cref="Save"/>, which is why this is its own class.
     /// </summary>
     public class YttEngine
     {
@@ -49,10 +44,7 @@ namespace SignalsLink.YTT.src.train
             }
         }
 
-        /// <summary>
-        /// Asks the vehicle to write its engine down, inventory and all. Called after every change,
-        /// because nothing else will.
-        /// </summary>
+        /// <summary>Called after every change, because nothing else will.</summary>
         public void Save(Entity entity)
         {
             if (surface?.CanReachEngine != true) return;

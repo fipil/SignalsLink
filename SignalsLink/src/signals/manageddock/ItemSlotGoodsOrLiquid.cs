@@ -1,38 +1,41 @@
+using SignalsLink.src.signals.managedchute.transporting;
 using Vintagestory.API.Common;
 using Vintagestory.GameContent;
 
 namespace SignalsLink.src.signals.manageddock
 {
     /// <summary>
-    /// A slot that takes goods or a measure of liquid, whichever turns up - the way a cooking pot
-    /// does.
-    ///
-    /// The dock is not split into a half for things and a half for liquids on purpose. A split
-    /// would need a directive for saying which half a block means, and the paper already picks by
-    /// what is IN a slot rather than by where the slot is. One undivided inventory keeps that true.
-    ///
-    /// Liquid arrives in two shapes - loose measures, or inside a bucket or barrel where it sits in
-    /// the stack attributes. Both are an item stack in a slot, so both simply fit.
+    /// A slot that takes goods or a measure of liquid, whichever turns up. The dock is deliberately
+    /// not split into a half for each: the paper picks by what is IN a slot, not by where it is.
     /// </summary>
-    public class ItemSlotUniversal : ItemSlot
+    public class ItemSlotGoodsOrLiquid : ItemSlot, ILiquidHoldingSlot
     {
-        /// <summary>How much loose liquid one slot holds. A bucket is 10, a barrel 50.</summary>
-        public const float CapacityLitres = 50f;
+        /// <summary>A barrel's worth.</summary>
+        public const float LitresPerSlot = 50f;
 
-        public ItemSlotUniversal(InventoryBase inventory) : base(inventory)
+        public ItemSlotGoodsOrLiquid(InventoryBase inventory) : base(inventory)
         {
         }
 
+        public float CapacityLitres => LitresPerSlot;
+
         /// <summary>
-        /// Loose liquid is counted in litres, not in stack sizes, so its capacity has to be worked
-        /// out from the liquid's own properties. Everything else keeps the ordinary rule.
+        /// The base class judges by storage flags, which a liquid portion does not carry. Saying
+        /// yes here is what the slot is for - it is asked before anything is poured in.
         /// </summary>
+        public override bool CanHold(ItemSlot sourceSlot)
+        {
+            return BlockLiquidContainerBase.GetContainableProps(sourceSlot?.Itemstack) != null
+                || base.CanHold(sourceSlot);
+        }
+
+        /// <summary>Loose liquid is counted in litres, everything else in stack sizes.</summary>
         public override int GetRemainingSlotSpace(ItemStack forItemstack)
         {
             WaterTightContainableProps props = BlockLiquidContainerBase.GetContainableProps(forItemstack);
             if (props == null) return base.GetRemainingSlotSpace(forItemstack);
 
-            int capacity = (int)(CapacityLitres * props.ItemsPerLitre);
+            int capacity = (int)(LitresPerSlot * props.ItemsPerLitre);
 
             return Empty ? capacity : capacity - StackSize;
         }

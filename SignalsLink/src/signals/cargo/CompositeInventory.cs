@@ -5,22 +5,11 @@ using Vintagestory.API.Datastructures;
 namespace SignalsLink.src.signals.cargo
 {
     /// <summary>
-    /// Several holds shown to the paper as one inventory, in a fixed order.
+    /// Several holds shown to the paper as one inventory. Nothing is copied - the slots are the
+    /// holds' own.
     ///
-    /// This is what makes "unload the whole train" or "fill the yard" a single action rather than a
-    /// fight with the one-action-per-pass rule: the holder offers one inventory, the paper works on
-    /// it exactly as it works on a chest, and gathering across slots is machinery that already
-    /// exists.
-    ///
-    /// Nothing is copied. Where the holds carry live slots, a change here is a change in the wagon
-    /// they came from.
-    ///
-    /// <b>Order is the whole trick.</b> Holds are laid out nearest-first and the transfer code
-    /// walks slots in index order, so filling starts at the near end and works outwards. That one
-    /// rule gives a train "fill the nearest wagon, do not top up half-stacks in distant ones" and a
-    /// yard "fill the nearest column to its height before starting another" - two wanted
-    /// behaviours, no special cases. Choosing a slot by best fit across the whole thing would break
-    /// both.
+    /// Order matters: holds are laid out nearest-first and transfers walk slots in index order, so
+    /// filling starts at the near end.
     /// </summary>
     public class CompositeInventory : InventoryBase
     {
@@ -28,12 +17,12 @@ namespace SignalsLink.src.signals.cargo
         private readonly List<ICargoHold> owners = new List<ICargoHold>();
 
         public CompositeInventory(ICoreAPI api)
-            // NOTE: the id must contain a dash - VS derives className/instanceId by splitting on it.
+            // The id must contain a dash - VS derives className/instanceId by splitting on it.
             : base("signalslink-composite", "composite", api)
         {
         }
 
-        /// <summary>Appends one hold. Call in the order the device should work through them.</summary>
+        /// <summary>Call in the order the device should work through the holds.</summary>
         public void Append(ICargoHold hold)
         {
             if (hold?.Inventory == null) return;
@@ -48,10 +37,7 @@ namespace SignalsLink.src.signals.cargo
             }
         }
 
-        /// <summary>
-        /// Which hold a slot came from - how the device turns a slot the paper chose back into the
-        /// wagon or the column of piles it belongs to.
-        /// </summary>
+        /// <summary>Which hold a slot came from.</summary>
         public ICargoHold HoldOf(int slotId)
         {
             return slotId < 0 || slotId >= owners.Count ? null : owners[slotId];
@@ -69,10 +55,7 @@ namespace SignalsLink.src.signals.cargo
             }
         }
 
-        /// <summary>
-        /// Nothing to save. The holds persist themselves - this is a view assembled for one pass
-        /// and thrown away again.
-        /// </summary>
+        // Nothing to save: the holds persist themselves.
         public override void FromTreeAttributes(ITreeAttribute tree)
         {
         }

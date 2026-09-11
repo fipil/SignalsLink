@@ -11,30 +11,12 @@ using Vintagestory.API.Datastructures;
 namespace SignalsLink.YTT.src.probe
 {
     /// <summary>
-    /// <b>Layer three: does it actually SAVE?</b>
+    /// Layer three: does the other mod actually SAVE what we write? If it stopped, every call
+    /// still succeeds and a player's goods vanish at the next reload.
     ///
-    /// The first two layers ask what the other mod looks like. They cannot answer the one question
-    /// that really matters here: after goods are written into a wagon and the slot is marked dirty,
-    /// does anything write that down? The other mod does it by hooking the inventory's
-    /// <c>SlotModified</c> event on the server. If that ever stops - if saving became explicit, say
-    /// - then every call still succeeds, nothing throws, and <b>a player's goods vanish at the next
-    /// reload</b>. No amount of looking at names catches that.
-    ///
-    /// So it is checked twice over.
-    ///
-    /// <b>Before anything moves</b> - the event's invocation list is read and asked whether anyone
-    /// from the other mod is listening. Reading a field-like event's backing field mutates nothing
-    /// and costs one lookup per inventory.
-    ///
-    /// <b>After the first real transfer</b> - the saved tree is compared with what it was. Goods
-    /// have just changed, so it MUST have changed too. If it has not, the bridge stands down for
-    /// the rest of the session rather than carrying on quietly losing things.
-    ///
-    /// There is no rollback of that first transfer, and that is deliberate: putting goods back
-    /// means knowing exactly what moved and being sure the putting-back is itself saved - and the
-    /// thing under suspicion is precisely whether saving works. Half a rollback would turn one lost
-    /// stack into two. The check before anything moves is the one meant to catch this; this is the
-    /// net under it.
+    /// Checked twice: <see cref="IsWired"/> before anything moves, and
+    /// <see cref="VerifyFirstTransfer"/> after the first one. No rollback - putting goods back
+    /// would itself depend on saving working.
     /// </summary>
     public sealed class YttPersistence
     {
@@ -59,10 +41,7 @@ namespace SignalsLink.YTT.src.probe
             this.other = other;
         }
 
-        /// <summary>
-        /// Is somebody from the other mod listening for changes to this inventory? Asked once per
-        /// inventory, before it is ever written to.
-        /// </summary>
+        /// <summary>Asked once per inventory, before it is ever written to.</summary>
         public bool IsWired(InventoryBase inventory)
         {
             if (!Trusted) return false;
@@ -92,16 +71,12 @@ namespace SignalsLink.YTT.src.probe
             }
             catch (Exception e)
             {
-                // A check that cannot be made is not a licence to carry on: this is the failure
-                // mode that costs a player their cargo.
+                // A check that cannot be made is not a licence to carry on.
                 return Distrust("the save-wiring check failed: " + e.Message);
             }
         }
 
-        /// <summary>
-        /// Is a snapshot still worth taking? Exactly one comparison is ever made, and until it has
-        /// been made every wagon in the yard would otherwise be serialised several times a second.
-        /// </summary>
+        /// <summary>Exactly one comparison is ever made; after it, stop serialising wagons.</summary>
         public bool NeedsSnapshot => Trusted && !firstTransferVerified;
 
         /// <summary>What the vehicle's saved goods look like right now, or null when there is nothing.</summary>
@@ -111,13 +86,8 @@ namespace SignalsLink.YTT.src.probe
         }
 
         /// <summary>
-        /// The saved goods as one short string, for telling one moment from another.
-        ///
-        /// Taken from the BYTES the tree would be written to disk as. The obvious way to do this is
-        /// <c>ToString()</c>, and it is a trap: TreeAttribute does not override it, so every tree
-        /// that ever existed describes itself as "Vintagestory.API.Datastructures.TreeAttribute"
-        /// and no two snapshots can ever differ. A check that cannot see a change reports that
-        /// nothing changed, which here means accusing the other mod of losing a player's cargo.
+        /// From the BYTES the tree would be saved as. NOT <c>ToString()</c>: TreeAttribute does not
+        /// override it, so every snapshot would read the same and the check would always fail.
         /// </summary>
         public static string Describe(ITreeAttribute tree)
         {
@@ -135,10 +105,7 @@ namespace SignalsLink.YTT.src.probe
             return Convert.ToHexString(sha.ComputeHash(buffer.ToArray())).Substring(0, 12).ToLowerInvariant();
         }
 
-        /// <summary>
-        /// Called once, right after the first real transfer, with the snapshot taken before it. The
-        /// goods have changed, so what is saved must have changed too.
-        /// </summary>
+        /// <summary>Once, after the first real transfer: what is saved must have changed too.</summary>
         public void VerifyFirstTransfer(Entity entity, string before)
         {
             if (firstTransferVerified || !Trusted) return;

@@ -60,19 +60,13 @@ namespace SignalsLink.YTT.src.train
 
         public void MarkDirty()
         {
-            // A wagon saves itself off the back of the dirty slots the transfer already marked;
-            // all that is left is to make sure it really did, once. An engine saves nothing on
-            // its own and has to be asked.
+            // A wagon saves itself off its dirty slots; an engine has to be asked.
             onSaved?.Invoke(entity);
 
             persistence.VerifyFirstTransfer(entity, snapshot);
         }
 
-        /// <summary>
-        /// Taken before anything is moved, for the check afterwards - and only while that check is
-        /// still to come. Serialising every wagon standing at the platform, every tick, forever,
-        /// to answer a question that is asked once would be a strange way to pay for it.
-        /// </summary>
+        /// <summary>Before anything moves, and only while that one check is still to come.</summary>
         public string TakeSnapshot()
         {
             if (persistence?.NeedsSnapshot != true) return null;
@@ -110,11 +104,8 @@ namespace SignalsLink.YTT.src.train
     }
 
     /// <summary>
-    /// Finds the train standing at the dock.
-    ///
-    /// Vehicles are recognised by the domain of their entity code and by the name of a behavior -
-    /// never by a type. That is what keeps this bridge free of a reference to the other mod's
-    /// assembly, and it is the difference between degrading and crashing when that mod changes.
+    /// Finds the train standing at the dock. Vehicles are recognised by the domain of their
+    /// entity code and the name of a behavior, never by a type.
     /// </summary>
     public class TrainCargoHolderFinder : ICargoHolderFinder
     {
@@ -133,9 +124,8 @@ namespace SignalsLink.YTT.src.train
         private readonly StandingWatch standing = new StandingWatch();
 
         /// <summary>
-        /// The probe is left out when only the header vocabulary is wanted - reading a header
-        /// has to work with no game, no other mod and no instance of anything, which is the
-        /// whole reason the keyword belongs to the finder rather than to a holder.
+        /// The probe is left out when only the header vocabulary is wanted - reading a header must
+        /// work with no game and no other mod.
         /// </summary>
         public TrainCargoHolderFinder(YttSurface surface = null, YttPersistence persistence = null)
         {
@@ -148,9 +138,8 @@ namespace SignalsLink.YTT.src.train
         public string Keyword => KeywordText;
 
         /// <summary>
-        /// A train moves, so nothing about it may be remembered between ticks - not the vehicles,
-        /// not their inventories. It is also what keeps the stopped-or-not question answerable:
-        /// that needs a fresh look every tick.
+        /// A train moves, so nothing about it may be remembered between ticks - and stopped-or-not
+        /// needs a fresh look anyway.
         /// </summary>
         public bool Cacheable => false;
 
@@ -184,8 +173,7 @@ namespace SignalsLink.YTT.src.train
                     continue;
                 }
 
-                // Reported rather than ignored: a header that quietly means something else than it
-                // says is the worst kind of paper to debug.
+                // Reported rather than ignored, or the header quietly means something else.
                 errors?.Add(token, "holderspec");
                 return false;
             }
@@ -194,8 +182,7 @@ namespace SignalsLink.YTT.src.train
             return true;
         }
 
-        /// <summary>North, south, east, west - or just their first letter, which is what anyone
-        /// writing this on a scrap of paper in a mine will reach for.</summary>
+        /// <summary>North, south, east, west - or just their first letter.</summary>
         private static BlockFacing ParseDirection(string token)
         {
             switch (token.ToLowerInvariant())
@@ -235,8 +222,7 @@ namespace SignalsLink.YTT.src.train
                 seen.Add(entity.EntityId);
             }
 
-            // Vehicles that have left are forgotten, or every train that ever passed stays in
-            // memory for the life of the world.
+            // Or every train that ever passed stays in memory for the life of the world.
             standing.Forget(seen);
 
             if (vehicles.Count == 0) return false;
@@ -254,8 +240,8 @@ namespace SignalsLink.YTT.src.train
 
                 if (wanted.EngineOnly)
                 {
-                    // Only when asked for by name. A firebox that quietly joined in on a plain
-                    // `load train` would swallow the first coal of every delivery.
+                    // Only when asked for by name, or a firebox swallows every delivery's
+                    // first coal on a plain `load train`.
                     InventoryBase inventory = engine.InventoryOf(entity);
 
                     if (inventory != null)
@@ -275,8 +261,7 @@ namespace SignalsLink.YTT.src.train
 
                 if (holds.Count == before) continue;
 
-                // Every vehicle being used has to be standing. Half a train stopped is not a train
-                // that can be unloaded - the other half is dragging it.
+                // Every vehicle in use has to be standing; half a train stopped is not stopped.
                 if (!standing.IsStanding(entity.EntityId, entity.Pos.X, entity.Pos.Y, entity.Pos.Z))
                 {
                     ready = false;
@@ -293,13 +278,19 @@ namespace SignalsLink.YTT.src.train
         }
 
         /// <summary>
-        /// By the domain of the code and the name of a behavior, never by a type: naming a type
-        /// would mean referencing the other mod's assembly, and then this bridge would fail to load
-        /// at all rather than politely doing nothing.
+        /// By domain and behavior name, never by type - naming a type would mean referencing the
+        /// other mod's assembly.
+        ///
+        /// A locomotive carries no SGStorage, only SteamPowered, so asking for cargo alone left it
+        /// invisible and `load train engine` could never find one. Its holds still only appear when
+        /// the header asks for them by name.
         /// </summary>
         private static bool IsVehicle(Entity entity)
         {
-            return entity?.Code?.Domain == Domain && entity.GetBehavior(YttSurface.StorageBehavior) != null;
+            if (entity?.Code?.Domain != Domain) return false;
+
+            return entity.GetBehavior(YttSurface.StorageBehavior) != null
+                || entity.GetBehavior(YttSurface.SteamBehavior) != null;
         }
 
         private static bool Matches(Entity entity, TrainSelector wanted)
@@ -310,13 +301,9 @@ namespace SignalsLink.YTT.src.train
         }
 
         /// <summary>
-        /// Where this vehicle rides in its convoy, counted from the head.
-        ///
-        /// Assembled from plain attributes rather than from the other mod's own index, which is not
-        /// published anywhere a bystander can read. Two things to know about it: the head is not
-        /// necessarily the locomotive, and the order is stable against how the train was coupled,
-        /// not against which end of the platform it stopped at. Picking wagons by what is IN them
-        /// is the more reliable habit, and the paper can already do that.
+        /// Where this vehicle rides in its convoy, counted from the head - assembled from plain
+        /// attributes because the other mod publishes no index. The head is not necessarily the
+        /// locomotive, and the order follows how the train was coupled, not which way it parked.
         /// </summary>
         private static int ConvoyIndex(Entity entity)
         {
@@ -330,11 +317,8 @@ namespace SignalsLink.YTT.src.train
         }
 
         /// <summary>
-        /// Does the vehicle reach the named side of the device?
-        ///
-        /// The test is on the vehicle's BODY, not on its middle. A boxcar is seven blocks long and
-        /// hangs well past the device, so a test on the centre of a long train would answer
-        /// differently from one tick to the next.
+        /// Does the vehicle reach the named side? Tested on its BODY, not its middle - a boxcar is
+        /// seven blocks long.
         /// </summary>
         private static bool Reaches(Entity entity, Vec3d centre, BlockFacing direction)
         {

@@ -1,3 +1,4 @@
+using Newtonsoft.Json.Linq;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using Vintagestory.API.Common;
@@ -29,6 +30,23 @@ namespace SignalsLink.Tests
 
             // A stack built by the game always carries an attribute tree; comparing two stacks
             // walks it, so without one the comparison falls over.
+            stack.Attributes ??= new TreeAttribute();
+
+            return stack;
+        }
+
+        /// <summary>
+        /// A measure of liquid. Needs real waterTightContainerProps, because everything that moves
+        /// litres reads ItemsPerLitre off them before it will move anything at all.
+        /// </summary>
+        public static ItemStack Liquid(Item item, string code, int stackSize = 500)
+        {
+            item.Code = new AssetLocation(code);
+            item.MatterState = EnumMatterState.Liquid;
+            item.Attributes = new JsonObject(JToken.Parse(
+                "{ \"waterTightContainerProps\": { \"containable\": true, \"itemsPerLitre\": 100 } }"));
+
+            ItemStack stack = new ItemStack(item, stackSize);
             stack.Attributes ??= new TreeAttribute();
 
             return stack;

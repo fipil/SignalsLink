@@ -73,6 +73,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
         public DriverResult RunPass(bool actionsBlocked, out TransferSelection selection)
         {
             selection = null;
+            actingBlock = null;
 
             IReadOnlyList<ConditionBlock> blocks = conditionsEvaluator?.GetBlocks();
 
@@ -111,11 +112,26 @@ namespace SignalsLink.src.signals.managedchute.transporting
                 block =>
                 {
                     directiveCtx ??= BuildDirectiveContext();
-                    TransferSelection candidate = SelectForBlock(block, directiveCtx);
-                    if (candidate == null) return false;
 
-                    picked = candidate;
-                    return true;
+                    // A block that says WHAT to carry gets to carry it. Its own actions are not
+                    // run here but after the move (see RunActionsAfterTransfer), so that
+                    // `game:water / do seal` fills the barrel before it seals it.
+                    if (block.CanSelectSource)
+                    {
+                        TransferSelection candidate = SelectForBlock(block, directiveCtx);
+
+                        if (candidate != null)
+                        {
+                            picked = candidate;
+                            actingBlock = block;
+                            return true;
+                        }
+                    }
+
+                    // Nothing to carry, or nothing it could carry right now - so do what else the
+                    // block says. That second half is the point: a paper that puts the kettle out
+                    // BECAUSE nothing is moving must not be stopped by nothing moving.
+                    return ConditionActions.RunOn(block, directiveCtx);
                 });
 
             selection = picked;
@@ -129,6 +145,22 @@ namespace SignalsLink.src.signals.managedchute.transporting
 
             ApplyOutput(result);
             return result;
+        }
+
+        /// <summary>
+        /// The block the pass chose to carry with, kept so that its own actions can be run once
+        /// the goods have actually moved.
+        /// </summary>
+        private ConditionBlock actingBlock;
+
+        /// <summary>
+        /// The actions of the block that just carried something, run now that it has. A block
+        /// that both fills and seals means fill THEN seal, and there is no way to say that from
+        /// inside the pass - the goods have not moved yet while the pass is running.
+        /// </summary>
+        protected void RunActionsAfterTransfer()
+        {
+            ConditionActions.RunOn(actingBlock, BuildDirectiveContext());
         }
 
         /// <summary>

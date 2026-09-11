@@ -16,17 +16,9 @@ using Vintagestory.GameContent;
 namespace SignalsLink.src.signals.manageddock
 {
     /// <summary>
-    /// The freight dock: it moves goods between whatever is standing around it — a storage yard
-    /// today, and whatever else registers a holder later.
-    ///
-    /// <b>A router, not a warehouse.</b> A header names BOTH ends (<c>from train to yard</c>), so
-    /// goods go from one other party straight to another without being carried through this crate.
-    /// <c>unload X</c> and <c>load X</c> are the short ways of saying "to me" and "from me", and
-    /// then the crate is simply one of the two ends. Every condition and directive means what it
-    /// always meant; the header only says what <c>in source</c> and <c>in target</c> point at.
-    ///
-    /// Server side only. Writing into somebody else's inventory from the client is how items get
-    /// duplicated.
+    /// The freight dock: a router, not a warehouse. A header names both ends
+    /// (<c>from train to yard</c>); <c>unload X</c> / <c>load X</c> are the short forms where the
+    /// crate is one of them. Server side only.
     /// </summary>
     public class BEManagedDock : BlockEntityOpenableContainer, IBESignalReceptor, IPaperConditionsHost, ISignalBuffer, IConditionOutputSink
     {
@@ -36,16 +28,9 @@ namespace SignalsLink.src.signals.manageddock
         private const byte OutputPin = 1;
         private const byte UnlimitedTransfer = 15;
 
-        /// <summary>
-        /// How often the dock looks around, by what it found last time.
-        ///
-        /// A yard does not walk away and a train does not arrive between two frames, so scanning at
-        /// full speed all the time would be paying for nothing. Working at one second, on the other
-        /// hand, would make loading a train painful.
-        /// </summary>
-        private const int IdleRateMs = 1000;      // nothing found: only looking
-        private const int WaitingRateMs = 200;    // something found: watching for it to be ready
-        private const int WorkingRateMs = 50;     // moving goods
+        /// <summary>How often the dock looks around, by what it found last time.</summary>
+        private const int IdleRateMs = DockTickRate.IdleMs;      // nothing found: only looking
+        private const int WaitingRateMs = DockTickRate.WaitingMs; // something found: watching for it
 
         private InventoryGeneric inventory;
         private long tickListenerId;
@@ -62,8 +47,7 @@ namespace SignalsLink.src.signals.manageddock
         private string conditionsText;
         private PaperConditionsEvaluator conditionsEvaluator;
 
-        // One evaluator per section, so that everything that already works on a whole paper —
-        // transfers, directives, actions — works on a section without knowing what a section is.
+        // One evaluator per section, so whole-paper machinery works on a section unchanged.
         private readonly Dictionary<string, PaperConditionsEvaluator> sectionEvaluators = new Dictionary<string, PaperConditionsEvaluator>();
 
         private CargoHolderRegistry registry;
@@ -79,9 +63,8 @@ namespace SignalsLink.src.signals.manageddock
         public bool RequiresSections => true;
 
         /// <summary>
-        /// Judges the two ends of a header while the paper is being read, so that a holder
-        /// nobody has ever heard of is a mistake the player is told about - not a dock that
-        /// stands there doing nothing with a paper that reads perfectly well.
+        /// Judges both ends while the paper is being read, so an unknown holder is a reported
+        /// mistake rather than a dock quietly doing nothing.
         /// </summary>
         public void CheckHeader(ConditionSection section, PaperErrorSink errors)
         {
@@ -95,7 +78,7 @@ namespace SignalsLink.src.signals.manageddock
         {
             // NOTE: the id must contain a dash - VS splits className/instanceId on it.
             inventory = new InventoryGeneric(SlotCount, "manageddock-0", null,
-                (id, inv) => new ItemSlotUniversal(inv));
+                (id, inv) => new ItemSlotGoodsOrLiquid(inv));
         }
 
         public string ConditionsText
@@ -145,9 +128,7 @@ namespace SignalsLink.src.signals.manageddock
         // ---------------------------------------------------------------- the tick
 
         /// <summary>
-        /// Changes how often the dock runs. A tick listener cannot be re-rated while it runs, so it
-        /// is thrown away and registered again — there are only a handful of these changes, so it
-        /// is cheaper than running fast and counting skipped ticks.
+        /// A tick listener cannot be re-rated while it runs, so it is registered again.
         /// </summary>
         private void SetTickRate(int rateMs)
         {
@@ -163,9 +144,7 @@ namespace SignalsLink.src.signals.manageddock
         {
             if (Api?.World == null || Api is not ICoreServerAPI) return;
 
-            // `# debug` on the paper turns on the same per-device trace the damper has, and it
-            // starts BEFORE the early outs: a dock that does nothing because it has no credit is
-            // exactly the case somebody switches this on for.
+            // Starts BEFORE the early outs: "no credit" is exactly what this gets switched on for.
             bool trace = ConditionDebug.IsMarked(conditionsText);
             if (trace) ConditionDebug.Begin(Api.Logger, "dock@" + Pos);
 
@@ -191,8 +170,7 @@ namespace SignalsLink.src.signals.manageddock
                 return;
             }
 
-            // Nothing to carry and nothing to report: an idle dock costs a tick of nothing, rather
-            // than a flood fill of the yard five times a second.
+            // An idle dock must not cost a flood fill of the yard five times a second.
             if (!unlimited && remaining <= 0 && !ConditionsEvaluator.HasAnyOutput)
             {
                 if (ConditionDebug.Enabled) ConditionDebug.Log("no credit on the Input pin and no output block, so nothing to do");
@@ -207,31 +185,29 @@ namespace SignalsLink.src.signals.manageddock
         private void RunSections(IReadOnlyList<ConditionSection> sections)
         {
             bool sawHolder = false;
+            searchedLive = false;
 
             byte output = DockPass.Run(sections,
                 (section, actionsBlocked) => RunSection(section, actionsBlocked, ref sawHolder),
                 out bool actionPerformed);
 
             SetOutput(output);
-
-            // Back into "waiting", never into "idle": the train is still standing there, the dock
-            // has merely run out of work for a moment. Dropping to a one second beat here would
-            // mean a chute could top the crate up and nothing would happen until the train left.
-            SetTickRate(!sawHolder ? IdleRateMs : actionPerformed ? WorkingRateMs : WaitingRateMs);
+            SetTickRate(DockTickRate.Next(sawHolder, actionPerformed, searchedLive));
         }
 
         /// <summary>
-        /// One section: find the other party, show it to the paper as one inventory and run the
-        /// pass. Null when there is nothing there to run against — a train that has not arrived
-        /// must not stop the yard section below it from working.
+        /// One section. Null when there is nothing to run against - a train that has not arrived
+        /// must not stop the section below it.
         /// </summary>
         private SectionPassResult RunSection(ConditionSection section, bool actionsBlocked, ref bool sawHolder)
         {
             if (section.Direction == null) return null;      // no header: reported as a paper error
             if (!section.EndsAreComplete) return null;       // half-written header: likewise
 
-            IReadOnlyList<ICargoHold> sources = EndOf(section, section.SourceTokens, ref sawHolder);
-            IReadOnlyList<ICargoHold> targets = sources == null ? null : EndOf(section, section.TargetTokens, ref sawHolder);
+            IReadOnlyList<ICargoHold> sources = CompositeHold.Over(Api, EndOf(section, section.SourceTokens, ref sawHolder));
+            IReadOnlyList<ICargoHold> targets = sources == null
+                ? null
+                : CompositeHold.Over(Api, EndOf(section, section.TargetTokens, ref sawHolder));
 
             if (ConditionDebug.Enabled)
             {
@@ -256,13 +232,15 @@ namespace SignalsLink.src.signals.manageddock
         {
             string what = tokens.Count == 0 ? "<the crate>" : string.Join(" ", tokens);
 
-            return what + (holds == null ? " NOT FOUND" : " (" + holds.Count + " holds)");
+            if (holds == null) return what + " NOT FOUND";
+
+            // One hold names itself; several are only ever several because they were not composed.
+            return what + " (" + (holds.Count == 1 ? holds[0].Code : holds.Count + " holds") + ")";
         }
 
         /// <summary>
-        /// One end of a section: this crate when the header said nothing there, otherwise whatever
-        /// holder it named. Null when the named holder is not there or is not ready — a train that
-        /// has not arrived must not stop the section below it from working.
+        /// This crate when the header said nothing there, otherwise the holder it named. Null when
+        /// that holder is missing or not ready.
         /// </summary>
         private IReadOnlyList<ICargoHold> EndOf(ConditionSection section, IReadOnlyList<string> tokens, ref bool sawHolder)
         {
@@ -278,12 +256,7 @@ namespace SignalsLink.src.signals.manageddock
             return holder.Holds;
         }
 
-        /// <summary>
-        /// The crate itself, as a hold like any other.
-        ///
-        /// It carries its own position, so a transfer to or from it is built by the same factory
-        /// every other device uses and behaves exactly as a chute pointed at a chest would.
-        /// </summary>
+        /// <summary>The crate itself, as a hold like any other.</summary>
         private sealed class DockHold : ICargoHold
         {
             private readonly BEManagedDock dock;
@@ -297,9 +270,7 @@ namespace SignalsLink.src.signals.manageddock
             public IInventory Inventory => dock.inventory;
             public BlockPos Pos => dock.Pos;
 
-            // A container that stands somewhere: both answers are true of it, and both are needed.
-            // The position is what lets a chute or a yard exchange with it exactly as with a chest;
-            // the slots are what lets a wagon, which has no position, exchange with it at all.
+            // A container that stands somewhere: the position serves blocks, the slots wagons.
             public bool IsContainer => true;
 
             public bool IsEmpty => dock.inventory.Empty;
@@ -313,16 +284,9 @@ namespace SignalsLink.src.signals.manageddock
         private IReadOnlyList<ICargoHold> ownHolds;
 
         /// <summary>
-        /// The other party of one section, kept between ticks.
-        ///
-        /// Searching is much the most expensive thing the dock does — a square of the world two
-        /// levels deep, and a flood fill for every yard in it — and the answer barely ever changes:
-        /// paving does not walk away. So it is found once and kept, and only the reading of what
-        /// stands on it is dropped each tick (<see cref="ICargoHolder.Refresh"/>).
-        ///
-        /// It is looked for again when the paper changes, when a neighbour changes, and otherwise
-        /// every few seconds — the slow path that catches a yard being paved further out, where
-        /// nothing next to the dock ever moved.
+        /// The other party of one section, kept between ticks because searching is much the most
+        /// expensive thing the dock does. Only what stands on it is re-read each tick
+        /// (<see cref="ICargoHolder.Refresh"/>).
         /// </summary>
         private ICargoHolder FindHolder(ConditionSection section, IReadOnlyList<string> tokens)
         {
@@ -344,18 +308,28 @@ namespace SignalsLink.src.signals.manageddock
                 cacheable = request.Finder.Cacheable;
             }
 
-            // Something that can drive away is looked for again every tick, inventories and all:
-            // a remembered wagon is one the goods might be written into after it has left.
-            // Anything that stays put is remembered - and a search that found NOTHING is worth
-            // remembering too, since that is the case that would otherwise repeat every tick.
-            if (cacheable) holders[key] = new HolderSearch(holder, now);
-            else holders.Remove(key);
+            // A remembered wagon is one the goods might be written into after it has left.
+            // A search that found nothing is worth remembering too.
+            if (cacheable)
+            {
+                holders[key] = new HolderSearch(holder, now);
+            }
+            else
+            {
+                holders.Remove(key);
+
+                // What the beat is held back for: this runs again next tick, whole.
+                searchedLive = true;
+            }
 
             return holder;
         }
 
         /// <summary>How long a found holder is trusted before the world is asked again.</summary>
         private const long HolderCacheMs = 3000;
+
+        /// <summary>Reset each pass: what THIS one did, not what the dock generally does.</summary>
+        private bool searchedLive;
 
         private readonly Dictionary<string, HolderSearch> holders = new Dictionary<string, HolderSearch>();
 
@@ -371,22 +345,15 @@ namespace SignalsLink.src.signals.manageddock
             }
         }
 
-        /// <summary>
-        /// Something was built or broken next door. It might be the paving, so the next tick looks
-        /// again rather than working with what was there before.
-        /// </summary>
+        /// <summary>It might have been the paving, so look again next tick.</summary>
         public void OnNeighbourBlockChange(BlockPos neibpos)
         {
             holders.Clear();
         }
 
         /// <summary>
-        /// The output rail, answered against the holder <b>as a whole</b>: every hold shown as one
-        /// inventory, so <c>in target game:firewood 500-</c> is a question about the whole yard
-        /// rather than about whichever corner of it is being filled at the moment.
-        ///
-        /// Reading is where the composed view belongs. Putting goods in is not - see
-        /// <see cref="Move"/>.
+        /// The output rail, answered against the holder as a whole rather than whichever corner of
+        /// it is being filled.
         /// </summary>
         private DriverResult RunOutputRail(PaperConditionsEvaluator evaluator,
             IReadOnlyList<ICargoHold> sources, IReadOnlyList<ICargoHold> targets)
@@ -409,24 +376,10 @@ namespace SignalsLink.src.signals.manageddock
         }
 
         /// <summary>
-        /// Moves one action's worth of goods, working through the holds <b>in order</b> and taking
-        /// the first one that can do something.
+        /// Moves one action's worth of goods: holds in order, first one that can do something wins.
         ///
-        /// Each hold is moved to or from through the ordinary transfer machinery, chosen by what is
-        /// actually at the two ends. That is what makes a storage yard work at all: a column of
-        /// piles is not slots that can be written to - it has to be built and taken apart block by
-        /// block - and the world transfers already know how, including growing a column to
-        /// <c>height N</c> and taking from the top of it.
-        ///
-        /// Nearest hold first is the whole point of the order: the near column fills to its height
-        /// before the next is started.
-        ///
-        /// The default amount is <b>everything that matches</b>, not one piece: an <c>unload</c>
-        /// without an <c>amount</c> is meant to empty the wagon, and a piece per action would take
-        /// all day. <c>amount N</c> is unchanged and still means N or nothing.
-        ///
-        /// One action costs <b>one credit</b>, whatever it carried. Charging per piece would make
-        /// the Input pin unusable on a device whose one action is "all of it".
+        /// The default amount is everything that matches, not one piece - an <c>unload</c> is meant
+        /// to empty the wagon. One action costs one credit whatever it carried.
         /// </summary>
         private bool Move(PaperConditionsEvaluator evaluator,
             IReadOnlyList<ICargoHold> sources, IReadOnlyList<ICargoHold> targets)
@@ -483,13 +436,7 @@ namespace SignalsLink.src.signals.manageddock
         /// <summary>How many pairs one tick may try before giving up until the next one.</summary>
         private const int MaxPairsPerTick = 64;
 
-        /// <summary>
-        /// The transfer between two holds, chosen by what each of them actually is.
-        ///
-        /// A hold that names a place in the world goes through the same factory every other device
-        /// uses, so it inherits every kind of end that already works — ground columns, layered
-        /// piles, portable containers. A hold that is an inventory is written to directly.
-        /// </summary>
+        /// <summary>The transfer between two holds; see <see cref="TransferRouting"/>.</summary>
         private IItemTransfer TransferFor(ICargoHold source, ICargoHold target, PaperConditionsEvaluator evaluator)
         {
             switch (TransferRouting.Between(source, target))
@@ -503,7 +450,14 @@ namespace SignalsLink.src.signals.manageddock
                 }
 
                 case TransferRoute.BetweenInventories:
-                    return new InventoryToInventoryTransfer(Api, source.Inventory, target.Inventory, null, 0, 0, evaluator);
+                {
+                    InventoryToInventoryTransfer transfer =
+                        new InventoryToInventoryTransfer(Api, source.Inventory, target.Inventory, null, 0, 0, evaluator);
+
+                    transfer.CarriesLiquid = true;
+
+                    return transfer;
+                }
 
                 case TransferRoute.InventoryToPlace:
                 {
@@ -521,18 +475,21 @@ namespace SignalsLink.src.signals.manageddock
         }
 
         /// <summary>
-        /// Under a header the ground is already implied, so <c>target ground</c> has nothing left to
-        /// say and the player should not have to write it. Only where the goods really do lie on the
-        /// ground — putting things into a crate is not that.
+        /// Under a header the ground is implied, so the player need not write <c>target ground</c>.
+        /// Only where the goods really do lie on the ground.
         /// </summary>
         private static void Imply(IItemTransfer transfer, ICargoHold target)
         {
+            // The dock carries liquid; the chute and the damper do not, and the factory does not
+            // know which device asked it for a transfer.
+            if (transfer is InventoryToInventoryTransfer between) between.CarriesLiquid = true;
+
             if (transfer is not InventoryToWorldTransfer world || target is DockHold) return;
 
             world.GroundImplied = true;
 
-            // And it is a yard column, which holds it to two more rules: one kind of goods per
-            // column, and nothing that cannot be stacked into a pile. See InventoryToWorldTransfer.
+            // A yard column: one kind of goods per column, stacking goods only.
+            // See InventoryToWorldTransfer.
             world.YardColumn = true;
         }
 
@@ -564,14 +521,10 @@ namespace SignalsLink.src.signals.manageddock
             return evaluator;
         }
 
-        /// <summary>
-        /// Opens the crate. One undivided inventory, six rows of eight — the paper picks by what is
-        /// in a slot, never by where the slot is, so there is nothing to divide.
-        /// </summary>
+        /// <summary>Opens the crate: one undivided inventory, six rows of eight.</summary>
         public override bool OnPlayerRightClick(IPlayer byPlayer, BlockSelection blockSel)
         {
-            // The server has to be told the inventory is in use, or nothing that happens in the
-            // dialog reaches it.
+            // The server has to be told the inventory is in use.
             if (Api.Side == EnumAppSide.Server)
             {
                 byPlayer.InventoryManager?.OpenInventory(Inventory);
@@ -681,8 +634,7 @@ namespace SignalsLink.src.signals.manageddock
             unlimited = tree.GetBool("unlimited", false);
             remaining = tree.GetInt("remaining", 0);
 
-            // The edge detector of the Input pin is saved with the credit: without it the pin looks
-            // like it went 0 -> N after every load, which credits a batch nobody asked for.
+            // Saved with the credit, or the pin looks like it went 0 -> N after every load.
             signalState = (byte)tree.GetInt("signalState", 0);
             outputState = (byte)tree.GetInt("outputState", 0);
         }

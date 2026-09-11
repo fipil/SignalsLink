@@ -27,6 +27,8 @@ Pravidla:
 * České slovo "Řízená" překládej do angličtiny jako "Managed": Managed Chute, Managed Valve.
 * Název bloku „Překladiště“ (manageddock) překládej do angličtiny jako „Freight Dock“, nikoli „Transfer station“. Stejný název používej v názvu bloku, titulku i nápovědě.
 * „Překladiště“ zde znamená konkrétní nákladové stanoviště pro nakládku, vykládku a překládání zboží mezi dopravními prostředky a skladem. Anglické „dock“ zde označuje nakládací místo či rampu, nemusí jít o lodní dok. Nejde o přestupní stanici pro cestující, překladiště odpadu ani celý nákladní terminál.
+* České „skladová plocha“ (yard) překládej do angličtiny vždy jako „storage yard“ — v názvu bloku, ve zprávě i v nápovědě. Nikdy „yard surface“ ani „storage area“. Tam, kde je kontext zřejmý a místo málo (titulek dialogu, jméno na ceduli), stačí samotné „yard“.
+* V ostatních jazycích drž jeden termín pro skladovou plochu napříč všemi texty; nemíchej dvě slova pro tutéž věc podle toho, jestli jde o název bloku nebo o hlášku.
 * V ostatních jazycích použij přirozený místní název se stejným nákladovým významem a dodržuj jej ve všech textech tohoto bloku; nepřebírej automaticky anglický název.
 
 Výstup:

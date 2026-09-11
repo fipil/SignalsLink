@@ -8,25 +8,15 @@ using Vintagestory.API.Common;
 namespace SignalsLink.YTT.src.probe
 {
     /// <summary>
-    /// <b>Layer one and two of the safety net: what the other mod looks like from outside.</b>
+    /// Layers one and two of the safety net, and the ONE place allowed to know the other mod's
+    /// member names.
     ///
-    /// This bridge reads private fields of another mod, so the question is never whether it works
-    /// today - it is what happens the day the other author renames something. Answering that is
-    /// what this class is for, and it is the ONE place allowed to know those names.
+    /// Layer 1: a structural probe over TYPES from the class registry - nothing constructed,
+    /// nothing called, run once at startup. Layer 2: those names and types hashed into a
+    /// fingerprint and compared against the known-good ones.
     ///
-    /// <b>Layer 1 - a structural probe, without a single instance.</b> Types come from the class
-    /// registry, which is ordinary public API, and everything after that is reflection over TYPES,
-    /// not over objects. Nothing is constructed, nothing is called, no entity has to exist. It runs
-    /// once at startup and can therefore refuse work before a single item is at risk.
-    ///
-    /// <b>Layer 2 - a fingerprint.</b> The names and types found are hashed into a short string
-    /// which is compared against the ones this was written against. A new version of the other mod
-    /// whose surface is unchanged says so in the log and carries on; one that has moved is a loud
-    /// warning and a bridge that stands down.
-    ///
-    /// <b>Always bind with Public | NonPublic.</b> The day the author grants our request and makes
-    /// something public, binding to NonPublic alone would break the bridge - being given what we
-    /// asked for must not be what kills us.
+    /// <b>Always bind with Public | NonPublic</b>, or the day the author makes something public
+    /// the bridge breaks.
     /// </summary>
     public sealed class YttSurface
     {
@@ -36,15 +26,10 @@ namespace SignalsLink.YTT.src.probe
         private const BindingFlags Anywhere =
             BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic;
 
-        /// <summary>
-        /// The fingerprints this bridge was written against. A version whose surface hashes to one
-        /// of these is known good; anything else is reported, whether or not it turns out to work.
-        /// </summary>
+        /// <summary>Known-good surfaces. Anything else is reported, work or not.</summary>
         private static readonly HashSet<string> KnownGood = new HashSet<string>
         {
-            // YTT 0.9.0, read off the log line this very class prints on a first run. Filling it
-            // in from an observed version is the point: it means the next surprise is a real
-            // change in the other mod rather than a value nobody ever checked.
+            // YTT 0.9.0, read off the log line this class prints on a first run.
             "8ded53acfa62",
         };
 
@@ -70,10 +55,7 @@ namespace SignalsLink.YTT.src.probe
         /// <summary>How a locomotive is asked to write its engine down. See YttEngine.</summary>
         public MethodInfo RequestSyncMethod { get; private set; }
 
-        /// <summary>
-        /// Looks the other mod over. Never throws: a bridge that takes the game down on startup is
-        /// worse than one that says it cannot work.
-        /// </summary>
+        /// <summary>Never throws: standing down beats taking the game down on startup.</summary>
         public static YttSurface Probe(ICoreAPI api)
         {
             YttSurface surface = new YttSurface();
@@ -127,9 +109,7 @@ namespace SignalsLink.YTT.src.probe
 
             members.Add(Describe("StoragePoint.Inventory", StoragePointInventoryField.FieldType));
 
-            // Not called - the other mod calls it itself when a slot is marked dirty. It is probed
-            // because losing it would mean persistence had been redesigned, and THAT is the change
-            // that quietly eats a player's goods.
+            // Never called - probed because losing it would mean persistence was redesigned.
             MethodInfo store = storage.GetMethod("StoreInventories", Anywhere);
 
             if (store == null)
@@ -147,10 +127,7 @@ namespace SignalsLink.YTT.src.probe
             Surface = Fingerprint(members);
         }
 
-        /// <summary>
-        /// The steam engine, probed separately and allowed to fail on its own: not being able to
-        /// stoke a locomotive is no reason to refuse to unload a boxcar.
-        /// </summary>
+        /// <summary>Probed separately: no engine is no reason to refuse to unload a boxcar.</summary>
         private void LookAtEngine(ICoreAPI api, List<string> members)
         {
             SteamBehaviorType = api.ClassRegistry.GetEntityBehaviorClass(SteamBehavior);
@@ -189,8 +166,7 @@ namespace SignalsLink.YTT.src.probe
                 members.Add(Describe(name, found.ReturnType));
             }
 
-            // The engine does not save itself off a dirty slot the way the wagons do, so
-            // without this there is no honest way to put fuel in one.
+            // Without this there is no honest way to put fuel in an engine. See YttEngine.
             RequestSyncMethod = SteamBehaviorType.GetMethod("RequestSync", Anywhere);
             if (RequestSyncMethod == null) return;
 
@@ -200,9 +176,8 @@ namespace SignalsLink.YTT.src.probe
         }
 
         /// <summary>
-        /// One member, as a name and a type. The type matters as much as the name: a member that
-        /// keeps its name and changes its type is the dangerous case, because the lookup still
-        /// succeeds and the cast fails later, somewhere else.
+        /// Name and type. The type matters as much: a member that keeps its name and changes its
+        /// type still resolves, and fails later somewhere else.
         /// </summary>
         private static string Describe(string name, Type type)
         {
@@ -214,10 +189,7 @@ namespace SignalsLink.YTT.src.probe
             return type.IsGenericType && type.GetGenericTypeDefinition() == typeof(List<>);
         }
 
-        /// <summary>
-        /// Hashes what was found. Sorted first: reflection promises no order, and a fingerprint
-        /// that depended on one would cry wolf at random.
-        /// </summary>
+        /// <summary>Sorted first - reflection promises no order.</summary>
         public static string Fingerprint(IEnumerable<string> members)
         {
             List<string> sorted = new List<string>(members);

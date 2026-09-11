@@ -46,7 +46,7 @@
   "signalslink:block-yardtilestone-cobblestone-*": "Dlážděná skladová plocha",
   "signalslink:block-yardtilestone-drystone-*": "Kamenná skladová plocha",
   "signalslink:block-yardtilestone-polished-*": "Leštěná skladová plocha",
-  "signalslink:block-yardtileplank-*": "Prkenná plocha",
+  "signalslink:block-yardtileplank-*": "Prkenná skladová plocha",
   "signalslink:block-yardsign-*": "Cedule skladové plochy",
   "signalslink:yard-unfinished": "Rozestavěná skladová plocha - je potřeba aspoň {0} dlaždic",
   "signalslink:yard-size": "Skladová plocha - dlaždic: {0}",

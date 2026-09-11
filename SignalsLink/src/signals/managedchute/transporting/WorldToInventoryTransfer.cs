@@ -47,6 +47,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
 
             TransferOperationResult moved = TransferOperationResult.None;
             IDictionary<string, object> outputCtx = null;
+            IDictionary<string, object> actionCtx = null;
 
             DriverResult result = ConditionDriver.Run(
                 blocks,
@@ -67,7 +68,16 @@ namespace SignalsLink.src.signals.managedchute.transporting
                 block =>
                 {
                     moved = TryPickUp(block);
-                    return moved.Success;
+
+                    // Picking something up is this device's transfer; anything else the block says
+                    // to do follows it, and still runs when there was nothing to pick up. A paper
+                    // that seals the barrel because the ground is finally clear would otherwise be
+                    // stopped by the very emptiness it is waiting for.
+                    actionCtx ??= BuildDirectiveContext();
+
+                    bool acted = ConditionActions.RunOn(block, actionCtx);
+
+                    return moved.Success || acted;
                 });
 
             OutputSink?.ApplyOutput(0, result.GetOutput());

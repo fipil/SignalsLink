@@ -64,18 +64,64 @@ namespace SignalsLink.src.signals.managedchute.transporting
         /// </summary>
         private bool CanReachTarget(ItemSlot slot, PaperConditionDirectives directives)
         {
-            if (slot?.Itemstack?.Collectible?.GetType().Name == "ItemLiquidPortion") return false;
+            if (IsLooseLiquid(slot))
+            {
+                if (!CarriesLiquid) return false;
+
+                return Liquid.GetTargetSlot(slot.Itemstack, EffectiveTargetSlot(directives)) != null;
+            }
 
             return GetGenericTargetSlot(slot, EffectiveTargetSlot(directives)) != null;
         }
 
+        /// <summary>
+        /// May this device carry loose liquid at all? False by default: moving liquid without a
+        /// hose is what the chute and the damper are deliberately not for. The dock sets it.
+        /// </summary>
+        public bool CarriesLiquid { get; set; }
+
+        /// <summary>
+        /// Liquid out of a slot rather than out of a hose. Measured in litres and counted by the
+        /// target's capacity, so it cannot go through the ordinary stack path at all - which is
+        /// why it used to be refused outright.
+        /// </summary>
+        private static bool IsLooseLiquid(ItemSlot slot)
+        {
+            return slot?.Itemstack?.Collectible?.GetType().Name == "ItemLiquidPortion";
+        }
+
+        private LiquidTransferService Liquid => liquid ??= new LiquidTransferService(api, targetInv, targetPos);
+
+        private LiquidTransferService liquid;
+
+        private TransferOperationResult TryMoveLiquid(TransferSelection selection, ItemSlot src, decimal litres)
+        {
+            ItemSlot dst = Liquid.GetTargetSlot(src.Itemstack, EffectiveTargetSlot(selection.Directives));
+            if (dst == null) return TransferOperationResult.None;
+
+            TransferOperationResult result =
+                Liquid.TryMoveFromItemSlot(src, dst, litres, selection.Directives.IsAtomicAmount);
+
+            if (!result.Success) return TransferOperationResult.None;
+
+            src.MarkDirty();
+            dst.MarkDirty();
+            RunActionsAfterTransfer();
+
+            return result;
+        }
+
         public TransferOperationResult TryMove(ItemStackMoveOperation opTemplate)
         {
-            ExecuteMatchingActions();
-
             TransferSelection selection = GetTransferSelection();
             ItemSlot src = selection?.SourceSlot;
             if (src == null || src.Empty) return TransferOperationResult.None;
+
+            if (CarriesLiquid && IsLooseLiquid(src))
+            {
+                return TryMoveLiquid(selection, src,
+                    selection.Directives.Amount ?? opTemplate.RequestedQuantity);
+            }
 
             int effectiveTargetSlotSignal = EffectiveTargetSlot(selection.Directives);
             ItemSlot dst = GetGenericTargetSlot(src, effectiveTargetSlotSignal);
@@ -113,7 +159,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
             {
                 src.MarkDirty();
                 dst.MarkDirty();
-                ExecuteMatchingActions();
+                RunActionsAfterTransfer();
                 // Buffer model B: cost = pieces actually moved, so the Input buffer counts real
                 // items (an `amount M` block subtracts M, not a flat 1 — no more multiplier).
                 int triggerCost = moved;
@@ -265,46 +311,5 @@ namespace SignalsLink.src.signals.managedchute.transporting
             return result;
         }
 
-        /// <summary>
-        /// Explicit actions (`do seal`). These used to run for EVERY matching block, which made
-        /// them a third rail of their own outside the model. They are now what the action rail
-        /// says they are: the first block whose action actually does work wins, and the rest are
-        /// left alone.
-        /// </summary>
-        private void ExecuteMatchingActions()
-        {
-            if (!conditionsEvaluator.HasConditions) return;
-
-            IReadOnlyList<ConditionBlock> blocks = conditionsEvaluator.GetBlocks();
-            if (blocks == null || blocks.Count == 0) return;
-
-            var ctx = BuildActionContext();
-
-            for (int i = 0; i < blocks.Count; i++)
-            {
-                ConditionBlock block = blocks[i];
-
-                if (block.IsOutputBlock || !block.HasActions) continue;
-
-                // No stack is being carried here, so conditions are asked the plain "is this true
-                // of the inventory?" question rather than the slot-selection one.
-                if (!block.MatchesActionContext(null, ctx)) continue;
-
-                bool did = false;
-                for (int j = 0; j < block.Actions.Count; j++)
-                {
-                    if (block.Actions[j].Execute(ctx)) did = true;
-                }
-
-                if (did) return;
-            }
-        }
-
-        private IDictionary<string, object> BuildActionContext()
-        {
-            // Actions see exactly what conditions see - there is no reason for `do seal` to be
-            // answered against a different picture of the world than the block it sits in.
-            return BuildDirectiveContext();
-        }
     }
 }
