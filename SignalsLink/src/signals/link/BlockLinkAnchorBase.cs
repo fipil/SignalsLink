@@ -75,7 +75,7 @@ namespace SignalsLink.src.signals.link
         #region ILinkAnchor
         public Vec3f GetLinkAnchorPosInBlock(NodePos pos) => LinkAnchorUtil.GetAnchorPosInBlock(linkAnchors, pos.index);
 
-        public NodePos GetNodePosForLink(IWorldAccessor world, BlockSelection blockSel, NodePos posInit = null)
+        public virtual NodePos GetNodePosForLink(IWorldAccessor world, BlockSelection blockSel, NodePos posInit = null)
         {
             foreach (LinkAnchor box in linkAnchors)
             {
@@ -84,7 +84,7 @@ namespace SignalsLink.src.signals.link
             return null;
         }
 
-        public bool CanAttachLink(IWorldAccessor world, NodePos pos, NodePos posInit = null) => true;
+        public virtual bool CanAttachLink(IWorldAccessor world, NodePos pos, NodePos posInit = null) => true;
 
         public virtual bool AllowsMultipleLinks(NodePos pos) => false;
 

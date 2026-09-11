@@ -9,7 +9,7 @@ namespace SignalsLink.src.signals
     ///
     /// <list type="bullet">
     /// <item><b>Sneak + wrench</b> clears a pending Input buffer (ManagedChute, Valve, Damper).</item>
-    /// <item><b>Ctrl + wrench</b> cycles the room sealing mode of a ceiling Damper.</item>
+    /// <item><b>Ctrl + wrench</b> cycles the room sealing mode of a ceiling Damper or wall coupling.</item>
     /// </list>
     /// </summary>
     public class WrenchActionsBehavior : CollectibleBehavior

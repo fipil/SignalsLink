@@ -182,7 +182,10 @@ namespace SignalsLink.src.signals.link
             if (pos == null) return;
             exempt.Add(pos.Copy());
 
-            string sideCode = world.BlockAccessor.GetBlock(pos)?.Variant?["side"];
+            var block = world.BlockAccessor.GetBlock(pos);
+            // A passage embedded in a wall has no external mounting block to exempt.
+            if (block?.Attributes?["linkMountExemption"].AsBool(true) == false) return;
+            string sideCode = block?.Variant?["side"];
             BlockFacing side = sideCode != null ? BlockFacing.FromCode(sideCode) : null;
             if (side != null) exempt.Add(pos.AddCopy(side));
         }

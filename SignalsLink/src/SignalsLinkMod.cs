@@ -52,6 +52,8 @@ namespace SignalsLink.src
             // ManagedSleeve - rukav (predmety a bloky)
             api.RegisterBlockClass("SleeveDamper", typeof(SignalsLink.src.signals.sleeve.BlockSleeveDamper));
             api.RegisterBlockClass("SleeveCoupling", typeof(SignalsLink.src.signals.sleeve.BlockSleeveCoupling));
+            api.RegisterBlockClass("SleeveWallCoupling", typeof(SignalsLink.src.signals.sleeve.BlockSleeveWallCoupling));
+            api.RegisterBlockEntityClass("SleeveWallCoupling", typeof(SignalsLink.src.signals.sleeve.BESleeveWallCoupling));
 
 
             // Skladova plocha - dlazdice a cedule se jmenem
