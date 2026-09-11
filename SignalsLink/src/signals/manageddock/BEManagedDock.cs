@@ -296,6 +296,12 @@ namespace SignalsLink.src.signals.manageddock
             public string Code => "dock";
             public IInventory Inventory => dock.inventory;
             public BlockPos Pos => dock.Pos;
+
+            // A container that stands somewhere: both answers are true of it, and both are needed.
+            // The position is what lets a chute or a yard exchange with it exactly as with a chest;
+            // the slots are what lets a wagon, which has no position, exchange with it at all.
+            public bool IsContainer => true;
+
             public bool IsEmpty => dock.inventory.Empty;
 
             public void MarkDirty()
@@ -486,34 +492,32 @@ namespace SignalsLink.src.signals.manageddock
         /// </summary>
         private IItemTransfer TransferFor(ICargoHold source, ICargoHold target, PaperConditionsEvaluator evaluator)
         {
-            if (source.Pos != null && target.Pos != null)
+            switch (TransferRouting.Between(source, target))
             {
-                IItemTransfer transfer = ItemTransferFactory.CreateTransfer(Api, source.Pos, target.Pos, 0, 0, evaluator);
-                Imply(transfer, target);
+                case TransferRoute.BetweenPlaces:
+                {
+                    IItemTransfer transfer = ItemTransferFactory.CreateTransfer(Api, source.Pos, target.Pos, 0, 0, evaluator);
+                    Imply(transfer, target);
 
-                return transfer;
+                    return transfer;
+                }
+
+                case TransferRoute.BetweenInventories:
+                    return new InventoryToInventoryTransfer(Api, source.Inventory, target.Inventory, null, 0, 0, evaluator);
+
+                case TransferRoute.InventoryToPlace:
+                {
+                    InventoryToWorldTransfer transfer = new InventoryToWorldTransfer(Api, source.Inventory, 0, target.Pos, 0, evaluator);
+                    Imply(transfer, target);
+
+                    return transfer;
+                }
+
+                case TransferRoute.PlaceToInventory:
+                    return new WorldToInventoryTransfer(Api, source.Pos, target.Inventory, 0, evaluator);
             }
 
-            if (source.Pos != null)
-            {
-                if (target.Inventory == null) return null;
-
-                return new WorldToInventoryTransfer(Api, source.Pos, target.Inventory, 0, evaluator);
-            }
-
-            if (source.Inventory == null) return null;
-
-            if (target.Pos != null)
-            {
-                InventoryToWorldTransfer transfer = new InventoryToWorldTransfer(Api, source.Inventory, 0, target.Pos, 0, evaluator);
-                Imply(transfer, target);
-
-                return transfer;
-            }
-
-            if (target.Inventory == null) return null;
-
-            return new InventoryToInventoryTransfer(Api, source.Inventory, target.Inventory, null, 0, 0, evaluator);
+            return null;
         }
 
         /// <summary>

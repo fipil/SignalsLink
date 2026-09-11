@@ -38,6 +38,16 @@ namespace SignalsLink.src.signals.cargo
         BlockPos Pos { get; }
 
         /// <summary>
+        /// Are the slots the goods themselves, so that a transfer may write straight into them?
+        ///
+        /// Usually the same question as <see cref="Pos"/> being null, and the default says so. The
+        /// exception is a container that stands somewhere - the dock's own crate - which has both a
+        /// position and slots of its own; a paved tile has a position and only a READING of the
+        /// piles on it. Which of the two it is decides how a pair of holds moves goods.
+        /// </summary>
+        bool IsContainer => Pos == null;
+
+        /// <summary>
         /// Nothing to take from here. Asked before anything else, so it has to be CHEAP - most of a
         /// yard is empty most of the time, and the honest answer means walking a column of block
         /// entities.

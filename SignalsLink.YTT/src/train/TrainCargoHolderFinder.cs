@@ -68,9 +68,15 @@ namespace SignalsLink.YTT.src.train
             persistence.VerifyFirstTransfer(entity, snapshot);
         }
 
-        /// <summary>Taken before anything is moved, for the check afterwards.</summary>
+        /// <summary>
+        /// Taken before anything is moved, for the check afterwards - and only while that check is
+        /// still to come. Serialising every wagon standing at the platform, every tick, forever,
+        /// to answer a question that is asked once would be a strange way to pay for it.
+        /// </summary>
         public string TakeSnapshot()
         {
+            if (persistence?.NeedsSnapshot != true) return null;
+
             snapshot ??= persistence.Snapshot(entity);
             return snapshot;
         }

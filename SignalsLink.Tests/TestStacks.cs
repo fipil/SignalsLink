@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using Vintagestory.API.Common;
 using Vintagestory.API.Datastructures;
@@ -14,15 +15,15 @@ namespace SignalsLink.Tests
         // Without this, two stacks of the same code hold two different Collectible objects and the
         // transfer code - which compares them by reference before anything else - reads them as
         // different materials.
-        private static readonly Dictionary<string, Item> items = new Dictionary<string, Item>();
+        //
+        // Concurrent because test classes run in parallel and every one of them comes here. A plain
+        // dictionary survived most runs and then corrupted itself in an unrelated test, which is
+        // the worst way to spend an afternoon.
+        private static readonly ConcurrentDictionary<string, Item> items = new ConcurrentDictionary<string, Item>();
 
         public static ItemStack Item(string code, int stackSize = 1)
         {
-            if (!items.TryGetValue(code, out Item item))
-            {
-                item = new Item { Code = new AssetLocation(code) };
-                items[code] = item;
-            }
+            Item item = items.GetOrAdd(code, c => new Item { Code = new AssetLocation(c) });
 
             ItemStack stack = new ItemStack(item, stackSize);
 

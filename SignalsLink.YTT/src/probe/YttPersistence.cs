@@ -1,6 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Reflection;
+using System.Security.Cryptography;
+using System.Text;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
 using Vintagestory.API.Datastructures;
@@ -95,12 +98,41 @@ namespace SignalsLink.YTT.src.probe
             }
         }
 
+        /// <summary>
+        /// Is a snapshot still worth taking? Exactly one comparison is ever made, and until it has
+        /// been made every wagon in the yard would otherwise be serialised several times a second.
+        /// </summary>
+        public bool NeedsSnapshot => Trusted && !firstTransferVerified;
+
         /// <summary>What the vehicle's saved goods look like right now, or null when there is nothing.</summary>
         public string Snapshot(Entity entity)
         {
-            if (entity?.WatchedAttributes?[InventoryTreeKey] is not ITreeAttribute tree) return null;
+            return Describe(entity?.WatchedAttributes?[InventoryTreeKey] as ITreeAttribute);
+        }
 
-            return tree.ToString();
+        /// <summary>
+        /// The saved goods as one short string, for telling one moment from another.
+        ///
+        /// Taken from the BYTES the tree would be written to disk as. The obvious way to do this is
+        /// <c>ToString()</c>, and it is a trap: TreeAttribute does not override it, so every tree
+        /// that ever existed describes itself as "Vintagestory.API.Datastructures.TreeAttribute"
+        /// and no two snapshots can ever differ. A check that cannot see a change reports that
+        /// nothing changed, which here means accusing the other mod of losing a player's cargo.
+        /// </summary>
+        public static string Describe(ITreeAttribute tree)
+        {
+            if (tree == null) return null;
+
+            using MemoryStream buffer = new MemoryStream();
+
+            using (BinaryWriter writer = new BinaryWriter(buffer, Encoding.UTF8, true))
+            {
+                tree.ToBytes(writer);
+            }
+
+            using SHA1 sha = SHA1.Create();
+
+            return Convert.ToHexString(sha.ComputeHash(buffer.ToArray())).Substring(0, 12).ToLowerInvariant();
         }
 
         /// <summary>
