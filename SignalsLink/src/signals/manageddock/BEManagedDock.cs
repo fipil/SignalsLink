@@ -6,6 +6,7 @@ using signals.src.signalNetwork;
 using SignalsLink.src.signals.cargo;
 using SignalsLink.src.signals.managedchute.transporting;
 using SignalsLink.src.signals.paperConditions;
+using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Config;
 using Vintagestory.API.Datastructures;
@@ -204,16 +205,21 @@ namespace SignalsLink.src.signals.manageddock
             if (section.Direction == null) return null;      // no header: reported as a paper error
             if (!section.EndsAreComplete) return null;       // half-written header: likewise
 
-            IReadOnlyList<ICargoHold> sources = CompositeHold.Over(Api, EndOf(section, section.SourceTokens, ref sawHolder));
+            IReadOnlyList<ICargoHold> sources =
+                CompositeHold.Over(Api, EndOf(section, section.SourceTokens, ref sawHolder, out string sourceWhy));
+
+            // The far end is not looked for when the near one failed, and the trace must not
+            // report that as a second failure - it sent me hunting for a fault that was not there.
+            string targetWhy = "(not looked at)";
             IReadOnlyList<ICargoHold> targets = sources == null
                 ? null
-                : CompositeHold.Over(Api, EndOf(section, section.TargetTokens, ref sawHolder));
+                : CompositeHold.Over(Api, EndOf(section, section.TargetTokens, ref sawHolder, out targetWhy));
 
             if (ConditionDebug.Enabled)
             {
                 ConditionDebug.Log("section '" + section.Header + "'"
-                    + " source=" + Describe(section.SourceTokens, sources)
-                    + " target=" + Describe(section.TargetTokens, targets));
+                    + " source=" + Describe(section.SourceTokens, sources, sourceWhy)
+                    + " target=" + Describe(section.TargetTokens, targets, targetWhy));
             }
 
             if (sources == null || targets == null) return null;
@@ -227,12 +233,17 @@ namespace SignalsLink.src.signals.manageddock
             return new SectionPassResult(moved, output.HasOutput(), output.GetOutput());
         }
 
-        /// <summary>How one end of a header turned out, for the trace.</summary>
-        private static string Describe(IReadOnlyList<string> tokens, IReadOnlyList<ICargoHold> holds)
+        /// <summary>
+        /// How one end of a header turned out, for the trace.
+        ///
+        /// The reason is the point. "not found" and "found but not standing" are one word apart
+        /// and hours apart to debug.
+        /// </summary>
+        private static string Describe(IReadOnlyList<string> tokens, IReadOnlyList<ICargoHold> holds, string why)
         {
             string what = tokens.Count == 0 ? "<the crate>" : string.Join(" ", tokens);
 
-            if (holds == null) return what + " NOT FOUND";
+            if (why != null) return what + " " + why;
 
             // One hold names itself; several are only ever several because they were not composed.
             return what + " (" + (holds.Count == 1 ? holds[0].Code : holds.Count + " holds") + ")";
@@ -240,18 +251,36 @@ namespace SignalsLink.src.signals.manageddock
 
         /// <summary>
         /// This crate when the header said nothing there, otherwise the holder it named. Null when
-        /// that holder is missing or not ready.
+        /// that holder is missing or not ready; <paramref name="why"/> says which.
         /// </summary>
-        private IReadOnlyList<ICargoHold> EndOf(ConditionSection section, IReadOnlyList<string> tokens, ref bool sawHolder)
+        private IReadOnlyList<ICargoHold> EndOf(ConditionSection section, IReadOnlyList<string> tokens,
+            ref bool sawHolder, out string why)
         {
+            why = null;
+
             if (tokens.Count == 0) return ownHolds;
 
             ICargoHolder holder = FindHolder(section, tokens);
-            if (holder == null) return null;
+
+            if (holder == null)
+            {
+                why = "NOT FOUND";
+                return null;
+            }
 
             sawHolder = true;
 
-            if (!holder.IsReady || holder.Holds.Count == 0) return null;
+            if (!holder.IsReady)
+            {
+                why = "found but NOT READY (a train has to be standing)";
+                return null;
+            }
+
+            if (holder.Holds.Count == 0)
+            {
+                why = "found but has NO HOLDS";
+                return null;
+            }
 
             return holder.Holds;
         }
@@ -637,7 +666,16 @@ namespace SignalsLink.src.signals.manageddock
             // Saved with the credit, or the pin looks like it went 0 -> N after every load.
             signalState = (byte)tree.GetInt("signalState", 0);
             outputState = (byte)tree.GetInt("outputState", 0);
+
+            MeshAngle = tree.GetFloat("meshAngle", MeshAngle);
         }
+
+        /// <summary>
+        /// Which way it was set down, in radians. Kept here rather than in a block variant, the way
+        /// a crate or a chest does it: four codes cannot say "roughly facing me", and a variant per
+        /// angle would be a hundred blocks in the creative inventory.
+        /// </summary>
+        public float MeshAngle { get; set; }
 
         public override void ToTreeAttributes(ITreeAttribute tree)
         {
@@ -648,17 +686,38 @@ namespace SignalsLink.src.signals.manageddock
             tree.SetInt("remaining", remaining);
             tree.SetInt("signalState", signalState);
             tree.SetInt("outputState", outputState);
+            tree.SetFloat("meshAngle", MeshAngle);
         }
+
+        /// <summary>
+        /// Drawn from here rather than with the chunk, because the angle is this block's own. The
+        /// unrotated mesh is built once per wood and shared; only the turning is per crate.
+        /// </summary>
+        public override bool OnTesselation(ITerrainMeshPool mesher, ITesselatorAPI tesselator)
+        {
+            if (Block == null || Api is not ICoreClientAPI) return false;
+
+            tesselator.TesselateBlock(Block, out MeshData mesh);
+            if (mesh == null) return false;
+
+            // Drawn unturned while turning is off, so a crate set down before it was switched off
+            // does not stand at an angle with its wires running to the wrong corner.
+            mesher.AddMeshData(BlockManagedDock.Turning ? mesh.Rotate(Origin, 0, MeshAngle, 0) : mesh);
+
+            return true;
+        }
+
+        /// <summary>The middle of the block, which is what everything here turns about.</summary>
+        public static readonly Vec3f Origin = new Vec3f(0.5f, 0.5f, 0.5f);
 
         public override void GetBlockInfo(IPlayer forPlayer, StringBuilder dsc)
         {
             BlockSelection selection = forPlayer?.CurrentBlockSelection;
 
-            if (selection?.SelectionBoxIndex < SignalInputsCount)
-            {
-                base.GetBlockInfo(forPlayer, dsc);
-                return;
-            }
+            // Looking at a wire anchor should say what the anchor is and nothing else. Handing the
+            // base class the question here was the fault: this crate IS a container, so the base
+            // answered with everything in it.
+            if (selection?.SelectionBoxIndex < SignalInputsCount) return;
 
             if (unlimited)
             {

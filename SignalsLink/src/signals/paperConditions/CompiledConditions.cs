@@ -133,6 +133,48 @@ namespace SignalsLink.src.signals.paperConditions
         public bool CanSelectSource => conditions.Any(condition =>
             condition.Scope == InventoryConditionScope.Source && !condition.IsGate);
 
+        /// <summary>
+        /// How much of what this block carries the target already holds, for `keep N`.
+        ///
+        /// Counted with the same walk `in target … N-` uses, so the two can never disagree - which
+        /// matters, because a player will write both on one block and expect one number. A glob is
+        /// therefore a total: `game:ingot-*` counts every kind of ingot together.
+        /// </summary>
+        public decimal CountInTarget(IInventory inventory, IDictionary<string, object> ctx)
+        {
+            if (inventory == null) return 0;
+
+            decimal total = 0;
+
+            foreach (ItemSlot slot in inventory)
+            {
+                if (slot?.Empty != false) continue;
+
+                ItemStack stack = slot.Itemstack;
+                if (stack?.Collectible == null || !CarriesThis(stack, ctx)) continue;
+
+                total += InventoryConditionResolver.GetStackAmount(stack);
+            }
+
+            return total;
+        }
+
+        /// <summary>Would this block's source conditions accept that stack?</summary>
+        private bool CarriesThis(ItemStack stack, IDictionary<string, object> ctx)
+        {
+            bool said = false;
+
+            foreach (ScopedCondition condition in conditions)
+            {
+                if (condition.Scope != InventoryConditionScope.Source || condition.IsGate) continue;
+                if (!condition.Condition.Evaluate(stack, ctx)) return false;
+
+                said = true;
+            }
+
+            return said;
+        }
+
         // --- IDriverBlock: the little the unified driver needs to know about a block.
         public bool IsOutputBlock => HasExplicitOutput;
 

@@ -76,10 +76,26 @@ namespace SignalsLink.src.signals.paperConditions
         /// </summary>
         public bool TargetFirepit { get; }
 
+        /// <summary>
+        /// `keep N` — the level to hold in the target, counting what is already there.
+        ///
+        /// A LEVEL, not a batch, and that is the whole difference from <see cref="Amount"/>. The
+        /// block carries what is missing and stops once the target has N; when the target drops
+        /// below it again, it tops it back up. It is therefore also a gate: at the level, the block
+        /// does nothing and the one below it gets its turn.
+        ///
+        /// What counts as "N of what this block carries" is decided by the block's own source
+        /// conditions, through the same counter `in target … N-` uses - so a glob means the total
+        /// (`game:ingot-*` with `keep 17` is seventeen ingots, of any kind).
+        /// </summary>
+        public decimal? Keep { get; }
+
+        public bool HasKeep => Keep.HasValue;
+
         public bool HasTargetOverride => TargetSlot.HasValue || TargetLast || TargetGround || TargetFirepit;
         public bool HasAmountOverride => Amount.HasValue;
 
-        public PaperConditionDirectives(int? sourceSlot, int? targetSlot, bool targetGround, decimal? amount, bool requireTargetEmpty, int targetGroundHeight = 1, bool targetFirepit = false, bool sourceLast = false, bool targetLast = false, AmountMode amountMode = AmountMode.Exactly)
+        public PaperConditionDirectives(int? sourceSlot, int? targetSlot, bool targetGround, decimal? amount, bool requireTargetEmpty, int targetGroundHeight = 1, bool targetFirepit = false, bool sourceLast = false, bool targetLast = false, AmountMode amountMode = AmountMode.Exactly, decimal? keep = null)
         {
             AmountMode = amountMode;
             SourceSlot = sourceSlot;
@@ -91,6 +107,7 @@ namespace SignalsLink.src.signals.paperConditions
             Amount = amount;
             RequireTargetEmpty = requireTargetEmpty;
             TargetFirepit = targetFirepit;
+            Keep = keep;
         }
 
         public bool Evaluate(IDictionary<string, object> ctx)

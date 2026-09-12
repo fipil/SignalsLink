@@ -168,7 +168,8 @@ namespace SignalsLink.src.signals.paperConditions
             return totalAmount;
         }
 
-        private static decimal GetStackAmount(ItemStack stack)
+        /// <summary>How much one stack counts for - litres for a liquid, pieces for anything else.</summary>
+        public static decimal GetStackAmount(ItemStack stack)
         {
             var props = BlockLiquidContainerBase.GetContainableProps(stack);
             if (props != null && props.ItemsPerLitre > 0)

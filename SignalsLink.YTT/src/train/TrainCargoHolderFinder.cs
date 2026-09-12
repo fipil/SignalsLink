@@ -16,17 +16,24 @@ namespace SignalsLink.YTT.src.train
         /// <summary>Narrows the search to one side of the device, or null for all round.</summary>
         public BlockFacing Direction { get; }
 
+        /// <summary>
+        /// How many blocks away the track is, counted by stepping off the device - <c>north5</c>.
+        /// Null means any distance on that side.
+        /// </summary>
+        public int? Distance { get; }
+
         /// <summary>Which vehicle, counted from the head of the convoy; null for all of them.</summary>
         public int? WagonIndex { get; }
 
         /// <summary>Only the steam engine's own holds - its fuel and its water.</summary>
         public bool EngineOnly { get; }
 
-        public TrainSelector(BlockFacing direction, int? wagonIndex, bool engineOnly)
+        public TrainSelector(BlockFacing direction, int? wagonIndex, bool engineOnly, int? distance = null)
         {
             Direction = direction;
             WagonIndex = wagonIndex;
             EngineOnly = engineOnly;
+            Distance = distance;
         }
     }
 
@@ -122,6 +129,7 @@ namespace SignalsLink.YTT.src.train
         private readonly YttStorage storage;
         private readonly YttEngine engine;
         private readonly StandingWatch standing = new StandingWatch();
+        private readonly VehicleSightings sightings = new VehicleSightings();
 
         /// <summary>
         /// The probe is left out when only the header vocabulary is wanted - reading a header must
@@ -148,16 +156,26 @@ namespace SignalsLink.YTT.src.train
             selector = null;
 
             BlockFacing direction = null;
+            int? distance = null;
             int? wagon = null;
             bool engine = false;
 
             foreach (string token in tokens ?? Array.Empty<string>())
             {
-                BlockFacing facing = ParseDirection(token);
+                BlockFacing facing = ParseDirection(token, out int? steps);
 
                 if (facing != null)
                 {
+                    // Out of reach can never match, and a header that matches nothing is the
+                    // hardest kind to debug. Say so while the paper is being written.
+                    if (steps != null && (steps < 1 || steps > SearchRadius))
+                    {
+                        errors?.Add(token, "holderspec");
+                        return false;
+                    }
+
                     direction = facing;
+                    distance = steps;
                     continue;
                 }
 
@@ -178,14 +196,35 @@ namespace SignalsLink.YTT.src.train
                 return false;
             }
 
-            selector = new TrainSelector(direction, wagon, engine);
+            selector = new TrainSelector(direction, wagon, engine, distance);
             return true;
         }
 
-        /// <summary>North, south, east, west - or just their first letter.</summary>
-        private static BlockFacing ParseDirection(string token)
+        /// <summary>
+        /// North, south, east, west - or just their first letter - and optionally how many blocks
+        /// away, written against the word: <c>north5</c>.
+        ///
+        /// Against the word, not after it, because <c>train north 5</c> would be arguing with the
+        /// wagon number over the same token.
+        /// </summary>
+        private static BlockFacing ParseDirection(string token, out int? steps)
         {
-            switch (token.ToLowerInvariant())
+            steps = null;
+
+            string word = token.ToLowerInvariant();
+            int digits = word.Length;
+
+            while (digits > 0 && char.IsDigit(word[digits - 1])) digits--;
+
+            if (digits < word.Length && digits > 0)
+            {
+                if (!int.TryParse(word.Substring(digits), out int parsed)) return null;
+
+                steps = parsed;
+                word = word.Substring(0, digits);
+            }
+
+            switch (word)
             {
                 case "n": return BlockFacing.NORTH;
                 case "s": return BlockFacing.SOUTH;
@@ -193,7 +232,7 @@ namespace SignalsLink.YTT.src.train
                 case "w": return BlockFacing.WEST;
             }
 
-            BlockFacing facing = BlockFacing.FromCode(token.ToLowerInvariant());
+            BlockFacing facing = BlockFacing.FromCode(word);
 
             return facing == BlockFacing.UP || facing == BlockFacing.DOWN ? null : facing;
         }
@@ -208,22 +247,22 @@ namespace SignalsLink.YTT.src.train
             TrainSelector wanted = selector as TrainSelector ?? new TrainSelector(null, null, false);
             Vec3d centre = devicePos.ToVec3d().Add(0.5, 0.5, 0.5);
 
-            Entity[] found = world.GetEntitiesAround(centre, SearchRadius, SearchRadius, IsVehicle);
-            if (found == null || found.Length == 0) return false;
+            IReadOnlyList<Entity> found = VehiclesNear(world, devicePos, centre);
+            if (found.Count == 0) return false;
 
+            long now = world.ElapsedMilliseconds;
             List<Entity> vehicles = new List<Entity>();
-            HashSet<long> seen = new HashSet<long>();
 
             foreach (Entity entity in found)
             {
-                if (!Reaches(entity, centre, wanted.Direction)) continue;
+                if (!Reaches(entity, centre, wanted)) continue;
 
                 vehicles.Add(entity);
-                seen.Add(entity.EntityId);
             }
 
-            // Or every train that ever passed stays in memory for the life of the world.
-            standing.Forget(seen);
+            // By age, not by what this one device can see: one finder serves every dock, and
+            // clearing the rest wiped the other dock's train on every tick.
+            standing.Forget(now);
 
             if (vehicles.Count == 0) return false;
 
@@ -262,7 +301,7 @@ namespace SignalsLink.YTT.src.train
                 if (holds.Count == before) continue;
 
                 // Every vehicle in use has to be standing; half a train stopped is not stopped.
-                if (!standing.IsStanding(entity.EntityId, entity.Pos.X, entity.Pos.Y, entity.Pos.Z))
+                if (!standing.IsStanding(entity.EntityId, entity.Pos.X, entity.Pos.Y, entity.Pos.Z, now))
                 {
                     ready = false;
                 }
@@ -275,6 +314,41 @@ namespace SignalsLink.YTT.src.train
 
             holder = train;
             return true;
+        }
+
+        /// <summary>
+        /// Every vehicle within reach of the device, from the last search or from a new one.
+        ///
+        /// What is remembered is ids, and only for half a second. They are exchanged for live
+        /// entities on every call, so a position sample is always fresh and a vehicle that has
+        /// gone comes back null instead of coming back writable.
+        ///
+        /// The search itself depends on nothing but the device's position - direction, wagon index
+        /// and `engine` are applied to its result - so one sighting serves whatever the header says.
+        /// </summary>
+        private IReadOnlyList<Entity> VehiclesNear(IWorldAccessor world, BlockPos devicePos, Vec3d centre)
+        {
+            long now = world.ElapsedMilliseconds;
+            long[] remembered = sightings.Recall(devicePos, now, id => world.GetEntityById(id) != null);
+
+            if (remembered != null)
+            {
+                List<Entity> live = new List<Entity>(remembered.Length);
+
+                foreach (long id in remembered) live.Add(world.GetEntityById(id));
+
+                return live;
+            }
+
+            Entity[] found = world.GetEntitiesAround(centre, SearchRadius, SearchRadius, IsVehicle)
+                ?? Array.Empty<Entity>();
+
+            long[] ids = new long[found.Length];
+            for (int i = 0; i < found.Length; i++) ids[i] = found[i].EntityId;
+
+            sightings.Remember(devicePos, now, ids);
+
+            return found;
         }
 
         /// <summary>
@@ -317,27 +391,19 @@ namespace SignalsLink.YTT.src.train
         }
 
         /// <summary>
-        /// Does the vehicle reach the named side? Tested on its BODY, not its middle - a boxcar is
-        /// seven blocks long.
+        /// Does the vehicle reach where the header says? Tested on its BODY, not its middle - a
+        /// boxcar is seven blocks long. See <see cref="TrainReach"/>.
         /// </summary>
-        private static bool Reaches(Entity entity, Vec3d centre, BlockFacing direction)
+        private static bool Reaches(Entity entity, Vec3d centre, TrainSelector wanted)
         {
-            if (direction == null) return true;
+            if (wanted.Direction == null) return true;
 
             Cuboidf box = entity.SelectionBox ?? new Cuboidf(-0.5f, 0, -0.5f, 0.5f, 1, 0.5f);
 
-            double minX = entity.Pos.X + box.X1;
-            double maxX = entity.Pos.X + box.X2;
-            double minZ = entity.Pos.Z + box.Z1;
-            double maxZ = entity.Pos.Z + box.Z2;
-
-            // North is -Z in Vintage Story.
-            if (direction == BlockFacing.NORTH) return minZ < centre.Z;
-            if (direction == BlockFacing.SOUTH) return maxZ > centre.Z;
-            if (direction == BlockFacing.WEST) return minX < centre.X;
-            if (direction == BlockFacing.EAST) return maxX > centre.X;
-
-            return true;
+            return TrainReach.Covers(
+                entity.Pos.X + box.X1, entity.Pos.X + box.X2,
+                entity.Pos.Z + box.Z1, entity.Pos.Z + box.Z2,
+                centre, wanted.Direction, wanted.Distance);
         }
 
         private static double Distance(Entity entity, Vec3d centre)

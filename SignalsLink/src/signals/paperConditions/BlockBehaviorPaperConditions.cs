@@ -65,6 +65,27 @@ namespace SignalsLink.src.signals.paperConditions
     {
         public BlockBehaviorPaperConditions(Block block) : base(block) { }
 
+        /// <summary>
+        /// Is this about to throw away orders the device already had? Then nothing is written
+        /// here: the client opens the dialog and the server waits for the answer to come back.
+        ///
+        /// Both sides return true together, so neither writes - the check is on the text alone and
+        /// the text is the same on both.
+        /// </summary>
+        private static bool AskFirst(IWorldAccessor world, IPlayer byPlayer, BlockSelection blockSel,
+            IPaperConditionsHost host, string wanted)
+        {
+            if (!PaperConfirmMod.WouldLoseSomething(host.ConditionsText, wanted)) return false;
+
+            if (world.Side == EnumAppSide.Client)
+            {
+                world.Api.ModLoader.GetModSystem<PaperConfirmMod>()
+                    ?.Ask(blockSel.Position, host.ConditionsText, wanted);
+            }
+
+            return true;
+        }
+
         public override bool OnBlockInteractStart(IWorldAccessor world, IPlayer byPlayer, BlockSelection blockSel, ref EnumHandling handling)
         {
             // Let base / other behaviors do their thing first
@@ -94,6 +115,12 @@ namespace SignalsLink.src.signals.paperConditions
                 // Shift + empty paper = clear
                 if (string.IsNullOrWhiteSpace(paperText) && sneaking)
                 {
+                    if (AskFirst(world, byPlayer, blockSel, be, null))
+                    {
+                        handling = EnumHandling.PreventDefault;
+                        return true;
+                    }
+
                     be.ConditionsText = null;
                     slot.MarkDirty();
                     handling = EnumHandling.PreventDefault;
@@ -103,6 +130,12 @@ namespace SignalsLink.src.signals.paperConditions
                 // Non-empty paper -> store conditions
                 if (!string.IsNullOrWhiteSpace(paperText))
                 {
+                    if (AskFirst(world, byPlayer, blockSel, be, paperText))
+                    {
+                        handling = EnumHandling.PreventDefault;
+                        return true;
+                    }
+
                     be.ConditionsText = paperText;
                     slot.MarkDirty();
                     ReportPaperErrors(world, byPlayer, paperText, be);

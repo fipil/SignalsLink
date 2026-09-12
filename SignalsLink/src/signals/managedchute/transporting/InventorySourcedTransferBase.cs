@@ -209,12 +209,41 @@ namespace SignalsLink.src.signals.managedchute.transporting
 
                 if (!block.TryMatch(slot.Itemstack, ctx)) continue;
                 if (!block.Directives.Evaluate(directiveCtx)) continue;
+
+                // `keep N` is a level, so it is also a gate: at the level this block has nothing
+                // to do and the walk carries on to the one below it.
+                decimal? room = RoomFor(block, directiveCtx);
+                if (room is <= 0) continue;
+
                 if (!CanTransferSelection(slot, block.Directives)) continue;
 
-                return new TransferSelection(slot, block.Directives);
+                return new TransferSelection(slot, block.Directives, room);
             }
 
             return null;
+        }
+
+        /// <summary>
+        /// The batch, held down to what `keep N` still wants. A level is not a batch: it never
+        /// waits for a full one and it never overshoots.
+        /// </summary>
+        protected static int CappedByKeep(int quantity, TransferSelection selection)
+        {
+            if (selection?.Room == null) return quantity;
+            if (selection.Room.Value <= 0) return 0;
+
+            int room = (int)decimal.Truncate(selection.Room.Value);
+
+            return quantity > room ? room : quantity;
+        }
+
+        /// <summary>What `keep N` still wants in the target, or null when the block said no such thing.</summary>
+        private static decimal? RoomFor(ConditionBlock block, IDictionary<string, object> ctx)
+        {
+            if (!block.Directives.HasKeep) return null;
+            if (ctx == null || !ctx.TryGetValue("targetInventory", out object obj)) return null;
+
+            return block.Directives.Keep.Value - block.CountInTarget(obj as IInventory, ctx);
         }
 
         private TransferSelection SelectWithoutPaper()

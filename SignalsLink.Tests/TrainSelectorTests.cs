@@ -40,6 +40,41 @@ namespace SignalsLink.Tests
             Assert.Equal(Parse(word).Direction, Parse(letter).Direction);
         }
 
+        [Theory]
+        [InlineData("north5", 5)]
+        [InlineData("n5", 5)]
+        [InlineData("WEST12", 12)]
+        public void A_number_against_the_direction_is_how_many_blocks_away(string token, int steps)
+        {
+            Assert.Equal(steps, Parse(token).Distance);
+        }
+
+        [Fact]
+        public void A_bare_direction_asks_for_no_particular_distance()
+        {
+            Assert.Null(Parse("north").Distance);
+        }
+
+        [Fact]
+        public void The_distance_does_not_eat_the_wagon_number()
+        {
+            // Why it is written against the word and not after it: `train north 5` would leave
+            // the 5 arguing with the wagon number over the same token.
+            TrainSelector selector = Parse("north5", "2");
+
+            Assert.Equal(5, selector.Distance);
+            Assert.Equal(2, selector.WagonIndex);
+        }
+
+        [Fact]
+        public void A_distance_out_of_reach_is_a_paper_error()
+        {
+            // Past the search radius it could never match, and a header that matches nothing is
+            // the hardest kind to debug.
+            Assert.False(new TrainCargoHolderFinder().TryParseHeader(new[] { "north99" }, null, out _));
+            Assert.False(new TrainCargoHolderFinder().TryParseHeader(new[] { "north0" }, null, out _));
+        }
+
         [Fact]
         public void A_number_is_the_wagon_counted_from_the_head()
         {

@@ -48,12 +48,7 @@
     "z1": 0.0625,
     "x2": 0.4375,
     "y2": 0.96875,
-    "z2": 0.1875,
-    "rotateYbytype": {
-     "*-*-east": 270,
-     "*-*-south": 180,
-     "*-*-west": 90
-    }
+    "z2": 0.1875
    },
    {
     "index": 1,
@@ -63,12 +58,7 @@
     "z1": 0.0625,
     "x2": 0.6875,
     "y2": 0.96875,
-    "z2": 0.1875,
-    "rotateYbytype": {
-     "*-*-east": 270,
-     "*-*-south": 180,
-     "*-*-west": 90
-    }
+    "z2": 0.1875
    }
   ]
  },
@@ -90,40 +80,18 @@
     "walnut",
     "purpleheart"
    ]
-  },
-  {
-   "code": "side",
-   "loadFromProperties": "abstract/horizontalorientation"
   }
  ],
  "creativeinventory": {
   "general": [
-   "*-north"
+   "*"
   ],
   "signalslink": [
-   "*-north"
+   "*"
   ]
  },
- "shapebytype": {
-  "*-*-north": {
-   "base": "block/dock/manageddock",
-   "rotateY": 0
-  },
-  "*-*-east": {
-   "base": "block/dock/manageddock",
-   "rotateY": 270
-  },
-  "*-*-south": {
-   "base": "block/dock/manageddock",
-   "rotateY": 180
-  },
-  "*-*-west": {
-   "base": "block/dock/manageddock",
-   "rotateY": 90
-  }
- },
  "texturesbytype": {
-  "*-aged-*": {
+  "*-aged": {
    "sides": {
     "base": "game:block/wood/crate/aged-sides"
    },
@@ -137,7 +105,7 @@
     "base": "block/normal3"
    }
   },
-  "*-birch-*": {
+  "*-birch": {
    "sides": {
     "base": "game:block/wood/crate/birch-sides"
    },
@@ -151,7 +119,7 @@
     "base": "block/normal3"
    }
   },
-  "*-oak-*": {
+  "*-oak": {
    "sides": {
     "base": "game:block/wood/crate/oak-sides"
    },
@@ -165,7 +133,7 @@
     "base": "block/normal3"
    }
   },
-  "*-maple-*": {
+  "*-maple": {
    "sides": {
     "base": "game:block/wood/crate/maple-sides"
    },
@@ -179,7 +147,7 @@
     "base": "block/normal3"
    }
   },
-  "*-pine-*": {
+  "*-pine": {
    "sides": {
     "base": "game:block/wood/crate/pine-sides"
    },
@@ -193,7 +161,7 @@
     "base": "block/normal3"
    }
   },
-  "*-acacia-*": {
+  "*-acacia": {
    "sides": {
     "base": "game:block/wood/crate/acacia-sides"
    },
@@ -207,7 +175,7 @@
     "base": "block/normal3"
    }
   },
-  "*-kapok-*": {
+  "*-kapok": {
    "sides": {
     "base": "game:block/wood/crate/kapok-sides"
    },
@@ -221,7 +189,7 @@
     "base": "block/normal3"
    }
   },
-  "*-baldcypress-*": {
+  "*-baldcypress": {
    "sides": {
     "base": "game:block/wood/crate/baldcypress-sides"
    },
@@ -235,7 +203,7 @@
     "base": "block/normal3"
    }
   },
-  "*-larch-*": {
+  "*-larch": {
    "sides": {
     "base": "game:block/wood/crate/larch-sides"
    },
@@ -249,7 +217,7 @@
     "base": "block/normal3"
    }
   },
-  "*-redwood-*": {
+  "*-redwood": {
    "sides": {
     "base": "game:block/wood/crate/redwood-sides"
    },
@@ -263,7 +231,7 @@
     "base": "block/normal3"
    }
   },
-  "*-ebony-*": {
+  "*-ebony": {
    "sides": {
     "base": "game:block/wood/crate/ebony-sides"
    },
@@ -277,7 +245,7 @@
     "base": "block/normal3"
    }
   },
-  "*-walnut-*": {
+  "*-walnut": {
    "sides": {
     "base": "game:block/wood/crate/walnut-sides"
    },
@@ -291,7 +259,7 @@
     "base": "block/normal3"
    }
   },
-  "*-purpleheart-*": {
+  "*-purpleheart": {
    "sides": {
     "base": "game:block/wood/crate/purpleheart-sides"
    },
@@ -324,12 +292,7 @@
    "z1": 0.0,
    "x2": 1.0,
    "y2": 0.8125,
-   "z2": 1.0,
-   "rotateYByType": {
-    "*-*-east": 270,
-    "*-*-south": 180,
-    "*-*-west": 90
-   }
+   "z2": 1.0
   },
   {
    "x1": 0.0,
@@ -337,12 +300,7 @@
    "z1": 0.0,
    "x2": 0.25,
    "y2": 1.0,
-   "z2": 1.0,
-   "rotateYByType": {
-    "*-*-east": 270,
-    "*-*-south": 180,
-    "*-*-west": 90
-   }
+   "z2": 1.0
   },
   {
    "x1": 0.75,
@@ -350,12 +308,7 @@
    "z1": 0.0,
    "x2": 1.0,
    "y2": 1.0,
-   "z2": 1.0,
-   "rotateYByType": {
-    "*-*-east": 270,
-    "*-*-south": 180,
-    "*-*-west": 90
-   }
+   "z2": 1.0
   },
   {
    "x1": 0.25,
@@ -363,12 +316,7 @@
    "z1": 0.28125,
    "x2": 0.75,
    "y2": 1.0,
-   "z2": 1.0,
-   "rotateYByType": {
-    "*-*-east": 270,
-    "*-*-south": 180,
-    "*-*-west": 90
-   }
+   "z2": 1.0
   }
  ],
  "sounds": {
@@ -377,5 +325,8 @@
   "hit": "game:block/planks",
   "walk": "game:walk/wood"
  },
- "materialDensity": 600
+ "materialDensity": 600,
+ "shape": {
+  "base": "block/dock/manageddock"
+ }
 }

@@ -21,16 +21,31 @@ namespace SignalsLink.src.signals.paperConditions
     {
         public const string Marker = "# debug";
 
+        /// <summary>The same thing written without the space, which is what most people type.</summary>
+        public const string TightMarker = "#debug";
+
+        /// <summary>A pass that says the same as the one before is repeated only this often.</summary>
+        public const long HeartbeatMs = 10000;
+
         private static ILogger logger;
         private static string tag;
+        private static List<string> pass;
+
+        private static readonly Dictionary<string, Repeat> lastPass = new Dictionary<string, Repeat>();
 
         /// <summary>True while a traced pass is running. Check before building log strings.</summary>
         public static bool Enabled => logger != null;
 
-        /// <summary>Does this paper ask to be traced?</summary>
+        /// <summary>
+        /// Does this paper ask to be traced? Asked on every tick of every device, so it stays two
+        /// plain comparisons rather than a pattern.
+        /// </summary>
         public static bool IsMarked(string conditionsText)
         {
-            return conditionsText != null && conditionsText.Contains(Marker, StringComparison.OrdinalIgnoreCase);
+            if (conditionsText == null) return false;
+
+            return conditionsText.Contains(Marker, StringComparison.OrdinalIgnoreCase)
+                || conditionsText.Contains(TightMarker, StringComparison.OrdinalIgnoreCase);
         }
 
         /// <summary>Opens a traced scope. Always pair with <see cref="End"/> in a finally block.</summary>
@@ -38,17 +53,68 @@ namespace SignalsLink.src.signals.paperConditions
         {
             logger = apiLogger;
             tag = scopeTag;
+            pass = apiLogger == null ? null : new List<string>();
         }
 
+        /// <summary>
+        /// Closes the scope and writes the pass out - but only if it says something the last one
+        /// did not.
+        ///
+        /// A device traces itself five to twenty times a second, and a device that is stuck says
+        /// the same thing every time. Printing all of it buries the one line where something
+        /// changed, which is the line the trace exists for. An unchanged pass is repeated once
+        /// every <see cref="HeartbeatMs"/> so it is still visible that the device is alive.
+        /// </summary>
         public static void End()
         {
+            if (logger != null && pass != null && pass.Count > 0) Flush();
+
             logger = null;
             tag = null;
+            pass = null;
+        }
+
+        private static void Flush()
+        {
+            string text = string.Join("\n", pass);
+            long now = Environment.TickCount64;
+
+            if (lastPass.TryGetValue(tag, out Repeat before) && before.Text == text)
+            {
+                if (now - before.At < HeartbeatMs)
+                {
+                    lastPass[tag] = new Repeat(text, before.At, before.Skipped + 1);
+                    return;
+                }
+
+                if (before.Skipped > 0)
+                {
+                    logger.Notification("[sl-dbg " + tag + "] (unchanged, " + before.Skipped + " passes)");
+                }
+            }
+
+            foreach (string line in pass) logger.Notification("[sl-dbg " + tag + "] " + line);
+
+            lastPass[tag] = new Repeat(text, now, 0);
         }
 
         public static void Log(string message)
         {
-            logger?.Notification("[sl-dbg " + tag + "] " + message);
+            pass?.Add(message);
+        }
+
+        private readonly struct Repeat
+        {
+            public Repeat(string text, long at, int skipped)
+            {
+                Text = text;
+                At = at;
+                Skipped = skipped;
+            }
+
+            public string Text { get; }
+            public long At { get; }
+            public int Skipped { get; }
         }
 
         /// <summary>What an inventory holds, short enough to read in a log line.</summary>

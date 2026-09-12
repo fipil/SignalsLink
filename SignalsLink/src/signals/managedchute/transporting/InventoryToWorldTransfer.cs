@@ -159,6 +159,10 @@ namespace SignalsLink.src.signals.managedchute.transporting
                 if (available > groundBatch) groundBatch = available;
             }
 
+            // `keep N` has the last word: it is the level on the ground, not a batch size.
+            groundBatch = CappedByKeep(groundBatch, selection);
+            if (groundBatch <= 0) return 0;
+
             bool groundAtomic = selection.Directives.IsAtomicAmount;
 
             // Without `target ground` we still top up an existing ground-storage pile at the target.

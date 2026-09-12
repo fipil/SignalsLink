@@ -59,6 +59,7 @@ namespace SignalsLink.src
             // Skladova plocha - dlazdice a cedule se jmenem
             api.RegisterBlockClass("ManagedDock", typeof(SignalsLink.src.signals.manageddock.BlockManagedDock));
             api.RegisterBlockEntityClass("BlockEntityManagedDock", typeof(SignalsLink.src.signals.manageddock.BEManagedDock));
+            api.RegisterBlockEntityClass("BlockEntityChunkAnchor", typeof(SignalsLink.src.signals.chunkanchor.BEChunkAnchor));
             api.RegisterBlockClass("YardTile", typeof(SignalsLink.src.signals.yard.BlockYardTile));
             api.RegisterBlockClass("YardSign", typeof(SignalsLink.src.signals.yard.BlockYardSign));
             api.RegisterBlockEntityClass("YardSign", typeof(SignalsLink.src.signals.yard.BEYardSign));

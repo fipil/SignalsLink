@@ -68,6 +68,7 @@ namespace SignalsLink.src.signals.paperConditions
                 int targetGroundHeight = 1;
                 bool requireTargetEmpty = false;
                 decimal? amount = null;
+                decimal? keep = null;
                 AmountMode amountMode = AmountMode.Exactly;
                 InventoryConditionScope currentScope = InventoryConditionScope.Source;
                 int explicitSourceLine = 0;
@@ -180,6 +181,19 @@ namespace SignalsLink.src.signals.paperConditions
                         continue;
                     }
 
+                    if (TryParseKeepDirective(line, out decimal parsedKeep))
+                    {
+                        keep = parsedKeep;
+                        continue;
+                    }
+
+                    if (line.StartsWith("keep", StringComparison.OrdinalIgnoreCase)
+                        && (line.Length == 4 || line[4] == ' '))
+                    {
+                        sink?.Add(line, "keep");
+                        continue;
+                    }
+
                     if (TryParseAction(line, out IConditionAction action))
                     {
                         actions.Add(action);
@@ -209,7 +223,7 @@ namespace SignalsLink.src.signals.paperConditions
                     // OutputValue keeps the effective default 15 when `output` is not
                     // specified — for the BlockSensor (no behavior change). HasExplicitOutput
                     // records whether `output` was actually specified; ManagedHose reads it (see spec §6).
-                    ConditionBlock block = new ConditionBlock(conditions, outputValue ?? 15, hasExplicitOutput, new PaperConditionDirectives(sourceSlot, targetSlot, targetGround, amount, requireTargetEmpty, targetGroundHeight, targetFirepit, sourceLast, targetLast, amountMode), actions, p[0].Number);
+                    ConditionBlock block = new ConditionBlock(conditions, outputValue ?? 15, hasExplicitOutput, new PaperConditionDirectives(sourceSlot, targetSlot, targetGround, amount, requireTargetEmpty, targetGroundHeight, targetFirepit, sourceLast, targetLast, amountMode, keep), actions, p[0].Number);
                     blocks.Add(block);
 
                     if (current != null)
@@ -507,6 +521,24 @@ namespace SignalsLink.src.signals.paperConditions
             const NumberStyles plainNumber = NumberStyles.AllowDecimalPoint | NumberStyles.AllowThousands;
 
             return decimal.TryParse(number, plainNumber, CultureInfo.InvariantCulture, out amount) && amount >= 0;
+        }
+
+        /// <summary>
+        /// `keep N` — the level to hold in the target. No marks: a level is not a batch, so there
+        /// is no "at least" or "at most" to say about it.
+        /// </summary>
+        private static bool TryParseKeepDirective(string line, out decimal keep)
+        {
+            keep = 0;
+
+            if (!line.StartsWith("keep ", StringComparison.OrdinalIgnoreCase)) return false;
+
+            var parts = line.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length != 2) return false;
+
+            const NumberStyles plainNumber = NumberStyles.AllowDecimalPoint | NumberStyles.AllowThousands;
+
+            return decimal.TryParse(parts[1], plainNumber, CultureInfo.InvariantCulture, out keep) && keep >= 0;
         }
 
         private static readonly Regex validNameRegex = new Regex("^[A-Za-z0-9_]+$", RegexOptions.Compiled);

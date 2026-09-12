@@ -146,6 +146,11 @@ namespace SignalsLink.src.signals.managedchute.transporting
                 requestedQuantity = available;
             }
 
+            // `keep N` has the last word, whatever the batch says: it is the level in the target,
+            // and overshooting it is the one thing it exists to prevent.
+            requestedQuantity = CappedByKeep(requestedQuantity, selection);
+            if (requestedQuantity <= 0) return TransferOperationResult.None;
+
             ItemStackMoveOperation op = new ItemStackMoveOperation(
                 opTemplate.World,
                 opTemplate.MouseButton,

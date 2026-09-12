@@ -158,6 +158,9 @@ namespace SignalsLink.src.signals.managedchute.transporting
                 if (directives.TakesEverythingAvailable && available > batch) batch = available;
             }
 
+            batch = CappedByKeep(batch, directives, block);
+            if (batch <= 0) return TransferOperationResult.None;
+
             int targetSignal = EffectiveTargetSlot(directives);
             int movedTotal = 0;
 
@@ -236,6 +239,9 @@ namespace SignalsLink.src.signals.managedchute.transporting
                 if (directives.IsAtomicAmount && available < requested) return TransferOperationResult.None;
                 if (directives.TakesEverythingAvailable && available > requested) requested = available;
             }
+
+            requested = CappedByKeep(requested, directives, paperBlock);
+            if (requested <= 0) return TransferOperationResult.None;
 
             int targetSignal = EffectiveTargetSlot(directives);
             int movedTotal = 0;
@@ -609,6 +615,22 @@ namespace SignalsLink.src.signals.managedchute.transporting
 
             directives = block.Directives;
             return true;
+        }
+
+        /// <summary>
+        /// The batch, held down to what `keep N` still wants in the target. A level is not a
+        /// batch: it never waits for a full one and it never overshoots.
+        /// </summary>
+        private int CappedByKeep(int quantity, PaperConditionDirectives directives, ConditionBlock block)
+        {
+            if (directives?.HasKeep != true || block == null) return quantity;
+
+            decimal room = directives.Keep.Value - block.CountInTarget(targetInv, BuildDirectiveContext());
+            if (room <= 0) return 0;
+
+            int capped = (int)decimal.Truncate(room);
+
+            return quantity > capped ? capped : quantity;
         }
 
         private IDictionary<string, object> BuildDirectiveContext()

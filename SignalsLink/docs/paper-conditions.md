@@ -91,7 +91,7 @@ Pravidlo je stejné pro všechny, ale **zdroj**, **cíl**, defaultní akce a pod
 
 - **Přenáší předměty.** Zdroj = inventář bloku na vstupní straně, cíl = inventář bloku na výstupní straně.
 - Defaultní akce: **přenos předmětů**.
-- Podporuje direktivy `source` / `target` / `amount` / `ifEmpty` a akci `do seal`.
+- Podporuje direktivy `source` / `target` / `amount` / `keep` / `ifEmpty` a akci `do seal`.
 - **Má výstupní pin** (kotva Output), takže `output` podporuje stejně jako ostatní. Už postavené žlaby ve starých světech novou kotvu dostanou samy při načtení.
 - Zdroj prochází po slotech (podle signálu zdrojového slotu) a hledá kandidátní předmět.
 
@@ -99,7 +99,7 @@ Pravidlo je stejné pro všechny, ale **zdroj**, **cíl**, defaultní akce a pod
 
 - **Přenáší kapaliny.** Zdroj = vzdálený konec hadice (hostitel protějšího ventilu, nebo **Sání** = voda ve světě), cíl = **vlastní** hostitelský blok ventilu.
 - Defaultní akce: **přenos kapalin**.
-- Podporuje `source` / `target` / `amount` / `ifEmpty`, `do seal` **i `output`** (výstupní pin, hodnoty 0–15).
+- Podporuje `source` / `target` / `amount` / `keep` (v litrech) / `ifEmpty`, `do seal` **i `output`** (výstupní pin, hodnoty 0–15).
 - `source N` u ventilu vybírá slot kapaliny na vzdáleném konci hadice.
 - Kapalinová specifika: **lávu nepřenáší** a **horkou vodu v cíli ochladí** na okolní teplotu.
 - Vyhodnocuje jen když ventil zrovna drží **token střídání** (dva protilehlé ventily se ve čerpání střídají).
@@ -109,7 +109,7 @@ Pravidlo je stejné pro všechny, ale **zdroj**, **cíl**, defaultní akce a pod
 - **Nic nepřenáší — dává signál na výstup.** „Zdroj" = sledovaný blok / jeho inventář; **cíl ve smyslu přenosu neexistuje**.
 - Defaultní akce: **výstup signálu** (bez `output` vrací výchozí hodnotu — např. úroveň zaplnění nebo číslo slotu).
 - Podporuje `output` (včetně `output .` = číslo shodného slotu).
-- **Přenosové direktivy (`target` / `amount` / `ifEmpty`) ani `do seal` nedávají smysl** — senzor nepřenáší.
+- **Přenosové direktivy (`target` / `amount` / `keep` / `ifEmpty`) ani `do seal` nedávají smysl** — senzor nepřenáší.
 
 ## Co se vyhodnocuje ve výchozím stavu
 
@@ -533,6 +533,25 @@ Chování na konci/okrajích se liší podle média:
 - **ManagedChute (předměty):** dávka je **atomická** — žlab spojí odpovídající stejné stacky z více zdrojových slotů a `amount` přenese jen tehdy, když je celé množství ve zdroji k dispozici; jinak se nespustí. Poslední naplnění dávky se dokončí celé (buffer může přetéct o méně než `amount`).
 - **ManagedHose (kapaliny):** přenese se **až** `amount` — kolik zdroj má, cíl pojme a zbývající buffer dovolí (klidně i méně). Např. buffer 3 a `amount 6` → přeteče jen 3.
 - **Hromádky na zemi (`target ground`):** dávka je **atomická** a funguje oběma směry. Při pokládání se posbírá i z několika zdrojových slotů (zadané množství bývá větší než velikost stacku) a při naplnění hromádky přeteče do vyšší v sloupci. Při sbírání se naopak bere přes několik pater odshora a v cílovém inventáři se rozloží do tolika slotů, kolik je potřeba.
+
+### `keep <hladina>`
+
+Hladina, kterou se má **držet v cíli** — ne velikost dávky.
+
+```text
+game:beeswax
+keep 17
+```
+
+Blok doveze jen to, co do 17 chybí. Jakmile je tam 17, blok **nedělá nic a propadne na další** — `keep` je tedy zároveň brána. Když z cíle něco ubude, doplní se to zpátky.
+
+**Rozdíl proti `amount`:** `amount N` je dávka a je atomická (buď celá, nebo nic). `keep N` je hladina: **nikdy nečeká** na plnou dávku (jsou-li k dispozici tři kusy z chybějících deseti, veze tři) a **nikdy nepřestřelí**. Obojí jde napsat naráz — `keep 17` + `amount 5` znamená „po pěti, dokud jich tam není sedmnáct".
+
+**Co se počítá.** Všechno, co ten blok veze, tedy `game:ingot-*` s `keep 17` je sedmnáct ingotů dohromady, jedno jakých. Je to **stejné počítání**, jakým se ptá podmínka `in target game:ingot-* 17-` (`ConditionBlock.CountInTarget` volá `InventoryConditionResolver.GetStackAmount` po slotech), takže si ty dva řádky nemohou protiřečit. U kapalin se počítá v litrech.
+
+**Past, kvůli které to vzniklo.** Podmínka `in target game:beeswax 17-` je **brána, ne strop** — řekne jen, jestli blok platí. Překladiště bez `amount` veze *všechno, co odpovídá*, takže pod otevřenou bránou naložilo rovnou celý stack. Brána říká *kdy*, `keep` říká *kolik*.
+
+Podporuje: žlab, klapka, překladiště, ventil (v litrech). Nedává smysl u `target firepit` a u kovadliny — to jsou stavební kroky, ne hladiny.
 
 ## `output` — akce nastavení výstupu
 

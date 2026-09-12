@@ -1,0 +1,21 @@
+{
+ "code": "chunkanchor",
+ "entityclass": "BlockEntityChunkAnchor",
+ "attributes": {
+  "chunkRadius": 3
+ },
+ "blockmaterial": "Metal",
+ "creativeinventory": {
+  "general": [ "*" ],
+  "signalslink": [ "*" ]
+ },
+ "drawtype": "cube",
+ "textures": {
+  "all": { "base": "block/brass" }
+ },
+ "lightAbsorption": 0,
+ "replaceable": 500,
+ "resistance": 3.5,
+ "sidesolid": { "all": true },
+ "sideopaque": { "all": true }
+}

@@ -91,7 +91,8 @@ namespace SignalsLink.src.signals.hose
             {
                 if (!actionsBlocked && sourceLiquid != null)
                 {
-                    result.Transfer = DefaultAction(sourceLiquid, srcSlot, worldWaterPos, PaperConditionDirectives.Empty, litresRequested, ctx);
+                    // No paper, so no block and nothing to keep: the plain default transfer.
+                    result.Transfer = DefaultAction(sourceLiquid, srcSlot, worldWaterPos, null, litresRequested, ctx);
                 }
 
                 result.OutputComputed = true;
@@ -163,15 +164,29 @@ namespace SignalsLink.src.signals.hose
 
             // 2) Default action - transfer liquid (or discard in drain mode), shaped by directives.
             if (sourceLiquid == null) return null;
-            TransferOperationResult res = DefaultAction(sourceLiquid, srcSlot, worldWaterPos, block.Directives, litresRequested, ctx);
+            TransferOperationResult res = DefaultAction(sourceLiquid, srcSlot, worldWaterPos, block, litresRequested, ctx);
             return res.Success ? new Result { Transfer = res } : (Result?)null;
         }
 
-        private TransferOperationResult DefaultAction(ItemStack sourceLiquid, ItemSlot srcSlot, BlockPos worldWaterPos, PaperConditionDirectives directives, decimal litresRequested, IDictionary<string, object> ctx)
+        private TransferOperationResult DefaultAction(ItemStack sourceLiquid, ItemSlot srcSlot, BlockPos worldWaterPos, ConditionBlock block, decimal litresRequested, IDictionary<string, object> ctx)
         {
             return discard
-                ? DiscardLiquid(sourceLiquid, srcSlot, worldWaterPos, directives, litresRequested)
-                : TransferLiquid(sourceLiquid, srcSlot, worldWaterPos, directives, litresRequested, ctx);
+                ? DiscardLiquid(sourceLiquid, srcSlot, worldWaterPos, block?.Directives ?? PaperConditionDirectives.Empty, litresRequested)
+                : TransferLiquid(sourceLiquid, srcSlot, worldWaterPos, block, litresRequested, ctx);
+        }
+
+        /// <summary>
+        /// Litres, held down to what `keep N` still wants in the target. On a valve the level is
+        /// in litres, which is what the shared counter already measures liquid in.
+        /// </summary>
+        private decimal CappedByKeep(decimal litres, ConditionBlock block, IDictionary<string, object> ctx)
+        {
+            if (block?.Directives?.HasKeep != true) return litres;
+
+            decimal room = block.Directives.Keep.Value - block.CountInTarget(targetInv, ctx);
+            if (room <= 0) return 0;
+
+            return litres > room ? room : litres;
         }
 
         /// <summary>
@@ -179,8 +194,10 @@ namespace SignalsLink.src.signals.hose
         /// empty, target full, `ifEmpty` not satisfied, or the source is lava). On success cools
         /// the deposited liquid to ambient (hot water arrives cold).
         /// </summary>
-        private TransferOperationResult TransferLiquid(ItemStack sourceLiquid, ItemSlot srcSlot, BlockPos worldWaterPos, PaperConditionDirectives directives, decimal litresRequested, IDictionary<string, object> ctx)
+        private TransferOperationResult TransferLiquid(ItemStack sourceLiquid, ItemSlot srcSlot, BlockPos worldWaterPos, ConditionBlock paperBlock, decimal litresRequested, IDictionary<string, object> ctx)
         {
+            PaperConditionDirectives directives = paperBlock?.Directives ?? PaperConditionDirectives.Empty;
+
             // ManagedHose rule: never transfer lava.
             if (IsLava(sourceLiquid)) return TransferOperationResult.None;
 
@@ -193,6 +210,9 @@ namespace SignalsLink.src.signals.hose
 
             // Cap by the remaining buffer: `amount M` never moves more than what is left to move.
             decimal litres = System.Math.Min(directives.Amount ?? litresRequested, maxTransfer);
+
+            litres = CappedByKeep(litres, paperBlock, ctx);
+            if (litres <= 0) return TransferOperationResult.None;
 
             TransferOperationResult res = srcSlot != null
                 ? liquid.TryMoveFromItemSlot(srcSlot, dst, litres, directives.IsAtomicAmount)
