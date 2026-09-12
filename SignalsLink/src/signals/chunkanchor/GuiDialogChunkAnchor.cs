@@ -210,9 +210,14 @@ namespace SignalsLink.src.signals.chunkanchor
             return line;
         }
 
+        /// <summary>
+        /// The grid hands over a finished network packet, not something to be serialised. It has to
+        /// go through the overload that takes it as it stands - the generic one tries to write it
+        /// out with protobuf and throws "no contract can be inferred: Packet_Client".
+        /// </summary>
         private void SendSlotPacket(object packet)
         {
-            capi.Network.SendBlockEntityPacket(pos, (int)BEChunkAnchor.PacketIdSlot, packet);
+            capi.Network.SendBlockEntityPacket(pos.X, pos.Y, pos.Z, packet);
         }
 
         /// <summary>
@@ -250,6 +255,12 @@ namespace SignalsLink.src.signals.chunkanchor
         public override void OnGuiClosed()
         {
             base.OnGuiClosed();
+
+            // Hand the slot back, the way any container dialog does. Without it the inventory stays
+            // open for this player and the next one to touch it gets a rollback.
+            SingleComposer.GetSlotGrid(SlotKey)?.OnGuiClosed(capi);
+
+            capi.Network.SendBlockEntityPacket(pos.X, pos.Y, pos.Z, (int)EnumBlockEntityPacketId.Close);
 
             // Hand the terrain tiles back, or the real world map keeps redrawing ground nobody is
             // looking at any more. Not while the world map itself is open - they are its tiles then.

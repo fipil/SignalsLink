@@ -392,9 +392,6 @@ namespace SignalsLink.src.signals.chunkanchor
 
         public const int PacketIdSetSwitch = 1044;
 
-        /// <summary>Vanilla's own inventory traffic, so the slot behaves like any other.</summary>
-        public const int PacketIdSlot = 1045;
-
         /// <summary>How long one gear lasts at the present census, in in-game days.</summary>
         public double DaysPerGear()
         {
@@ -442,9 +439,18 @@ namespace SignalsLink.src.signals.chunkanchor
 
         public override void OnReceivedClientPacket(IPlayer fromPlayer, int packetid, byte[] data)
         {
-            if (packetid == PacketIdSlot)
+            // Everything under 1000 is the inventory talking to itself - the slot grid's own
+            // traffic, with ids the grid chose. 1001 is the dialog saying it has closed.
+            if (packetid < 1000)
             {
                 gearSlot?.InvNetworkUtil?.HandleClientPacket(fromPlayer, packetid, data);
+                Api.World.BlockAccessor.GetChunkAtBlockPos(Pos)?.MarkModified();
+                return;
+            }
+
+            if (packetid == (int)EnumBlockEntityPacketId.Close)
+            {
+                fromPlayer?.InventoryManager?.CloseInventory(gearSlot);
                 return;
             }
 
