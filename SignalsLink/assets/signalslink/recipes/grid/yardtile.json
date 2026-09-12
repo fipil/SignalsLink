@@ -1,0 +1,129 @@
+[
+	{
+		"ingredientPattern": "SSS,SMS,SSS",
+		"ingredients": {
+			"S": { "type": "block", "code": "game:stonebricks-{material}" },
+			"M": { "type": "item", "code": "game:mortar" }
+		},
+		"allowedVariants": {
+			"material": ["andesite", "basalt", "chalk", "chert", "claystone", "conglomerate", "granite", "limestone", "peridotite", "phyllite", "sandstone", "shale", "slate", "bauxite"]
+		},
+		"width": 3,
+		"height": 3,
+		"output": { "type": "block", "code": "signalslink:yardtilestone-brick-{material}", "quantity": 8 }
+	},
+	{
+		"ingredientPattern": "SSS,SMS,SSS",
+		"ingredients": {
+			"S": { "type": "block", "code": "game:agedstonebricks-{material}" },
+			"M": { "type": "item", "code": "game:mortar" }
+		},
+		"allowedVariants": {
+			"material": ["andesite", "basalt", "chalk", "chert", "claystone", "conglomerate", "granite", "limestone", "peridotite", "phyllite", "sandstone", "shale", "slate", "bauxite"]
+		},
+		"width": 3,
+		"height": 3,
+		"output": { "type": "block", "code": "signalslink:yardtilestone-agedbrick-{material}", "quantity": 8 }
+	},
+	{
+		"ingredientPattern": "SSS,SMS,SSS",
+		"ingredients": {
+			"S": { "type": "block", "code": "game:crackedstonebricks-{material}" },
+			"M": { "type": "item", "code": "game:mortar" }
+		},
+		"allowedVariants": {
+			"material": ["andesite", "basalt", "chalk", "chert", "claystone", "conglomerate", "granite", "limestone", "peridotite", "phyllite", "sandstone", "shale", "slate", "bauxite"]
+		},
+		"width": 3,
+		"height": 3,
+		"output": { "type": "block", "code": "signalslink:yardtilestone-crackedbrick-{material}", "quantity": 8 }
+	},
+	{
+		"ingredientPattern": "SSS,SMS,SSS",
+		"ingredients": {
+			"S": { "type": "block", "code": "game:cobblestone-{material}" },
+			"M": { "type": "item", "code": "game:mortar" }
+		},
+		"allowedVariants": {
+			"material": ["andesite", "basalt", "chalk", "chert", "claystone", "conglomerate", "granite", "limestone", "peridotite", "phyllite", "sandstone", "shale", "slate", "bauxite"]
+		},
+		"width": 3,
+		"height": 3,
+		"output": { "type": "block", "code": "signalslink:yardtilestone-cobblestone-{material}", "quantity": 8 }
+	},
+	{
+		"ingredientPattern": "SSS,SMS,SSS",
+		"ingredients": {
+			"S": { "type": "block", "code": "game:cobblestonefan-{material}-north" },
+			"M": { "type": "item", "code": "game:mortar" }
+		},
+		"allowedVariants": {
+			"material": ["andesite", "basalt", "chalk", "chert", "claystone", "conglomerate", "granite", "limestone", "peridotite", "phyllite", "sandstone", "shale", "slate", "bauxite"]
+		},
+		"width": 3,
+		"height": 3,
+		"output": { "type": "block", "code": "signalslink:yardtilestone-fan-{material}", "quantity": 8 }
+	},
+	{
+		"ingredientPattern": "SSS,SMS,SSS",
+		"ingredients": {
+			"S": { "type": "block", "code": "game:drystone-{material}" },
+			"M": { "type": "item", "code": "game:mortar" }
+		},
+		"allowedVariants": {
+			"material": ["andesite", "basalt", "chalk", "chert", "claystone", "conglomerate", "granite", "limestone", "peridotite", "phyllite", "sandstone", "shale", "slate", "bauxite"]
+		},
+		"width": 3,
+		"height": 3,
+		"output": { "type": "block", "code": "signalslink:yardtilestone-drystone-{material}", "quantity": 8 }
+	},
+	{
+		"ingredientPattern": "SSS,SMS,SSS",
+		"ingredients": {
+			"S": { "type": "block", "code": "game:rockpolished-{material}" },
+			"M": { "type": "item", "code": "game:mortar" }
+		},
+		"allowedVariants": {
+			"material": ["andesite", "basalt", "chalk", "chert", "claystone", "conglomerate", "granite", "limestone", "peridotite", "phyllite", "sandstone", "shale", "slate", "bauxite"]
+		},
+		"width": 3,
+		"height": 3,
+		"output": { "type": "block", "code": "signalslink:yardtilestone-polished-{material}", "quantity": 8 }
+	},
+	{
+		"ingredientPattern": "SSS,SMS,SSS",
+		"ingredients": {
+			"S": { "type": "block", "code": "game:rock-{material}" },
+			"M": { "type": "item", "code": "game:mortar" }
+		},
+		"allowedVariants": {
+			"material": ["andesite", "basalt", "chalk", "chert", "claystone", "conglomerate", "granite", "limestone", "peridotite", "phyllite", "sandstone", "shale", "slate", "bauxite"]
+		},
+		"width": 3,
+		"height": 3,
+		"output": { "type": "block", "code": "signalslink:yardtilestone-raw-{material}", "quantity": 8 }
+	},
+	{
+		"ingredientPattern": "SSS,SMS,SSS",
+		"ingredients": {
+			"S": { "type": "block", "code": "game:stonepath-free" },
+			"M": { "type": "item", "code": "game:mortar" }
+		},
+		"width": 3,
+		"height": 3,
+		"output": { "type": "block", "code": "signalslink:yardtilepath", "quantity": 8 }
+	},
+	{
+		"ingredientPattern": "PPP,PNP,PPP",
+		"ingredients": {
+			"P": { "type": "item", "code": "game:plank-{material}" },
+			"N": { "type": "item", "code": "game:metalnailsandstrips-*" }
+		},
+		"allowedVariants": {
+			"material": ["birch", "oak", "maple", "pine", "acacia", "kapok", "baldcypress", "larch", "redwood", "ebony", "walnut", "purpleheart", "aged"]
+		},
+		"width": 3,
+		"height": 3,
+		"output": { "type": "block", "code": "signalslink:yardtileplank-{material}", "quantity": 8 }
+	}
+]

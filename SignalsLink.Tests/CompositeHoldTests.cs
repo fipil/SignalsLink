@@ -83,11 +83,15 @@ namespace SignalsLink.Tests
         }
 
         [Fact]
-        public void Only_the_wagon_that_changed_is_told_it_changed()
+        public void Every_hold_is_told_that_goods_moved()
         {
-            // The reason this matters is two rooms away: the bridge to the other mod checks, after
-            // the first transfer, that what a vehicle SAVES really changed. An untouched wagon told
-            // it was written to would fail that check and stand the whole bridge down.
+            // This used to pass the word on only to holds whose inventory reported IsDirty, to
+            // spare the YTT bridge a false alarm. That flag means "needs resending to the client",
+            // not "was written to" - so a cart's chest, which nobody syncs, was never told and
+            // never wrote its cargo down. It looked like it loaded and the chest stayed empty.
+            //
+            // "Goods moved in this holder" is the only thing that can honestly be said from here.
+            // The false alarm is prevented where it happens, in YttPersistence.
             FakeHold written = Wagon(2);
             FakeHold untouched = Wagon(2);
 
@@ -97,7 +101,7 @@ namespace SignalsLink.Tests
             CompositeHold.Over(null, new ICargoHold[] { written, untouched })[0].MarkDirty();
 
             Assert.Equal(1, written.DirtyCalls);
-            Assert.Equal(0, untouched.DirtyCalls);
+            Assert.Equal(1, untouched.DirtyCalls);
         }
 
         private static FakeHold Wagon(int slots)

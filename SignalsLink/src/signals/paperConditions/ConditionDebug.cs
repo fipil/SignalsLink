@@ -27,9 +27,33 @@ namespace SignalsLink.src.signals.paperConditions
         /// <summary>A pass that says the same as the one before is repeated only this often.</summary>
         public const long HeartbeatMs = 10000;
 
+        /// <summary>
+        /// And no device writes more often than this, whatever it has to say.
+        ///
+        /// Suppressing only IDENTICAL passes is not enough: a dock walking a yard names a
+        /// different column every tick, so nothing ever matched and the trace wrote several
+        /// hundred lines a second - enough to make a singleplayer game stutter. Two passes a
+        /// second is plenty to watch a device think.
+        /// </summary>
+        public const long MinIntervalMs = 500;
+
+        /// <summary>
+        /// And one pass never writes more than this many lines, plus its last one.
+        ///
+        /// A dock names every pair it tried and every column it read, so a yard of twelve tiles
+        /// costs three dozen lines - and a yard may have four hundred. Capping the rate alone was
+        /// not enough: two passes a second of that is still a hundred lines a second.
+        ///
+        /// The last line is always kept, because a device says what came of the whole pass at the
+        /// end of it, and cutting the tail off would throw away the one line worth reading.
+        /// </summary>
+        public const int MaxLinesPerPass = 8;
+
         private static ILogger logger;
         private static string tag;
         private static List<string> pass;
+        private static int dropped;
+        private static string lastLine;
 
         private static readonly Dictionary<string, Repeat> lastPass = new Dictionary<string, Repeat>();
 
@@ -54,6 +78,8 @@ namespace SignalsLink.src.signals.paperConditions
             logger = apiLogger;
             tag = scopeTag;
             pass = apiLogger == null ? null : new List<string>();
+            dropped = 0;
+            lastLine = null;
         }
 
         /// <summary>
@@ -72,24 +98,38 @@ namespace SignalsLink.src.signals.paperConditions
             logger = null;
             tag = null;
             pass = null;
+            dropped = 0;
+            lastLine = null;
         }
 
         private static void Flush()
         {
+            if (dropped > 0)
+            {
+                pass.Add("(" + dropped + " lines of this pass not shown)");
+                pass.Add(lastLine);
+            }
+
             string text = string.Join("\n", pass);
             long now = Environment.TickCount64;
 
-            if (lastPass.TryGetValue(tag, out Repeat before) && before.Text == text)
+            bool known = lastPass.TryGetValue(tag, out Repeat before);
+
+            if (known)
             {
-                if (now - before.At < HeartbeatMs)
+                // The same thing again is worth repeating only now and then; anything at all is
+                // worth writing at most twice a second.
+                long quiet = before.Text == text ? HeartbeatMs : MinIntervalMs;
+
+                if (now - before.At < quiet)
                 {
-                    lastPass[tag] = new Repeat(text, before.At, before.Skipped + 1);
+                    lastPass[tag] = new Repeat(before.Text, before.At, before.Skipped + 1);
                     return;
                 }
 
                 if (before.Skipped > 0)
                 {
-                    logger.Notification("[sl-dbg " + tag + "] (unchanged, " + before.Skipped + " passes)");
+                    logger.Notification("[sl-dbg " + tag + "] (" + before.Skipped + " passes not shown)");
                 }
             }
 
@@ -100,7 +140,18 @@ namespace SignalsLink.src.signals.paperConditions
 
         public static void Log(string message)
         {
-            pass?.Add(message);
+            if (pass == null) return;
+
+            if (pass.Count >= MaxLinesPerPass)
+            {
+                // Held rather than thrown away: whichever turns out to be last is the one worth
+                // keeping, and only End knows which that was.
+                if (lastLine != null) dropped++;
+                lastLine = message;
+                return;
+            }
+
+            pass.Add(message);
         }
 
         private readonly struct Repeat

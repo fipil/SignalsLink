@@ -241,7 +241,11 @@ namespace SignalsLink.YTT.src.train
         {
             holder = null;
 
-            if (surface?.CanCarry != true || persistence?.Trusted != true) return false;
+            // Deliberately NOT gated on the probe or on the save check. Those belong to the other
+            // mod's own inventories, and each of the three readers below asks for itself: wagons
+            // and the engine stand down when the surface moved, a cart carries a vanilla bag and
+            // has nothing to stand down from. So a YTT update that moves a private field costs the
+            // wagons and leaves the carts working.
             if (world?.Api is not Vintagestory.API.Server.ICoreServerAPI) return false;
 
             TrainSelector wanted = selector as TrainSelector ?? new TrainSelector(null, null, false);
@@ -296,6 +300,11 @@ namespace SignalsLink.YTT.src.train
                     {
                         holds.Add(new TrainHold(persistence, entity, inventory, "wagon" + index++));
                     }
+
+                    // A cart carries its load in a chest hung on it, which is a vanilla held bag
+                    // rather than anything of the other mod's - so it goes through neither the
+                    // reflection nor the save check those wagons need.
+                    holds.AddRange(YttCart.HoldsOf(entity));
                 }
 
                 if (holds.Count == before) continue;
@@ -364,7 +373,8 @@ namespace SignalsLink.YTT.src.train
             if (entity?.Code?.Domain != Domain) return false;
 
             return entity.GetBehavior(YttSurface.StorageBehavior) != null
-                || entity.GetBehavior(YttSurface.SteamBehavior) != null;
+                || entity.GetBehavior(YttSurface.SteamBehavior) != null
+                || YttCart.IsCart(entity);
         }
 
         private static bool Matches(Entity entity, TrainSelector wanted)

@@ -9,8 +9,10 @@
     "agedbrick",
     "crackedbrick",
     "cobblestone",
+    "fan",
     "drystone",
-    "polished"
+    "polished",
+    "raw"
    ]
   },
   {
@@ -61,6 +63,11 @@
     "base": "game:block/stone/cobblestone/{rock}1"
    }
   },
+  "*-fan-*": {
+   "tile": {
+    "base": "game:block/stone/cobblestone/fanned/{rock}1"
+   }
+  },
   "*-drystone-*": {
    "tile": {
     "base": "game:block/stone/drystone/{rock}1"
@@ -69,6 +76,11 @@
   "*-polished-*": {
    "tile": {
     "base": "game:block/stone/polishedrock/{rock}"
+   }
+  },
+  "*-raw-*": {
+   "tile": {
+    "base": "game:block/stone/rock/{rock}1"
    }
   }
  },

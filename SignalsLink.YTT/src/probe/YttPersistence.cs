@@ -110,18 +110,33 @@ namespace SignalsLink.YTT.src.probe
         {
             if (firstTransferVerified || !Trusted) return;
 
-            firstTransferVerified = true;
             string after = Snapshot(entity);
 
             if (before != null && before == after)
             {
+                // One vehicle that did not change proves nothing: several are marked at once and
+                // most of them were simply not the one written to. Only a long run of them saying
+                // the same is evidence that nothing is being saved at all.
+                if (++unchanged < UnchangedBeforeDistrust) return;
+
                 Distrust("goods were moved in or out of a vehicle and nothing was written down."
                     + " Whatever is on that vehicle now will be lost when the world is reloaded.");
                 return;
             }
 
+            firstTransferVerified = true;
+
             api.Logger.Notification("[SignalsLink.YTT] first transfer was saved; carrying on.");
         }
+
+        /// <summary>
+        /// How many vehicles may be marked, and show no change, before this concludes that nothing
+        /// is being saved. High enough to survive a train being marked whole, low enough that a
+        /// mod which really stopped saving is caught within seconds.
+        /// </summary>
+        private const int UnchangedBeforeDistrust = 40;
+
+        private int unchanged;
 
         private bool Distrust(string what)
         {
