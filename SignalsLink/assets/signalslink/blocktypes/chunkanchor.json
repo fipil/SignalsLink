@@ -1,21 +1,40 @@
 {
  "code": "chunkanchor",
+ "class": "ChunkAnchor",
  "entityclass": "BlockEntityChunkAnchor",
  "attributes": {
-  "chunkRadius": 3
+  "mapRadius": 7,
+  "handbook": {
+   "exclude": true
+  }
  },
  "blockmaterial": "Metal",
- "creativeinventory": {
-  "general": [ "*" ],
-  "signalslink": [ "*" ]
- },
+ "creativeinventory": {},
  "drawtype": "cube",
  "textures": {
-  "all": { "base": "block/brass" }
+  "all": {
+   "base": "block/brass"
+  }
  },
  "lightAbsorption": 0,
  "replaceable": 500,
  "resistance": 3.5,
- "sidesolid": { "all": true },
- "sideopaque": { "all": true }
+ "sidesolid": {
+  "all": true
+ },
+ "sideopaque": {
+  "all": true
+ },
+ "behaviors": [
+  {
+   "name": "BlockBehaviorTemporalCharge",
+   "properties": {
+    "baseConsumptionFactor": 1.0,
+    "referenceVolume": 100,
+    "referenceDays": 100,
+    "maxChargeMultiplier": 5,
+    "chargeItemCode": "gear-temporal"
+   }
+  }
+ ]
 }
