@@ -155,7 +155,6 @@
   "signalslink:block-sleevewallcoupling-cobble-shale-*": "Stěnová spojka rukávu (dlažební kámen – břidlice) ",
   "signalslink:block-sleevewallcoupling-cobble-slate-*": "Stěnová spojka rukávu (dlažební kámen – pokrývačská břidlice) ",
   "signalslink:block-sleevewallcoupling-cobble-bauxite-*": "Stěnová spojka rukávu (dlažební kámen – bauxit) ",
-  "signalslink:block-chunkanchor": "Kotva chunků",
   "signalslink:chunkanchor-holding": "Drží načtené sloupce chunků: {0}",
   "signalslink:papererror-keep": "keep bere jedno číslo - hladinu, kterou se má v cíli držet",
   "signalslink:confirmpaper-title": "Přepsat předpis?",
@@ -166,7 +165,7 @@
   "signalslink:confirmpaper-yes": "Přepsat",
   "signalslink:confirmpaper-clear-yes": "Smazat",
   "signalslink:chunkanchor-dialogtitle": "Kotva chunků",
-  "signalslink:chunkanchor-price": "Držené sloupce: {0}",
+  "signalslink:chunkanchor-price": "Držené sloupce: {0} z {1}",
   "signalslink:chunkanchor-census": "Drží při životě: {0} aktivních bloků, {1} zvířat ({2} jednotek)",
   "signalslink:chunkanchor-rate": "Jedno kolečko vydrží {0} dní",
   "signalslink:chunkanchor-free": "Nedrží nic — kolečko neubývá",
@@ -177,5 +176,14 @@
   "signalslink:chunkanchor-off": "Vypnutá — nedrží nic a nic nestojí.",
   "signalslink:chunkanchor-slotlabel": "Náhradní kolečko",
   "signalslink:chunkanchor-waketitle": "Probouzení",
-  "signalslink:chunkanchor-wakesoon": "Zatím drží trvale. Jakmile bude mít signálové piny, půjde tu nastavit, jak často a na jak dlouho se probouzí."
+  "signalslink:block-chunkanchor-*": "Kotva chunků",
+  "signalslink:chunkanchor-wake-never": "Nikdy neusíná",
+  "signalslink:chunkanchor-wake-every": "Probudit každých {0} h",
+  "signalslink:chunkanchor-windowtitle": "Jak dlouho vzhůru",
+  "signalslink:chunkanchor-window-for": "{0} minut",
+  "signalslink:chunkanchor-wakeonjoin": "Probudit navíc při oživení serveru",
+  "signalslink:chunkanchor-asleep": "Spí — probudí se za {0} h",
+  "signalslink:chunkanchor-heldawake": "Signál na vstupu ji drží vzhůru",
+  "signalslink:con-input": "Vstup",
+  "signalslink:con-output": "Výstup"
 }

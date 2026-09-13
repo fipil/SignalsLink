@@ -1,19 +1,52 @@
+using signals.src.signalNetwork;
+using Vintagestory.API.MathTools;
 using Vintagestory.API.Common;
 
 namespace SignalsLink.src.signals.chunkanchor
 {
     /// <summary>
-    /// The anchor block. Right click opens its map.
+    /// The anchor block. Right click opens its map; a click on one of its two pins is a wire.
     ///
-    /// It will grow two signal pins, and then the click has to be shared: a click on a pin belongs
-    /// to Signals, so that the player can wire the thing, and only a click on the body opens the
-    /// map. That split is written now, while there is nothing to get wrong, because the alternative
-    /// is a block that cannot be wired because a dialog keeps jumping out from under the wire.
+    /// <b>A BlockConnection, not a plain Block</b>, like every other device here with anchors on
+    /// it. That is what turns the <c>signalNodes</c> in the block's attributes into selection boxes
+    /// a wire can be hooked to, and it puts those boxes FIRST - which is what the pin count below
+    /// counts on.
+    ///
+    /// It turns in the four world directions through a VARIANT, the way the chute and the valve do,
+    /// and not through a mesh angle the way the dock tries to. That distinction is the whole
+    /// reason the dock cannot be turned today: Signals reads its anchor positions out of the
+    /// block's attributes rather than from the selection boxes, so a freely turned block leaves
+    /// its wires hanging in mid-air. A variant is a different block carrying its own
+    /// already-rotated attributes, so the two have no way to disagree - which is why every rotated
+    /// chute in the world wires up correctly.
     /// </summary>
-    public class BlockChunkAnchor : Block
+    public class BlockChunkAnchor : BlockConnection
     {
         /// <summary>Selection boxes below this belong to the pins; -1 while there are none.</summary>
         public int PinBoxes => Attributes?["signalPins"].AsInt(0) ?? 0;
+
+        /// <summary>
+        /// Always handed over as the idle variant facing north.
+        ///
+        /// The turned and the lit variants are how the block LOOKS where it stands; carrying four
+        /// directions and two states around as eight different items in the inventory would be
+        /// eight ways to say the same thing. The behavior sets the direction again on placement,
+        /// and the block entity lights it when it starts holding.
+        /// </summary>
+        private ItemStack Idle(IWorldAccessor world)
+        {
+            Block idle = world.GetBlock(CodeWithVariants(
+                new[] { "state", "side" }, new[] { "off", "north" }));
+
+            return new ItemStack(idle ?? this);
+        }
+
+        public override ItemStack OnPickBlock(IWorldAccessor world, BlockPos pos) => Idle(world);
+
+        public override ItemStack[] GetDrops(IWorldAccessor world, BlockPos pos, IPlayer byPlayer, float dropQuantityMultiplier = 1)
+        {
+            return new[] { Idle(world) };
+        }
 
         /// <summary>
         /// Contains, not equals: the charge behaviour looks the item up the same way, and the two

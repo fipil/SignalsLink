@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using SignalsLink.src;
+using signals.src;
+using signals.src.signalNetwork;
 using SignalsLink.src.signals.behaviours;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
@@ -28,7 +30,7 @@ namespace SignalsLink.src.signals.chunkanchor
     /// disagree, but because the ModSystem has to know them before any chunk is loaded, including
     /// the one this block stands in.
     /// </summary>
-    public class BEChunkAnchor : BlockEntity, IBlockEntityContainer, ITemporalChargeHolder
+    public class BEChunkAnchor : BlockEntity, IBlockEntityContainer, ITemporalChargeHolder, IBESignalReceptor
     {
         /// <summary>How often the bill is worked out, in in-game hours.</summary>
         private const double BillEveryHours = 1.0;
@@ -75,6 +77,48 @@ namespace SignalsLink.src.signals.chunkanchor
 
         private static SignalsLinkConfig Config => SignalsLinkConfigLoader.Current;
 
+        // ------------------------------------------------------------------ the wake cycle
+
+        /// <summary>Which pin is which. The node boxes come first, so these are also box indices.</summary>
+        public const int InputPin = 0;
+        public const int OutputPin = 1;
+
+        /// <summary>
+        /// How long between waking, in in-game hours. Zero means it never sleeps.
+        ///
+        /// In-game and not real time, and that is not a detail: an empty server suspends its ticks,
+        /// so a real-time interval would fire nothing at all while nobody is on and then owe a
+        /// hundred wake-ups at once. Everything the anchor is waiting for - a train, a factory
+        /// eating its stock - runs on the same clock.
+        /// </summary>
+        public double WakeIntervalHours { get; private set; }
+
+        /// <summary>
+        /// How long it stays up before it looks at the pin and decides to go back down.
+        ///
+        /// It has to cover more than the glance: the factory's own sensors need to load and work
+        /// out whether they have anything to say before the pin means anything.
+        /// </summary>
+        public double WakeWindowHours { get; private set; } = 0.5;
+
+        private byte inputSignal;
+        private byte outputSignal;
+        private byte? lastPushedOutput;
+
+        private double awakeSinceHours;
+        private SignalNetworkMod signalMod;
+
+        /// <summary>True while a signal on the input pin is holding it up past its window.</summary>
+        public bool HeldAwake => inputSignal > 0;
+
+        /// <summary>
+        /// Also come up when somebody logs in to a server that has been standing empty.
+        ///
+        /// An idle server suspends its ticks, so no interval passes while nobody is on: without
+        /// this, the factory a player left running last night is still asleep when they come back.
+        /// </summary>
+        public bool WakeOnPlayerJoin { get; private set; } = true;
+
         /// <summary>The columns this anchor is set to hold.</summary>
         public IReadOnlyCollection<long> Columns => columns;
 
@@ -105,6 +149,10 @@ namespace SignalsLink.src.signals.chunkanchor
             }
 
             lastBilledHours = api.World.Calendar.TotalHours;
+            awakeSinceHours = lastBilledHours;
+
+            signalMod = api.ModLoader.GetModSystem<SignalNetworkMod>();
+            signalMod?.RegisterSignalTickListener(PushOutput);
 
             // Nothing is held for free. A freshly placed anchor has no charge, so it holds nothing
             // at all until somebody feeds it - it used to hold everything until the first hourly
@@ -135,12 +183,19 @@ namespace SignalsLink.src.signals.chunkanchor
             // First count as soon as there is something to count. Deliberately on a tick and not
             // in Initialize: the held columns are still being force-loaded at that moment, so
             // counting there would report whatever happened to have arrived.
-            if (!counted) { Census(); counted = true; MarkDirty(); }
+            if (!counted) { Census(); counted = true; ShowState(); MarkDirty(); }
 
             if (!SwitchedOn) return;
 
             double now = Api.World.Calendar.TotalHours;
             double elapsed = now - lastBilledHours;
+
+            // The BILL is worked out by the hour - a smaller step would be arithmetic noise. The
+            // wake window and the output pin are NOT: a fifteen-minute window checked once an hour
+            // is not a fifteen-minute window, and a charge readout an hour behind is no use to a
+            // chute that is meant to notice the anchor running low.
+            ReportCharge();
+            MaybeSleep(now);
 
             // A jump means the world was away, not that a century of rent is due.
             if (elapsed < 0 || elapsed > 24) { lastBilledHours = now; return; }
@@ -157,15 +212,91 @@ namespace SignalsLink.src.signals.chunkanchor
             Spend((float)elapsed);
         }
 
+        // ------------------------------------------------------------------ pins
+
+        public void OnValueChanged(NodePos pos, byte value)
+        {
+            if (pos.index != InputPin || inputSignal == value) return;
+
+            inputSignal = value;
+
+            // A signal arriving is also a reason to come back: it means whatever the anchor was
+            // waiting for has happened, and waiting out the rest of the interval would waste it.
+            if (value > 0) Anchors?.WakeNow(Pos);
+
+            MarkDirty();
+        }
+
+        /// <summary>The output reports how full the anchor is, 0-15, so a chute can keep it fed.</summary>
+        private void ReportCharge()
+        {
+            byte level = (byte)(ChargePercent * 15 / 100);
+
+            if (level > 15) level = 15;
+            if (outputSignal == level) return;
+
+            outputSignal = level;
+            MarkDirty();
+        }
+
+        private void PushOutput()
+        {
+            if (lastPushedOutput == outputSignal) return;
+
+            BEBehaviorSignalConnector connector = GetBehavior<BEBehaviorSignalConnector>();
+            ISignalNode node = connector?.GetNodeAt(new NodePos(Pos, OutputPin));
+            if (node == null) return;
+
+            signalMod.netManager.UpdateSource(node, outputSignal);
+            lastPushedOutput = outputSignal;
+        }
+
+        /// <summary>
+        /// Puts it down for its interval once the window has run out - unless the input pin is
+        /// holding it up, which is the whole point of that pin: a factory that still has work says
+        /// so, and the anchor stays with it.
+        /// </summary>
+        private void MaybeSleep(double now)
+        {
+            if (WakeIntervalHours <= 0 || !Alive || HeldAwake) return;
+            if (now - awakeSinceHours < WakeWindowHours) return;
+
+            Alive = false;
+            ShowState();
+
+            Anchors?.Sleep(Pos, columns, now + WakeIntervalHours, WakeOnPlayerJoin);
+        }
+
+        /// <summary>What the player picked in the dialog.</summary>
+        public void SetWakeCycle(double intervalHours, double windowHours, bool onPlayerJoin)
+        {
+            if (Api is not ICoreServerAPI) return;
+
+            WakeIntervalHours = intervalHours < 0 ? 0 : intervalHours;
+            WakeWindowHours = windowHours < 0.05 ? 0.05 : windowHours;
+            WakeOnPlayerJoin = onPlayerJoin;
+
+            awakeSinceHours = Api.World.Calendar.TotalHours;
+
+            MarkDirty();
+        }
+
         private void Spend(float hours)
         {
             if (chargeBehavior == null) return;
 
-            float perHour = chargeBehavior.GearTotalCharge / (100f * 24f)
-                * (GetOperationalVolume() / chargeBehavior.ReferenceVolume)
-                * chargeBehavior.BaseConsumptionFactor;
+            // Only while it is actually holding. An anchor that has let go - asleep, or out of
+            // charge - pays nothing, and it can still be ticking at that moment: its own column is
+            // released but the chunk lingers until the last player walks out of view, and longer
+            // still if another anchor holds the same ground.
+            if (Alive)
+            {
+                float perHour = chargeBehavior.GearTotalCharge / (100f * 24f)
+                    * (GetOperationalVolume() / chargeBehavior.ReferenceVolume)
+                    * chargeBehavior.BaseConsumptionFactor;
 
-            charge -= perHour * hours;
+                charge -= perHour * hours;
+            }
 
             while (charge <= 0 && TakeSpareGear()) { }
 
@@ -228,15 +359,46 @@ namespace SignalsLink.src.signals.chunkanchor
             return true;
         }
 
+        /// <summary>
+        /// Swaps the block for the variant that matches what it is doing, so a glance across the
+        /// yard says whether an anchor is holding or lying idle.
+        ///
+        /// An exchange rather than a mesh swap: the block entity, its inventory and its selection
+        /// boxes all survive it, and the signal pins keep the positions Signals reads out of the
+        /// block's attributes. A second variant group costs nothing here because the block is not
+        /// in the creative inventory anyway.
+        /// </summary>
+        private void ShowState()
+        {
+            if (Api is not ICoreServerAPI) return;
+
+            // Read the block out of the WORLD, not from this entity's own Block property. That
+            // property is set when the entity comes up and ExchangeBlock does not refresh it, so
+            // after the first swap it describes a block that is no longer there and every later
+            // comparison is made against the wrong variant.
+            Block standing = Api.World.BlockAccessor.GetBlock(Pos);
+            if (standing?.Code == null) return;
+
+            string wanted = Alive ? "on" : "off";
+            if (standing.Variant["state"] == wanted) return;
+
+            Block swapped = Api.World.GetBlock(standing.CodeWithVariant("state", wanted));
+            if (swapped == null) return;
+
+            Api.World.BlockAccessor.ExchangeBlock(swapped.BlockId, Pos);
+            Api.World.BlockAccessor.MarkBlockDirty(Pos);
+        }
+
         private void Die()
         {
             if (!Alive) return;
 
             Alive = false;
             Anchors?.Release(Pos);
+            ShowState();
 
-            Api.World.Logger.Notification("[SignalsLink] anchor at " + Pos
-                + " ran out of charge and let its columns go.");
+            Api.World.Logger.Notification("[SignalsLink] anchor dead at " + Pos
+                + "; out of charge and no spare gear, everything let go.");
 
             MarkDirty();
         }
@@ -245,8 +407,14 @@ namespace SignalsLink.src.signals.chunkanchor
         {
             if (!SwitchedOn) return;
 
+            // A sleeping anchor is down on purpose and its wake-up is the scheduler's business.
+            // Without this it would stand straight back up on the first tick after going to sleep,
+            // because from here "not alive but has charge" looks exactly like "ready to work".
+            if (Anchors?.IsAsleep(Pos) == true) return;
+
             Alive = true;
             Anchors?.SetColumns(Pos, columns);
+            ShowState();
 
             MarkDirty();
         }
@@ -336,7 +504,7 @@ namespace SignalsLink.src.signals.chunkanchor
             float reference = chargeBehavior?.ReferenceVolume ?? 100f;
 
             return AnchorCensus.EffectiveVolume(
-                AnchorCensus.Units(ActiveBlocks, Creatures, Config.AnchorCreatureWeight),
+                AnchorCensus.Units(ActiveBlocks, Creatures, columns.Count, Config.AnchorCreatureWeight, Config.AnchorColumnWeight),
                 reference, Config.AnchorReferenceLoad, Config.AnchorPriceExponent);
         }
 
@@ -352,7 +520,7 @@ namespace SignalsLink.src.signals.chunkanchor
 
             (int cx, int cz) = Anchors?.ColumnAt(Pos) ?? (0, 0);
 
-            HashSet<long> clean = AnchorArea.Sanitise(wanted, cx, cz, MapRadius);
+            HashSet<long> clean = AnchorArea.Sanitise(wanted, cx, cz, MapRadius, Config.AnchorMaxColumns);
 
             columns.Clear();
             foreach (long key in clean) columns.Add(key);
@@ -387,6 +555,7 @@ namespace SignalsLink.src.signals.chunkanchor
                 Anchors?.Release(Pos);
             }
 
+            ShowState();
             MarkDirty();
         }
 
@@ -402,7 +571,7 @@ namespace SignalsLink.src.signals.chunkanchor
             if (chargeBehavior == null) return double.PositiveInfinity;
 
             return AnchorCensus.DaysPerGear(
-                AnchorCensus.Units(ActiveBlocks, Creatures, Config.AnchorCreatureWeight),
+                AnchorCensus.Units(ActiveBlocks, Creatures, columns.Count, Config.AnchorCreatureWeight, Config.AnchorColumnWeight),
                 chargeBehavior.GearTotalCharge, chargeBehavior.ReferenceVolume,
                 chargeBehavior.BaseConsumptionFactor,
                 Config.AnchorReferenceLoad, Config.AnchorPriceExponent);
@@ -417,7 +586,8 @@ namespace SignalsLink.src.signals.chunkanchor
             capi.World.Player.InventoryManager.OpenInventory(gearSlot);
 
             new GuiDialogChunkAnchor(capi, Pos, GlobalConstants.ChunkSize, columns, MapRadius,
-                SwitchedOn, SendColumnsToServer, SendSwitchToServer, this).TryOpen();
+                SwitchedOn, Config.AnchorMaxColumns,
+                SendColumnsToServer, SendSwitchToServer, SendCycleToServer, this).TryOpen();
         }
 
         public const int PacketIdSetColumns = 1043;
@@ -435,6 +605,20 @@ namespace SignalsLink.src.signals.chunkanchor
             capi.Network.SendBlockEntityPacket(Pos, PacketIdSetColumns, stream.ToArray());
         }
 
+        public const int PacketIdSetCycle = 1046;
+
+        private void SendCycleToServer(double interval, double window, bool onPlayerJoin)
+        {
+            using MemoryStream stream = new MemoryStream();
+            using BinaryWriter writer = new BinaryWriter(stream);
+
+            writer.Write(interval);
+            writer.Write(window);
+            writer.Write(onPlayerJoin);
+
+            (Api as ICoreClientAPI)?.Network.SendBlockEntityPacket(Pos, PacketIdSetCycle, stream.ToArray());
+        }
+
         private void SendSwitchToServer(bool on)
         {
             (Api as ICoreClientAPI)?.Network.SendBlockEntityPacket(Pos, PacketIdSetSwitch,
@@ -449,6 +633,15 @@ namespace SignalsLink.src.signals.chunkanchor
             {
                 gearSlot?.InvNetworkUtil?.HandleClientPacket(fromPlayer, packetid, data);
                 Api.World.BlockAccessor.GetChunkAtBlockPos(Pos)?.MarkModified();
+                return;
+            }
+
+            if (packetid == PacketIdSetCycle)
+            {
+                using MemoryStream cycle = new MemoryStream(data);
+                using BinaryReader read = new BinaryReader(cycle);
+
+                SetWakeCycle(read.ReadDouble(), read.ReadDouble(), read.ReadBoolean());
                 return;
             }
 
@@ -489,6 +682,7 @@ namespace SignalsLink.src.signals.chunkanchor
         /// </summary>
         public override void OnBlockRemoved()
         {
+            signalMod?.DisposeSignalTickListener(PushOutput);
             Anchors?.Release(Pos);
 
             base.OnBlockRemoved();
@@ -523,6 +717,12 @@ namespace SignalsLink.src.signals.chunkanchor
                 foreach (long key in saved.value) columns.Add(key);
             }
 
+            WakeIntervalHours = tree.GetDouble("wakeinterval", 0);
+            WakeOnPlayerJoin = tree.GetBool("wakeonjoin", true);
+            WakeWindowHours = tree.GetDouble("wakewindow", 0.5);
+            inputSignal = (byte)tree.GetInt("inputsignal", 0);
+            outputSignal = (byte)tree.GetInt("outputsignal", 0);
+
             charge = tree.GetFloat("charge", 0f);
             Alive = tree.GetBool("alive", true);
             SwitchedOn = tree.GetBool("switchedon", true);
@@ -541,6 +741,12 @@ namespace SignalsLink.src.signals.chunkanchor
             columns.CopyTo(keys);
 
             tree["columns"] = new LongArrayAttribute(keys);
+
+            tree.SetDouble("wakeinterval", WakeIntervalHours);
+            tree.SetBool("wakeonjoin", WakeOnPlayerJoin);
+            tree.SetDouble("wakewindow", WakeWindowHours);
+            tree.SetInt("inputsignal", inputSignal);
+            tree.SetInt("outputsignal", outputSignal);
 
             tree.SetFloat("charge", charge);
             tree.SetBool("alive", Alive);
@@ -562,7 +768,7 @@ namespace SignalsLink.src.signals.chunkanchor
             // The price is shown WHATEVER state it is in. It used to be hidden while the anchor was
             // out of charge, which is precisely the moment the player is deciding whether feeding
             // it is worth a gear.
-            float units = AnchorCensus.Units(ActiveBlocks, Creatures, Config.AnchorCreatureWeight);
+            float units = AnchorCensus.Units(ActiveBlocks, Creatures, columns.Count, Config.AnchorCreatureWeight, Config.AnchorColumnWeight);
 
             sb.AppendLine(Lang.Get("signalslink:chunkanchor-census", ActiveBlocks, Creatures, (int)units));
 
@@ -583,8 +789,27 @@ namespace SignalsLink.src.signals.chunkanchor
                     gearSlot?[0]?.Empty == false ? 1 : 0));
             }
 
-            if (!SwitchedOn) sb.AppendLine(Lang.Get("signalslink:chunkanchor-off"));
-            else if (!Alive) sb.AppendLine(Lang.Get("signalslink:chunkanchor-dead"));
+            if (!SwitchedOn)
+            {
+                sb.AppendLine(Lang.Get("signalslink:chunkanchor-off"));
+                return;
+            }
+
+            double? wakes = Anchors?.WakesAt(Pos);
+
+            if (wakes != null)
+            {
+                sb.AppendLine(Lang.Get("signalslink:chunkanchor-asleep",
+                    (wakes.Value - Api.World.Calendar.TotalHours).ToString("0.#")));
+            }
+            else if (!Alive)
+            {
+                sb.AppendLine(Lang.Get("signalslink:chunkanchor-dead"));
+            }
+            else if (HeldAwake)
+            {
+                sb.AppendLine(Lang.Get("signalslink:chunkanchor-heldawake"));
+            }
         }
 
         private ChunkAnchors Anchors => Api?.ModLoader?.GetModSystem<ChunkAnchors>();

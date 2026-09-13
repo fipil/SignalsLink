@@ -2,30 +2,75 @@
  "code": "chunkanchor",
  "class": "ChunkAnchor",
  "entityclass": "BlockEntityChunkAnchor",
+ "variantgroups": [
+  {
+   "code": "state",
+   "states": [
+    "off",
+    "on"
+   ]
+  },
+  {
+   "code": "side",
+   "loadFromProperties": "abstract/horizontalorientation"
+  }
+ ],
  "attributes": {
   "mapRadius": 7,
+  "signalPins": 2,
+  "inventoryClassName": "signalslinkanchor",
+  "reinforcable": true,
+  "signalNodes": [
+   {
+    "index": 0,
+    "name": "con-input",
+    "x1": 0.5625,
+    "y1": 0.8125,
+    "z1": 0.4375,
+    "x2": 0.6875,
+    "y2": 1.0,
+    "z2": 0.5625,
+    "rotateYbytype": {
+     "*-*-east": 270,
+     "*-*-south": 180,
+     "*-*-west": 90
+    }
+   },
+   {
+    "index": 1,
+    "name": "con-output",
+    "x1": 0.3125,
+    "y1": 0.8125,
+    "z1": 0.4375,
+    "x2": 0.4375,
+    "y2": 1.0,
+    "z2": 0.5625,
+    "rotateYbytype": {
+     "*-*-east": 270,
+     "*-*-south": 180,
+     "*-*-west": 90
+    }
+   }
+  ],
   "handbook": {
-   "exclude": true
+   "extraSections": [
+    {
+     "title": "signalslink:block-handbooktitle-signalslink",
+     "text": "signalslink:block-handbooktext-chunkanchor"
+    }
+   ]
   }
- },
- "blockmaterial": "Metal",
- "creativeinventory": {},
- "drawtype": "cube",
- "textures": {
-  "all": {
-   "base": "block/brass"
-  }
- },
- "lightAbsorption": 0,
- "replaceable": 500,
- "resistance": 3.5,
- "sidesolid": {
-  "all": true
- },
- "sideopaque": {
-  "all": true
  },
  "behaviors": [
+  {
+   "name": "HorizontalOrientable",
+   "properties": {
+    "dropBlockFace": "north"
+   }
+  },
+  {
+   "name": "Lockable"
+  },
   {
    "name": "BlockBehaviorTemporalCharge",
    "properties": {
@@ -36,5 +81,122 @@
     "chargeItemCode": "gear-temporal"
    }
   }
- ]
+ ],
+ "entityBehaviors": [
+  {
+   "name": "BEBehaviorSignalConnector",
+   "properties": {
+    "signalNodes": [
+     {
+      "index": 0,
+      "isSource": false
+     },
+     {
+      "index": 1,
+      "isSource": true,
+      "output": 0
+     }
+    ]
+   }
+  }
+ ],
+ "shapeByType": {
+  "*-on-north": {
+   "base": "block/anchor/chunkanchor_active"
+  },
+  "*-on-east": {
+   "base": "block/anchor/chunkanchor_active",
+   "rotateY": 270
+  },
+  "*-on-south": {
+   "base": "block/anchor/chunkanchor_active",
+   "rotateY": 180
+  },
+  "*-on-west": {
+   "base": "block/anchor/chunkanchor_active",
+   "rotateY": 90
+  },
+  "*-off-north": {
+   "base": "block/anchor/chunkanchor"
+  },
+  "*-off-east": {
+   "base": "block/anchor/chunkanchor",
+   "rotateY": 270
+  },
+  "*-off-south": {
+   "base": "block/anchor/chunkanchor",
+   "rotateY": 180
+  },
+  "*-off-west": {
+   "base": "block/anchor/chunkanchor",
+   "rotateY": 90
+  }
+ },
+ "blockmaterial": "Metal",
+ "creativeinventory": {
+  "general": [
+   "*-off-north"
+  ],
+  "signalslink": [
+   "*-off-north"
+  ]
+ },
+ "drawtype": "json",
+ "lightAbsorption": 0,
+ "replaceable": 500,
+ "resistance": 3.5,
+ "sidesolid": {
+  "all": false
+ },
+ "sideopaque": {
+  "all": false
+ },
+ "collisionSelectionBoxesByType": {
+  "*-north": [
+   {
+    "x1": 0.125,
+    "y1": 0.0,
+    "z1": 0.25,
+    "x2": 0.875,
+    "y2": 0.8125,
+    "z2": 0.75
+   }
+  ],
+  "*-east": [
+   {
+    "x1": 0.25,
+    "y1": 0.0,
+    "z1": 0.125,
+    "x2": 0.75,
+    "y2": 0.8125,
+    "z2": 0.875
+   }
+  ],
+  "*-south": [
+   {
+    "x1": 0.125,
+    "y1": 0.0,
+    "z1": 0.25,
+    "x2": 0.875,
+    "y2": 0.8125,
+    "z2": 0.75
+   }
+  ],
+  "*-west": [
+   {
+    "x1": 0.25,
+    "y1": 0.0,
+    "z1": 0.125,
+    "x2": 0.75,
+    "y2": 0.8125,
+    "z2": 0.875
+   }
+  ]
+ },
+ "sounds": {
+  "place": "game:block/anvil",
+  "break": "game:block/anvil",
+  "hit": "game:block/anvil",
+  "walk": "game:walk/stone"
+ }
 }

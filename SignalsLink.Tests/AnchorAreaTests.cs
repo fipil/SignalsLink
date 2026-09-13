@@ -94,6 +94,55 @@ namespace SignalsLink.Tests
         }
 
         [Fact]
+        public void There_is_a_ceiling_on_how_much_one_anchor_may_hold()
+        {
+            // The price is the real brake, but a server owner wants a number to point at.
+            HashSet<long> held = AnchorArea.JustTheAnchor(Cx, Cz);
+
+            for (int i = 1; i <= 10; i++) AnchorArea.Toggle(held, Cx + i, Cz, Cx, Cz, 7, 5);
+
+            Assert.Equal(5, held.Count);
+        }
+
+        [Fact]
+        public void But_giving_a_column_back_is_always_allowed()
+        {
+            // Refusing to REMOVE at the ceiling would strand a player who had already reached it.
+            HashSet<long> held = AnchorArea.JustTheAnchor(Cx, Cz);
+
+            for (int i = 1; i <= 10; i++) AnchorArea.Toggle(held, Cx + i, Cz, Cx, Cz, 7, 5);
+
+            Assert.True(AnchorArea.Toggle(held, Cx + 1, Cz, Cx, Cz, 7, 5));
+            Assert.Equal(4, held.Count);
+        }
+
+        [Fact]
+        public void A_set_that_is_over_the_ceiling_is_cut_from_the_far_end()
+        {
+            // The nearest ground is kept, because that is the ground the anchor was put there for -
+            // and the same set always cuts the same way, so a trim cannot wander between runs.
+            List<long> wanted = new List<long> { AnchorArea.Key(Cx, Cz) };
+
+            for (int i = 1; i <= 6; i++) wanted.Add(AnchorArea.Key(Cx + i, Cz));
+
+            HashSet<long> clean = AnchorArea.Sanitise(wanted, Cx, Cz, 7, 3);
+
+            Assert.Equal(3, clean.Count);
+            Assert.Contains(AnchorArea.Key(Cx, Cz), clean);
+            Assert.Contains(AnchorArea.Key(Cx + 1, Cz), clean);
+            Assert.DoesNotContain(AnchorArea.Key(Cx + 6, Cz), clean);
+        }
+
+        [Fact]
+        public void A_ceiling_of_zero_means_no_ceiling()
+        {
+            List<long> wanted = new List<long>();
+            for (int i = 1; i <= 30; i++) wanted.Add(AnchorArea.Key(Cx + (i % 7), Cz + i / 7));
+
+            Assert.True(AnchorArea.Sanitise(wanted, Cx, Cz, 7, 0).Count > 20);
+        }
+
+        [Fact]
         public void A_selection_arriving_from_a_client_is_cut_down_to_what_is_allowed()
         {
             // Nothing stops someone sending a set that holds the whole world. The rule is applied

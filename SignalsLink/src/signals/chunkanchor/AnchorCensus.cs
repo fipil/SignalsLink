@@ -20,6 +20,24 @@ namespace SignalsLink.src.signals.chunkanchor
         public const int ActiveBlockWeight = 1;
 
         /// <summary>
+        /// What a held column costs before anything is standing in it.
+        ///
+        /// Without this an empty column is free, and two hundred of them are free as well - which
+        /// is not true. A loaded chunk costs memory, it gets written on every save, and it sits in
+        /// the set the server walks. Ten units means twenty-five columns of bare ground come to
+        /// the reference load: noticeable, and nowhere near what a built-up one costs.
+        ///
+        /// Five, not ten: the point is that bare ground is not FREE, not that it is expensive. Fifty
+        /// columns of nothing then come to the reference load, which is about what a player who
+        /// grabbed the whole window deserves to pay.
+        ///
+        /// It is NOT a charge for growing things. Crops are counted already - every tilled block is
+        /// a block entity - and wild plants do not grow in an anchored chunk at all, because random
+        /// block ticks only happen within BlockTickChunkRange of a player.
+        /// </summary>
+        public const int ColumnWeight = 5;
+
+        /// <summary>
         /// Fallbacks, used where no server settings are to hand - in tests, and if the config
         /// system has not come up. The live values are in <see cref="SignalsLinkConfig"/>, because
         /// the right ones depend on how heavily built the server's world is.
@@ -38,12 +56,16 @@ namespace SignalsLink.src.signals.chunkanchor
         public const float Exponent = 1.174f;
 
         /// <summary>Weighted total of what is held.</summary>
-        public static float Units(int activeBlocks, int creatures, int creatureWeight = CreatureWeight)
+        public static float Units(int activeBlocks, int creatures, int columns = 0,
+            int creatureWeight = CreatureWeight, int columnWeight = ColumnWeight)
         {
             if (activeBlocks < 0) activeBlocks = 0;
             if (creatures < 0) creatures = 0;
+            if (columns < 0) columns = 0;
 
-            return activeBlocks * ActiveBlockWeight + creatures * creatureWeight;
+            return activeBlocks * ActiveBlockWeight
+                + creatures * creatureWeight
+                + columns * columnWeight;
         }
 
         /// <summary>

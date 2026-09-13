@@ -14,7 +14,7 @@
 		"temporal-anchor": [16,16]
 	},
 	"textures": {
-		"pin-porcelain2": "C:/Downloads/pin-porcelain",
+		"pin-porcelain2": "block/pin-porcelain",
 		"castironbrown": "block/castironbrown",
 		"castironbrown-anchor": "block/castironbrown-anchor",
 		"pin-brass": "block/pin-brass",

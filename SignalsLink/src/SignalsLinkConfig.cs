@@ -1,3 +1,6 @@
+using System;
+using System.Reflection;
+using Newtonsoft.Json;
 using Vintagestory.API.Common;
 
 namespace SignalsLink.src
@@ -8,38 +11,65 @@ namespace SignalsLink.src
     /// Only things whose right value depends on the SERVER belong here - how heavily built the
     /// world is, how generous the admin wants to be. Everything a player can see and reason about
     /// stays in the block's own attributes, where it travels with the block.
+    ///
+    /// Every setting is preceded by a <c>-description</c> key carrying its explanation. JSON has no
+    /// comments, and the one that Newtonsoft tolerates on the way IN would be stripped the moment
+    /// the file was written back out - a description that is itself a setting survives the round
+    /// trip. They are in English because a config file is read by whoever runs the server.
     /// </summary>
     public class SignalsLinkConfig
     {
-        /// <summary>
-        /// What a chunk anchor may keep alive before it costs the base rate: one gear per hundred
-        /// in-game days.
-        ///
-        /// Measured, not guessed. A single chunk column of a built-up castle came to about 1500
-        /// active blocks, which is why the first attempt at 50 priced that castle at five gears a
-        /// day. A remote workshop of a few hundred is what this is meant to sit near.
-        /// </summary>
+        [JsonProperty("AnchorReferenceLoad-description")]
+        public string AnchorReferenceLoadDescription =
+            "CHUNK ANCHOR. How much an anchor may keep alive before it costs the base rate of one "
+            + "temporal gear per 100 in-game days. An anchor is billed for what it HOLDS - active "
+            + "blocks and creatures in its columns - not for how busy that ground is. Raise this to "
+            + "make anchors cheaper everywhere, lower it to make them dearer. Measured, not guessed: "
+            + "one chunk column of a built-up castle came to about 1500 active blocks, so 250 sits "
+            + "near a modest remote workshop.";
+
         public float AnchorReferenceLoad = 250f;
 
-        /// <summary>
-        /// How sharply the price climbs above that. Must stay above 1, or a home base costs merely
-        /// proportionally more than a workshop instead of unreasonably more - which is the whole
-        /// reason the anchor is priced at all.
-        ///
-        /// With the reference load above, 1.174 gives roughly: 300 units 80 days, 1500 units 12
-        /// days, 7000 units 2 days.
-        /// </summary>
+        [JsonProperty("AnchorPriceExponent-description")]
+        public string AnchorPriceExponentDescription =
+            "How sharply the price climbs above the reference load. Must stay above 1: at 1 a home "
+            + "base costs merely proportionally more than a workshop, above 1 it costs unreasonably "
+            + "more, which is the whole reason anchors are priced at all. With the reference load "
+            + "above, 1.174 gives roughly 80 days per gear at 300 units, 12 days at 1500, 2 days at "
+            + "7000.";
+
         public float AnchorPriceExponent = 1.174f;
 
-        /// <summary>
-        /// What one creature counts for against one active block. Creatures run AI, pathfinding and
-        /// physics every tick where a block entity wakes a few times a second, so ten is the low
-        /// end of what they actually cost.
-        /// </summary>
+        [JsonProperty("AnchorCreatureWeight-description")]
+        public string AnchorCreatureWeightDescription =
+            "What one creature counts for against one active block. Creatures run AI, pathfinding "
+            + "and physics every tick where a block entity wakes a few times a second, so 10 is the "
+            + "low end of what they really cost. Note that in a built-up base the BUILDINGS dominate "
+            + "the bill, not the herd - a measured castle held 6141 active blocks against 81 "
+            + "animals. Turn AnchorReferenceLoad, not this, when bases come out too cheap or dear.";
+
         public int AnchorCreatureWeight = 10;
+
+        [JsonProperty("AnchorColumnWeight-description")]
+        public string AnchorColumnWeightDescription =
+            "What one held chunk column costs before anything stands in it. Without this, empty "
+            + "ground is free and a player can take the whole map window for nothing - and a loaded "
+            + "chunk still costs memory and is written on every save. At 5, fifty columns of bare "
+            + "ground come to the reference load. Set to 0 to charge only for contents.";
+
+        public int AnchorColumnWeight = 5;
+
+        [JsonProperty("AnchorMaxColumns-description")]
+        public string AnchorMaxColumnsDescription =
+            "The most chunk columns one anchor may hold. The price is the real brake; this is the "
+            + "number a server owner can point at. The map offers a 15x15 window, so 225 is as high "
+            + "as this can usefully go. 64 is a square of eight - a generous factory with room for "
+            + "the track that serves it. Set to 0 to remove the ceiling and leave only the price.";
+
+        public int AnchorMaxColumns = 64;
     }
 
-    /// <summary>Loads the settings, and writes the file out the first time so it can be found.</summary>
+    /// <summary>Loads the settings, and writes the file back out so it can be found and read.</summary>
     public class SignalsLinkConfigLoader : ModSystem
     {
         public const string FileName = "signalslink.json";
@@ -57,7 +87,7 @@ namespace SignalsLink.src
             {
                 Current = api.LoadModConfig<SignalsLinkConfig>(FileName) ?? new SignalsLinkConfig();
             }
-            catch (System.Exception e)
+            catch (Exception e)
             {
                 // A typo in the file must not stop the mod loading; it falls back and says so.
                 api.Logger.Error("[SignalsLink] " + FileName + " could not be read (" + e.Message
@@ -66,7 +96,29 @@ namespace SignalsLink.src
                 Current = new SignalsLinkConfig();
             }
 
+            RefreshDescriptions(Current);
+
+            // Written back every start, so a setting added by a newer build turns up in the file
+            // instead of only existing in the code.
             api.StoreModConfig(Current, FileName);
+        }
+
+        /// <summary>
+        /// Puts the current wording back over whatever the file had.
+        ///
+        /// Otherwise a file written by an older build keeps its old explanations for ever - and an
+        /// explanation that no longer matches what the setting does is worse than none. Every string
+        /// field here IS a description; nothing else is one.
+        /// </summary>
+        private static void RefreshDescriptions(SignalsLinkConfig config)
+        {
+            SignalsLinkConfig fresh = new SignalsLinkConfig();
+
+            foreach (FieldInfo field in typeof(SignalsLinkConfig)
+                .GetFields(BindingFlags.Public | BindingFlags.Instance))
+            {
+                if (field.FieldType == typeof(string)) field.SetValue(config, field.GetValue(fresh));
+            }
         }
     }
 }

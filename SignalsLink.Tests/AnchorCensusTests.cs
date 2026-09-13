@@ -30,6 +30,22 @@ namespace SignalsLink.Tests
         private const float Factor = 1f;
 
         [Fact]
+        public void Bare_ground_is_not_free()
+        {
+            // Without a charge per column, a player could take two hundred empty chunks for
+            // nothing - and an empty loaded chunk still costs memory and gets written every save.
+            Assert.Equal(0f, AnchorCensus.Units(0, 0, 0));
+            Assert.Equal(250f, AnchorCensus.Units(0, 0, 50));
+
+            // Fifty columns of nothing come to about the reference load - noticeable, and nowhere
+            // near what a single built-up column costs.
+            double days = AnchorCensus.DaysPerGear(AnchorCensus.Units(0, 0, 50),
+                GearCharge, ReferenceVolume, Factor);
+
+            Assert.InRange(days, 80, 130);
+        }
+
+        [Fact]
         public void An_animal_counts_for_ten_active_blocks()
         {
             Assert.Equal(10f, AnchorCensus.Units(0, 1));

@@ -30,6 +30,7 @@ namespace SignalsLink.src.signals.chunkanchor
         private readonly int anchorCx;
         private readonly int anchorCz;
         private readonly int mapRadius;
+        private readonly int maxColumns;
 
         private readonly HashSet<long> held;
         private readonly Action changed;
@@ -44,13 +45,15 @@ namespace SignalsLink.src.signals.chunkanchor
         private Vec2f viewPos = new Vec2f();
 
         public GuiElementAnchorMap(List<MapLayer> mapLayers, ICoreClientAPI capi, ElementBounds bounds,
-            int chunkSize, int anchorCx, int anchorCz, int mapRadius, HashSet<long> held, Action changed)
+            int chunkSize, int anchorCx, int anchorCz, int mapRadius, int maxColumns,
+            HashSet<long> held, Action changed)
             : base(mapLayers, capi, null, bounds, false)
         {
             this.chunkSize = chunkSize;
             this.anchorCx = anchorCx;
             this.anchorCz = anchorCz;
             this.mapRadius = mapRadius;
+            this.maxColumns = maxColumns;
             this.held = held;
             this.changed = changed;
         }
@@ -182,7 +185,7 @@ namespace SignalsLink.src.signals.chunkanchor
             if (!wasClick || !IsInside(args.X, args.Y)) return;
             if (!ColumnAt(args.X, args.Y, out int cx, out int cz)) return;
 
-            if (AnchorArea.Toggle(held, cx, cz, anchorCx, anchorCz, mapRadius)) changed?.Invoke();
+            if (AnchorArea.Toggle(held, cx, cz, anchorCx, anchorCz, mapRadius, maxColumns)) changed?.Invoke();
         }
 
         public override void OnMouseMove(ICoreClientAPI api, MouseEvent args)

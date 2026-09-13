@@ -21,6 +21,16 @@ namespace SignalsLink.src.signals.chunkanchor
         /// </summary>
         public const int WindowRadius = 7;
 
+        /// <summary>
+        /// The most one anchor may hold, whatever the window allows.
+        ///
+        /// The price is the real brake, but a ceiling is worth having as well: it is the number a
+        /// server owner can point at, and it stops one player from taking the whole 15x15 window
+        /// before anyone works out what that costs. The live value is in the server settings; this
+        /// is the fallback for tests and for a config that has not loaded.
+        /// </summary>
+        public const int MaxColumns = 64;
+
         /// <summary>One column as a single number, so a set of them is cheap to keep and to send.</summary>
         public static long Key(int cx, int cz) => ((long)cx << 32) ^ (uint)cz;
 
@@ -43,7 +53,7 @@ namespace SignalsLink.src.signals.chunkanchor
         /// outside the window, or on the anchor's own column, which is never given up.
         /// </summary>
         public static bool Toggle(ISet<long> held, int cx, int cz, int anchorCx, int anchorCz,
-            int windowRadius = WindowRadius)
+            int windowRadius = WindowRadius, int maxColumns = MaxColumns)
         {
             if (held == null) return false;
             if (!InWindow(cx, cz, anchorCx, anchorCz, windowRadius)) return false;
@@ -54,7 +64,14 @@ namespace SignalsLink.src.signals.chunkanchor
             // is how it stops being able to do anything at all - including letting go of the rest.
             if (key == Key(anchorCx, anchorCz)) return false;
 
-            if (!held.Remove(key)) held.Add(key);
+            if (held.Remove(key)) return true;
+
+            // Giving one back is always allowed; taking one more is not, once the ceiling is
+            // reached. Refusing the click is kinder than accepting it and trimming it away later,
+            // which would look like the map losing the player's work.
+            if (maxColumns > 0 && held.Count >= maxColumns) return false;
+
+            held.Add(key);
 
             return true;
         }
@@ -87,19 +104,51 @@ namespace SignalsLink.src.signals.chunkanchor
         /// own column. Applied to whatever arrives from a client, which is not to be believed.
         /// </summary>
         public static HashSet<long> Sanitise(IEnumerable<long> wanted, int anchorCx, int anchorCz,
-            int windowRadius = WindowRadius)
+            int windowRadius = WindowRadius, int maxColumns = MaxColumns)
         {
             HashSet<long> clean = JustTheAnchor(anchorCx, anchorCz);
             if (wanted == null) return clean;
+
+            List<long> inside = new List<long>();
 
             foreach (long key in wanted)
             {
                 (int x, int z) = Of(key);
 
-                if (InWindow(x, z, anchorCx, anchorCz, windowRadius)) clean.Add(key);
+                if (key != Key(anchorCx, anchorCz) && InWindow(x, z, anchorCx, anchorCz, windowRadius))
+                {
+                    inside.Add(key);
+                }
+            }
+
+            // Nearest first, so a set that has to be cut down keeps the ground around the anchor
+            // rather than an arbitrary handful. Sorted by the key as well, so two runs on the same
+            // set always cut the same way - a trim that wandered would be worse than a hard refusal.
+            inside.Sort((a, b) =>
+            {
+                int byDistance = Distance(a, anchorCx, anchorCz).CompareTo(Distance(b, anchorCx, anchorCz));
+
+                return byDistance != 0 ? byDistance : a.CompareTo(b);
+            });
+
+            foreach (long key in inside)
+            {
+                if (maxColumns > 0 && clean.Count >= maxColumns) break;
+
+                clean.Add(key);
             }
 
             return clean;
+        }
+
+        private static int Distance(long key, int anchorCx, int anchorCz)
+        {
+            (int x, int z) = Of(key);
+
+            int dx = x - anchorCx;
+            int dz = z - anchorCz;
+
+            return dx * dx + dz * dz;
         }
     }
 }

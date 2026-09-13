@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using SignalsLink.src;
 using Vintagestory.API.Common;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Server;
@@ -30,6 +31,9 @@ namespace SignalsLink.src.signals.chunkanchor
         /// </summary>
         private const int ColumnsFormat = -1;
 
+        /// <summary>As above, and each anchor also carries the hour it should next wake at.</summary>
+        private const int SleepersFormat = -2;
+
         private ICoreServerAPI sapi;
 
         /// <summary>Which columns each anchor holds.</summary>
@@ -48,6 +52,125 @@ namespace SignalsLink.src.signals.chunkanchor
             api.Event.GameWorldSave += Store;
 
             api.Event.RegisterGameTickListener(DrainReleases, 5000);
+            api.Event.RegisterGameTickListener(WakeSleepers, 5000);
+            api.Event.PlayerNowPlaying += OnPlayerArrived;
+        }
+
+        // ---------------------------------------------------------------- sleeping and waking
+
+        /// <summary>
+        /// A sleeping anchor: what it wants to hold, and the in-game hour it should wake at.
+        ///
+        /// This has to live HERE and not in the block entity, and it is the same reason the claims
+        /// do: a sleeping anchor's own column is unloaded, so its block entity is not ticking and
+        /// cannot possibly wake itself. Nothing in the world would ever load that chunk again.
+        /// </summary>
+        private sealed class Sleeper
+        {
+            public double WakeAtHours;
+            public HashSet<long> Columns;
+
+            /// <summary>Also come up when somebody logs in to a server that was standing idle.</summary>
+            public bool OnPlayerJoin;
+        }
+
+        private readonly Dictionary<BlockPos, Sleeper> sleeping = new Dictionary<BlockPos, Sleeper>();
+
+        /// <summary>Lets everything go, but remembers it, and comes back for it at the given hour.</summary>
+        public void Sleep(BlockPos pos, IEnumerable<long> columns, double wakeAtHours, bool onPlayerJoin)
+        {
+            if (sapi == null || pos == null) return;
+
+            HashSet<long> wanted = new HashSet<long>(columns ?? System.Array.Empty<long>());
+
+            Release(pos);
+
+            sleeping[pos.Copy()] = new Sleeper
+            {
+                WakeAtHours = wakeAtHours,
+                Columns = wanted,
+                OnPlayerJoin = onPlayerJoin
+            };
+
+            sapi.Logger.Notification("[SignalsLink] anchor asleep at " + pos + "; " + wanted.Count
+                + " column(s) let go, back at hour " + wakeAtHours.ToString("0.#")
+                + " (in " + (wakeAtHours - sapi.World.Calendar.TotalHours).ToString("0.#") + " h)"
+                + (onPlayerJoin ? ", or sooner if the server wakes up." : "."));
+        }
+
+        /// <summary>True while this anchor is down for its interval rather than out of charge.</summary>
+        public bool IsAsleep(BlockPos pos) => pos != null && sleeping.ContainsKey(pos);
+
+        /// <summary>When it is next due up, or null when it is not asleep.</summary>
+        public double? WakesAt(BlockPos pos)
+        {
+            return pos != null && sleeping.TryGetValue(pos, out Sleeper one) ? one.WakeAtHours : null;
+        }
+
+        /// <summary>Brings it back now - what a signal on the input pin amounts to.</summary>
+        public void WakeNow(BlockPos pos) => Wake(pos, "a signal");
+
+        /// <summary>
+        /// Wakes a sleeper and says WHY in the log.
+        ///
+        /// The reason is the point: on a running server the only way to tell a working wake cycle
+        /// from an anchor that woke by accident - or never woke at all - is to read the pairs off
+        /// the log. "Asleep at X / awake at X" with a reason each is a thing you can grep.
+        /// </summary>
+        private void Wake(BlockPos pos, string why)
+        {
+            if (pos == null || !sleeping.TryGetValue(pos, out Sleeper one)) return;
+
+            sleeping.Remove(pos);
+
+            sapi.Logger.Notification("[SignalsLink] anchor awake at " + pos + "; " + why
+                + " at hour " + sapi.World.Calendar.TotalHours.ToString("0.#")
+                + ", taking back " + one.Columns.Count + " column(s).");
+
+            SetColumns(pos, one.Columns);
+        }
+
+        /// <summary>
+        /// Somebody has arrived on a server that was standing empty.
+        ///
+        /// While no one is on, the server suspends its ticks - so no interval elapses, no factory
+        /// runs, and an anchor that went to sleep last night is still asleep. Waking on arrival is
+        /// what makes the world look like it kept going, and it is settable per anchor because a
+        /// player who wants a factory to stay down until its train comes should get that too.
+        /// </summary>
+        private void OnPlayerArrived(IServerPlayer player)
+        {
+            if (sleeping.Count == 0) return;
+            if (sapi.World.AllOnlinePlayers.Length > 1) return;
+
+            due.Clear();
+
+            foreach (KeyValuePair<BlockPos, Sleeper> one in sleeping)
+            {
+                if (one.Value.OnPlayerJoin) due.Add(one.Key);
+            }
+
+            foreach (BlockPos pos in due) Wake(pos, "the server came back to life");
+        }
+
+        private readonly List<BlockPos> due = new List<BlockPos>();
+
+        private void WakeSleepers(float dt)
+        {
+            if (sleeping.Count == 0) return;
+
+            double now = sapi.World.Calendar.TotalHours;
+
+            due.Clear();
+
+            foreach (KeyValuePair<BlockPos, Sleeper> one in sleeping)
+            {
+                if (one.Value.WakeAtHours <= now) due.Add(one.Key);
+            }
+
+            // Claiming the columns loads the chunks, which brings the block entity up, which is
+            // what actually starts the anchor working again.
+            foreach (BlockPos pos in due) Wake(pos, "its interval elapsed");
         }
 
         /// <summary>The columns this anchor holds, or an empty set when it holds none.</summary>
@@ -83,7 +206,8 @@ namespace SignalsLink.src.signals.chunkanchor
 
             (int cx, int cz) = ColumnAt(pos);
 
-            HashSet<long> after = AnchorArea.Sanitise(wanted, cx, cz);
+            HashSet<long> after = AnchorArea.Sanitise(wanted, cx, cz,
+                AnchorArea.WindowRadius, SignalsLinkConfigLoader.Current.AnchorMaxColumns);
 
             if (!anchors.TryGetValue(pos, out HashSet<long> before))
             {
@@ -222,20 +346,36 @@ namespace SignalsLink.src.signals.chunkanchor
             using MemoryStream buffer = new MemoryStream();
             using BinaryWriter writer = new BinaryWriter(buffer);
 
-            writer.Write(ColumnsFormat);
-            writer.Write(anchors.Count);
+            // Sleepers are saved with everything else. Without that a restart would leave an
+            // anchor asleep with nothing left in the world that knows to come back for it.
+            writer.Write(SleepersFormat);
+            writer.Write(anchors.Count + sleeping.Count);
 
             foreach (KeyValuePair<BlockPos, HashSet<long>> anchor in anchors)
             {
-                writer.Write(anchor.Key.X);
-                writer.Write(anchor.Key.Y);
-                writer.Write(anchor.Key.Z);
+                WriteOne(writer, anchor.Key, anchor.Value, double.NegativeInfinity, false);
+            }
 
-                writer.Write(anchor.Value.Count);
-                foreach (long key in anchor.Value) writer.Write(key);
+            foreach (KeyValuePair<BlockPos, Sleeper> one in sleeping)
+            {
+                WriteOne(writer, one.Key, one.Value.Columns, one.Value.WakeAtHours, one.Value.OnPlayerJoin);
             }
 
             sapi.WorldManager.SaveGame.StoreData(SaveKey, buffer.ToArray());
+        }
+
+        /// <summary>An hour of negative infinity means "awake"; anything else is when to wake it.</summary>
+        private static void WriteOne(BinaryWriter writer, BlockPos pos, HashSet<long> columns,
+            double wakeAt, bool onPlayerJoin)
+        {
+            writer.Write(pos.X);
+            writer.Write(pos.Y);
+            writer.Write(pos.Z);
+            writer.Write(wakeAt);
+            writer.Write(onPlayerJoin);
+
+            writer.Write(columns.Count);
+            foreach (long key in columns) writer.Write(key);
         }
 
         /// <summary>
@@ -256,7 +396,12 @@ namespace SignalsLink.src.signals.chunkanchor
             {
                 int first = reader.ReadInt32();
 
-                saved = first == ColumnsFormat ? ReadColumns(reader) : ReadSquares(reader, first);
+                saved = first switch
+                {
+                    SleepersFormat => ReadSleepers(reader),
+                    ColumnsFormat => ReadColumns(reader),
+                    _ => ReadSquares(reader, first)
+                };
             }
             catch (EndOfStreamException)
             {
@@ -271,6 +416,40 @@ namespace SignalsLink.src.signals.chunkanchor
             {
                 foreach ((BlockPos pos, HashSet<long> columns) in saved) SetColumns(pos, columns);
             });
+        }
+
+        /// <summary>
+        /// Reads the form that knows about sleeping. A sleeper is not claimed now - it is put back
+        /// on the schedule, so a world that stops overnight does not wake every sleeping factory
+        /// the moment it starts again.
+        /// </summary>
+        private List<(BlockPos, HashSet<long>)> ReadSleepers(BinaryReader reader)
+        {
+            List<(BlockPos, HashSet<long>)> awake = new List<(BlockPos, HashSet<long>)>();
+
+            int count = reader.ReadInt32();
+
+            for (int i = 0; i < count; i++)
+            {
+                BlockPos pos = new BlockPos(reader.ReadInt32(), reader.ReadInt32(), reader.ReadInt32());
+                double wakeAt = reader.ReadDouble();
+                bool onPlayerJoin = reader.ReadBoolean();
+
+                HashSet<long> columns = new HashSet<long>();
+                int columnCount = reader.ReadInt32();
+
+                for (int c = 0; c < columnCount; c++) columns.Add(reader.ReadInt64());
+
+                if (double.IsNegativeInfinity(wakeAt)) awake.Add((pos, columns));
+                else sleeping[pos] = new Sleeper
+                {
+                    WakeAtHours = wakeAt,
+                    Columns = columns,
+                    OnPlayerJoin = onPlayerJoin
+                };
+            }
+
+            return awake;
         }
 
         private static List<(BlockPos, HashSet<long>)> ReadColumns(BinaryReader reader)

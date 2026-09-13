@@ -345,6 +345,25 @@
     Plocha se jmenuje podle <strong>první cedule, která na ní stojí</strong>. Víc cedulí na jedné ploše tedy nevadí, ale jméno určuje jen jedna z nich.<br>
     Cedule je zároveň obyčejná značka — nic neřídí a nemá žádné konektory.
 </translation>
+<translation key="signalslink:block-handbooktext-chunkanchor">
+    Kotva drží kousek světa načtený, i když tam nikdo není. Bez ní se odlehlá továrna zastaví ve chvíli, kdy od ní odejdete, a zase se rozeběhne, až se vrátíte.<br>
+    Klepnutím otevřete mapu okolí. Kotva je uprostřed, světlejší čtverce drží; klepnutím je zapínáte a vypínáte. Sloupec, na kterém kotva stojí, drží vždy.<br><br>
+    <font size="20" color="6082B6">Co to stojí</font><br>
+    Kotva spotřebovává <strong>temporální kolečka</strong>. Cena neroste podle toho, kolik se v držených chuncích děje, ale podle toho, <strong>kolik toho drží při životě</strong> — kolik je tam aktivních bloků (truhly, pece, sudy, hromady zboží) a zvířat. Zvíře stojí jako deset bloků.<br>
+    Něco stojí i každý držený sloupec sám o sobě, i kdyby v něm nebylo nic — načtený chunk zabírá paměť a ukládá se. Nabírat prázdné chunky do zásoby se tedy nevyplatí.<br>
+    Cena roste prudčeji než přímo úměrně, takže <strong>malá odlehlá dílna vyjde levně a domácí základna nesmyslně draho</strong>. Kotva na vlastní hrad není záměr.<br>
+    Pozor: <strong>divoké rostliny a tráva v zakotveném chunku nerostou</strong> — to se děje jen kolem hráčů. Pole ale ano, protože každé zorané políčko je aktivní blok, a taky se podle toho počítá.<br>
+    Cenu vidíte v mapě i v popisu bloku dřív, než kolečko vložíte. Když u kotvy stojíte, nespotřebovává nic — ty chunky by byly načtené tak jako tak.<br>
+    Kolečko dáte kotvě klepnutím s kolečkem v ruce. Jedno navíc se vejde do slotu jako záloha; doplní ho i <a href="handbook://block-signalslink:managedchute-up-north">řízený žlab</a>. Když dojde náboj i záloha, kotva všechno pustí a čeká, až jí kolečko někdo přinese.<br><br>
+    <font size="20" color="6082B6">Usínání</font><br>
+    Kotva nemusí držet pořád. V mapě si nastavíte, <strong>jak často se probouzí</strong> a <strong>jak dlouho zůstane vzhůru</strong> — a mezi tím spí a nic nestojí.<br>
+    Je to postavené na továrnu, která pracuje jen občas: kotva se probudí, chunky se načtou, přijede vlak a vyloží suroviny, výroba se rozeběhne. Čidlo výroby přitom drží signál na <strong>vstupu</strong> kotvy, a dokud signál trvá, kotva neusne. Jakmile suroviny dojdou a signál zhasne, kotva po vypršení okna zase usne.<br>
+    Okno vzhůru proto nemá být krátké — musí se do něj vejít nejen příjezd vlaku, ale i to, než se čidla v továrně proberou a stihnou něco říct.<br>
+    Přepínačem lze zařídit, aby se kotva probudila také vždy, když se po prázdném serveru někdo připojí. Dokud na serveru nikdo není, čas totiž neběží a žádný interval neuplyne.<br><br>
+    <font size="20" color="6082B6">Konektory</font><br>
+    <strong>Vstup</strong> — signál na něm brání usnutí.<br>
+    <strong>Výstup</strong> — hlásí stav kolečka od 0 do 15. Hodí se na kontrolku, nebo na žlab, který kotvě doplní kolečko, jakmile jí dochází.
+</translation>
 <translation key="signalslink:block-handbooktext-manageddock">
     Překladiště je bedna, která nakládá a vykládá to, co stojí vedle ní. Je to první zařízení SignalsLinku, které má <strong>dva vlastní konce</strong>: jedním je ono samo, druhým protistrana, kterou vedle sebe najde.<br>
     Má jeden nedělený inventář o 48 slotech. Každý slot přijme předměty i kapalinu, takže se nemusíte starat o to, co kam patří — <a href="handbook://signalslink:usageinfo-paperconditions">Podmínky na papíře</a> vybírají podle obsahu, ne podle místa.<br><br>
