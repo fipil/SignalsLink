@@ -392,6 +392,10 @@ namespace SignalsLink.src.signals.chunkanchor
 
         public const int PacketIdSetSwitch = 1044;
 
+        /// <summary>How full the anchor is, 0-100, for the dialog.</summary>
+        public int ChargePercent => chargeBehavior == null || chargeBehavior.GearTotalCharge <= 0
+            ? 0 : (int)(charge / chargeBehavior.GearTotalCharge * 100f);
+
         /// <summary>How long one gear lasts at the present census, in in-game days.</summary>
         public double DaysPerGear()
         {

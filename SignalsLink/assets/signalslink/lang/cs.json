@@ -175,5 +175,7 @@
   "signalslink:chunkanchor-spare": "Náhradní kolečko: {0}",
   "signalslink:chunkanchor-switch": "Kotva zapnutá",
   "signalslink:chunkanchor-off": "Vypnutá — nedrží nic a nic nestojí.",
-  "signalslink:chunkanchor-slotlabel": "Náhradní:"
+  "signalslink:chunkanchor-slotlabel": "Náhradní kolečko",
+  "signalslink:chunkanchor-waketitle": "Probouzení",
+  "signalslink:chunkanchor-wakesoon": "Zatím drží trvale. Jakmile bude mít signálové piny, půjde tu nastavit, jak často a na jak dlouho se probouzí."
 }

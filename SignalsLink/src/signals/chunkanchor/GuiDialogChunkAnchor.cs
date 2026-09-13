@@ -23,6 +23,7 @@ namespace SignalsLink.src.signals.chunkanchor
         private const string PriceKey = "price";
         private const string SwitchKey = "switch";
         private const string SlotKey = "gearslot";
+        private const string ChargeKey = "charge";
 
         /// <summary>
         /// Where the player's chosen zoom is kept, in their own client settings.
@@ -37,6 +38,7 @@ namespace SignalsLink.src.signals.chunkanchor
         private float shownZoom = -1f;
         private int shownBlocks = -1;
         private int shownCreatures = -1;
+        private int shownCharge = -1;
 
         private readonly BlockPos pos;
         private readonly int anchorCx;
@@ -96,14 +98,52 @@ namespace SignalsLink.src.signals.chunkanchor
                 }
             }
 
-            ElementBounds mapBounds = ElementBounds.Fixed(0, 30, 420, 420);
-            ElementBounds switchBounds = ElementBounds.Fixed(0, 462, 30, 22);
-            ElementBounds switchLabel = ElementBounds.Fixed(38, 462, 260, 24);
-            ElementBounds slotBounds = ElementStdBounds.SlotGrid(EnumDialogArea.None, 372, 458, 1, 1);
-            ElementBounds slotLabel = ElementBounds.Fixed(300, 462, 68, 24);
-            ElementBounds priceBounds = ElementBounds.Fixed(0, 500, 420, 76);
+            // Two columns under the title bar: the map on the left, everything that is a SETTING on
+            // the right, and the price across the bottom where it reads as the sum of both.
+            //
+            // Every number below is Pad away from its neighbour. Without that the elements sit
+            // flush against the dialog frame, which makes a window look unfinished however right
+            // the contents are.
+            const int Pad = 12;
 
-            ElementBounds inner = ElementBounds.Fixed(0, 0, 420, 584);
+            // The dialog's own title bar. Content that starts at zero disappears under it.
+            const int TitleBar = 31;
+
+            const int MapSide = 420;
+
+            // Wide enough for German, which says everything in about half as many words again.
+            const int SideColumn = 270;
+
+            const int PriceHeight = 74;
+            const int SlotSide = 48;
+
+            int top = TitleBar + Pad;
+            int right = Pad + MapSide + Pad;
+            int width = right + SideColumn + Pad;
+
+            int mapBottom = top + MapSide;
+            int belowMap = mapBottom + Pad;
+
+            ElementBounds mapBounds = ElementBounds.Fixed(Pad, top, MapSide, MapSide);
+
+            ElementBounds switchBounds = ElementBounds.Fixed(right, top, 30, 22);
+            ElementBounds switchLabel = ElementBounds.Fixed(right + 38, top + 3, SideColumn - 38, 24);
+
+            ElementBounds wakeTitle = ElementBounds.Fixed(right, top + 44, SideColumn, 24);
+            ElementBounds wakeSoon = ElementBounds.Fixed(right, top + 70, SideColumn, 200);
+
+            // The gear sits on the same line the map ends on, which leaves the whole middle of the
+            // column free for the wake settings when they arrive.
+            int slotTop = mapBottom - SlotSide;
+
+            ElementBounds chargeLabel = ElementBounds.Fixed(right, slotTop - 30, SideColumn, 24);
+            ElementBounds slotLabel = ElementBounds.Fixed(right, slotTop + 12, SideColumn - SlotSide - 12, 24);
+            ElementBounds slotBounds = ElementStdBounds.SlotGrid(
+                EnumDialogArea.None, right + SideColumn - SlotSide, slotTop, 1, 1);
+
+            ElementBounds priceBounds = ElementBounds.Fixed(Pad, belowMap, width - 2 * Pad, PriceHeight);
+
+            ElementBounds inner = ElementBounds.Fixed(0, 0, width, belowMap + PriceHeight + Pad);
             ElementBounds outer = ElementStdBounds.AutosizedMainDialog.WithAlignment(EnumDialogArea.CenterMiddle);
 
             map = new GuiElementAnchorMap(layers, capi, mapBounds, chunkSize,
@@ -125,8 +165,13 @@ namespace SignalsLink.src.signals.chunkanchor
                     .AddSwitch(OnSwitch, switchBounds, SwitchKey)
                     .AddStaticText(Lang.Get("signalslink:chunkanchor-switch"),
                         CairoFont.WhiteSmallText(), switchLabel)
+                    .AddStaticText(Lang.Get("signalslink:chunkanchor-waketitle"),
+                        CairoFont.WhiteSmallText(), wakeTitle)
+                    .AddStaticText(Lang.Get("signalslink:chunkanchor-wakesoon"),
+                        CairoFont.WhiteDetailText(), wakeSoon)
+                    .AddDynamicText("", CairoFont.WhiteSmallText(), chargeLabel, ChargeKey)
                     .AddStaticText(Lang.Get("signalslink:chunkanchor-slotlabel"),
-                        CairoFont.WhiteSmallText().WithOrientation(EnumTextOrientation.Right), slotLabel)
+                        CairoFont.WhiteSmallText(), slotLabel)
                     .AddItemSlotGrid(anchor?.Inventory, SendSlotPacket, 1, slotBounds, SlotKey)
                     .AddDynamicText("", CairoFont.WhiteSmallText(), priceBounds, PriceKey)
                 .EndChildElements()
@@ -182,6 +227,9 @@ namespace SignalsLink.src.signals.chunkanchor
         private void UpdatePrice()
         {
             SingleComposer.GetDynamicText(PriceKey)?.SetNewText(PriceText());
+
+            SingleComposer.GetDynamicText(ChargeKey)?.SetNewText(
+                Lang.Get("signalslink:chunkanchor-charge", anchor?.ChargePercent ?? 0));
         }
 
         /// <summary>
@@ -231,10 +279,12 @@ namespace SignalsLink.src.signals.chunkanchor
             // The census arrives from the server a few seconds after a change, so the line is
             // rewritten when it moves - otherwise the player would see the old count and conclude
             // their click did nothing.
-            if (anchor != null && (anchor.ActiveBlocks != shownBlocks || anchor.Creatures != shownCreatures))
+            if (anchor != null && (anchor.ActiveBlocks != shownBlocks || anchor.Creatures != shownCreatures
+                || anchor.ChargePercent != shownCharge))
             {
                 shownBlocks = anchor.ActiveBlocks;
                 shownCreatures = anchor.Creatures;
+                shownCharge = anchor.ChargePercent;
                 UpdatePrice();
             }
 
