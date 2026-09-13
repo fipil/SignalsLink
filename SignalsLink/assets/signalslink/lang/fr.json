@@ -167,6 +167,7 @@
   "signalslink:chunkanchor-census": "Maintient en vie : {0} blocs actifs, {1} animaux ({2} unités)",
   "signalslink:chunkanchor-charge": "Roue : {0} %",
   "signalslink:chunkanchor-dead": "Pas de roue — ne maintient rien. Tapez dessus avec une roue en main.",
+  "signalslink:chunkanchor-name": "Nom de l’ancre",
   "signalslink:chunkanchor-dialogtitle": "Ancre de chunks",
   "signalslink:chunkanchor-free": "Ne maintient rien — la roue ne s'use pas",
   "signalslink:chunkanchor-off": "Désactivée — ne maintient rien et ne coûte rien.",

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using System.Linq;
 using SignalsLink.src;
 using signals.src;
 using signals.src.signalNetwork;
@@ -32,8 +33,8 @@ namespace SignalsLink.src.signals.chunkanchor
     /// </summary>
     public class BEChunkAnchor : BlockEntity, IBlockEntityContainer, ITemporalChargeHolder, IBESignalReceptor
     {
-        /// <summary>How often the bill is worked out, in in-game hours.</summary>
-        private const double BillEveryHours = 1.0;
+        /// <summary>How often the census is refreshed, in in-game hours.</summary>
+        private const double CensusEveryHours = 1.0;
 
         /// <summary>How far the map reaches, in columns; also the limit on what may be claimed.</summary>
         public int MapRadius { get; private set; } = AnchorArea.WindowRadius;
@@ -43,8 +44,17 @@ namespace SignalsLink.src.signals.chunkanchor
         private InventoryGeneric gearSlot;
         private BlockBehaviorTemporalCharge chargeBehavior;
 
-        private float charge;
-        private double lastBilledHours;
+        private double charge;
+        private readonly AnchorAccounting accounting = new();
+        private double lastCensusHours;
+        private double? censusStarted;
+        private bool warmingUp;
+        private bool takingGear;
+        private bool unloaded;
+        private double? syncedWakeAt;
+        private SignalsLinkConfig clientConfig = new();
+        public bool CensusReady { get; private set; }
+        public SignalsLinkConfig Settings => Config;
 
         /// <summary>
         /// Whether anything has been counted since this block entity came up.
@@ -75,7 +85,7 @@ namespace SignalsLink.src.signals.chunkanchor
         /// </summary>
         public bool SwitchedOn { get; private set; } = true;
 
-        private static SignalsLinkConfig Config => SignalsLinkConfigLoader.Current;
+        private SignalsLinkConfig Config => Api?.Side == EnumAppSide.Client ? clientConfig : SignalsLinkConfigLoader.Current;
 
         // ------------------------------------------------------------------ the wake cycle
 
@@ -136,6 +146,7 @@ namespace SignalsLink.src.signals.chunkanchor
             chargeBehavior = Block?.GetBehavior<BlockBehaviorTemporalCharge>();
 
             gearSlot ??= NewGearSlot(api);
+            if (api is ICoreServerAPI) Anchors?.SetName(Pos, AnchorName);
             gearSlot.LateInitialize(InventoryClassName + "-" + Pos, api);
 
             if (api is not ICoreServerAPI) return;
@@ -148,8 +159,11 @@ namespace SignalsLink.src.signals.chunkanchor
                 foreach (long key in AnchorArea.JustTheAnchor(cx, cz)) columns.Add(key);
             }
 
-            lastBilledHours = api.World.Calendar.TotalHours;
-            awakeSinceHours = lastBilledHours;
+            accounting.Reset(api.World.Calendar.TotalHours);
+            awakeSinceHours = api.World.Calendar.TotalHours;
+            inputSignal = 0;
+            unloaded = false;
+            gearSlot.SlotModified += OnGearChanged;
 
             signalMod = api.ModLoader.GetModSystem<SignalNetworkMod>();
             signalMod?.RegisterSignalTickListener(PushOutput);
@@ -159,9 +173,11 @@ namespace SignalsLink.src.signals.chunkanchor
             // bill caught up with it, which is an hour of ground kept loaded for nothing.
             if (SwitchedOn && charge <= 0) TakeSpareGear();
 
-            Alive = SwitchedOn && charge > 0;
+            Alive = AnchorAccounting.CanRun(SwitchedOn, charge, Anchors?.IsAsleep(Pos) == true);
+            warmingUp = Alive;
 
             if (Alive) Anchors?.SetColumns(Pos, columns);
+            else if (Anchors?.IsAsleep(Pos) != true) Anchors?.Release(Pos);
 
             RegisterGameTickListener(OnTick, 5000);
         }
@@ -179,44 +195,41 @@ namespace SignalsLink.src.signals.chunkanchor
         private void OnTick(float dt)
         {
             if (Api is not ICoreServerAPI) return;
-
-            // First count as soon as there is something to count. Deliberately on a tick and not
-            // in Initialize: the held columns are still being force-loaded at that moment, so
-            // counting there would report whatever happened to have arrived.
-            if (!counted) { Census(); counted = true; ShowState(); MarkDirty(); }
-
-            if (!SwitchedOn) return;
-
             double now = Api.World.Calendar.TotalHours;
-            double elapsed = now - lastBilledHours;
-
-            // The BILL is worked out by the hour - a smaller step would be arithmetic noise. The
-            // wake window and the output pin are NOT: a fifteen-minute window checked once an hour
-            // is not a fifteen-minute window, and a charge readout an hour behind is no use to a
-            // chute that is meant to notice the anchor running low.
+            Settle(now);
+            if (!counted || (Alive && now - lastCensusHours >= CensusEveryHours)) Census();
+            if (warmingUp && counted && Anchors?.ColumnsReady(columns) == true)
+            {
+                warmingUp = false;
+                awakeSinceHours = now;
+                accounting.Reset(now);
+            }
+            if (SwitchedOn && charge <= 0 && TakeSpareGear()) Revive();
+            if (!warmingUp && SwitchedOn) MaybeSleep(now);
             ReportCharge();
-            MaybeSleep(now);
+            ShowState();
+        }
 
-            // A jump means the world was away, not that a century of rent is due.
-            if (elapsed < 0 || elapsed > 24) { lastBilledHours = now; return; }
-            if (elapsed < BillEveryHours) return;
+        private void Settle(double now)
+        {
+            bool billable = Alive && !warmingUp && SwitchedOn
+                && Api.World.AllOnlinePlayers.Length > 0 && !PlayerNear();
+            double hours = accounting.Advance(now, billable);
+            if (hours > 0) Spend(hours);
+        }
 
-            lastBilledHours = now;
-
-            Census();
-
-            // Standing next to it costs nothing: those chunks would be loaded anyway, so the anchor
-            // is doing no work and has nothing to charge for.
-            if (PlayerNear()) { MarkDirty(); return; }
-
-            Spend((float)elapsed);
+        private void OnGearChanged(int slot)
+        {
+            if (takingGear || unloaded || Api is not ICoreServerAPI) return;
+            if (SwitchedOn && charge <= 0 && TakeSpareGear()) Revive();
+            MarkDirty();
         }
 
         // ------------------------------------------------------------------ pins
 
         public void OnValueChanged(NodePos pos, byte value)
         {
-            if (pos.index != InputPin || inputSignal == value) return;
+            if (unloaded || pos.index != InputPin || inputSignal == value) return;
 
             inputSignal = value;
 
@@ -241,7 +254,7 @@ namespace SignalsLink.src.signals.chunkanchor
 
         private void PushOutput()
         {
-            if (lastPushedOutput == outputSignal) return;
+            if (unloaded || lastPushedOutput == outputSignal) return;
 
             BEBehaviorSignalConnector connector = GetBehavior<BEBehaviorSignalConnector>();
             ISignalNode node = connector?.GetNodeAt(new NodePos(Pos, OutputPin));
@@ -258,13 +271,13 @@ namespace SignalsLink.src.signals.chunkanchor
         /// </summary>
         private void MaybeSleep(double now)
         {
-            if (WakeIntervalHours <= 0 || !Alive || HeldAwake) return;
-            if (now - awakeSinceHours < WakeWindowHours) return;
+            if (!AnchorAccounting.ShouldSleep(now, awakeSinceHours, WakeIntervalHours, WakeWindowHours, Alive, HeldAwake)) return;
 
             Alive = false;
             ShowState();
 
             Anchors?.Sleep(Pos, columns, now + WakeIntervalHours, WakeOnPlayerJoin);
+            MarkDirty();
         }
 
         /// <summary>What the player picked in the dialog.</summary>
@@ -272,16 +285,23 @@ namespace SignalsLink.src.signals.chunkanchor
         {
             if (Api is not ICoreServerAPI) return;
 
-            WakeIntervalHours = intervalHours < 0 ? 0 : intervalHours;
-            WakeWindowHours = windowHours < 0.05 ? 0.05 : windowHours;
+            if (!new[] { 0d, 1d, 4d, 24d }.Contains(intervalHours)
+                || !new[] { .25d, .5d, 1d, 2d }.Contains(windowHours)) return;
+            Settle(Api.World.Calendar.TotalHours);
+            WakeIntervalHours = intervalHours;
+            WakeWindowHours = windowHours;
             WakeOnPlayerJoin = onPlayerJoin;
 
             awakeSinceHours = Api.World.Calendar.TotalHours;
-
+            if (Anchors?.IsAsleep(Pos) == true)
+            {
+                if (intervalHours == 0) { Anchors.Release(Pos); Revive(); }
+                else Anchors.UpdateSleep(Pos, columns, awakeSinceHours + intervalHours, onPlayerJoin);
+            }
             MarkDirty();
         }
 
-        private void Spend(float hours)
+        private void Spend(double hours)
         {
             if (chargeBehavior == null) return;
 
@@ -291,7 +311,7 @@ namespace SignalsLink.src.signals.chunkanchor
             // still if another anchor holds the same ground.
             if (Alive)
             {
-                float perHour = chargeBehavior.GearTotalCharge / (100f * 24f)
+                double perHour = chargeBehavior.GearTotalCharge / (100d * 24d)
                     * (GetOperationalVolume() / chargeBehavior.ReferenceVolume)
                     * chargeBehavior.BaseConsumptionFactor;
 
@@ -307,8 +327,7 @@ namespace SignalsLink.src.signals.chunkanchor
                 return;
             }
 
-            if (!Alive) Revive();
-
+            ReportCharge();
             MarkDirty();
         }
 
@@ -321,7 +340,8 @@ namespace SignalsLink.src.signals.chunkanchor
             if (Api is not ICoreServerAPI || chargeBehavior == null) return false;
 
             string path = from?.Itemstack?.Collectible?.Code?.Path;
-            if (path == null || !path.Contains(chargeBehavior.ChargeItemCode)) return false;
+            if (path != chargeBehavior.ChargeItemCode) return false;
+            Settle(Api.World.Calendar.TotalHours);
 
             if (charge <= 0)
             {
@@ -331,6 +351,8 @@ namespace SignalsLink.src.signals.chunkanchor
                 charge = chargeBehavior.GearTotalCharge;
                 counted = false;
                 Revive();
+                ReportCharge();
+                MarkDirty();
 
                 return true;
             }
@@ -351,10 +373,15 @@ namespace SignalsLink.src.signals.chunkanchor
             ItemSlot slot = gearSlot?[0];
             if (slot == null || slot.Empty || chargeBehavior == null) return false;
 
-            slot.TakeOut(1);
-            slot.MarkDirty();
-
-            charge += chargeBehavior.GearTotalCharge;
+            takingGear = true;
+            try
+            {
+                charge += chargeBehavior.GearTotalCharge;
+                slot.TakeOut(1);
+                slot.MarkDirty();
+            }
+            finally { takingGear = false; }
+            MarkDirty();
 
             return true;
         }
@@ -397,7 +424,7 @@ namespace SignalsLink.src.signals.chunkanchor
             Anchors?.Release(Pos);
             ShowState();
 
-            Api.World.Logger.Notification("[SignalsLink] anchor dead at " + Pos
+            Api.World.Logger.Notification("[SignalsLink] anchor dead at " + AnchorDisplay.Location(AnchorName, Pos)
                 + "; out of charge and no spare gear, everything let go.");
 
             MarkDirty();
@@ -405,13 +432,20 @@ namespace SignalsLink.src.signals.chunkanchor
 
         private void Revive()
         {
-            if (!SwitchedOn) return;
+            if (!SwitchedOn || charge <= 0) return;
 
             // A sleeping anchor is down on purpose and its wake-up is the scheduler's business.
             // Without this it would stand straight back up on the first tick after going to sleep,
             // because from here "not alive but has charge" looks exactly like "ready to work".
             if (Anchors?.IsAsleep(Pos) == true) return;
 
+            if (!Alive)
+            {
+                awakeSinceHours = Api.World.Calendar.TotalHours;
+                accounting.Reset(awakeSinceHours);
+                warmingUp = true;
+                counted = false;
+            }
             Alive = true;
             Anchors?.SetColumns(Pos, columns);
             ShowState();
@@ -423,46 +457,26 @@ namespace SignalsLink.src.signals.chunkanchor
         /// Counts what is being kept alive. Walks the held columns rather than a box around the
         /// anchor, because those are exactly the chunks being paid for.
         /// </summary>
-        private void Census()
+        public void WakeFromSchedule()
         {
-            ActiveBlocks = 0;
-            Creatures = 0;
-
-            if (Api is not ICoreServerAPI sapi) return;
-
-            int size = GlobalConstants.ChunkSize;
-            int levels = sapi.WorldManager.MapSizeY / size;
-
-            foreach (long key in columns)
-            {
-                (int cx, int cz) = AnchorArea.Of(key);
-
-                for (int cy = 0; cy < levels; cy++)
-                {
-                    IWorldChunk chunk = sapi.WorldManager.GetChunk(cx, cy, cz);
-                    if (chunk == null) continue;
-
-                    if (chunk.BlockEntities != null) ActiveBlocks += chunk.BlockEntities.Count;
-
-                    if (chunk.Entities == null) continue;
-
-                    for (int i = 0; i < chunk.EntitiesCount; i++)
-                    {
-                        if (IsChargeable(chunk.Entities[i])) Creatures++;
-                    }
-                }
-            }
+            if (!SwitchedOn || charge <= 0) { Alive = false; Anchors?.Release(Pos); MarkDirty(); return; }
+            Alive = false;
+            Revive();
         }
 
-        /// <summary>
-        /// Creatures only. Dropped items and projectiles are transient and not the player's doing,
-        /// and charging for them would be a tax on untidiness rather than on load.
-        /// </summary>
-        private static bool IsChargeable(Entity entity)
+        private void Census()
         {
-            // Not the player. It is their world, and the ground they are standing on would be
-            // loaded whether the anchor paid for it or not.
-            return entity is EntityAgent && entity is not EntityPlayer && entity.Alive;
+            if (Anchors == null) return;
+            censusStarted ??= Api.World.ElapsedMilliseconds / 1000.0;
+            bool ready = Anchors.TryCensus(columns, censusStarted.Value, out var result);
+            if (!ready) { if (CensusReady) { CensusReady = false; MarkDirty(); } return; }
+            // The anchor itself is infrastructure, not a machine kept alive by it.
+            ActiveBlocks = Math.Max(0, result.Blocks - 1);
+            Creatures = result.Creatures;
+            counted = CensusReady = true;
+            censusStarted = null;
+            lastCensusHours = Api.World.Calendar.TotalHours;
+            MarkDirty();
         }
 
         private bool PlayerNear()
@@ -484,7 +498,7 @@ namespace SignalsLink.src.signals.chunkanchor
 
         // ------------------------------------------------------------------ charge holder
 
-        public float GetCurrentCharge() => charge;
+        public float GetCurrentCharge() => (float)charge;
 
         public void SetCurrentCharge(float value)
         {
@@ -504,7 +518,7 @@ namespace SignalsLink.src.signals.chunkanchor
             float reference = chargeBehavior?.ReferenceVolume ?? 100f;
 
             return AnchorCensus.EffectiveVolume(
-                AnchorCensus.Units(ActiveBlocks, Creatures, columns.Count, Config.AnchorCreatureWeight, Config.AnchorColumnWeight),
+                AnchorCensus.AnchorUnits(ActiveBlocks, Creatures, columns.Count, Config.AnchorCreatureWeight, Config.AnchorColumnWeight),
                 reference, Config.AnchorReferenceLoad, Config.AnchorPriceExponent);
         }
 
@@ -522,8 +536,12 @@ namespace SignalsLink.src.signals.chunkanchor
 
             HashSet<long> clean = AnchorArea.Sanitise(wanted, cx, cz, MapRadius, Config.AnchorMaxColumns);
 
+            Settle(Api.World.Calendar.TotalHours);
             columns.Clear();
             foreach (long key in clean) columns.Add(key);
+            counted = CensusReady = false;
+            censusStarted = null;
+            if (Anchors?.WakesAt(Pos) is double wakeAt) Anchors.UpdateSleep(Pos, columns, wakeAt, WakeOnPlayerJoin);
 
             if (Alive) Anchors?.SetColumns(Pos, columns);
 
@@ -542,7 +560,9 @@ namespace SignalsLink.src.signals.chunkanchor
         {
             if (Api is not ICoreServerAPI || on == SwitchedOn) return;
 
+            Settle(Api.World.Calendar.TotalHours);
             SwitchedOn = on;
+            accounting.Reset(Api.World.Calendar.TotalHours);
 
             if (on)
             {
@@ -560,10 +580,25 @@ namespace SignalsLink.src.signals.chunkanchor
         }
 
         public const int PacketIdSetSwitch = 1044;
+        public const int PacketIdSetName = 1048;
+        public string AnchorName { get; private set; } = "";
+
+        public void SetAnchorName(string name)
+        {
+            AnchorName = AnchorDisplay.CleanName(name);
+            if (Api is ICoreServerAPI) Anchors?.SetName(Pos, AnchorName);
+            MarkDirty();
+        }
+
+        public void SendNameToServer(string name)
+        {
+            (Api as ICoreClientAPI)?.Network.SendBlockEntityPacket(Pos, PacketIdSetName,
+                Encoding.UTF8.GetBytes(AnchorDisplay.CleanName(name)));
+        }
 
         /// <summary>How full the anchor is, 0-100, for the dialog.</summary>
         public int ChargePercent => chargeBehavior == null || chargeBehavior.GearTotalCharge <= 0
-            ? 0 : (int)(charge / chargeBehavior.GearTotalCharge * 100f);
+            ? 0 : (int)Math.Clamp(charge / chargeBehavior.GearTotalCharge * 100.0, 0, 100);
 
         /// <summary>How long one gear lasts at the present census, in in-game days.</summary>
         public double DaysPerGear()
@@ -571,7 +606,7 @@ namespace SignalsLink.src.signals.chunkanchor
             if (chargeBehavior == null) return double.PositiveInfinity;
 
             return AnchorCensus.DaysPerGear(
-                AnchorCensus.Units(ActiveBlocks, Creatures, columns.Count, Config.AnchorCreatureWeight, Config.AnchorColumnWeight),
+                AnchorCensus.AnchorUnits(ActiveBlocks, Creatures, columns.Count, Config.AnchorCreatureWeight, Config.AnchorColumnWeight),
                 chargeBehavior.GearTotalCharge, chargeBehavior.ReferenceVolume,
                 chargeBehavior.BaseConsumptionFactor,
                 Config.AnchorReferenceLoad, Config.AnchorPriceExponent);
@@ -584,6 +619,7 @@ namespace SignalsLink.src.signals.chunkanchor
 
             // The slot has to be open for the player before its grid will accept anything.
             capi.World.Player.InventoryManager.OpenInventory(gearSlot);
+            capi.Network.SendBlockEntityPacket(Pos, PacketIdRefreshCensus);
 
             new GuiDialogChunkAnchor(capi, Pos, GlobalConstants.ChunkSize, columns, MapRadius,
                 SwitchedOn, Config.AnchorMaxColumns,
@@ -591,6 +627,7 @@ namespace SignalsLink.src.signals.chunkanchor
         }
 
         public const int PacketIdSetColumns = 1043;
+        public const int PacketIdRefreshCensus = 1047;
 
         private void SendColumnsToServer(IReadOnlyCollection<long> wanted)
         {
@@ -636,8 +673,25 @@ namespace SignalsLink.src.signals.chunkanchor
                 return;
             }
 
+            if (packetid == PacketIdSetName)
+            {
+                if (data == null || data.Length > AnchorDisplay.MaxNameLength * 4) return;
+                if (fromPlayer?.Entity == null || fromPlayer.Entity.Pos.SquareDistanceTo(Pos.ToVec3d()) > 100) return;
+                SetAnchorName(Encoding.UTF8.GetString(data));
+                return;
+            }
+
+            if (packetid == PacketIdRefreshCensus)
+            {
+                counted = CensusReady = false;
+                censusStarted = null;
+                Census();
+                MarkDirty();
+                return;
+            }
             if (packetid == PacketIdSetCycle)
             {
+                if (data == null || data.Length != 17) return;
                 using MemoryStream cycle = new MemoryStream(data);
                 using BinaryReader read = new BinaryReader(cycle);
 
@@ -663,10 +717,12 @@ namespace SignalsLink.src.signals.chunkanchor
                 return;
             }
 
+            if (data == null || data.Length < 4 || data.Length > 4 + 225 * 8) return;
             using MemoryStream stream = new MemoryStream(data);
             using BinaryReader reader = new BinaryReader(stream);
 
             int count = reader.ReadInt32();
+            if (count < 0 || count > 225 || data.Length != 4 + count * 8) return;
             List<long> wanted = new List<long>(count);
 
             for (int i = 0; i < count; i++) wanted.Add(reader.ReadInt64());
@@ -682,10 +738,25 @@ namespace SignalsLink.src.signals.chunkanchor
         /// </summary>
         public override void OnBlockRemoved()
         {
-            signalMod?.DisposeSignalTickListener(PushOutput);
+            Detach();
             Anchors?.Release(Pos);
+            Anchors?.SetName(Pos, null);
 
             base.OnBlockRemoved();
+        }
+
+        private void Detach()
+        {
+            if (Api is ICoreServerAPI && !unloaded) Settle(Api.World.Calendar.TotalHours);
+            unloaded = true;
+            signalMod?.DisposeSignalTickListener(PushOutput);
+            if (gearSlot != null) gearSlot.SlotModified -= OnGearChanged;
+        }
+
+        public override void OnBlockUnloaded()
+        {
+            Detach();
+            base.OnBlockUnloaded();
         }
 
         /// <summary>The spare gear comes back out; losing it to a pickaxe would be a quiet theft.</summary>
@@ -709,6 +780,8 @@ namespace SignalsLink.src.signals.chunkanchor
         public override void FromTreeAttributes(ITreeAttribute tree, IWorldAccessor worldForResolving)
         {
             base.FromTreeAttributes(tree, worldForResolving);
+            AnchorName = AnchorDisplay.CleanName(tree.GetString("anchorName", ""));
+            if (Api is ICoreServerAPI) Anchors?.SetName(Pos, AnchorName);
 
             columns.Clear();
 
@@ -723,11 +796,22 @@ namespace SignalsLink.src.signals.chunkanchor
             inputSignal = (byte)tree.GetInt("inputsignal", 0);
             outputSignal = (byte)tree.GetInt("outputsignal", 0);
 
-            charge = tree.GetFloat("charge", 0f);
+            charge = tree.GetDecimal("charge", 0);
+            if (!double.IsFinite(charge) || charge < 0) charge = 0;
             Alive = tree.GetBool("alive", true);
             SwitchedOn = tree.GetBool("switchedon", true);
             ActiveBlocks = tree.GetInt("activeblocks", 0);
             Creatures = tree.GetInt("creatures", 0);
+            CensusReady = tree.GetBool("censusready", false);
+            syncedWakeAt = tree.HasAttribute("wakesat") ? tree.GetDouble("wakesat") : null;
+            if (worldForResolving?.Side == EnumAppSide.Client)
+            {
+                clientConfig.AnchorReferenceLoad = tree.GetFloat("anchorReference", 250);
+                clientConfig.AnchorPriceExponent = tree.GetFloat("anchorExponent", 1.174f);
+                clientConfig.AnchorCreatureWeight = tree.GetInt("anchorCreature", 10);
+                clientConfig.AnchorColumnWeight = tree.GetInt("anchorColumn", 5);
+                clientConfig.AnchorMaxColumns = tree.GetInt("anchorMax", 64);
+            }
 
             gearSlot ??= NewGearSlot(worldForResolving?.Api);
             gearSlot.FromTreeAttributes(tree.GetTreeAttribute("gear") ?? new TreeAttribute());
@@ -736,6 +820,7 @@ namespace SignalsLink.src.signals.chunkanchor
         public override void ToTreeAttributes(ITreeAttribute tree)
         {
             base.ToTreeAttributes(tree);
+            tree.SetString("anchorName", AnchorName);
 
             long[] keys = new long[columns.Count];
             columns.CopyTo(keys);
@@ -748,11 +833,19 @@ namespace SignalsLink.src.signals.chunkanchor
             tree.SetInt("inputsignal", inputSignal);
             tree.SetInt("outputsignal", outputSignal);
 
-            tree.SetFloat("charge", charge);
+            tree.SetDouble("charge", charge);
             tree.SetBool("alive", Alive);
             tree.SetBool("switchedon", SwitchedOn);
             tree.SetInt("activeblocks", ActiveBlocks);
             tree.SetInt("creatures", Creatures);
+            tree.SetBool("censusready", CensusReady);
+            if (Anchors?.WakesAt(Pos) is double wakeAt) tree.SetDouble("wakesat", wakeAt);
+            else tree.RemoveAttribute("wakesat");
+            tree.SetFloat("anchorReference", Config.AnchorReferenceLoad);
+            tree.SetFloat("anchorExponent", Config.AnchorPriceExponent);
+            tree.SetInt("anchorCreature", Config.AnchorCreatureWeight);
+            tree.SetInt("anchorColumn", Config.AnchorColumnWeight);
+            tree.SetInt("anchorMax", Config.AnchorMaxColumns);
 
             TreeAttribute gear = new TreeAttribute();
             gearSlot?.ToTreeAttributes(gear);
@@ -763,14 +856,19 @@ namespace SignalsLink.src.signals.chunkanchor
         {
             base.GetBlockInfo(forPlayer, sb);
 
+            if (!string.IsNullOrEmpty(AnchorName))
+            {
+                sb.AppendLine(AnchorName.Replace("<", "&lt;").Replace(">", "&gt;"));
+            }
+
             sb.AppendLine(Lang.Get("signalslink:chunkanchor-holding", columns.Count));
 
             // The price is shown WHATEVER state it is in. It used to be hidden while the anchor was
             // out of charge, which is precisely the moment the player is deciding whether feeding
             // it is worth a gear.
-            float units = AnchorCensus.Units(ActiveBlocks, Creatures, columns.Count, Config.AnchorCreatureWeight, Config.AnchorColumnWeight);
+            float units = AnchorCensus.AnchorUnits(ActiveBlocks, Creatures, columns.Count, Config.AnchorCreatureWeight, Config.AnchorColumnWeight);
 
-            sb.AppendLine(Lang.Get("signalslink:chunkanchor-census", ActiveBlocks, Creatures, (int)units));
+            sb.AppendLine(CensusReady ? Lang.Get("signalslink:chunkanchor-census", ActiveBlocks, Creatures, (int)units) : "�");
 
             if (chargeBehavior != null)
             {
@@ -778,7 +876,7 @@ namespace SignalsLink.src.signals.chunkanchor
                     chargeBehavior.ReferenceVolume, chargeBehavior.BaseConsumptionFactor,
                     Config.AnchorReferenceLoad, Config.AnchorPriceExponent);
 
-                sb.AppendLine(double.IsInfinity(days)
+                sb.AppendLine(!CensusReady ? "�" : double.IsInfinity(days)
                     ? Lang.Get("signalslink:chunkanchor-free")
                     : Lang.Get("signalslink:chunkanchor-rate", days.ToString("0.#")));
 
@@ -795,7 +893,7 @@ namespace SignalsLink.src.signals.chunkanchor
                 return;
             }
 
-            double? wakes = Anchors?.WakesAt(Pos);
+            double? wakes = Api.Side == EnumAppSide.Client ? syncedWakeAt : Anchors?.WakesAt(Pos);
 
             if (wakes != null)
             {
@@ -823,13 +921,14 @@ namespace SignalsLink.src.signals.chunkanchor
         public ItemSlotGear(InventoryBase inventory, string code) : base(inventory)
         {
             this.code = code;
+            MaxSlotStackSize = 1;
         }
 
         public override bool CanHold(ItemSlot sourceSlot)
         {
             string path = sourceSlot?.Itemstack?.Collectible?.Code?.Path;
 
-            return path != null && path.Contains(code) && base.CanHold(sourceSlot);
+            return path == code && base.CanHold(sourceSlot);
         }
     }
 }

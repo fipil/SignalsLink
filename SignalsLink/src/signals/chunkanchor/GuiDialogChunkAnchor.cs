@@ -19,6 +19,8 @@ namespace SignalsLink.src.signals.chunkanchor
     /// </summary>
     public class GuiDialogChunkAnchor : GuiDialog
     {
+        private const string NameKey = "anchorname";
+        private string savedName;
         private const string MapKey = "anchormap";
         private const string PriceKey = "price";
         private const string SwitchKey = "switch";
@@ -51,6 +53,8 @@ namespace SignalsLink.src.signals.chunkanchor
         private int shownBlocks = -1;
         private int shownCreatures = -1;
         private int shownCharge = -1;
+        private bool shownReady;
+        private int shownColumnCount = -1;
         private bool repaintWanted;
 
         private readonly BlockPos pos;
@@ -134,7 +138,8 @@ namespace SignalsLink.src.signals.chunkanchor
             const int PriceHeight = 74;
             const int SlotSide = 48;
 
-            int top = TitleBar + Pad;
+            int nameTop = TitleBar + Pad;
+            int top = nameTop + 44;
             int right = Pad + MapSide + Pad;
             int width = right + SideColumn + Pad;
 
@@ -182,6 +187,10 @@ namespace SignalsLink.src.signals.chunkanchor
                 .AddShadedDialogBG(inner)
                 .AddDialogTitleBar(Lang.Get("signalslink:chunkanchor-dialogtitle"), () => TryClose())
                 .BeginChildElements(inner)
+                    .AddStaticText(Lang.Get("signalslink:chunkanchor-name"),
+                        CairoFont.WhiteSmallText(), ElementBounds.Fixed(Pad, nameTop + 4, 130, 28))
+                    .AddTextInput(ElementBounds.Fixed(Pad + 140, nameTop, width - 2 * Pad - 140, 30),
+                        null, CairoFont.WhiteSmallText(), NameKey)
                     .AddInteractiveElement(map, MapKey)
                     .AddSwitch(OnSwitch, switchBounds, SwitchKey)
                     .AddStaticText(Lang.Get("signalslink:chunkanchor-switch"),
@@ -202,6 +211,9 @@ namespace SignalsLink.src.signals.chunkanchor
                     .AddDynamicText("", CairoFont.WhiteSmallText(), priceBounds, PriceKey)
                 .EndChildElements()
                 .Compose();
+
+            savedName = anchor?.AnchorName ?? "";
+            SingleComposer.GetTextInput(NameKey).SetValue(savedName);
 
             // Zoom first, then centre: CenterMapTo works out the view from the zoom, so doing it
             // the other way round centres for one zoom and then leaves it at another.
@@ -235,8 +247,21 @@ namespace SignalsLink.src.signals.chunkanchor
         /// there is a way to stop the bill that does not involve breaking the block and picking
         /// every column again afterwards.
         /// </summary>
+        private void SaveName()
+        {
+            var input = SingleComposer.GetTextInput(NameKey);
+            string text = input.GetText();
+            if (text == savedName) return;
+            string name = AnchorDisplay.CleanName(text);
+            if (name != text) input.SetValue(name);
+            if (name == savedName) return;
+            savedName = name;
+            anchor?.SendNameToServer(name);
+        }
+
         private void OnSwitch(bool on)
         {
+            SaveName();
             switchedOn = on;
             setSwitch?.Invoke(on);
         }
@@ -351,6 +376,7 @@ namespace SignalsLink.src.signals.chunkanchor
 
         private void SendCycle()
         {
+            SaveName();
             double interval = SelectedWake();
             double window = WindowChoices[SingleComposer.GetDropDown(WindowKey)?.SelectedIndices?[0] ?? 1];
 
@@ -389,10 +415,11 @@ namespace SignalsLink.src.signals.chunkanchor
             string line = Lang.Get("signalslink:chunkanchor-price", held.Count, maxColumns);
 
             if (anchor == null) return line;
+            if (!anchor.CensusReady) return line + "\n�";
 
-            float units = AnchorCensus.Units(anchor.ActiveBlocks, anchor.Creatures, held.Count,
-                SignalsLinkConfigLoader.Current.AnchorCreatureWeight,
-                SignalsLinkConfigLoader.Current.AnchorColumnWeight);
+            float units = AnchorCensus.AnchorUnits(anchor.ActiveBlocks, anchor.Creatures, held.Count,
+                anchor.Settings.AnchorCreatureWeight,
+                anchor.Settings.AnchorColumnWeight);
 
             line += "\n" + Lang.Get("signalslink:chunkanchor-census",
                 anchor.ActiveBlocks, anchor.Creatures, (int)units);
@@ -435,12 +462,16 @@ namespace SignalsLink.src.signals.chunkanchor
             // The census arrives from the server a few seconds after a change, so the line is
             // rewritten when it moves - otherwise the player would see the old count and conclude
             // their click did nothing.
+            if (SingleComposer.GetTextInput(NameKey)?.HasFocus == false) SaveName();
+
             if (anchor != null && (anchor.ActiveBlocks != shownBlocks || anchor.Creatures != shownCreatures
-                || anchor.ChargePercent != shownCharge))
+                || anchor.ChargePercent != shownCharge || anchor.CensusReady != shownReady || anchor.Columns.Count != shownColumnCount))
             {
                 shownBlocks = anchor.ActiveBlocks;
                 shownCreatures = anchor.Creatures;
                 shownCharge = anchor.ChargePercent;
+                shownReady = anchor.CensusReady;
+                shownColumnCount = anchor.Columns.Count;
                 UpdatePrice();
             }
 
@@ -460,13 +491,14 @@ namespace SignalsLink.src.signals.chunkanchor
 
         public override void OnGuiClosed()
         {
+            SaveName();
             base.OnGuiClosed();
 
             // Hand the slot back, the way any container dialog does. Without it the inventory stays
             // open for this player and the next one to touch it gets a rollback.
             SingleComposer.GetSlotGrid(SlotKey)?.OnGuiClosed(capi);
 
-            capi.Network.SendBlockEntityPacket(pos.X, pos.Y, pos.Z, (int)EnumBlockEntityPacketId.Close);
+            capi.Network.SendBlockEntityPacket(pos, (int)EnumBlockEntityPacketId.Close);
 
             // Hand the terrain tiles back, or the real world map keeps redrawing ground nobody is
             // looking at any more. Not while the world map itself is open - they are its tiles then.

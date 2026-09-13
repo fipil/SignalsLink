@@ -167,6 +167,7 @@
   "signalslink:chunkanchor-census": "Mantém ativos: {0} blocos ativos, {1} animais ({2} unidades)",
   "signalslink:chunkanchor-charge": "Roda: {0} %",
   "signalslink:chunkanchor-dead": "Sem roda — não mantém nada. Toque nela com uma roda na mão.",
+  "signalslink:chunkanchor-name": "Nome da âncora",
   "signalslink:chunkanchor-dialogtitle": "Âncora de chunks",
   "signalslink:chunkanchor-free": "Não mantém nada — a roda não se desgasta",
   "signalslink:chunkanchor-off": "Desligada — não mantém nada e não custa nada.",

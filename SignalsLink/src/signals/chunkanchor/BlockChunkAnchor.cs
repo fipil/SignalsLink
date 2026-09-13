@@ -49,15 +49,14 @@ namespace SignalsLink.src.signals.chunkanchor
         }
 
         /// <summary>
-        /// Contains, not equals: the charge behaviour looks the item up the same way, and the two
-        /// have to agree or the block would take a gear the anchor then refuses.
+        /// Match the charge item exactly, as the inventory slot does.
         /// </summary>
         private bool IsGear(ItemSlot slot)
         {
             string code = GetBehavior<behaviours.BlockBehaviorTemporalCharge>()?.ChargeItemCode;
             string path = slot?.Itemstack?.Collectible?.Code?.Path;
 
-            return code != null && path != null && path.Contains(code);
+            return code != null && path != null && path == code;
         }
 
         public override bool OnBlockInteractStart(IWorldAccessor world, IPlayer byPlayer, BlockSelection blockSel)

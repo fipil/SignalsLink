@@ -167,6 +167,7 @@
   "signalslink:chunkanchor-census": "Keeping alive: {0} active blocks, {1} animals ({2} units)",
   "signalslink:chunkanchor-charge": "Wheel: {0} %",
   "signalslink:chunkanchor-dead": "No wheel — holding nothing. Click it with a wheel in hand.",
+  "signalslink:chunkanchor-name": "Anchor name",
   "signalslink:chunkanchor-dialogtitle": "Chunk Anchor",
   "signalslink:chunkanchor-free": "Holding nothing — the wheel is not consumed",
   "signalslink:chunkanchor-off": "Off — holding nothing and costs nothing.",

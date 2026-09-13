@@ -5,6 +5,13 @@ using SignalsLink.src;
 using Vintagestory.API.Common;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Server;
+using Vintagestory.API.Common.Entities;
+using Vintagestory.Server;
+using signals.src;
+using signals.src.signalNetwork;
+using signals.src.hangingwires;
+using System.Linq;
+using HarmonyLib;
 
 namespace SignalsLink.src.signals.chunkanchor
 {
@@ -16,7 +23,7 @@ namespace SignalsLink.src.signals.chunkanchor
     /// claims are saved: after a restart nothing would ever load the chunk an anchor stands in, so
     /// the anchor could never claim anything - it cannot pull itself up by its own bootstraps.
     ///
-    /// The same reason will make this the home of the wake schedule later: a sleeping anchor's own
+    /// The wake schedule lives here too: a sleeping anchor's own
     /// column is unloaded, so its block entity is not ticking and cannot wake itself either.
     /// </summary>
     public class ChunkAnchors : ModSystem
@@ -33,8 +40,166 @@ namespace SignalsLink.src.signals.chunkanchor
 
         /// <summary>As above, and each anchor also carries the hour it should next wake at.</summary>
         private const int SleepersFormat = -2;
+        private const int NamedFormat = -3;
+        private readonly Dictionary<BlockPos, string> names = new();
+
+        public void SetName(BlockPos pos, string name)
+        {
+            if (pos == null) return;
+            name = AnchorDisplay.CleanName(name);
+            if (name.Length == 0) names.Remove(pos);
+            else names[pos.Copy()] = name;
+        }
+
+        public string NameAt(BlockPos pos) => names.TryGetValue(pos, out string name) ? name : "";
+        private string LogLocation(BlockPos pos) => AnchorDisplay.Location(NameAt(pos), pos);
 
         private ICoreServerAPI sapi;
+        private AnchorColumnJobs jobs;
+        private SignalNetworkMod signals;
+        private HangingWiresMod wires;
+        private readonly Queue<(BlockPos Pos, string Why, Sleeper Token)> wakeQueue = new();
+        private readonly Dictionary<BlockPos, Sleeper> wakeQueued = new();
+        private Harmony wireHooks;
+        private readonly List<long> listeners = new();
+        private readonly Dictionary<NodePos, List<NodePos>> wirePeers = new();
+        private int wireCount = -1;
+        private readonly Queue<BlockPos> validateClaims = new();
+        private readonly Dictionary<BlockPos, List<NodePos>> wakeInputs = new();
+
+        public bool ColumnsReady(IEnumerable<long> columns) => columns.All(jobs.IsReady);
+        public bool TryCensus(IEnumerable<long> columns, double requestStarted, out AnchorCount result)
+        {
+            result = default;
+            bool complete = true;
+            double now = sapi.World.ElapsedMilliseconds / 1000.0;
+            foreach (long key in columns)
+            {
+                if (!jobs.TryGet(key, now, out var count, requestStarted)) complete = false;
+                result = new AnchorCount(result.Blocks + count.Blocks, result.Creatures + count.Creatures);
+            }
+            return complete;
+        }
+
+        private IEnumerable<AnchorCount> Scan(long key)
+        {
+            var (x, z) = AnchorArea.Of(key);
+            int blocks = 0, creatures = 0;
+            for (int y = 0; y < (sapi.WorldManager.MapSizeY + 31) / 32; y++)
+            {
+                var chunk = sapi.WorldManager.GetChunk(x, y, z);
+                if (chunk == null) yield break;
+                blocks += chunk.BlockEntities?.Count ?? 0;
+                for (int i = 0, count = chunk.EntitiesCount; i < count; i++)
+                {
+                    if (i < chunk.EntitiesCount && chunk.Entities?[i] is EntityAgent entity && entity is not EntityPlayer && entity.Alive) creatures++;
+                    yield return new AnchorCount(blocks, creatures);
+                }
+                yield return new AnchorCount(blocks, creatures);
+            }
+        }
+
+        private bool ColumnReady(long key)
+        {
+            var (x, z) = AnchorArea.Of(key);
+            for (int y = 0; y < (sapi.WorldManager.MapSizeY + 31) / 32; y++)
+                if (sapi.WorldManager.GetChunk(x, y, z) == null) return false;
+            return true;
+        }
+
+        private void ProcessWork(float dt)
+        {
+            // Old versions could persist claims after a sleeper was broken. Validate only
+            // after the anchor's own column has finished loading, with bounded work per tick.
+            int checks = Math.Min(8, validateClaims.Count);
+            for (int i = 0; i < checks; i++)
+            {
+                BlockPos pos = validateClaims.Dequeue();
+                if (!anchors.ContainsKey(pos)) continue;
+                var (x, z) = ColumnAt(pos);
+                if (!jobs.IsReady(AnchorArea.Key(x, z))) { validateClaims.Enqueue(pos); continue; }
+                if (sapi.World.BlockAccessor.GetBlockEntity(pos) is not BEChunkAnchor) Release(pos);
+            }
+            // Wires survive unload. Read only live ends, never load a sleeping column to poll it.
+            if ((wires?.data?.connections?.Count ?? 0) != wireCount) RebuildWakeInputs();
+            foreach (var pair in wakeInputs)
+            {
+                foreach (NodePos input in pair.Value)
+                {
+                    var node = signals?.GetDeviceAt(input.blockPos)?.GetNodeAt(input);
+                    if (node != null && (node.isSource ? Math.Max(node.output, node.value) : node.value) > 0)
+                    { QueueWake(pair.Key, "a signal"); break; }
+                }
+            }
+            for (int n = 0; n < 2 && wakeQueue.Count > 0; n++)
+            {
+                var next = wakeQueue.Dequeue();
+                if (wakeQueued.TryGetValue(next.Pos, out var queued) && ReferenceEquals(queued, next.Token)) wakeQueued.Remove(next.Pos);
+                if (sleeping.TryGetValue(next.Pos, out var current) && ReferenceEquals(current, next.Token)) Wake(next.Pos, next.Why);
+            }
+            jobs.Tick(sapi.World.ElapsedMilliseconds / 1000.0);
+        }
+
+        private void RebuildWakeInputs()
+        {
+            wirePeers.Clear();
+            wakeInputs.Clear();
+            wireCount = wires?.data?.connections?.Count ?? 0;
+            if (wires?.data?.connections == null) return;
+            foreach (var wire in wires.data.connections)
+            {
+                AddPeer(wire.pos1, wire.pos2);
+                AddPeer(wire.pos2, wire.pos1);
+            }
+            foreach (var pos in sleeping.Keys) WatchInput(pos);
+        }
+        private void AddPeer(NodePos from, NodePos to)
+        {
+            if (!wirePeers.TryGetValue(from, out var peers)) wirePeers[from] = peers = new();
+            if (!peers.Contains(to)) peers.Add(to);
+        }
+        private void WatchInput(BlockPos pos)
+        {
+            wakeInputs.Remove(pos);
+            if (sleeping.ContainsKey(pos) && wirePeers.TryGetValue(new NodePos(pos, BEChunkAnchor.InputPin), out var peers)) wakeInputs[pos.Copy()] = peers;
+        }
+        private void QueueWake(BlockPos pos, string why)
+        {
+            if (pos != null && sleeping.TryGetValue(pos, out var token) && !wakeQueued.ContainsKey(pos))
+            { wakeQueued[pos.Copy()] = token; wakeQueue.Enqueue((pos.Copy(), why, token)); }
+        }
+        private static void WireAdded(SignalNetworkMod __instance, WireConnection __0)
+            => __instance.Api?.ModLoader?.GetModSystem<ChunkAnchors>()?.ChangeWire(__0, true);
+        private static void WireRemoved(SignalNetworkMod __instance, WireConnection __0)
+            => __instance.Api?.ModLoader?.GetModSystem<ChunkAnchors>()?.ChangeWire(__0, false);
+
+        private void ChangeWire(WireConnection wire, bool added)
+        {
+            if (wireCount < 0) return; // The persisted topology is indexed once after startup.
+            if (added) { AddPeer(wire.pos1, wire.pos2); AddPeer(wire.pos2, wire.pos1); }
+            else
+            {
+                if (wirePeers.TryGetValue(wire.pos1, out var first)) first.Remove(wire.pos2);
+                if (wirePeers.TryGetValue(wire.pos2, out var second)) second.Remove(wire.pos1);
+            }
+            wireCount = wires?.data?.connections?.Count ?? 0;
+            WatchInput(wire.pos1.blockPos);
+            WatchInput(wire.pos2.blockPos);
+        }
+
+        public override void Dispose()
+        {
+            if (sapi != null)
+            {
+                foreach (long listener in listeners) sapi.Event.UnregisterGameTickListener(listener);
+                sapi.Event.SaveGameLoaded -= Restore;
+                sapi.Event.GameWorldSave -= Store;
+                sapi.Event.PlayerNowPlaying -= OnPlayerArrived;
+            }
+            wireHooks?.UnpatchAll("signalslink.chunkanchor.wires");
+            jobs?.Dispose();
+            base.Dispose();
+        }
 
         /// <summary>Which columns each anchor holds.</summary>
         private readonly Dictionary<BlockPos, HashSet<long>> anchors = new Dictionary<BlockPos, HashSet<long>>();
@@ -47,12 +212,27 @@ namespace SignalsLink.src.signals.chunkanchor
         public override void StartServerSide(ICoreServerAPI api)
         {
             sapi = api;
+            // VS 1.22 UnloadChunkColumn discards dirty chunks. Unpin only, then let the
+            // ordinary unload system save them and respect players and normal chunk lifetime.
+            var server = api.World as ServerMain
+                ?? throw new NotSupportedException("Chunk anchors require the VS server world.");
+            jobs = new AnchorColumnJobs(ColumnReady,
+                key => { var (x, z) = AnchorArea.Of(key); api.WorldManager.LoadChunkColumn(x, z, true); },
+                key => { var (x, z) = AnchorArea.Of(key); server.RemoveChunkColumnFromForceLoadedList(api.WorldManager.MapChunkIndex2D(x, z)); },
+                key => Scan(key).GetEnumerator());
+            signals = api.ModLoader.GetModSystem<SignalNetworkMod>();
+            wires = api.ModLoader.GetModSystem<HangingWiresMod>();
+            wireHooks = new Harmony("signalslink.chunkanchor.wires");
+            wireHooks.Patch(AccessTools.Method(typeof(SignalNetworkMod), nameof(SignalNetworkMod.OnWireAdded)),
+                postfix: new HarmonyMethod(AccessTools.Method(typeof(ChunkAnchors), nameof(WireAdded))));
+            wireHooks.Patch(AccessTools.Method(typeof(SignalNetworkMod), nameof(SignalNetworkMod.OnWireRemoved)),
+                postfix: new HarmonyMethod(AccessTools.Method(typeof(ChunkAnchors), nameof(WireRemoved))));
 
             api.Event.SaveGameLoaded += Restore;
             api.Event.GameWorldSave += Store;
 
-            api.Event.RegisterGameTickListener(DrainReleases, 5000);
-            api.Event.RegisterGameTickListener(WakeSleepers, 5000);
+            listeners.Add(api.Event.RegisterGameTickListener(ProcessWork, 100));
+            listeners.Add(api.Event.RegisterGameTickListener(WakeSleepers, 5000));
             api.Event.PlayerNowPlaying += OnPlayerArrived;
         }
 
@@ -91,10 +271,11 @@ namespace SignalsLink.src.signals.chunkanchor
                 Columns = wanted,
                 OnPlayerJoin = onPlayerJoin
             };
+            if (wireCount < 0) RebuildWakeInputs(); else WatchInput(pos);
 
-            sapi.Logger.Notification("[SignalsLink] anchor asleep at " + pos + "; " + wanted.Count
-                + " column(s) let go, back at hour " + wakeAtHours.ToString("0.#")
-                + " (in " + (wakeAtHours - sapi.World.Calendar.TotalHours).ToString("0.#") + " h)"
+            sapi.Logger.Notification("[SignalsLink] anchor asleep at " + LogLocation(pos) + "; " + wanted.Count
+                + " column(s) let go, back at " + AnchorDisplay.TimeOfDay(wakeAtHours, sapi.World.Calendar.HoursPerDay)
+                + " (in " + AnchorDisplay.Duration(wakeAtHours - sapi.World.Calendar.TotalHours) + ")"
                 + (onPlayerJoin ? ", or sooner if the server wakes up." : "."));
         }
 
@@ -108,7 +289,15 @@ namespace SignalsLink.src.signals.chunkanchor
         }
 
         /// <summary>Brings it back now - what a signal on the input pin amounts to.</summary>
-        public void WakeNow(BlockPos pos) => Wake(pos, "a signal");
+        public void WakeNow(BlockPos pos) => QueueWake(pos, "a signal");
+        public void UpdateSleep(BlockPos pos, IEnumerable<long> columns, double when, bool onJoin)
+        {
+            if (sleeping.TryGetValue(pos, out var one))
+            {
+                sleeping[pos.Copy()] = new Sleeper { Columns = new HashSet<long>(columns), WakeAtHours = when, OnPlayerJoin = onJoin };
+                wakeQueued.Remove(pos);
+            }
+        }
 
         /// <summary>
         /// Wakes a sleeper and says WHY in the log.
@@ -122,12 +311,15 @@ namespace SignalsLink.src.signals.chunkanchor
             if (pos == null || !sleeping.TryGetValue(pos, out Sleeper one)) return;
 
             sleeping.Remove(pos);
+            wakeInputs.Remove(pos);
+            wakeQueued.Remove(pos);
 
-            sapi.Logger.Notification("[SignalsLink] anchor awake at " + pos + "; " + why
-                + " at hour " + sapi.World.Calendar.TotalHours.ToString("0.#")
+            sapi.Logger.Notification("[SignalsLink] anchor awake at " + LogLocation(pos) + "; " + why
+                + " at " + AnchorDisplay.TimeOfDay(sapi.World.Calendar.TotalHours, sapi.World.Calendar.HoursPerDay)
                 + ", taking back " + one.Columns.Count + " column(s).");
 
-            SetColumns(pos, one.Columns);
+            if (sapi.World.BlockAccessor.GetBlockEntity(pos) is BEChunkAnchor anchor) anchor.WakeFromSchedule();
+            else SetColumns(pos, one.Columns);
         }
 
         /// <summary>
@@ -150,7 +342,7 @@ namespace SignalsLink.src.signals.chunkanchor
                 if (one.Value.OnPlayerJoin) due.Add(one.Key);
             }
 
-            foreach (BlockPos pos in due) Wake(pos, "the server came back to life");
+            foreach (BlockPos pos in due) QueueWake(pos, "the server came back to life");
         }
 
         private readonly List<BlockPos> due = new List<BlockPos>();
@@ -170,7 +362,7 @@ namespace SignalsLink.src.signals.chunkanchor
 
             // Claiming the columns loads the chunks, which brings the block entity up, which is
             // what actually starts the anchor working again.
-            foreach (BlockPos pos in due) Wake(pos, "its interval elapsed");
+            foreach (BlockPos pos in due) QueueWake(pos, "its interval elapsed");
         }
 
         /// <summary>The columns this anchor holds, or an empty set when it holds none.</summary>
@@ -213,6 +405,7 @@ namespace SignalsLink.src.signals.chunkanchor
             {
                 before = new HashSet<long>();
                 anchors[pos.Copy()] = before;
+                validateClaims.Enqueue(pos.Copy());
             }
 
             int claimed = 0, released = 0;
@@ -228,8 +421,7 @@ namespace SignalsLink.src.signals.chunkanchor
 
                 if (count == 0)
                 {
-                    (int x, int z) = AnchorArea.Of(key);
-                    sapi.WorldManager.LoadChunkColumn(x, z, true);
+                    jobs.Retain(key);
                 }
             }
 
@@ -250,19 +442,23 @@ namespace SignalsLink.src.signals.chunkanchor
             // something happened twice.
             if (claimed == 0 && released == 0) return;
 
-            sapi.Logger.Notification("[SignalsLink] anchor at " + pos + " holds "
+            sapi.Logger.Notification("[SignalsLink] anchor at " + LogLocation(pos) + " holds "
                 + after.Count + " chunk column(s); " + held.Count + " held in all.");
         }
 
         public void Release(BlockPos pos)
         {
+            if (pos == null) return;
+            sleeping.Remove(pos);
+            wakeInputs.Remove(pos);
+            wakeQueued.Remove(pos);
             if (sapi == null || pos == null || !anchors.TryGetValue(pos, out HashSet<long> columns)) return;
 
             anchors.Remove(pos);
 
             foreach (long key in columns) LetGo(key);
 
-            sapi.Logger.Notification("[SignalsLink] anchor at " + pos + " let go; "
+            sapi.Logger.Notification("[SignalsLink] anchor at " + LogLocation(pos) + " let go; "
                 + held.Count + " columns still held.");
         }
 
@@ -281,62 +477,7 @@ namespace SignalsLink.src.signals.chunkanchor
 
             held.Remove(key);
 
-            // NOT unloaded here. UnloadChunkColumn is documented as acting "independent of any
-            // nearby players", and it means it: unticking a column on the map while standing in it
-            // pulls the ground out from under whoever is there. There is no API to merely clear the
-            // keep-loaded flag, so the column is queued and dropped once nobody is near it.
-            releasing.Add(key);
-        }
-
-        /// <summary>Columns nobody claims any more, waiting for the last player to walk away.</summary>
-        private readonly HashSet<long> releasing = new HashSet<long>();
-
-        private readonly List<long> ready = new List<long>();
-
-        /// <summary>
-        /// Drops what can safely be dropped. A column is safe once no player is within their own
-        /// view distance of it - inside that, the game would have it loaded anyway, so holding on a
-        /// little longer costs nothing and yanking it away costs a lot.
-        /// </summary>
-        private void DrainReleases(float dt)
-        {
-            if (releasing.Count == 0) return;
-
-            ready.Clear();
-
-            int margin = (sapi.Server?.Config?.MaxChunkRadius ?? 12) + 1;
-
-            foreach (long key in releasing)
-            {
-                // Claimed again while it waited: nothing to do.
-                if (held.ContainsKey(key)) { ready.Add(key); continue; }
-
-                (int x, int z) = AnchorArea.Of(key);
-                if (PlayerNear(x, z, margin)) continue;
-
-                sapi.WorldManager.UnloadChunkColumn(x, z);
-                ready.Add(key);
-            }
-
-            foreach (long key in ready) releasing.Remove(key);
-        }
-
-        private bool PlayerNear(int cx, int cz, int margin)
-        {
-            int size = sapi.WorldManager.ChunkSize;
-
-            foreach (IPlayer player in sapi.World.AllOnlinePlayers)
-            {
-                Vintagestory.API.Common.Entities.EntityPos at = player?.Entity?.Pos;
-                if (at == null) continue;
-
-                int px = (int)Math.Floor(at.X / size);
-                int pz = (int)Math.Floor(at.Z / size);
-
-                if (Math.Abs(px - cx) <= margin && Math.Abs(pz - cz) <= margin) return true;
-            }
-
-            return false;
+            jobs.LetGo(key);
         }
 
         // ---------------------------------------------------------------- across a restart
@@ -348,17 +489,17 @@ namespace SignalsLink.src.signals.chunkanchor
 
             // Sleepers are saved with everything else. Without that a restart would leave an
             // anchor asleep with nothing left in the world that knows to come back for it.
-            writer.Write(SleepersFormat);
+            writer.Write(NamedFormat);
             writer.Write(anchors.Count + sleeping.Count);
 
             foreach (KeyValuePair<BlockPos, HashSet<long>> anchor in anchors)
             {
-                WriteOne(writer, anchor.Key, anchor.Value, double.NegativeInfinity, false);
+                WriteOne(writer, anchor.Key, anchor.Value, double.NegativeInfinity, false, NameAt(anchor.Key));
             }
 
             foreach (KeyValuePair<BlockPos, Sleeper> one in sleeping)
             {
-                WriteOne(writer, one.Key, one.Value.Columns, one.Value.WakeAtHours, one.Value.OnPlayerJoin);
+                WriteOne(writer, one.Key, one.Value.Columns, one.Value.WakeAtHours, one.Value.OnPlayerJoin, NameAt(one.Key));
             }
 
             sapi.WorldManager.SaveGame.StoreData(SaveKey, buffer.ToArray());
@@ -366,13 +507,14 @@ namespace SignalsLink.src.signals.chunkanchor
 
         /// <summary>An hour of negative infinity means "awake"; anything else is when to wake it.</summary>
         private static void WriteOne(BinaryWriter writer, BlockPos pos, HashSet<long> columns,
-            double wakeAt, bool onPlayerJoin)
+            double wakeAt, bool onPlayerJoin, string name)
         {
             writer.Write(pos.X);
             writer.Write(pos.Y);
             writer.Write(pos.Z);
             writer.Write(wakeAt);
             writer.Write(onPlayerJoin);
+            writer.Write(name);
 
             writer.Write(columns.Count);
             foreach (long key in columns) writer.Write(key);
@@ -398,6 +540,7 @@ namespace SignalsLink.src.signals.chunkanchor
 
                 saved = first switch
                 {
+                    NamedFormat => ReadSleepers(reader, true),
                     SleepersFormat => ReadSleepers(reader),
                     ColumnsFormat => ReadColumns(reader),
                     _ => ReadSquares(reader, first)
@@ -415,6 +558,7 @@ namespace SignalsLink.src.signals.chunkanchor
             sapi.Event.ServerRunPhase(EnumServerRunPhase.RunGame, () =>
             {
                 foreach ((BlockPos pos, HashSet<long> columns) in saved) SetColumns(pos, columns);
+                RebuildWakeInputs();
             });
         }
 
@@ -423,7 +567,7 @@ namespace SignalsLink.src.signals.chunkanchor
         /// on the schedule, so a world that stops overnight does not wake every sleeping factory
         /// the moment it starts again.
         /// </summary>
-        private List<(BlockPos, HashSet<long>)> ReadSleepers(BinaryReader reader)
+        private List<(BlockPos, HashSet<long>)> ReadSleepers(BinaryReader reader, bool named = false)
         {
             List<(BlockPos, HashSet<long>)> awake = new List<(BlockPos, HashSet<long>)>();
 
@@ -434,6 +578,7 @@ namespace SignalsLink.src.signals.chunkanchor
                 BlockPos pos = new BlockPos(reader.ReadInt32(), reader.ReadInt32(), reader.ReadInt32());
                 double wakeAt = reader.ReadDouble();
                 bool onPlayerJoin = reader.ReadBoolean();
+                if (named) SetName(pos, reader.ReadString());
 
                 HashSet<long> columns = new HashSet<long>();
                 int columnCount = reader.ReadInt32();

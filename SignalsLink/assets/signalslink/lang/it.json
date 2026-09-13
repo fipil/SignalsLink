@@ -167,6 +167,7 @@
   "signalslink:chunkanchor-census": "Mantiene in vita: {0} blocchi attivi, {1} animali ({2} unità)",
   "signalslink:chunkanchor-charge": "Ruota: {0} %",
   "signalslink:chunkanchor-dead": "Senza ruota — non mantiene nulla. Toccala tenendo una ruota in mano.",
+  "signalslink:chunkanchor-name": "Nome dell'ancora",
   "signalslink:chunkanchor-dialogtitle": "Ancora dei chunk",
   "signalslink:chunkanchor-free": "Non mantiene nulla — la ruota non si consuma",
   "signalslink:chunkanchor-off": "Spenta — non mantiene nulla e non costa nulla.",

@@ -55,6 +55,11 @@ namespace SignalsLink.src.signals.chunkanchor
         /// </summary>
         public const float Exponent = 1.174f;
 
+        // K34: a solitary empty anchor is free; extra empty columns still have their normal cost.
+        public static float AnchorUnits(int blocks, int creatures, int columns,
+            int creatureWeight = CreatureWeight, int columnWeight = ColumnWeight)
+            => columns == 1 && blocks == 0 && creatures == 0 ? 0 : Units(blocks, creatures, columns, creatureWeight, columnWeight);
+
         /// <summary>Weighted total of what is held.</summary>
         public static float Units(int activeBlocks, int creatures, int columns = 0,
             int creatureWeight = CreatureWeight, int columnWeight = ColumnWeight)

@@ -67,6 +67,17 @@ namespace SignalsLink.src
             + "the track that serves it. Set to 0 to remove the ceiling and leave only the price.";
 
         public int AnchorMaxColumns = 64;
+
+        public bool Validate()
+        {
+            bool valid = true;
+            if (!float.IsFinite(AnchorReferenceLoad) || AnchorReferenceLoad <= 0) { AnchorReferenceLoad = 250; valid = false; }
+            if (!float.IsFinite(AnchorPriceExponent) || AnchorPriceExponent <= 1) { AnchorPriceExponent = 1.174f; valid = false; }
+            if (AnchorCreatureWeight < 0) { AnchorCreatureWeight = 10; valid = false; }
+            if (AnchorColumnWeight < 0) { AnchorColumnWeight = 5; valid = false; }
+            if (AnchorMaxColumns < 0) { AnchorMaxColumns = 64; valid = false; }
+            return valid;
+        }
     }
 
     /// <summary>Loads the settings, and writes the file back out so it can be found and read.</summary>
@@ -82,6 +93,8 @@ namespace SignalsLink.src
         public override void Start(ICoreAPI api)
         {
             base.Start(api);
+            // Clients receive the authoritative values in each anchor's attributes.
+            if (api.Side != EnumAppSide.Server) return;
 
             try
             {
@@ -96,11 +109,13 @@ namespace SignalsLink.src
                 Current = new SignalsLinkConfig();
             }
 
+            if (!Current.Validate()) api.Logger.Warning("[SignalsLink] Invalid anchor settings replaced by defaults.");
             RefreshDescriptions(Current);
 
             // Written back every start, so a setting added by a newer build turns up in the file
             // instead of only existing in the code.
-            api.StoreModConfig(Current, FileName);
+            try { api.StoreModConfig(Current, FileName); }
+            catch (Exception e) { api.Logger.Warning("[SignalsLink] Could not write config: " + e.Message); }
         }
 
         /// <summary>

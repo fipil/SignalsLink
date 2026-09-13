@@ -167,6 +167,7 @@
   "signalslink:chunkanchor-census": "Udržiava pri živote: {0} aktívnych blokov, {1} zvierat ({2} jednotiek)",
   "signalslink:chunkanchor-charge": "Koleso: {0} %",
   "signalslink:chunkanchor-dead": "Bez kolesa — nič neudržiava. Klikni na ňu s kolesom v ruke.",
+  "signalslink:chunkanchor-name": "Názov kotvy",
   "signalslink:chunkanchor-dialogtitle": "Kotva chunkov",
   "signalslink:chunkanchor-free": "Nič neudržiava — koleso sa nemíňa",
   "signalslink:chunkanchor-off": "Vypnutá — nič neudržiava a nič nestojí.",

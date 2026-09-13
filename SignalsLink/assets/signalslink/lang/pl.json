@@ -167,6 +167,7 @@
   "signalslink:chunkanchor-census": "Utrzymuje przy życiu: {0} aktywnych bloków, {1} zwierząt ({2} jednostek)",
   "signalslink:chunkanchor-charge": "Koło: {0} %",
   "signalslink:chunkanchor-dead": "Brak koła — niczego nie utrzymuje. Kliknij ją, trzymając koło w ręce.",
+  "signalslink:chunkanchor-name": "Nazwa kotwicy",
   "signalslink:chunkanchor-dialogtitle": "Kotwica chunków",
   "signalslink:chunkanchor-free": "Nie utrzymuje niczego — koło się nie zużywa",
   "signalslink:chunkanchor-off": "Wyłączona — niczego nie utrzymuje i nic nie kosztuje.",

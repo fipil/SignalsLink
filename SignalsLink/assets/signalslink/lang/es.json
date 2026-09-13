@@ -167,6 +167,7 @@
   "signalslink:chunkanchor-census": "Mantiene activos: {0} bloques activos, {1} animales ({2} unidades)",
   "signalslink:chunkanchor-charge": "Rueda: {0} %",
   "signalslink:chunkanchor-dead": "Sin rueda: no mantiene nada. Tócala con una rueda en la mano.",
+  "signalslink:chunkanchor-name": "Nombre del ancla",
   "signalslink:chunkanchor-dialogtitle": "Ancla de chunks",
   "signalslink:chunkanchor-free": "No mantiene nada: la rueda no se consume",
   "signalslink:chunkanchor-off": "Apagada: no mantiene nada y no cuesta nada.",

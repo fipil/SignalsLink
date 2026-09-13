@@ -167,6 +167,7 @@
   "signalslink:chunkanchor-census": "Поддерживает: {0} активных блоков, {1} животных ({2} единиц)",
   "signalslink:chunkanchor-charge": "Колесо: {0} %",
   "signalslink:chunkanchor-dead": "Без колеса — ничего не поддерживает. Нажмите на неё, держа колесо в руке.",
+  "signalslink:chunkanchor-name": "Имя якоря",
   "signalslink:chunkanchor-dialogtitle": "Якорь чанков",
   "signalslink:chunkanchor-free": "Ничего не поддерживает — колесо не расходуется",
   "signalslink:chunkanchor-off": "Выключена — ничего не поддерживает и ничего не стоит.",
