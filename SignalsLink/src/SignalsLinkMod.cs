@@ -14,7 +14,7 @@ using SignalsLink.src.signals.link;
 [assembly: ModInfo("Signals Link", "signalslink",
     Description = "Extends Signals mod with sensors and control elements for interacting with other mods and vanilla blocks.",
     Website = "",
-    Version = "0.2.8",
+    Version = "1.0.0",
     Authors = new[] { "fipil" }
 )]
 
