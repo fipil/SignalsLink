@@ -286,7 +286,7 @@ namespace SignalsLink.src.signals.paperConditions
         /// out by watching a device do nothing, which is the worst possible way to be told about a
         /// typo. The paper is still accepted - only the bad lines never hold.
         /// </summary>
-        private static void ReportPaperErrors(IWorldAccessor world, IPlayer byPlayer, string conditionsText, IPaperConditionsHost be)
+        internal static void ReportPaperErrors(IWorldAccessor world, IPlayer byPlayer, string conditionsText, IPaperConditionsHost be)
         {
             IReadOnlyList<PaperConditionError> errors = FindErrors(conditionsText, be);
             if (errors.Count == 0) return;

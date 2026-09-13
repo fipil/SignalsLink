@@ -187,5 +187,21 @@
   "signalslink:chunkanchor-window-for": "{0} minuti",
   "signalslink:chunkanchor-windowtitle": "Quanto tempo resta sveglia",
   "signalslink:con-input": "Ingresso",
-  "signalslink:con-output": "Uscita"
+  "signalslink:con-output": "Uscita",
+  "block-bottomlesschest-*": "Forziere senza fondo",
+  "block-normal-generic-bottomlesschest-*": "Forziere senza fondo",
+  "block-normal-generic-recyclerchest-*": "Forziere di smaltimento",
+  "block-recyclerchest-*": "Forziere di smaltimento",
+  "bottomlesschest-help": "Ogni slot ripristina la quantità originale dell'oggetto inserito. Accovacciarsi + corsa + clic destro a mani vuote cancella tutti i modelli e il contenuto.",
+  "bottomlesschest-title": "Forziere senza fondo",
+  "recycler-cancel": "Annulla",
+  "recycler-full": "Quando è completamente pieno",
+  "recycler-half": "Quando è pieno a metà",
+  "recycler-immediate": "Immediatamente",
+  "recycler-interval": "Intervallo tra i lotti",
+  "recycler-save": "Salva",
+  "recycler-settings": "Impostazioni di smaltimento",
+  "recycler-trigger": "Avvia smaltimento",
+  "recyclerchest-help": "Al raggiungimento del riempimento impostato, smaltisce i lotti più vecchi. Accovacciarsi + clic destro apre le impostazioni.",
+  "recyclerchest-title": "Forziere di smaltimento"
 }

@@ -94,6 +94,7 @@ namespace SignalsLink.src.signals.paperConditions
             Func<TBlock, bool> tryAct,
             bool everyBlockIsOutput = false) where TBlock : IDriverBlock
         {
+            using var regexBudget = RegexEvaluationBudget.Begin();
             if (blocks == null || blocks.Count == 0) return DriverResult.Nothing;
 
             // Nothing to compute and nothing to do: no output block on the paper and the action
@@ -113,7 +114,7 @@ namespace SignalsLink.src.signals.paperConditions
                     // First one wins, per pin. Later output blocks for the same pin are not even
                     // asked, so a paper reads top-down like a list of rules.
                     if (outputs != null && outputs.ContainsKey(block.OutputPin)) continue;
-                    if (outputHolds == null || !outputHolds(block)) continue;
+                    if (outputHolds == null || !Safely(() => outputHolds(block))) continue;
 
                     outputs ??= new Dictionary<int, byte>();
                     outputs[block.OutputPin] = block.OutputValue;
@@ -121,7 +122,7 @@ namespace SignalsLink.src.signals.paperConditions
                 }
 
                 if (actionsBlocked) continue;
-                if (tryAct == null || !tryAct(block)) continue;
+                if (tryAct == null || !Safely(() => tryAct(block))) continue;
 
                 // Only a block that really did work closes the rail. An attempt does not.
                 actionPerformed = true;
@@ -129,6 +130,12 @@ namespace SignalsLink.src.signals.paperConditions
             }
 
             return new DriverResult(outputs, actionPerformed);
+        }
+
+        private static bool Safely(Func<bool> evaluate)
+        {
+            try { return evaluate(); }
+            catch (System.Text.RegularExpressions.RegexMatchTimeoutException) { return false; }
         }
 
         private static bool HasAnyOutputBlock<TBlock>(IReadOnlyList<TBlock> blocks, bool everyBlockIsOutput)

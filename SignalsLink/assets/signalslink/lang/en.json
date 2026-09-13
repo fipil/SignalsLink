@@ -187,5 +187,21 @@
   "signalslink:chunkanchor-window-for": "{0} minutes",
   "signalslink:chunkanchor-windowtitle": "How long awake",
   "signalslink:con-input": "Input",
-  "signalslink:con-output": "Output"
+  "signalslink:con-output": "Output",
+  "block-normal-generic-bottomlesschest-*": "Bottomless Chest",
+  "block-bottomlesschest-*": "Bottomless Chest",
+  "bottomlesschest-title": "Bottomless Chest",
+  "bottomlesschest-help": "Each slot replenishes the inserted item to its original quantity. Sneak + sprint + right-click with an empty hand clears all patterns and contents.",
+  "block-normal-generic-recyclerchest-*": "Recycler Chest",
+  "block-recyclerchest-*": "Recycler Chest",
+  "recyclerchest-title": "Recycler Chest",
+  "recyclerchest-help": "Destroys the oldest batches once the set fill level is reached. Sneak + right-click opens settings.",
+  "recycler-settings": "Recycling Settings",
+  "recycler-interval": "Interval between batches",
+  "recycler-immediate": "Immediately",
+  "recycler-trigger": "Start recycling",
+  "recycler-full": "When full",
+  "recycler-half": "When half full",
+  "recycler-cancel": "Cancel",
+  "recycler-save": "Save"
 }

@@ -82,6 +82,7 @@ namespace SignalsLink.src.signals.paperConditions
             if (player.Entity.World.BlockAccessor.GetBlockEntity(pos) is not IPaperConditionsHost host) return;
 
             host.ConditionsText = string.IsNullOrWhiteSpace(packet.Text) ? null : packet.Text;
+            BlockBehaviorPaperConditions.ReportPaperErrors(player.Entity.World, player, host.ConditionsText, host);
         }
     }
 }

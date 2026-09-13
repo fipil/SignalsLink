@@ -81,17 +81,15 @@ namespace SignalsLink.Tests
         }
 
         [Fact]
-        public void An_explicit_in_source_output_block_reads_the_target_too()
+        public void An_explicit_in_source_output_block_is_invalid()
         {
-            // `in source` in an output block has nothing to be about, so it is overridden rather
-            // than quietly measuring the wrong end. The parser should report it as a mistake in
-            // the paper; that part is not built yet.
+            // P81/P89: a reported invalid scope must not drive the output.
             ConditionBlock block = FirstBlock("in source\ngame:firewood 96\noutput 5\n");
 
             IDictionary<string, object> ctx = Ctx(TestStacks.Item("game:firewood", 96));
             ctx["sourceInventory"] = TestStacks.Inventory(4);
 
-            Assert.True(block.OutputConditionsHold(ctx));
+            Assert.False(block.OutputConditionsHold(ctx));
         }
 
         // ---------------------------------------------------------------- plumbing

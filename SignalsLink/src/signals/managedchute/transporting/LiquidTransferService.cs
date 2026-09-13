@@ -84,7 +84,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
             return CanAcceptLiquid(dst);
         }
 
-        public TransferOperationResult TryMoveFromItemSlot(ItemSlot src, ItemSlot dst, decimal requestedAmount, bool hasAmountOverride)
+        public TransferOperationResult TryMoveFromItemSlot(ItemSlot src, ItemSlot dst, decimal requestedAmount, bool hasAmountOverride, decimal? atomicFloor = null)
         {
             if (src?.Itemstack == null || src.Itemstack.StackSize <= 0) return TransferOperationResult.None;
             if (!CanAcceptLiquid(dst)) return TransferOperationResult.None;
@@ -94,6 +94,9 @@ namespace SignalsLink.src.signals.managedchute.transporting
 
             ItemStack liquidStack = GetLiquidStackForTransfer(src.Itemstack);
             if (liquidStack == null) return TransferOperationResult.None;
+
+            if (hasAmountOverride && (AvailableLitres(liquidStack) < (atomicFloor ?? litresToMove)
+                || RemainingLitres(dst, liquidStack) < (atomicFloor ?? litresToMove))) return TransferOperationResult.None;
 
             int moved = TryMoveLiquidStackToTarget(liquidStack, dst, litresToMove);
             if (moved <= 0) return TransferOperationResult.None;
@@ -114,7 +117,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
             return CreateLiquidTransferResult(liquidStack, moved, hasAmountOverride);
         }
 
-        public TransferOperationResult TryMoveFromWorldSource(BlockPos sourcePos, ItemSlot dst, decimal requestedAmount, bool hasAmountOverride)
+        public TransferOperationResult TryMoveFromWorldSource(BlockPos sourcePos, ItemSlot dst, decimal requestedAmount, bool hasAmountOverride, decimal? atomicFloor = null)
         {
             if (!TryResolveWorldLiquidSource(sourcePos, out ItemStack liquidStack)) return TransferOperationResult.None;
             if (!CanAcceptLiquid(dst)) return TransferOperationResult.None;
@@ -122,9 +125,21 @@ namespace SignalsLink.src.signals.managedchute.transporting
             decimal litresToMove = NormalizeLiquidAmount(requestedAmount);
             if (litresToMove <= 0) return TransferOperationResult.None;
 
+            if (hasAmountOverride && (AvailableLitres(liquidStack) < (atomicFloor ?? litresToMove)
+                || RemainingLitres(dst, liquidStack) < (atomicFloor ?? litresToMove))) return TransferOperationResult.None;
+
             int moved = TryMoveLiquidStackToTarget(liquidStack, dst, litresToMove);
             return moved > 0 ? CreateLiquidTransferResult(liquidStack, moved, hasAmountOverride) : TransferOperationResult.None;
         }
+
+        public static decimal AvailableLitres(ItemStack stack)
+        {
+            var props = BlockLiquidContainerBase.GetContainableProps(stack);
+            return props?.ItemsPerLitre > 0 ? stack.StackSize / (decimal)props.ItemsPerLitre : 0;
+        }
+
+        public decimal RemainingLitres(ItemSlot slot, ItemStack stack)
+            => TryGetRemainingLiquidCapacityLitres(slot, stack, targetInv.GetSlotId(slot), out float room) ? (decimal)room : 0;
 
         public bool TryResolveWorldLiquidSource(BlockPos sourcePos, out ItemStack liquidStack)
         {

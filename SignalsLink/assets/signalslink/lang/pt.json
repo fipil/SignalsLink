@@ -187,5 +187,21 @@
   "signalslink:chunkanchor-window-for": "{0} minutos",
   "signalslink:chunkanchor-windowtitle": "Por quanto tempo acordada",
   "signalslink:con-input": "Entrada",
-  "signalslink:con-output": "Saída"
+  "signalslink:con-output": "Saída",
+  "block-bottomlesschest-*": "Baú sem fundo",
+  "block-normal-generic-bottomlesschest-*": "Baú sem fundo",
+  "block-normal-generic-recyclerchest-*": "Baú de reciclagem",
+  "block-recyclerchest-*": "Baú de reciclagem",
+  "bottomlesschest-help": "Cada espaço repõe o item inserido à quantidade original. Agachar + correr + botão direito do rato com a mão vazia apaga todos os padrões e o conteúdo.",
+  "bottomlesschest-title": "Baú sem fundo",
+  "recycler-cancel": "Cancelar",
+  "recycler-full": "Quando estiver cheio",
+  "recycler-half": "Quando estiver meio cheio",
+  "recycler-immediate": "Imediatamente",
+  "recycler-interval": "Intervalo entre lotes",
+  "recycler-save": "Guardar",
+  "recycler-settings": "Definições de reciclagem",
+  "recycler-trigger": "Iniciar reciclagem",
+  "recyclerchest-help": "Ao atingir o nível de enchimento definido, recicla os lotes mais antigos. Agachar + botão direito do rato abre as definições.",
+  "recyclerchest-title": "Baú de reciclagem"
 }

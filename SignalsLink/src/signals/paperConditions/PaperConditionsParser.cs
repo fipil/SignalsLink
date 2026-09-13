@@ -9,7 +9,7 @@ namespace SignalsLink.src.signals.paperConditions
     public static class PaperConditionsParser
     {
         // `game:firewood 96+` and, with a slot named, `game:firewood 96+ slot 5`.
-        private static readonly Regex inventoryAmountRegex = new Regex("^(?<pattern>@\\S+|\\S*[\\*\\?]\\S*|[A-Za-z0-9_]+:\\S+)\\s+(?<amount>\\d+(?:[\\.,]\\d+)?)(?<mode>[+-]?)(?:\\s+slot\\s+(?<slot>\\d+))?$", RegexOptions.Compiled);
+        private static readonly Regex inventoryAmountRegex = new Regex("^(?<pattern>@\\S+|\\S*[\\*\\?]\\S*|[A-Za-z0-9_]+:\\S+)\\s+(?<amount>\\d+(?:[\\.,]\\d+)?)(?<mode>[+-]?)(?:\\s+slot\\s+(?<slot>\\d+))?$", RegexOptions.None);
 
         public static CompiledConditions Parse(string text, List<PaperConditionError> errors = null)
         {
@@ -216,6 +216,7 @@ namespace SignalsLink.src.signals.paperConditions
                 if (hasExplicitOutput && explicitSourceLine > 0)
                 {
                     errors?.Add(new PaperConditionError(explicitSourceLine, explicitSourceText, "outputsource"));
+                    conditions.Add(new ScopedCondition(FalseCondition.Instance, InventoryConditionScope.Target));
                 }
 
                 if (conditions.Count > 0 || actions.Count > 0)
@@ -541,7 +542,7 @@ namespace SignalsLink.src.signals.paperConditions
             return decimal.TryParse(parts[1], plainNumber, CultureInfo.InvariantCulture, out keep) && keep >= 0;
         }
 
-        private static readonly Regex validNameRegex = new Regex("^[A-Za-z0-9_]+$", RegexOptions.Compiled);
+        private static readonly Regex validNameRegex = new Regex("^[A-Za-z0-9_]+$", RegexOptions.None);
 
         private static bool ContainsWhitespace(string line)
         {
@@ -622,16 +623,14 @@ namespace SignalsLink.src.signals.paperConditions
             // Regex pattern
             if (line.StartsWith("@"))
             {
-                return new CodeRegexCondition(new Regex(line.Substring(1), RegexOptions.Compiled));
+                return new CodeRegexCondition(new Regex(line.Substring(1), RegexOptions.None));
             }
 
             // Exact code pattern: domain:path  (no wildcards)
             // Treat it as exact code match (equivalent to regex ^domain:path$)
             if (Regex.IsMatch(line, @"^[A-Za-z0-9_]+:[A-Za-z0-9_\-]+$"))
             {
-                // Build a regex that matches this code exactly
-                string pattern = "^" + Regex.Escape(line) + "$";
-                return new CodeRegexCondition(new Regex(pattern, RegexOptions.Compiled));
+                return new CodeGlobCondition(line);
             }
 
             // Glob pattern
@@ -730,14 +729,13 @@ namespace SignalsLink.src.signals.paperConditions
 
             if (pattern.StartsWith("@"))
             {
-                condition = new CodeRegexCondition(new Regex(pattern.Substring(1), RegexOptions.Compiled));
+                condition = new CodeRegexCondition(new Regex(pattern.Substring(1), RegexOptions.None));
                 return true;
             }
 
             if (Regex.IsMatch(pattern, @"^[A-Za-z0-9_]+:[A-Za-z0-9_\-]+$"))
             {
-                string exactPattern = "^" + Regex.Escape(pattern) + "$";
-                condition = new CodeRegexCondition(new Regex(exactPattern, RegexOptions.Compiled));
+                condition = new CodeGlobCondition(pattern);
                 return true;
             }
 

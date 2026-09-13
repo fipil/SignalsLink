@@ -39,6 +39,8 @@ namespace SignalsLink.src.signals.manageddock
 
         private byte signalState;
         private int remaining;
+        private readonly DockActionCursor actionCursor = new DockActionCursor();
+        private bool outputClaimedThisTick;
         private bool unlimited;
 
         public byte outputState;
@@ -90,6 +92,7 @@ namespace SignalsLink.src.signals.manageddock
                 conditionsText = value;
                 conditionsEvaluator?.SetConditionsText(conditionsText);
                 sectionEvaluators.Clear();
+                actionCursor.Reset();
                 holders.Clear();      // a new paper may name a different yard
                 remaining = 0;      // reconfiguring drops the pending batch; it may make no sense now
                 MarkDirty();
@@ -143,6 +146,7 @@ namespace SignalsLink.src.signals.manageddock
 
         private void OnServerTick(float dt)
         {
+            using var regexDiagnostics = RegexDiagnostics.Begin(Api, Pos, "ManagedDock");
             if (Api?.World == null || Api is not ICoreServerAPI) return;
 
             // Starts BEFORE the early outs: "no credit" is exactly what this gets switched on for.
@@ -185,13 +189,19 @@ namespace SignalsLink.src.signals.manageddock
 
         private void RunSections(IReadOnlyList<ConditionSection> sections)
         {
+            using var regexBudget = RegexEvaluationBudget.Begin();
             bool sawHolder = false;
             searchedLive = false;
 
+            actionCursor.BeginTick(MaxPairsPerTick);
+            outputClaimedThisTick = false;
             byte output = DockPass.Run(sections,
                 (section, actionsBlocked) => RunSection(section, actionsBlocked, ref sawHolder),
                 out bool actionPerformed);
 
+            if (ConditionDebug.Enabled) ConditionDebug.Log("dock search: " + actionCursor.CheckedPairsThisTick
+                + " pair checks, deferred=" + actionCursor.Deferred + ", action=" + actionPerformed);
+            actionCursor.EndTick();
             SetOutput(output);
             SetTickRate(DockTickRate.Next(sawHolder, actionPerformed, searchedLive));
         }
@@ -225,12 +235,25 @@ namespace SignalsLink.src.signals.manageddock
             if (sources == null || targets == null) return null;
 
             PaperConditionsEvaluator evaluator = EvaluatorFor(section);
-            DriverResult output = RunOutputRail(evaluator, sources, targets);
-
             bool hasCredit = unlimited || remaining > 0;
-            bool moved = !actionsBlocked && hasCredit && Move(evaluator, sources, targets);
-
-            return new SectionPassResult(moved, output.HasOutput(), output.GetOutput());
+            IDictionary<string, object> outputContext = null;
+            DriverResult result = ConditionDriver.Run(evaluator.GetBlocks(), actionsBlocked || !hasCredit,
+                block =>
+                {
+                    if (outputClaimedThisTick) return false;
+                    var ctx = outputContext ??= ConditionContext.Build(Api, null, null, null,
+                        Composed(targets), targets[0].Pos);
+                    bool holds = block.OutputConditionsHold(ctx);
+                    if (holds) outputClaimedThisTick = true;
+                    return holds;
+                },
+                block =>
+                {
+                    bool moved = Move(PaperConditionsEvaluator.ForBlock(block), sources, targets, !block.HasActions, section.FirstLine + block.FirstLine);
+                    if (moved) outputContext = null;
+                    return moved;
+                });
+            return new SectionPassResult(result.ActionPerformed, result.HasOutput(), result.GetOutput());
         }
 
         /// <summary>
@@ -378,24 +401,13 @@ namespace SignalsLink.src.signals.manageddock
         public void OnNeighbourBlockChange(BlockPos neibpos)
         {
             holders.Clear();
+            actionCursor.Reset();
         }
 
         /// <summary>
         /// The output rail, answered against the holder as a whole rather than whichever corner of
         /// it is being filled.
         /// </summary>
-        private DriverResult RunOutputRail(PaperConditionsEvaluator evaluator,
-            IReadOnlyList<ICargoHold> sources, IReadOnlyList<ICargoHold> targets)
-        {
-            IReadOnlyList<ConditionBlock> blocks = evaluator.GetBlocks();
-            if (blocks == null || blocks.Count == 0) return DriverResult.Nothing;
-
-            IDictionary<string, object> ctx = ConditionContext.Build(Api, null,
-                Composed(sources), sources[0].Pos, Composed(targets), targets[0].Pos);
-
-            return ConditionDriver.Run(blocks, true, block => block.OutputConditionsHold(ctx), null);
-        }
-
         private CompositeInventory Composed(IReadOnlyList<ICargoHold> holds)
         {
             CompositeInventory composite = new CompositeInventory(Api);
@@ -411,55 +423,35 @@ namespace SignalsLink.src.signals.manageddock
         /// to empty the wagon. One action costs one credit whatever it carried.
         /// </summary>
         private bool Move(PaperConditionsEvaluator evaluator,
-            IReadOnlyList<ICargoHold> sources, IReadOnlyList<ICargoHold> targets)
+            IReadOnlyList<ICargoHold> sources, IReadOnlyList<ICargoHold> targets, bool needsSource, int order)
         {
-            ItemStackMoveOperation op = new ItemStackMoveOperation(
-                Api.World, EnumMouseButton.Left, 0, EnumMergePriority.DirectMerge, EverythingThatMatches);
-
-            int tried = 0;
-
-            foreach ((ICargoHold source, ICargoHold target) in DockPairs.Order(sources, targets, MaxPairsPerTick))
+            return actionCursor.TryRun(sources, targets, needsSource, (source, target) =>
             {
-                if (ReferenceEquals(source, target)) continue;
-
-                tried++;
-
                 IItemTransfer transfer = TransferFor(source, target, evaluator);
-
                 if (transfer == null)
                 {
-                    if (ConditionDebug.Enabled) ConditionDebug.Log("  " + source.Code + " -> " + target.Code + ": no transfer for these two ends");
-                    continue;
+                    var block = evaluator.GetBlocks()[0];
+                    var ctx = ConditionContext.Build(Api, null, source.Inventory, source.Pos, target.Inventory, target.Pos);
+                    if (!ConditionActions.RunOn(block, ctx)) return false;
+                    source.MarkDirty(); target.MarkDirty();
+                    if (!unlimited) remaining = Math.Max(0, remaining - 1);
+                    MarkDirty();
+                    return true;
                 }
-
+                var op = new ItemStackMoveOperation(Api.World, EnumMouseButton.Left, 0,
+                    EnumMergePriority.DirectMerge, EverythingThatMatches);
                 TransferOperationResult result = transfer.TryMove(op);
-
                 if (!result.Success)
                 {
-                    if (ConditionDebug.Enabled) ConditionDebug.Log("  " + source.Code + " -> " + target.Code + ": " + transfer.GetType().Name + " moved nothing");
-                    continue;
+                    if (ConditionDebug.Enabled) ConditionDebug.Log("  " + source.Code + " -> " + target.Code + ": moved nothing");
+                    return false;
                 }
-
                 source.MarkDirty();
                 target.MarkDirty();
-
-                if (!unlimited)
-                {
-                    remaining--;
-                    if (remaining < 0) remaining = 0;
-                }
-
+                if (!unlimited) remaining = Math.Max(0, remaining - 1);
                 MarkDirty();
                 return true;
-            }
-
-            if (ConditionDebug.Enabled)
-            {
-                ConditionDebug.Log("  nothing moved; " + tried + " pair(s) tried, "
-                    + sources.Count + " source hold(s), " + targets.Count + " target hold(s)");
-            }
-
-            return false;
+            }, order);
         }
 
         /// <summary>How many pairs one tick may try before giving up until the next one.</summary>
@@ -481,7 +473,7 @@ namespace SignalsLink.src.signals.manageddock
                 case TransferRoute.BetweenInventories:
                 {
                     InventoryToInventoryTransfer transfer =
-                        new InventoryToInventoryTransfer(Api, source.Inventory, target.Inventory, null, 0, 0, evaluator);
+                        new InventoryToInventoryTransfer(Api, source.Inventory, target.Inventory, target.Pos, 0, 0, evaluator);
 
                     transfer.CarriesLiquid = true;
 
@@ -497,7 +489,7 @@ namespace SignalsLink.src.signals.manageddock
                 }
 
                 case TransferRoute.PlaceToInventory:
-                    return new WorldToInventoryTransfer(Api, source.Pos, target.Inventory, 0, evaluator);
+                    return new WorldToInventoryTransfer(Api, source.Pos, target.Inventory, 0, evaluator, target.Pos);
             }
 
             return null;

@@ -1,0 +1,162 @@
+{
+  "code": "recyclerchest",
+  "class": "BlockGenericTypedContainer",
+  "entityclass": "SignalsLinkTestChest",
+  "attributes": {
+    "inventoryClassName": "recyclerchest",
+    "defaultType": "normal-generic",
+    "types": [
+      "normal-generic"
+    ],
+    "variantByGroup": "side",
+    "quantitySlots": {
+      "normal-generic": 16
+    },
+    "quantityColumns": {
+      "normal-generic": 4
+    },
+    "dialogTitleLangCode": {
+      "normal-generic": "signalslink:recyclerchest-title"
+    },
+    "rotatatableInterval": {
+      "normal-generic": "22.5degnot45deg"
+    },
+    "drop": {
+      "normal-generic": true
+    },
+    "storageType": {
+      "normal-generic": 189
+    },
+    "shape": {
+      "normal-generic": "signalslink:block/testchest/recyclerchest"
+    },
+    "retrieveOnly": {
+      "normal-generic": false
+    },
+    "typedOpenSound": {
+      "normal-generic": "game:sounds/block/largechestopen"
+    },
+    "typedCloseSound": {
+      "normal-generic": "game:sounds/block/largechestclose"
+    },
+    "partialAttachable": true,
+    "reinforcable": true
+  },
+  "behaviors": [
+    {
+      "name": "Lockable"
+    },
+    {
+      "name": "Container"
+    }
+  ],
+  "entityBehaviors": [
+    {
+      "name": "Animatable"
+    }
+  ],
+  "variantgroups": [
+    {
+      "code": "side",
+      "loadFromProperties": "abstract/horizontalorientation"
+    }
+  ],
+  "creativeinventory": {},
+  "creativeinventoryStacksByType": {
+    "*-east": [
+      {
+        "tabs": [
+          "general",
+          "decorative"
+        ],
+        "stacks": [
+          {
+            "type": "block",
+            "code": "recyclerchest-east",
+            "attributes": {
+              "type": "normal-generic"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "shapeInventory": {
+    "base": "signalslink:block/testchest/recyclerchest",
+    "rotateY": 270
+  },
+  "shapeByType": {
+    "*-north": {
+      "base": "signalslink:block/testchest/recyclerchest",
+      "rotateY": 0
+    },
+    "*-east": {
+      "base": "signalslink:block/testchest/recyclerchest",
+      "rotateY": 270
+    },
+    "*-west": {
+      "base": "signalslink:block/testchest/recyclerchest",
+      "rotateY": 90
+    },
+    "*-south": {
+      "base": "signalslink:block/testchest/recyclerchest",
+      "rotateY": 180
+    }
+  },
+  "textures": {
+    "normal-generic-sides2": {
+      "base": "game:block/wood/planks/burned/blackened/normal1"
+    },
+    "normal-generic-lid": {
+      "base": "game:block/wood/planks/burned/blackened/normal1"
+    },
+    "normal-generic-accessories": {
+      "base": "game:block/black"
+    }
+  },
+  "blockmaterial": "Wood",
+  "replaceable": 900,
+  "resistance": 3,
+  "lightAbsorption": 0,
+  "sideAo": {
+    "all": false
+  },
+  "sidesolid": {
+    "all": false
+  },
+  "sideopaque": {
+    "all": false
+  },
+  "collisionbox": {
+    "x1": 0.0625,
+    "y1": 0,
+    "z1": 0.0625,
+    "x2": 0.9375,
+    "y2": 0.8125,
+    "z2": 0.9375
+  },
+  "selectionbox": {
+    "x1": 0.0625,
+    "y1": 0,
+    "z1": 0.0625,
+    "x2": 0.9375,
+    "y2": 0.8125,
+    "z2": 0.9375
+  },
+  "sounds": {
+    "place": "game:block/planks",
+    "hit": "game:block/planks",
+    "break": "game:block/planks",
+    "walk": "game:walk/wood"
+  },
+  "heldTpIdleAnimation": "holdunderarm",
+  "materialDensity": 600,
+  "guiTransform": {
+    "origin": {
+      "x": 0.5,
+      "y": 0.4,
+      "z": 0.5
+    },
+    "scale": 1.16
+  }
+}

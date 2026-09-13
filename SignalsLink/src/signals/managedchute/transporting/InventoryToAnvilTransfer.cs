@@ -60,6 +60,9 @@ namespace SignalsLink.src.signals.managedchute.transporting
         }
 
         public TransferOperationResult TryMove(ItemStackMoveOperation opTemplate)
+            => RunTransferPass(opTemplate, () => MoveSelected(opTemplate));
+
+        private TransferOperationResult MoveSelected(ItemStackMoveOperation opTemplate)
         {
             if (targetAnvil == null) return TransferOperationResult.None;
 
@@ -100,19 +103,6 @@ namespace SignalsLink.src.signals.managedchute.transporting
         }
 
         public int TryMoveOneItem(ItemStackMoveOperation opTemplate)
-        {
-            int carried = MoveOneItem(opTemplate);
-
-            // The block that carried may also have said to DO something; now that the goods have
-            // really moved is when it means it.
-            if (carried > 0) RunActionsAfterTransfer();
-
-            return carried;
-        }
-
-        private int MoveOneItem(ItemStackMoveOperation opTemplate)
-        {
-            return (int)TryMove(opTemplate).MovedAmount;
-        }
+            => (int)TryMove(opTemplate).MovedAmount;
     }
 }

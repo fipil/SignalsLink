@@ -101,16 +101,15 @@ namespace SignalsLink.src.signals.managedchute.transporting
             return TargetInventoryResolver.ResolveGroundColumn(api, targetPos);
         }
 
+        public TransferOperationResult TryMove(ItemStackMoveOperation opTemplate)
+            => RunTransferPass(opTemplate, () =>
+            {
+                int moved = MoveOneItem(opTemplate);
+                return moved > 0 ? new TransferOperationResult(moved, moved, false) : TransferOperationResult.None;
+            });
+
         public int TryMoveOneItem(ItemStackMoveOperation opTemplate)
-        {
-            int carried = MoveOneItem(opTemplate);
-
-            // The block that carried may also have said to DO something; now that the goods have
-            // really moved is when it means it.
-            if (carried > 0) RunActionsAfterTransfer();
-
-            return carried;
-        }
+            => (int)TryMove(opTemplate).MovedAmount;
 
         private int MoveOneItem(ItemStackMoveOperation opTemplate)
         {
@@ -141,7 +140,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
             // Like the chute's item batches it is atomic on the source, but the batch is gathered from
             // ALL matching source slots - N routinely exceeds the item's max stack size (ingots stack
             // to 16 while a pile holds 64), so a single-slot check could never be satisfied.
-            int groundBatch = 1;
+            int groundBatch = Math.Max(1, opTemplate.RequestedQuantity);
             decimal? amountDirective = selection.Directives.Amount;
             if (amountDirective.HasValue)
             {
@@ -226,7 +225,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
                     src.MarkDirty();
                     return 1;
                 }
-                else 
+                else
                 {
                     // Pokud se nepodaří stackovat, nespadá to dál – režim je „pouze stackovat“
                     return 0;
@@ -297,6 +296,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
         private int TryGroundStorageStack(ItemSlot src, int maxHeight, bool createNew, int maxItems, bool atomic, int atomicFloor = 0)
         {
             if (atomicFloor <= 0) atomicFloor = maxItems;
+            atomicFloor = Math.Min(atomicFloor, maxItems);
 
             ItemStack stack = src.Itemstack;
             if (stack?.Collectible == null) return 0;
@@ -314,7 +314,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
             {
                 int available = 0;
                 foreach (ItemSlot s in srcSlots) available += s.StackSize;
-                if (available < atomicFloor) return 0; // all of it or nothing
+                if (available < atomicFloor || GroundCapacity(stack, props, maxHeight, createNew) < atomicFloor) return 0;
             }
 
             IBlockAccessor ba = api.World.BlockAccessor;
@@ -351,6 +351,30 @@ namespace SignalsLink.src.signals.managedchute.transporting
         /// A batch usually spans several slots because the item's max stack size is smaller than
         /// the pile capacity - the inventory-to-inventory transfer gathers the same way.
         /// </summary>
+        private long GroundCapacity(ItemStack stack, GroundStorageProperties props, int maxHeight, bool createNew)
+        {
+            long room = 0;
+            var ba = api.World.BlockAccessor;
+            bool supported = HasGroundSupport(targetPos);
+            for (int dy = 0; dy < Math.Max(1, maxHeight); dy++)
+            {
+                var pos = targetPos.AddCopy(0, dy, 0);
+                if (ba.GetBlockEntity(pos) is BlockEntityGroundStorage pile)
+                {
+                    var slot = pile.Inventory?[0];
+                    if (slot != null && (slot.Empty || slot.Itemstack.Equals(api.World, stack, GlobalConstants.IgnoredStackAttributes)))
+                        room += Math.Max(0, pile.Capacity - pile.TotalStackSize);
+                    supported = true;
+                }
+                else
+                {
+                    if (!createNew || !supported || ba.GetBlock(pos).Replaceable < 6000) break;
+                    room += props.StackingCapacity;
+                }
+            }
+            return room;
+        }
+
         private List<ItemSlot> GetMatchingSourceSlots(ItemSlot initial)
         {
             List<ItemSlot> list = new List<ItemSlot>();
@@ -359,13 +383,16 @@ namespace SignalsLink.src.signals.managedchute.transporting
             list.Add(initial);
             ItemStack reference = initial.Itemstack;
 
-            for (int i = 0; i < sourceInv.Count; i++)
+            for (var ids = CandidateSlots(ActiveDirectives).GetEnumerator(); ids.MoveNext();)
             {
+                int i = ids.Current;
+                if (i < 0 || i >= sourceInv.Count) continue;
                 ItemSlot slot = sourceInv[i];
                 if (slot == null || ReferenceEquals(slot, initial) || slot.Empty) continue;
                 if (slot.Itemstack?.Collectible != reference.Collectible) continue;
                 if (!slot.Itemstack.Equals(api.World, reference, GlobalConstants.IgnoredStackAttributes)) continue;
 
+                if (!MatchesActiveBlock(slot.Itemstack)) continue;
                 list.Add(slot);
             }
 

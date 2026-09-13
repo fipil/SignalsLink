@@ -187,5 +187,21 @@
   "signalslink:chunkanchor-window-for": "{0} минут",
   "signalslink:chunkanchor-windowtitle": "Как долго бодрствовать",
   "signalslink:con-input": "Вход",
-  "signalslink:con-output": "Выход"
+  "signalslink:con-output": "Выход",
+  "block-bottomlesschest-*": "Бездонный сундук",
+  "block-normal-generic-bottomlesschest-*": "Бездонный сундук",
+  "block-normal-generic-recyclerchest-*": "Сундук-утилизатор",
+  "block-recyclerchest-*": "Сундук-утилизатор",
+  "bottomlesschest-help": "Каждый слот пополняет помещённый предмет до исходного количества. Красться + спринт + правая кнопка мыши пустой рукой удаляет все шаблоны и содержимое.",
+  "bottomlesschest-title": "Бездонный сундук",
+  "recycler-cancel": "Отмена",
+  "recycler-full": "При полном заполнении",
+  "recycler-half": "При половинном заполнении",
+  "recycler-immediate": "Немедленно",
+  "recycler-interval": "Интервал между партиями",
+  "recycler-save": "Сохранить",
+  "recycler-settings": "Настройки утилизации",
+  "recycler-trigger": "Запустить утилизацию",
+  "recyclerchest-help": "При достижении заданного заполнения утилизирует самые старые партии. Красться + правая кнопка мыши открывает настройки.",
+  "recyclerchest-title": "Сундук-утилизатор"
 }

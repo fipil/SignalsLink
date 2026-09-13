@@ -145,13 +145,18 @@ namespace SignalsLink.src.signals.paperConditions
             if (inventory == null) return 0;
 
             decimal total = 0;
+            long failureVersion = RegexEvaluationBudget.FailureVersion;
 
             foreach (ItemSlot slot in inventory)
             {
                 if (slot?.Empty != false) continue;
 
                 ItemStack stack = slot.Itemstack;
-                if (stack?.Collectible == null || !CarriesThis(stack, ctx)) continue;
+                if (stack?.Collectible == null) continue;
+                bool matches = CarriesThis(stack, ctx);
+                // An incomplete count must leave no room for a keep transfer.
+                if (RegexEvaluationBudget.FailureVersion != failureVersion) return decimal.MaxValue;
+                if (!matches) continue;
 
                 total += InventoryConditionResolver.GetStackAmount(stack);
             }
@@ -193,24 +198,29 @@ namespace SignalsLink.src.signals.paperConditions
 
         public bool TryMatch(ItemStack stack, IDictionary<string, object> ctx)
         {
-            // A source-scoped condition is what picks the slot to move FROM, so a transfer block
-            // without one is meaningless. A block that only sets the Output pin moves nothing and
-            // needs no slot — requiring one there made `in target … output N` impossible to write,
-            // because every condition in it is scoped to the target.
-            if (!HasExplicitOutput && !CanSelectSource) return false;
-
-            foreach (var c in conditions)
+            long failureVersion = RegexEvaluationBudget.FailureVersion;
+            try
             {
-                if (!c.Evaluate(stack, ctx, true)) return false;
+                // A source-scoped condition is what picks the slot to move FROM, so a transfer block
+                // without one is meaningless. A block that only sets the Output pin moves nothing and
+                // needs no slot — requiring one there made `in target … output N` impossible to write,
+                // because every condition in it is scoped to the target.
+                if (!HasExplicitOutput && !CanSelectSource) return false;
+
+                foreach (var c in conditions)
+                {
+                    if (!c.Evaluate(stack, ctx, true) || RegexEvaluationBudget.FailureVersion != failureVersion) return false;
+                }
+
+                // Directive validity (e.g. `target N ifEmpty`) is part of block validity: once a
+                // block's target slot is no longer empty it stops matching, so evaluation falls
+                // through to the next block. For blocks without such directives this is a no-op
+                // (Directives.Evaluate returns true).
+                if (!Directives.Evaluate(ctx)) return false;
+
+                return true;
             }
-
-            // Directive validity (e.g. `target N ifEmpty`) is part of block validity: once a
-            // block's target slot is no longer empty it stops matching, so evaluation falls
-            // through to the next block. For blocks without such directives this is a no-op
-            // (Directives.Evaluate returns true).
-            if (!Directives.Evaluate(ctx)) return false;
-
-            return true;
+            catch (System.Text.RegularExpressions.RegexMatchTimeoutException) { return false; }
         }
 
         /// <summary>
@@ -228,11 +238,16 @@ namespace SignalsLink.src.signals.paperConditions
         /// </summary>
         public bool OutputConditionsHold(IDictionary<string, object> ctx)
         {
-            foreach (var c in conditions)
+            long failureVersion = RegexEvaluationBudget.FailureVersion;
+            try
             {
-                if (!c.EvaluateAsOutput(ctx)) return false;
+                foreach (var c in conditions)
+                {
+                    if (!c.EvaluateAsOutput(ctx) || RegexEvaluationBudget.FailureVersion != failureVersion) return false;
+                }
+                return true;
             }
-            return true;
+            catch (System.Text.RegularExpressions.RegexMatchTimeoutException) { return false; }
         }
 
         /// <summary>
@@ -244,21 +259,31 @@ namespace SignalsLink.src.signals.paperConditions
         /// </summary>
         public bool ConditionsHold(ItemStack stack, IDictionary<string, object> ctx)
         {
-            foreach (var c in conditions)
+            long failureVersion = RegexEvaluationBudget.FailureVersion;
+            try
             {
-                if (!c.Evaluate(stack, ctx, true)) return false;
+                foreach (var c in conditions)
+                {
+                    if (!c.Evaluate(stack, ctx, true) || RegexEvaluationBudget.FailureVersion != failureVersion) return false;
+                }
+                return true;
             }
-            return true;
+            catch (System.Text.RegularExpressions.RegexMatchTimeoutException) { return false; }
         }
 
         public bool MatchesActionContext(ItemStack stack, IDictionary<string, object> ctx)
         {
-            foreach (var c in conditions)
+            long failureVersion = RegexEvaluationBudget.FailureVersion;
+            try
             {
-                if (!c.Evaluate(stack, ctx, false)) return false;
-            }
+                foreach (var c in conditions)
+                {
+                    if (!c.Evaluate(stack, ctx, false) || RegexEvaluationBudget.FailureVersion != failureVersion) return false;
+                }
 
-            return true;
+                return true;
+            }
+            catch (System.Text.RegularExpressions.RegexMatchTimeoutException) { return false; }
         }
 
         public PaperConditionMatchResult CreateMatchResult()

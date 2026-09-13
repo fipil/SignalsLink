@@ -34,7 +34,7 @@ namespace SignalsLink.src.signals.hose
         private decimal maxLitresPerTick = 1.0m;
 
         public byte signalState;
-        private int remaining;
+        private decimal remaining;
         private bool unlimited;
 
         /// <summary>Does this valve currently have Input credit (a batch, or continuous)?</summary>
@@ -178,6 +178,7 @@ namespace SignalsLink.src.signals.hose
         /// </summary>
         private void MoveLiquid(float dt)
         {
+            using var regexDiagnostics = RegexDiagnostics.Begin(Api, Pos, "HoseValve");
             if (Api is not ICoreServerAPI) return;
 
             // Blocks with an `output` action are evaluated on EVERY tick, whatever the Input pin
@@ -217,6 +218,7 @@ namespace SignalsLink.src.signals.hose
         /// </summary>
         private void EvaluateOutputs()
         {
+            using var regexDiagnostics = RegexDiagnostics.Begin(Api, Pos, "HoseValve");
             if (conditionsEvaluator == null || !conditionsEvaluator.HasAnyOutput) { SetOutput(0); return; }
 
             LinkNetworkMod linkMod = Api.ModLoader.GetModSystem<LinkNetworkMod>();
@@ -346,14 +348,14 @@ namespace SignalsLink.src.signals.hose
 
             if (moved && !unlimited)
             {
-                remaining -= result.Transfer.TriggerCost;
+                remaining -= result.Transfer.CreditCost;
                 if (remaining < 0) remaining = 0;
                 MarkDirty();
             }
 
             // Occasional water splash while transporting (mirrors the chute's random sound). The
             // hose wobbles in sync with this audible pulse (see flowPulse → client TriggerWobble).
-            if (moved && Api.World.Rand.NextDouble() < 0.2)
+            if (result.Transfer.MovedAmount > 0 && Api.World.Rand.NextDouble() < 0.2)
             {
                 Api.World.PlaySoundAt(waterSound, Pos, 0.0, range: 8f, volume: 0.5f);
                 flowFar = source.FirstHop; // only this segment should wobble
@@ -563,7 +565,7 @@ namespace SignalsLink.src.signals.hose
             base.FromTreeAttributes(tree, worldForResolving);
             ConditionsText = tree.GetString("conditionsText", null);
             unlimited = tree.GetBool("unlimited", false);
-            remaining = tree.GetInt("remaining", 0);
+            remaining = LiquidCredit.Read(tree);
             signalState = (byte)tree.GetInt("signalState", 0);
             outputState = (byte)tree.GetInt("outputState", 0);
             drainPulse = tree.GetInt("drainPulse", 0);
@@ -584,7 +586,7 @@ namespace SignalsLink.src.signals.hose
             base.ToTreeAttributes(tree);
             tree.SetString("conditionsText", ConditionsText);
             tree.SetBool("unlimited", unlimited);
-            tree.SetInt("remaining", remaining);
+            LiquidCredit.Write(tree, remaining);
             tree.SetInt("signalState", signalState);
             tree.SetInt("outputState", outputState);
             tree.SetInt("drainPulse", drainPulse);

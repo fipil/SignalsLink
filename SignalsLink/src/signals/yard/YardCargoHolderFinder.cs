@@ -49,7 +49,7 @@ namespace SignalsLink.src.signals.yard
         /// four hundred columns. Only the ones the paper actually asks about are worth that, and on
         /// most ticks that is none of them.
         /// </summary>
-        public IInventory Inventory => inventory ??= TargetInventoryResolver.ResolveGroundColumn(world?.Api, GroundPos);
+        public IInventory Inventory => inventory ??= (TargetInventoryResolver.Resolve(world?.Api, GroundPos) ?? TargetInventoryResolver.ResolveGroundColumn(world?.Api, GroundPos));
 
         /// <summary>The goods stand in the world here, so they are moved by the world transfers.</summary>
         public BlockPos Pos => GroundPos;

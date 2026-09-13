@@ -187,5 +187,21 @@
   "signalslink:chunkanchor-window-for": "{0} minutos",
   "signalslink:chunkanchor-windowtitle": "Cuánto tiempo despierta",
   "signalslink:con-input": "Entrada",
-  "signalslink:con-output": "Salida"
+  "signalslink:con-output": "Salida",
+  "block-bottomlesschest-*": "Cofre sin fondo",
+  "block-normal-generic-bottomlesschest-*": "Cofre sin fondo",
+  "block-normal-generic-recyclerchest-*": "Cofre triturador",
+  "block-recyclerchest-*": "Cofre triturador",
+  "bottomlesschest-help": "Cada ranura repone el objeto insertado hasta su cantidad original. Agacharse + correr + clic derecho con la mano vacía borra todos los patrones y el contenido.",
+  "bottomlesschest-title": "Cofre sin fondo",
+  "recycler-cancel": "Cancelar",
+  "recycler-full": "Al llenarse por completo",
+  "recycler-half": "Al llenarse a la mitad",
+  "recycler-immediate": "Inmediatamente",
+  "recycler-interval": "Intervalo entre lotes",
+  "recycler-save": "Guardar",
+  "recycler-settings": "Configuración de destrucción",
+  "recycler-trigger": "Iniciar destrucción",
+  "recyclerchest-help": "Al alcanzar el nivel de llenado establecido, destruye los lotes más antiguos. Agacharse + clic derecho abre la configuración.",
+  "recyclerchest-title": "Cofre triturador"
 }

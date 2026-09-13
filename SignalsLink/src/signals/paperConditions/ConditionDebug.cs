@@ -14,8 +14,8 @@ namespace SignalsLink.src.signals.paperConditions
     /// behaves — it travels with the block, needs no command and no restart, and is removed by
     /// deleting the line.
     ///
-    /// The current logger is a static: the server tick is single-threaded, and a host opens the
-    /// scope right before its pass and closes it right after, so nothing else can be inside it.
+    /// Scopes belong to the current thread. Concurrent evaluations must not append to another
+    /// device's trace; nested synchronous scopes restore their parent when closed.
     /// </summary>
     public static class ConditionDebug
     {
@@ -49,16 +49,21 @@ namespace SignalsLink.src.signals.paperConditions
         /// </summary>
         public const int MaxLinesPerPass = 8;
 
-        private static ILogger logger;
-        private static string tag;
-        private static List<string> pass;
-        private static int dropped;
-        private static string lastLine;
-
+        private sealed class Scope
+        {
+            public ILogger Logger;
+            public string Tag;
+            public readonly List<string> Lines = new List<string>();
+            public int Dropped;
+            public string LastLine;
+            public Scope Parent;
+        }
+        [ThreadStatic] private static Scope current;
+        private static readonly object repeatLock = new object();
         private static readonly Dictionary<string, Repeat> lastPass = new Dictionary<string, Repeat>();
 
         /// <summary>True while a traced pass is running. Check before building log strings.</summary>
-        public static bool Enabled => logger != null;
+        public static bool Enabled => current?.Logger != null;
 
         /// <summary>
         /// Does this paper ask to be traced? Asked on every tick of every device, so it stays two
@@ -75,11 +80,7 @@ namespace SignalsLink.src.signals.paperConditions
         /// <summary>Opens a traced scope. Always pair with <see cref="End"/> in a finally block.</summary>
         public static void Begin(ILogger apiLogger, string scopeTag)
         {
-            logger = apiLogger;
-            tag = scopeTag;
-            pass = apiLogger == null ? null : new List<string>();
-            dropped = 0;
-            lastLine = null;
+            current = new Scope { Logger = apiLogger, Tag = scopeTag, Parent = current };
         }
 
         /// <summary>
@@ -93,65 +94,53 @@ namespace SignalsLink.src.signals.paperConditions
         /// </summary>
         public static void End()
         {
-            if (logger != null && pass != null && pass.Count > 0) Flush();
-
-            logger = null;
-            tag = null;
-            pass = null;
-            dropped = 0;
-            lastLine = null;
+            Scope scope = current;
+            if (scope == null) return;
+            // Detach before invoking user logger callbacks, including callbacks that throw or trace.
+            current = scope.Parent;
+            if (scope.Logger != null && scope.Lines.Count > 0) Flush(scope);
         }
 
-        private static void Flush()
+        private static void Flush(Scope scope)
         {
-            if (dropped > 0)
+            if (scope.LastLine != null)
             {
-                pass.Add("(" + dropped + " lines of this pass not shown)");
-                pass.Add(lastLine);
+                if (scope.Dropped > 0) scope.Lines.Add("(" + scope.Dropped + " lines of this pass not shown)");
+                scope.Lines.Add(scope.LastLine);
             }
-
-            string text = string.Join("\n", pass);
-            long now = Environment.TickCount64;
-
-            bool known = lastPass.TryGetValue(tag, out Repeat before);
-
-            if (known)
+            string text = string.Join("\n", scope.Lines);
+            long skipped = 0;
+            lock (repeatLock)
             {
-                // The same thing again is worth repeating only now and then; anything at all is
-                // worth writing at most twice a second.
-                long quiet = before.Text == text ? HeartbeatMs : MinIntervalMs;
-
-                if (now - before.At < quiet)
+                long now = Environment.TickCount64;
+                if (lastPass.TryGetValue(scope.Tag, out Repeat before))
                 {
-                    lastPass[tag] = new Repeat(before.Text, before.At, before.Skipped + 1);
-                    return;
+                    long quiet = before.Text == text ? HeartbeatMs : MinIntervalMs;
+                    if (now - before.At < quiet)
+                    {
+                        lastPass[scope.Tag] = new Repeat(before.Text, before.At, before.Skipped + 1);
+                        return;
+                    }
+                    skipped = before.Skipped;
                 }
-
-                if (before.Skipped > 0)
-                {
-                    logger.Notification("[sl-dbg " + tag + "] (" + before.Skipped + " passes not shown)");
-                }
+                lastPass[scope.Tag] = new Repeat(text, now, 0);
             }
-
-            foreach (string line in pass) logger.Notification("[sl-dbg " + tag + "] " + line);
-
-            lastPass[tag] = new Repeat(text, now, 0);
+            // Never hold the shared throttle lock while calling an external logger.
+            if (skipped > 0) scope.Logger.Notification("[sl-dbg " + scope.Tag + "] (" + skipped + " passes not shown)");
+            foreach (string line in scope.Lines) scope.Logger.Notification("[sl-dbg " + scope.Tag + "] " + line);
         }
 
         public static void Log(string message)
         {
-            if (pass == null) return;
-
-            if (pass.Count >= MaxLinesPerPass)
+            Scope scope = current;
+            if (scope?.Logger == null) return;
+            if (scope.Lines.Count >= MaxLinesPerPass)
             {
-                // Held rather than thrown away: whichever turns out to be last is the one worth
-                // keeping, and only End knows which that was.
-                if (lastLine != null) dropped++;
-                lastLine = message;
+                if (scope.LastLine != null) scope.Dropped++;
+                scope.LastLine = message;
                 return;
             }
-
-            pass.Add(message);
+            scope.Lines.Add(message);
         }
 
         private readonly struct Repeat

@@ -6,6 +6,10 @@ using Vintagestory.API.MathTools;
 
 public class PaperConditionsEvaluator
 {
+    public static PaperConditionsEvaluator ForBlock(ConditionBlock block)
+        => new PaperConditionsEvaluator { conditionsText = "<compiled>", lastParsedText = "<compiled>",
+            compiled = new CompiledConditions(new List<ConditionBlock> { block }) };
+
     private string conditionsText;
     private string lastParsedText;
     private CompiledConditions compiled;

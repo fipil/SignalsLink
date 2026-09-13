@@ -1,4 +1,4 @@
-﻿using signals.src;
+using signals.src;
 using signals.src.signalNetwork;
 using SignalsLink.src.signals;
 using SignalsLink.src.signals.managedchute.transporting;
@@ -106,6 +106,7 @@ namespace SignalsLink.src.signals.managedchute
 
         public void MoveItem(float dt)
         {
+            using var regexDiagnostics = RegexDiagnostics.Begin(Api, Pos, "ManagedChute");
             if (Api?.World == null || !(Api is ICoreServerAPI)) return;
 
             bool hasCredit = unlimited || remaining > 0;
@@ -141,7 +142,7 @@ namespace SignalsLink.src.signals.managedchute
 
             bool remainingChanged = false;
             decimal movedTotal = 0;
-            while (movedTotal < allowedNow)
+            do
             {
                 TransferOperationResult moveResult = transfer.TryMove(opTemplate);
                 if (!moveResult.Success) break;
@@ -169,7 +170,7 @@ namespace SignalsLink.src.signals.managedchute
                     remainingChanged = true;
                     if (remaining <= 0) break;
                 }
-            }
+            } while (false);
 
             if (remainingChanged)
             {
@@ -310,7 +311,7 @@ namespace SignalsLink.src.signals.managedchute
                 {
                     conditionsEvaluator = new PaperConditionsEvaluator();
                     conditionsEvaluator.SetConditionsText(ConditionsText);
-                }   
+                }
                 return conditionsEvaluator;
             }
         }

@@ -43,6 +43,7 @@
   <ItemGroup>
     <ProjectReference Include="..\SignalsLink\SignalsLink.csproj" />
     <ProjectReference Include="..\SignalsLink.YTT\SignalsLink.YTT.csproj" />
+    <ProjectReference Include="..\SignalsLink.Testing\SignalsLink.Testing.csproj" />
   </ItemGroup>
 
   <ItemGroup>

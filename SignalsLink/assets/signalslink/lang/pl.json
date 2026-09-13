@@ -187,5 +187,21 @@
   "signalslink:chunkanchor-window-for": "{0} minut",
   "signalslink:chunkanchor-windowtitle": "Jak długo aktywna",
   "signalslink:con-input": "Wejście",
-  "signalslink:con-output": "Wyjście"
+  "signalslink:con-output": "Wyjście",
+  "block-bottomlesschest-*": "Bezdenna skrzynia",
+  "block-normal-generic-bottomlesschest-*": "Bezdenna skrzynia",
+  "block-normal-generic-recyclerchest-*": "Skrzynia utylizacyjna",
+  "block-recyclerchest-*": "Skrzynia utylizacyjna",
+  "bottomlesschest-help": "Każdy slot uzupełnia umieszczony przedmiot do pierwotnej liczby. Skradanie + sprint + prawy przycisk myszy pustą ręką usuwa wszystkie wzory i zawartość.",
+  "bottomlesschest-title": "Bezdenna skrzynia",
+  "recycler-cancel": "Anuluj",
+  "recycler-full": "Przy pełnym zapełnieniu",
+  "recycler-half": "Przy połowicznym zapełnieniu",
+  "recycler-immediate": "Natychmiast",
+  "recycler-interval": "Odstęp między partiami",
+  "recycler-save": "Zapisz",
+  "recycler-settings": "Ustawienia utylizacji",
+  "recycler-trigger": "Uruchom utylizację",
+  "recyclerchest-help": "Po osiągnięciu ustawionego zapełnienia utylizuje najstarsze partie. Skradanie + prawy przycisk myszy otwiera ustawienia.",
+  "recyclerchest-title": "Skrzynia utylizacyjna"
 }

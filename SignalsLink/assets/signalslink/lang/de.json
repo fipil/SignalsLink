@@ -187,5 +187,21 @@
   "signalslink:chunkanchor-window-for": "{0} Minuten",
   "signalslink:chunkanchor-windowtitle": "Wie lange wach",
   "signalslink:con-input": "Eingang",
-  "signalslink:con-output": "Ausgang"
+  "signalslink:con-output": "Ausgang",
+  "block-bottomlesschest-*": "Unendliche Truhe",
+  "block-normal-generic-bottomlesschest-*": "Unendliche Truhe",
+  "block-normal-generic-recyclerchest-*": "Entsorgungstruhe",
+  "block-recyclerchest-*": "Entsorgungstruhe",
+  "bottomlesschest-help": "Jeder Slot füllt den eingelegten Gegenstand auf die ursprüngliche Anzahl auf. Schleichen + Sprinten + Rechtsklick mit leerer Hand löscht alle Vorlagen und den Inhalt.",
+  "bottomlesschest-title": "Unendliche Truhe",
+  "recycler-cancel": "Abbrechen",
+  "recycler-full": "Bei vollständiger Füllung",
+  "recycler-half": "Bei halber Füllung",
+  "recycler-immediate": "Sofort",
+  "recycler-interval": "Intervall zwischen Chargen",
+  "recycler-save": "Speichern",
+  "recycler-settings": "Entsorgungseinstellungen",
+  "recycler-trigger": "Entsorgung auslösen",
+  "recyclerchest-help": "Bei Erreichen der eingestellten Füllmenge werden die ältesten Chargen entsorgt. Schleichen + Rechtsklick öffnet die Einstellungen.",
+  "recyclerchest-title": "Entsorgungstruhe"
 }

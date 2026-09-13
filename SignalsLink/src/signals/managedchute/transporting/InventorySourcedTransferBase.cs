@@ -36,6 +36,56 @@ namespace SignalsLink.src.signals.managedchute.transporting
 
         protected virtual bool AllowsLiquidContainers => false;
 
+        private bool executingSelection;
+        private TransferSelection currentSelection;
+        protected PaperConditionDirectives ActiveDirectives => currentSelection?.Directives ?? PaperConditionDirectives.Empty;
+
+        public TransferOperationResult RunTransferPass(ItemStackMoveOperation operation, Func<TransferOperationResult> move)
+        {
+            TransferOperationResult moved = TransferOperationResult.None;
+            var blocks = conditionsEvaluator?.GetBlocks();
+            if (blocks == null || blocks.Count == 0)
+            {
+                ApplyOutput(DriverResult.Nothing);
+                return ExecuteSelection(SelectWithoutPaper(), null, move);
+            }
+            DriverResult result = ConditionDriver.Run(blocks, false,
+                block => block.OutputConditionsHold(BuildConditionContext(null)),
+                block =>
+                {
+                    var ctx = BuildDirectiveContext();
+                    actingBlock = block;
+                    if (block.CanSelectSource)
+                    {
+                        foreach (TransferSelection selection in SelectionsForBlock(block, ctx))
+                        {
+                            moved = ExecuteSelection(selection, block, move);
+                            if (moved.Success) return true;
+                        }
+                    }
+                    if (!ConditionActions.RunOn(block, BuildDirectiveContext())) return false;
+                    moved = TransferOperationResult.ActionOnly;
+                    return true;
+                });
+            ApplyOutput(result);
+            return moved;
+        }
+
+        private TransferOperationResult ExecuteSelection(TransferSelection selection, ConditionBlock block, Func<TransferOperationResult> move)
+        {
+            if (selection == null) return TransferOperationResult.None;
+            executingSelection = true;
+            currentSelection = selection;
+            actingBlock = block;
+            try
+            {
+                var result = move();
+                if (result.Success) RunActionsAfterTransfer();
+                return result;
+            }
+            finally { executingSelection = false; currentSelection = null; actingBlock = null; }
+        }
+
         protected ItemSlot GetSourceSlot()
         {
             return GetTransferSelection()?.SourceSlot;
@@ -43,6 +93,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
 
         protected TransferSelection GetTransferSelection()
         {
+            if (executingSelection) return currentSelection;
             RunPass(false, out TransferSelection selection);
             return selection;
         }
@@ -160,13 +211,13 @@ namespace SignalsLink.src.signals.managedchute.transporting
         /// </summary>
         protected void RunActionsAfterTransfer()
         {
-            ConditionActions.RunOn(actingBlock, BuildDirectiveContext());
+            ConditionActions.ExecuteMatched(actingBlock, BuildDirectiveContext());
         }
 
         /// <summary>
         /// The slots one action block may take from, in the order it tries them.
         /// </summary>
-        private IEnumerable<int> CandidateSlots(PaperConditionDirectives directives)
+        protected IEnumerable<int> CandidateSlots(PaperConditionDirectives directives)
         {
             // `source last` names the end of the inventory, whatever its size.
             if (directives.SourceLast)
@@ -199,6 +250,9 @@ namespace SignalsLink.src.signals.managedchute.transporting
         }
 
         private TransferSelection SelectForBlock(ConditionBlock block, IDictionary<string, object> directiveCtx)
+            => SelectionsForBlock(block, directiveCtx).FirstOrDefault();
+
+        private IEnumerable<TransferSelection> SelectionsForBlock(ConditionBlock block, IDictionary<string, object> directiveCtx)
         {
             foreach (int index in CandidateSlots(block.Directives))
             {
@@ -215,12 +269,11 @@ namespace SignalsLink.src.signals.managedchute.transporting
                 decimal? room = RoomFor(block, directiveCtx);
                 if (room is <= 0) continue;
 
+                actingBlock = block;
                 if (!CanTransferSelection(slot, block.Directives)) continue;
 
-                return new TransferSelection(slot, block.Directives, room);
+                yield return new TransferSelection(slot, block.Directives, room);
             }
-
-            return null;
         }
 
         /// <summary>
@@ -232,7 +285,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
             if (selection?.Room == null) return quantity;
             if (selection.Room.Value <= 0) return 0;
 
-            int room = (int)decimal.Truncate(selection.Room.Value);
+            int room = (int)Math.Min(int.MaxValue, decimal.Truncate(selection.Room.Value));
 
             return quantity > room ? room : quantity;
         }
@@ -291,6 +344,9 @@ namespace SignalsLink.src.signals.managedchute.transporting
 
             return false;
         }
+
+        protected bool MatchesActiveBlock(ItemStack stack)
+            => actingBlock == null || actingBlock.TryMatch(stack, BuildConditionContext(stack));
 
         protected bool IsConditionMet(ItemStack stack)
         {

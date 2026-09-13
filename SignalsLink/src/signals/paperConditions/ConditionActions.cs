@@ -31,6 +31,13 @@ namespace SignalsLink.src.signals.paperConditions
             // which is the one an action has always been asked.
             if (!block.MatchesActionContext(null, ctx)) return false;
 
+            if (!block.Directives.Evaluate(ctx)) return false;
+            return ExecuteMatched(block, ctx);
+        }
+
+        public static bool ExecuteMatched(ConditionBlock block, IDictionary<string, object> ctx)
+        {
+            if (block == null || !block.HasActions || block.IsOutputBlock) return false;
             bool did = false;
 
             for (int i = 0; i < block.Actions.Count; i++)

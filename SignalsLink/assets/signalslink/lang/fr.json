@@ -187,5 +187,21 @@
   "signalslink:chunkanchor-window-for": "{0} minutes",
   "signalslink:chunkanchor-windowtitle": "Durée d’éveil",
   "signalslink:con-input": "Entrée",
-  "signalslink:con-output": "Sortie"
+  "signalslink:con-output": "Sortie",
+  "block-bottomlesschest-*": "Coffre sans fond",
+  "block-normal-generic-bottomlesschest-*": "Coffre sans fond",
+  "block-normal-generic-recyclerchest-*": "Coffre de recyclage",
+  "block-recyclerchest-*": "Coffre de recyclage",
+  "bottomlesschest-help": "Chaque emplacement réapprovisionne l'objet inséré jusqu'à sa quantité d'origine. S'accroupir + sprinter + clic droit avec une main vide efface tous les modèles et le contenu.",
+  "bottomlesschest-title": "Coffre sans fond",
+  "recycler-cancel": "Annuler",
+  "recycler-full": "Lorsqu'il est plein",
+  "recycler-half": "Lorsqu'il est à moitié plein",
+  "recycler-immediate": "Immédiatement",
+  "recycler-interval": "Intervalle entre les lots",
+  "recycler-save": "Enregistrer",
+  "recycler-settings": "Paramètres de recyclage",
+  "recycler-trigger": "Déclencher le recyclage",
+  "recyclerchest-help": "Une fois le niveau de remplissage défini atteint, recycle les lots les plus anciens. S'accroupir + clic droit ouvre les paramètres.",
+  "recyclerchest-title": "Coffre de recyclage"
 }

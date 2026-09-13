@@ -122,7 +122,7 @@ namespace SignalsLink.src.signals.hose
             }
 
             // Tell the BE which liquid was poured out, so it can render mouth particles.
-            if (discard && result.Transfer.Success) result.DrainedLiquid = sourceLiquid;
+            if (discard && result.Transfer.MovedAmount > 0) result.DrainedLiquid = sourceLiquid;
             return result;
         }
 
@@ -141,9 +141,9 @@ namespace SignalsLink.src.signals.hose
             // before the conditions are asked - they are asked about that liquid, not about
             // whichever one the default rule happened to find first. Used to be ignored here in
             // silence, which is the worst way for a directive to not work.
-            if (block.Directives.SourceSlot.HasValue)
+            if (block.Directives.SourceSlot.HasValue || block.Directives.SourceLast)
             {
-                sourceLiquid = ResolveSource(out srcSlot, out worldWaterPos, out IInventory blockSourceInv, block.Directives.SourceSlot);
+                sourceLiquid = ResolveSource(out srcSlot, out worldWaterPos, out IInventory blockSourceInv, block.Directives.SourceSlot, block.Directives.SourceLast);
                 ctx = BuildContext(sourceLiquid, blockSourceInv);
             }
 
@@ -154,18 +154,14 @@ namespace SignalsLink.src.signals.hose
             // why the same paper behaved differently on a valve than on a damper.
             if (!block.Directives.Evaluate(ctx)) return null;
 
-            // 1) Explicit action `do seal` - replaces the transfer.
-            if (block.HasActions)
-            {
-                bool did = false;
-                for (int i = 0; i < block.Actions.Count; i++) if (block.Actions[i].Execute(ctx)) did = true;
-                return did ? new Result { Transfer = TransferOperationResult.None } : (Result?)null;
-            }
-
-            // 2) Default action - transfer liquid (or discard in drain mode), shaped by directives.
-            if (sourceLiquid == null) return null;
-            TransferOperationResult res = DefaultAction(sourceLiquid, srcSlot, worldWaterPos, block, litresRequested, ctx);
-            return res.Success ? new Result { Transfer = res } : (Result?)null;
+            TransferOperationResult res = TransferOperationResult.None;
+            if (sourceLiquid != null && (!block.HasActions || block.CanSelectSource))
+                res = DefaultAction(sourceLiquid, srcSlot, worldWaterPos, block, litresRequested, ctx);
+            var actionContext = BuildContext(srcSlot?.Itemstack ?? sourceLiquid,
+                ctx.TryGetValue("sourceInventory", out object inv) ? inv as IInventory : null);
+            bool did = res.Success ? ConditionActions.ExecuteMatched(block, actionContext) : ConditionActions.RunOn(block, actionContext);
+            if (res.Success) return new Result { Transfer = res };
+            return did ? new Result { Transfer = TransferOperationResult.ActionOnly } : (Result?)null;
         }
 
         private TransferOperationResult DefaultAction(ItemStack sourceLiquid, ItemSlot srcSlot, BlockPos worldWaterPos, ConditionBlock block, decimal litresRequested, IDictionary<string, object> ctx)
@@ -209,14 +205,15 @@ namespace SignalsLink.src.signals.hose
             if (dst == null) return TransferOperationResult.None;
 
             // Cap by the remaining buffer: `amount M` never moves more than what is left to move.
-            decimal litres = System.Math.Min(directives.Amount ?? litresRequested, maxTransfer);
-
-            litres = CappedByKeep(litres, paperBlock, ctx);
-            if (litres <= 0) return TransferOperationResult.None;
-
+            decimal floor = CappedByKeep(directives.Amount ?? litresRequested, paperBlock, ctx);
+            decimal available = worldWaterPos != null ? decimal.MaxValue : LiquidTransferService.AvailableLitres(sourceLiquid);
+            decimal litres = directives.TakesEverythingAvailable
+                ? System.Math.Min(available, liquid.RemainingLitres(dst, sourceLiquid)) : floor;
+            litres = CappedByKeep(System.Math.Min(litres, maxTransfer), paperBlock, ctx);
+            if (litres <= 0 || (directives.IsAtomicAmount && maxTransfer < floor)) return TransferOperationResult.None;
             TransferOperationResult res = srcSlot != null
-                ? liquid.TryMoveFromItemSlot(srcSlot, dst, litres, directives.IsAtomicAmount)
-                : liquid.TryMoveFromWorldSource(worldWaterPos, dst, litres, directives.IsAtomicAmount);
+                ? liquid.TryMoveFromItemSlot(srcSlot, dst, litres, directives.IsAtomicAmount, floor)
+                : liquid.TryMoveFromWorldSource(worldWaterPos, dst, litres, directives.IsAtomicAmount, floor);
 
             if (res.Success)
             {
@@ -241,7 +238,10 @@ namespace SignalsLink.src.signals.hose
             if (props == null || props.ItemsPerLitre <= 0) return TransferOperationResult.None;
 
             // Cap by the remaining buffer (see maxTransfer): the drain consumes at most what's left.
-            decimal litres = decimal.Round(System.Math.Min(directives.Amount ?? litresRequested, maxTransfer), 2, System.MidpointRounding.ToZero);
+            decimal floor = directives.Amount ?? litresRequested;
+            decimal available = srcSlot == null ? int.MaxValue / (decimal)props.ItemsPerLitre : LiquidTransferService.AvailableLitres(sourceLiquid);
+            if (directives.IsAtomicAmount && (available < floor || maxTransfer < floor)) return TransferOperationResult.None;
+            decimal litres = decimal.Round(System.Math.Min(directives.TakesEverythingAvailable ? available : floor, maxTransfer), 2, System.MidpointRounding.ToZero);
             if (litres <= 0) return TransferOperationResult.None;
 
             int wantItems = (int)(props.ItemsPerLitre * (float)litres);
@@ -279,7 +279,7 @@ namespace SignalsLink.src.signals.hose
         /// The `source N` directive, when a block carries one: draw from exactly that slot of the
         /// far host and from no other. An intake (world water) has no slots, so it ignores this.
         /// </param>
-        private ItemStack ResolveSource(out ItemSlot srcSlot, out BlockPos worldWaterPos, out IInventory sourceInv, int? sourceSlot = null)
+        private ItemStack ResolveSource(out ItemSlot srcSlot, out BlockPos worldWaterPos, out IInventory sourceInv, int? sourceSlot = null, bool sourceLast = false)
         {
             srcSlot = null;
             worldWaterPos = null;
@@ -304,7 +304,7 @@ namespace SignalsLink.src.signals.hose
             if (farInv == null) return null;
             sourceInv = farInv;
 
-            ItemSlot liquidSlot = sourceSlot.HasValue ? GetLiquidSlotAt(farInv, sourceSlot.Value) : FindLiquidSlot(farInv);
+            ItemSlot liquidSlot = sourceLast ? GetLiquidSlotAt(farInv, farInv.Count) : sourceSlot.HasValue ? GetLiquidSlotAt(farInv, sourceSlot.Value) : FindLiquidSlot(farInv);
             if (liquidSlot == null || liquidSlot.Empty) return null;
             srcSlot = liquidSlot;
             return liquid.GetLiquidStackForTransfer(liquidSlot.Itemstack);

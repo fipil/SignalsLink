@@ -13,8 +13,7 @@ namespace SignalsLink.Tests
     /// pass of a dock names every column it read and every pair it tried - three dozen lines for a
     /// small yard, and a yard may be much larger than that.
     ///
-    /// These tests share ConditionDebug's static scope, so they all live in one class and each one
-    /// uses a tag of its own.
+    /// Each test uses a distinct tag so rate limiting does not couple separate scenarios.
     /// </summary>
     public class ConditionDebugVolumeTests
     {
@@ -85,6 +84,61 @@ namespace SignalsLink.Tests
             Assert.Equal(2, second.Lines.Count);
         }
 
+        [Fact]
+        public void One_line_above_the_cap_keeps_the_tail_without_an_omission_notice()
+        {
+            var logger=Pass("one-above-cap",ConditionDebug.MaxLinesPerPass+1);
+            Assert.Equal(ConditionDebug.MaxLinesPerPass+1,logger.Lines.Count);
+            Assert.EndsWith("line 8",logger.Lines[^1]);
+        }
+
+        [Fact]
+        public void Untraced_worker_cannot_modify_a_pass_while_it_is_being_flushed()
+        {
+            var logger=new Log();
+            logger.Callback=()=>System.Threading.Tasks.Task.Run(()=> {
+                Assert.False(ConditionDebug.Enabled);
+                ConditionDebug.Log("foreign transfer");
+            }).GetAwaiter().GetResult();
+            ConditionDebug.Begin(logger,"worker-during-flush");
+            ConditionDebug.Log("first"); ConditionDebug.Log("second");
+            ConditionDebug.End();
+            Assert.Equal(2,logger.Lines.Count);
+            Assert.DoesNotContain(logger.Lines,l=>l.Contains("foreign"));
+            Assert.False(ConditionDebug.Enabled);
+        }
+
+        [Fact]
+        public async System.Threading.Tasks.Task Concurrent_scopes_keep_their_own_logger_and_lines()
+        {
+            using var rendezvous=new System.Threading.Barrier(2);
+            var logs=new[] {new Log(),new Log()};
+            var tasks=Enumerable.Range(0,2).Select(i=>System.Threading.Tasks.Task.Factory.StartNew(()=> {
+                ConditionDebug.Begin(logs[i],"concurrent-"+i);
+                try {
+                    Assert.True(rendezvous.SignalAndWait(TimeSpan.FromSeconds(5)));
+                    ConditionDebug.Log("only-"+i);
+                    Assert.True(rendezvous.SignalAndWait(TimeSpan.FromSeconds(5)));
+                } finally { ConditionDebug.End(); }
+            },System.Threading.Tasks.TaskCreationOptions.LongRunning)).ToArray();
+            await System.Threading.Tasks.Task.WhenAll(tasks);
+            for(int i=0;i<2;i++) Assert.Equal("[sl-dbg concurrent-"+i+"] only-"+i,Assert.Single(logs[i].Lines));
+        }
+
+        [Fact]
+        public void Nested_scope_restores_parent_and_throwing_logger_does_not_leave_scope_enabled()
+        {
+            var outer=new Log(); var inner=new Log();
+            ConditionDebug.Begin(outer,"outer-scope"); ConditionDebug.Log("before");
+            ConditionDebug.Begin(inner,"inner-scope"); ConditionDebug.Log("inside"); ConditionDebug.End();
+            ConditionDebug.Log("after"); ConditionDebug.End();
+            Assert.Equal(2,outer.Lines.Count); Assert.Single(inner.Lines);
+            var throwing=new Log { Callback=()=>throw new InvalidOperationException("logger failed") };
+            ConditionDebug.Begin(throwing,"throwing-scope"); ConditionDebug.Log("message");
+            Assert.Throws<InvalidOperationException>(ConditionDebug.End);
+            Assert.False(ConditionDebug.Enabled);
+        }
+
         private static Log Pass(string tag, int lines)
         {
             Log logger = new Log();
@@ -98,10 +152,12 @@ namespace SignalsLink.Tests
 
         private sealed class Log : LoggerBase
         {
+            public Action Callback { get; set; }
             public List<string> Lines { get; } = new List<string>();
 
             protected override void LogImpl(EnumLogType logType, string format, params object[] args)
             {
+                Callback?.Invoke();
                 Lines.Add(args == null || args.Length == 0 ? format : string.Format(format, args));
             }
         }

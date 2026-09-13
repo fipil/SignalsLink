@@ -187,5 +187,21 @@
   "signalslink:chunkanchor-window-for": "{0} minút",
   "signalslink:chunkanchor-windowtitle": "Ako dlho hore",
   "signalslink:con-input": "Vstup",
-  "signalslink:con-output": "Výstup"
+  "signalslink:con-output": "Výstup",
+  "block-bottomlesschest-*": "Bezedná truhlica",
+  "block-normal-generic-bottomlesschest-*": "Bezedná truhlica",
+  "block-normal-generic-recyclerchest-*": "Likvidačná truhlica",
+  "block-recyclerchest-*": "Likvidačná truhlica",
+  "bottomlesschest-help": "Každý slot doplní vloženú položku na pôvodný počet. Plíženie + šprint + pravé tlačidlo prázdnou rukou vymaže všetky vzory a obsah.",
+  "bottomlesschest-title": "Bezedná truhlica",
+  "recycler-cancel": "Zrušiť",
+  "recycler-full": "Pri úplnom zaplnení",
+  "recycler-half": "Pri polovičnom zaplnení",
+  "recycler-immediate": "Okamžite",
+  "recycler-interval": "Interval medzi dávkami",
+  "recycler-save": "Uložiť",
+  "recycler-settings": "Nastavenia likvidácie",
+  "recycler-trigger": "Spustiť likvidáciu",
+  "recyclerchest-help": "Po dosiahnutí nastaveného zaplnenia likviduje najstaršie dávky. Plíženie + pravé tlačidlo otvorí nastavenia.",
+  "recyclerchest-title": "Likvidačná truhlica"
 }

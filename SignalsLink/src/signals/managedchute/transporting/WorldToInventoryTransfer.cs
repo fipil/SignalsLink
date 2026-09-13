@@ -18,6 +18,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
         // Where the target inventory lives. Optional only because a caller may not know it; with
         // it, `in target isBurning` and `do seal` work in this direction too.
         private readonly BlockPos targetPos;
+        private int defaultQuantity = 1;
 
         public WorldToInventoryTransfer(ICoreAPI api, BlockPos sourcePos, IInventory targetInv, byte targetSlotSignal, PaperConditionsEvaluator conditionsEvaluator, BlockPos targetPos = null)
         {
@@ -37,6 +38,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
         /// </summary>
         public TransferOperationResult TryMove(ItemStackMoveOperation opTemplate)
         {
+            defaultQuantity = Math.Max(1, opTemplate.RequestedQuantity);
             IReadOnlyList<ConditionBlock> blocks = conditionsEvaluator?.GetBlocks();
 
             if (blocks == null || blocks.Count == 0)
@@ -54,7 +56,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
                 false,
                 block =>
                 {
-                    outputCtx ??= BuildOutputContext();
+                    outputCtx = BuildOutputContext();
                     bool holds = block.OutputConditionsHold(outputCtx);
 
                     if (ConditionDebug.Enabled)
@@ -73,11 +75,12 @@ namespace SignalsLink.src.signals.managedchute.transporting
                     // to do follows it, and still runs when there was nothing to pick up. A paper
                     // that seals the barrel because the ground is finally clear would otherwise be
                     // stopped by the very emptiness it is waiting for.
-                    actionCtx ??= BuildDirectiveContext();
+                    actionCtx = BuildDirectiveContext();
 
-                    bool acted = ConditionActions.RunOn(block, actionCtx);
+                    bool acted = moved.Success ? ConditionActions.ExecuteMatched(block, actionCtx) : ConditionActions.RunOn(block, actionCtx);
 
-                    return moved.Success || acted;
+                    if (acted && !moved.Success) moved = TransferOperationResult.ActionOnly;
+                    return moved.Success;
                 });
 
             OutputSink?.ApplyOutput(0, result.GetOutput());
@@ -90,6 +93,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
         /// </summary>
         private TransferOperationResult TryPickUp(ConditionBlock block)
         {
+            if (block != null && !block.CanSelectSource) return TransferOperationResult.None;
             TransferOperationResult fromPile = TryTakeFromGroundStorageColumn(block);
             if (fromPile.Success) return fromPile;
 
@@ -145,23 +149,19 @@ namespace SignalsLink.src.signals.managedchute.transporting
             // `amount N` takes a whole batch at once, spanning several piles of the column if
             // needed (mirrors the placing side). Whether it waits for the whole of N is what the
             // mark says: a plain amount and `N+` are floors, `N-` is a ceiling and never waits.
-            int batch = 1;
-            if (directives.Amount.HasValue)
+            int available = 0;
+            foreach (BlockEntityGroundStorage p in column)
             {
-                batch = (int)decimal.Truncate(directives.Amount.Value);
-                if (batch < 1) batch = 1;
-
-                int available = 0;
-                foreach (BlockEntityGroundStorage p in column) available += p.TotalStackSize;
-
-                if (directives.IsAtomicAmount && available < batch) return TransferOperationResult.None;
-                if (directives.TakesEverythingAvailable && available > batch) batch = available;
+                var held = p.Inventory?[0]?.Itemstack;
+                if (held == null || !held.Equals(api.World, stack, GlobalConstants.IgnoredStackAttributes)) break;
+                available += held.StackSize;
             }
-
-            batch = CappedByKeep(batch, directives, block);
+            int floor = CappedByKeep(Math.Max(1, (int)(directives.Amount ?? defaultQuantity)), directives, block);
+            int targetSignal = EffectiveTargetSlot(directives);
+            if (directives.IsAtomicAmount && (available < floor || RoomFor(stack, targetSignal) < floor)) return TransferOperationResult.None;
+            int batch = CappedByKeep(directives.TakesEverythingAvailable ? available : floor, directives, block);
             if (batch <= 0) return TransferOperationResult.None;
 
-            int targetSignal = EffectiveTargetSlot(directives);
             int movedTotal = 0;
 
             foreach (BlockEntityGroundStorage pile in column)
@@ -225,25 +225,16 @@ namespace SignalsLink.src.signals.managedchute.transporting
             if (!directives.Evaluate(BuildDirectiveContext())) return TransferOperationResult.None;
 
             int perLayer = layerStack.StackSize;
-            int requested = perLayer; // no directive: one layer per attempt, so it drains gradually
-
-            if (directives.Amount.HasValue)
-            {
-                requested = (int)decimal.Truncate(directives.Amount.Value);
-                if (requested < 1) requested = 1;
-
-                // Same three forms as everywhere else; see PaperConditionDirectives.AmountMode.
-                int available = 0;
-                foreach (BlockPos p in column) available += GetLayerCount(api.World.BlockAccessor.GetBlock(p), layerGroup) * perLayer;
-
-                if (directives.IsAtomicAmount && available < requested) return TransferOperationResult.None;
-                if (directives.TakesEverythingAvailable && available > requested) requested = available;
-            }
-
-            requested = CappedByKeep(requested, directives, paperBlock);
+            int available = 0;
+            foreach (BlockPos p in column) available += GetLayerCount(api.World.BlockAccessor.GetBlock(p), layerGroup) * perLayer;
+            int floor = CappedByKeep(Math.Max(1, (int)(directives.Amount ?? Math.Max(perLayer, defaultQuantity))), directives, paperBlock);
+            int targetSignal = EffectiveTargetSlot(directives);
+            // A layer cannot be split. Never round a ceiling or keep upwards.
+            if (directives.IsAtomicAmount && (floor % perLayer != 0 || available < floor || RoomFor(layerStack, targetSignal) < floor)) return TransferOperationResult.None;
+            int requested = CappedByKeep(directives.TakesEverythingAvailable ? available : floor, directives, paperBlock);
+            requested -= requested % perLayer;
             if (requested <= 0) return TransferOperationResult.None;
 
-            int targetSignal = EffectiveTargetSlot(directives);
             int movedTotal = 0;
 
             foreach (BlockPos pos in column)
@@ -383,10 +374,11 @@ namespace SignalsLink.src.signals.managedchute.transporting
         {
             if (slot == null || stack?.Collectible == null) return 0;
             if (!slot.CanHold(new DummySlot(stack))) return 0;
-            if (slot.Empty) return stack.Collectible.MaxStackSize;
+            if (!slot.CanTakeFrom(new DummySlot(stack), EnumMergePriority.DirectMerge)) return 0;
+            if (slot.Empty) return slot.GetRemainingSlotSpace(stack);
             if (!slot.Itemstack.Equals(api.World, stack, GlobalConstants.IgnoredStackAttributes)) return 0;
 
-            return System.Math.Max(0, slot.Itemstack.Collectible.MaxStackSize - slot.StackSize);
+            return System.Math.Max(0, slot.GetRemainingSlotSpace(stack));
         }
 
         #endregion

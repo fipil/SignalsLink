@@ -44,7 +44,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
             // under way, by which time the block had won and the ones below it were never asked:
             // four medium hides in the chest were enough for `amount 12` to select the block, move
             // nothing, and starve the `amount 8` block below it of its turn.
-            if (directives.IsAtomicAmount
+            if (directives.IsAtomicAmount && !directives.HasKeep && !IsLooseLiquid(slot)
                 && GetAvailableMatchingSourceQuantity(slot, directives) < GetItemTransferQuantity(directives.Amount.Value))
             {
                 return false;
@@ -99,19 +99,25 @@ namespace SignalsLink.src.signals.managedchute.transporting
             ItemSlot dst = Liquid.GetTargetSlot(src.Itemstack, EffectiveTargetSlot(selection.Directives));
             if (dst == null) return TransferOperationResult.None;
 
+            decimal floor = System.Math.Min(litres, selection.Room ?? decimal.MaxValue);
+            if (selection.Directives.TakesEverythingAvailable) litres = LiquidTransferService.AvailableLitres(src.Itemstack);
+            litres = System.Math.Min(litres, selection.Room ?? decimal.MaxValue);
             TransferOperationResult result =
-                Liquid.TryMoveFromItemSlot(src, dst, litres, selection.Directives.IsAtomicAmount);
+                Liquid.TryMoveFromItemSlot(src, dst, litres, selection.Directives.IsAtomicAmount, floor);
 
             if (!result.Success) return TransferOperationResult.None;
 
             src.MarkDirty();
             dst.MarkDirty();
-            RunActionsAfterTransfer();
+
 
             return result;
         }
 
         public TransferOperationResult TryMove(ItemStackMoveOperation opTemplate)
+            => RunTransferPass(opTemplate, () => MoveSelected(opTemplate));
+
+        private TransferOperationResult MoveSelected(ItemStackMoveOperation opTemplate)
         {
             TransferSelection selection = GetTransferSelection();
             ItemSlot src = selection?.SourceSlot;
@@ -124,8 +130,15 @@ namespace SignalsLink.src.signals.managedchute.transporting
             }
 
             int effectiveTargetSlotSignal = EffectiveTargetSlot(selection.Directives);
-            ItemSlot dst = GetGenericTargetSlot(src, effectiveTargetSlotSignal);
-            if (dst == null) return TransferOperationResult.None;
+            var targets = new List<ItemSlot>();
+            for (int i = 0; i < targetInv.Count; i++)
+            {
+                if (effectiveTargetSlotSignal > 0 && i != effectiveTargetSlotSignal - 1) continue;
+                if (CanMoveToTarget(src, targetInv[i])) targets.Add(targetInv[i]);
+            }
+            if (targets.Count == 0) return TransferOperationResult.None;
+            long targetRoom = 0;
+            foreach (ItemSlot slot in targets) targetRoom += slot.GetRemainingSlotSpace(src.Itemstack);
 
             decimal requestedAmount = selection.Directives.Amount ?? opTemplate.RequestedQuantity;
 
@@ -134,7 +147,8 @@ namespace SignalsLink.src.signals.managedchute.transporting
 
             // A floor - `amount N` or `amount N+` - waits until the whole of it is there. A ceiling
             // - `amount N-` - never waits; fewer than ten is fewer than ten.
-            if (selection.Directives.IsAtomicAmount && available < requestedQuantity)
+            if (selection.Directives.IsAtomicAmount && (available < CappedByKeep(requestedQuantity, selection)
+                || targetRoom < CappedByKeep(requestedQuantity, selection)))
             {
                 return TransferOperationResult.None;
             }
@@ -159,12 +173,20 @@ namespace SignalsLink.src.signals.managedchute.transporting
                 requestedQuantity
             );
 
-            int moved = TryMoveItemsFromMatchingSourceSlots(src, dst, ref op, selection.Directives);
+            var candidates = GetMatchingSourceSlots(src, selection.Directives);
+            int moved = 0;
+            foreach (ItemSlot dst in targets)
+            {
+                op.RequestedQuantity = requestedQuantity - moved;
+                int added = TryMoveItemsFromMatchingSourceSlots(candidates, dst, ref op);
+                if (added > 0) dst.MarkDirty();
+                moved += added;
+                if (moved >= requestedQuantity) break;
+            }
             if (moved > 0)
             {
                 src.MarkDirty();
-                dst.MarkDirty();
-                RunActionsAfterTransfer();
+
                 // Buffer model B: cost = pieces actually moved, so the Input buffer counts real
                 // items (an `amount M` block subtracts M, not a flat 1 — no more multiplier).
                 int triggerCost = moved;
@@ -239,12 +261,12 @@ namespace SignalsLink.src.signals.managedchute.transporting
             return quantity;
         }
 
-        private int TryMoveItemsFromMatchingSourceSlots(ItemSlot initialSourceSlot, ItemSlot dst, ref ItemStackMoveOperation op, PaperConditionDirectives directives)
+        private int TryMoveItemsFromMatchingSourceSlots(List<ItemSlot> candidates, ItemSlot dst, ref ItemStackMoveOperation op)
         {
             int movedTotal = 0;
             int requestedQuantity = op.RequestedQuantity;
 
-            foreach (ItemSlot candidate in GetMatchingSourceSlots(initialSourceSlot, directives))
+            foreach (ItemSlot candidate in candidates)
             {
                 if (movedTotal >= requestedQuantity) break;
 
@@ -297,8 +319,9 @@ namespace SignalsLink.src.signals.managedchute.transporting
 
             result.Add(initialSourceSlot);
 
-            for (int i = 0; i < sourceInv.Count; i++)
+            foreach (int i in CandidateSlots(directives))
             {
+                if (i < 0 || i >= sourceInv.Count) continue;
                 ItemSlot slot = sourceInv[i];
                 if (slot == null || ReferenceEquals(slot, initialSourceSlot) || slot.Empty) continue;
 
@@ -307,9 +330,8 @@ namespace SignalsLink.src.signals.managedchute.transporting
 
                 if (!stack.Equals(api.World, initialStack, GlobalConstants.IgnoredStackAttributes)) continue;
                 if (IsLiquidContainer(stack) && !AllowsLiquidContainers) continue;
-                if (!TryGetMatchedDirectives(stack, out PaperConditionDirectives candidateDirectives)) continue;
-                if (candidateDirectives.SourceSlot != directives.SourceSlot || candidateDirectives.TargetSlot != directives.TargetSlot || candidateDirectives.TargetGround != directives.TargetGround || candidateDirectives.TargetGroundHeight != directives.TargetGroundHeight || candidateDirectives.Amount != directives.Amount || candidateDirectives.RequireTargetEmpty != directives.RequireTargetEmpty) continue;
-                if (!CanReachTarget(slot, candidateDirectives)) continue;
+                if (!MatchesActiveBlock(stack)) continue;
+                if (!CanReachTarget(slot, directives)) continue;
 
                 result.Add(slot);
             }

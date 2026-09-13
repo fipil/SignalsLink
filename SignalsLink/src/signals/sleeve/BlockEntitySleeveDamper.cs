@@ -214,6 +214,7 @@ namespace SignalsLink.src.signals.sleeve
         /// </summary>
         private void MoveItems(float dt)
         {
+            using var regexDiagnostics = RegexDiagnostics.Begin(Api, Pos, "SleeveDamper");
             if (Api is not ICoreServerAPI) return;
 
             // Blocks with an `output` action are evaluated on EVERY tick, before anything else and
@@ -252,6 +253,7 @@ namespace SignalsLink.src.signals.sleeve
         /// </summary>
         private void EvaluateOutputs()
         {
+            using var regexDiagnostics = RegexDiagnostics.Begin(Api, Pos, "SleeveDamper");
             bool trace = ConditionDebug.IsMarked(conditionsText);
             if (trace) ConditionDebug.Begin(Api.Logger, "damper@" + Pos);
 
@@ -448,7 +450,7 @@ namespace SignalsLink.src.signals.sleeve
                 ItemStackMoveOperation op = new ItemStackMoveOperation(
                     Api.World, EnumMouseButton.Left, 0, EnumMergePriority.DirectMerge, 1);
 
-                while (movedTotal < budget)
+                do
                 {
                     TransferOperationResult result = transfer.TryMove(op);
                     if (!result.Success) break;
@@ -463,7 +465,7 @@ namespace SignalsLink.src.signals.sleeve
                         MarkDirty();
                         if (remaining <= 0) break;
                     }
-                }
+                } while (false);
             }
 
             // Occasional rustle while transporting. The sleeve sways in sync with this audible

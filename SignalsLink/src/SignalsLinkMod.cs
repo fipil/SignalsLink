@@ -38,6 +38,7 @@ namespace SignalsLink.src
             api.RegisterBlockClass("BlockSensor", typeof(BlockSensor));
             api.RegisterBlockClass("EntitySensor", typeof(EntitySensor));
             api.RegisterBlockClass("ManagedChute", typeof(ManagedChute));
+            api.RegisterBlockEntityClass("SignalsLinkTestChest", typeof(SignalsLink.src.signals.testchest.BETestChest));
             api.RegisterBlockClass("ManagedWallChute", typeof(ManagedWallChute));
 
             // ManagedHose — řízená hadice (kapaliny)
