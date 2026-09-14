@@ -1,0 +1,11 @@
+{
+  "type": "code",
+  "modid": "yttrepro",
+  "name": "YTT Repro",
+  "authors": ["Fipil"],
+  "description": "Reproduces a stuck-convoy state in Yang's Transport Tycoon for a bug report: /yttrepro build, split, check, clean. Use in a disposable creative test world.",
+  "version": "0.1.0",
+  "side": "Server",
+  "requiredOnClient": false,
+  "dependencies": { "game": "1.22.0", "yangtransport": "0.9.0" }
+}
