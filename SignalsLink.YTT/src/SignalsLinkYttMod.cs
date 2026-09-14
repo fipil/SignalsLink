@@ -1,4 +1,5 @@
 using SignalsLink.src.signals.cargo;
+using SignalsLink.YTT.src.dump;
 using SignalsLink.YTT.src.probe;
 using SignalsLink.YTT.src.train;
 using Vintagestory.API.Common;
@@ -43,6 +44,10 @@ namespace SignalsLink.YTT.src
                 api.Logger.Notification("[SignalsLink.YTT] " + YttModId + " is not loaded, standing down.");
                 return;
             }
+
+            // Diagnostics first: a bridge that stands down below is exactly when somebody wants
+            // to see what YTT is thinking.
+            SlyttCommand.Register(api);
 
             // The last moment at which the answer can still be "do nothing" rather than
             // "lose somebody's cargo".
