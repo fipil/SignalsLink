@@ -203,5 +203,10 @@
   "recycler-settings": "Ustawienia utylizacji",
   "recycler-trigger": "Uruchom utylizację",
   "recyclerchest-help": "Po osiągnięciu ustawionego zapełnienia utylizuje najstarsze partie. Skradanie + prawy przycisk myszy otwiera ustawienia.",
-  "recyclerchest-title": "Skrzynia utylizacyjna"
+  "recyclerchest-title": "Skrzynia utylizacyjna",
+  "signalslink:chunkanchor-asleep-prompted": "Śpi — obudzi ją tylko sygnał, przybycie gracza lub pojazd",
+  "signalslink:chunkanchor-guests": "Na jej terenie stoi skład — nie zaśnie, dopóki nie odjedzie",
+  "signalslink:chunkanchor-halo": "Dodatkowo utrzymuje {0} kolumn, aby skład się nie rozdzielił",
+  "signalslink:chunkanchor-wake-prompted": "Budź tylko na żądanie",
+  "signalslink:papererror-vehiclespec": "statek lub zwierzę wybiera się tylko stroną świata - na przykład north lub north5"
 }

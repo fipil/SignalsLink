@@ -203,5 +203,10 @@
   "recycler-settings": "Nastavenia likvidácie",
   "recycler-trigger": "Spustiť likvidáciu",
   "recyclerchest-help": "Po dosiahnutí nastaveného zaplnenia likviduje najstaršie dávky. Plíženie + pravé tlačidlo otvorí nastavenia.",
-  "recyclerchest-title": "Likvidačná truhlica"
+  "recyclerchest-title": "Likvidačná truhlica",
+  "signalslink:chunkanchor-asleep-prompted": "Spí — prebudí ju len signál, príchod hráča alebo vozidlo",
+  "signalslink:chunkanchor-guests": "Na jejom území stojí súprava — nezaspí, kým neodíde",
+  "signalslink:chunkanchor-halo": "Navyše drží {0} stĺpcov, aby sa súprava nerozdelila",
+  "signalslink:chunkanchor-wake-prompted": "Prebudiť len na podnet",
+  "signalslink:papererror-vehiclespec": "loď alebo zviera sa vyberá len svetovou stranou - napríklad north alebo north5"
 }

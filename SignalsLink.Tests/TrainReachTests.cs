@@ -1,4 +1,4 @@
-using SignalsLink.YTT.src.train;
+using SignalsLink.src.signals.vehicle;
 using Vintagestory.API.MathTools;
 using Xunit;
 
@@ -124,7 +124,7 @@ namespace SignalsLink.Tests
 
             public bool Covers(BlockFacing direction, int? distance)
             {
-                return TrainReach.Covers(minX, maxX, minZ, maxZ, Dock, direction, distance);
+                return BodyReach.Covers(minX, maxX, minZ, maxZ, Dock, direction, distance);
             }
         }
     }

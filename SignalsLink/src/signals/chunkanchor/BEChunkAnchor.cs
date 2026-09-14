@@ -65,6 +65,14 @@ namespace SignalsLink.src.signals.chunkanchor
         /// </summary>
         private bool counted;
 
+        // What ChunkAnchors holds for a guest on this anchor's ground, mirrored here for the price
+        // and the info panel - the client has no ChunkAnchors to ask.
+        private int haloCount;
+        private bool guests;
+
+        /// <summary>Everything paid for: the selection, plus what is held so a convoy stays whole.</summary>
+        private int HeldColumns => columns.Count + haloCount;
+
         /// <summary>
         /// What the last census found, kept for the dialog and the info panel.
         ///
@@ -128,6 +136,15 @@ namespace SignalsLink.src.signals.chunkanchor
         /// this, the factory a player left running last night is still asleep when they come back.
         /// </summary>
         public bool WakeOnPlayerJoin { get; private set; } = true;
+
+        /// <summary>And when another mod says a vehicle is heading for its ground. Off by default.</summary>
+        public bool WakeOnArrival { get; private set; }
+
+        /// <summary>
+        /// The label of the switch for that, or empty when no mod can report arrivals - in which
+        /// case the dialog shows no such switch. Set on the server, mirrored to the client.
+        /// </summary>
+        public string ArrivalSourceLangKey { get; private set; } = "";
 
         /// <summary>The columns this anchor is set to hold.</summary>
         public IReadOnlyCollection<long> Columns => columns;
@@ -206,8 +223,23 @@ namespace SignalsLink.src.signals.chunkanchor
             }
             if (SwitchedOn && charge <= 0 && TakeSpareGear()) Revive();
             if (!warmingUp && SwitchedOn) MaybeSleep(now);
+            SyncHalo();
             ReportCharge();
             ShowState();
+        }
+
+        private void SyncHalo()
+        {
+            int halo = Anchors?.HaloOf(Pos).Count ?? 0;
+            bool standing = Anchors?.HasGuests(Pos) == true;
+            string arrivals = Anchors?.ArrivalLangKey ?? "";
+
+            if (halo == haloCount && standing == guests && arrivals == ArrivalSourceLangKey) return;
+
+            haloCount = halo;
+            guests = standing;
+            ArrivalSourceLangKey = arrivals;
+            MarkDirty();
         }
 
         private void Settle(double now)
@@ -273,30 +305,37 @@ namespace SignalsLink.src.signals.chunkanchor
         {
             if (!AnchorAccounting.ShouldSleep(now, awakeSinceHours, WakeIntervalHours, WakeWindowHours, Alive, HeldAwake)) return;
 
+            // Not while a convoy stands on its ground. Letting go now could leave the half of it
+            // that a player's chunks keep loaded - and that half never moves again.
+            if (Anchors?.HasGuests(Pos) == true) return;
+
             Alive = false;
             ShowState();
 
-            Anchors?.Sleep(Pos, columns, now + WakeIntervalHours, WakeOnPlayerJoin);
+            Anchors?.Sleep(Pos, columns, now + WakeIntervalHours, WakeOnPlayerJoin, WakeOnArrival);
             MarkDirty();
         }
 
         /// <summary>What the player picked in the dialog.</summary>
-        public void SetWakeCycle(double intervalHours, double windowHours, bool onPlayerJoin)
+        public void SetWakeCycle(double intervalHours, double windowHours, bool onPlayerJoin, bool onArrival = false)
         {
             if (Api is not ICoreServerAPI) return;
 
-            if (!new[] { 0d, 1d, 4d, 24d }.Contains(intervalHours)
+            // Infinity is "only when prompted": it sleeps after its window and nothing but a
+            // signal, a player or a vehicle brings it back.
+            if (!new[] { 0d, 1d, 4d, 24d, double.PositiveInfinity }.Contains(intervalHours)
                 || !new[] { .25d, .5d, 1d, 2d }.Contains(windowHours)) return;
             Settle(Api.World.Calendar.TotalHours);
             WakeIntervalHours = intervalHours;
             WakeWindowHours = windowHours;
             WakeOnPlayerJoin = onPlayerJoin;
+            WakeOnArrival = onArrival;
 
             awakeSinceHours = Api.World.Calendar.TotalHours;
             if (Anchors?.IsAsleep(Pos) == true)
             {
                 if (intervalHours == 0) { Anchors.Release(Pos); Revive(); }
-                else Anchors.UpdateSleep(Pos, columns, awakeSinceHours + intervalHours, onPlayerJoin);
+                else Anchors.UpdateSleep(Pos, columns, awakeSinceHours + intervalHours, onPlayerJoin, onArrival);
             }
             MarkDirty();
         }
@@ -518,7 +557,7 @@ namespace SignalsLink.src.signals.chunkanchor
             float reference = chargeBehavior?.ReferenceVolume ?? 100f;
 
             return AnchorCensus.EffectiveVolume(
-                AnchorCensus.AnchorUnits(ActiveBlocks, Creatures, columns.Count, Config.AnchorCreatureWeight, Config.AnchorColumnWeight),
+                AnchorCensus.AnchorUnits(ActiveBlocks, Creatures, HeldColumns, Config.AnchorCreatureWeight, Config.AnchorColumnWeight),
                 reference, Config.AnchorReferenceLoad, Config.AnchorPriceExponent);
         }
 
@@ -541,7 +580,7 @@ namespace SignalsLink.src.signals.chunkanchor
             foreach (long key in clean) columns.Add(key);
             counted = CensusReady = false;
             censusStarted = null;
-            if (Anchors?.WakesAt(Pos) is double wakeAt) Anchors.UpdateSleep(Pos, columns, wakeAt, WakeOnPlayerJoin);
+            if (Anchors?.WakesAt(Pos) is double wakeAt) Anchors.UpdateSleep(Pos, columns, wakeAt, WakeOnPlayerJoin, WakeOnArrival);
 
             if (Alive) Anchors?.SetColumns(Pos, columns);
 
@@ -606,7 +645,7 @@ namespace SignalsLink.src.signals.chunkanchor
             if (chargeBehavior == null) return double.PositiveInfinity;
 
             return AnchorCensus.DaysPerGear(
-                AnchorCensus.AnchorUnits(ActiveBlocks, Creatures, columns.Count, Config.AnchorCreatureWeight, Config.AnchorColumnWeight),
+                AnchorCensus.AnchorUnits(ActiveBlocks, Creatures, HeldColumns, Config.AnchorCreatureWeight, Config.AnchorColumnWeight),
                 chargeBehavior.GearTotalCharge, chargeBehavior.ReferenceVolume,
                 chargeBehavior.BaseConsumptionFactor,
                 Config.AnchorReferenceLoad, Config.AnchorPriceExponent);
@@ -644,7 +683,7 @@ namespace SignalsLink.src.signals.chunkanchor
 
         public const int PacketIdSetCycle = 1046;
 
-        private void SendCycleToServer(double interval, double window, bool onPlayerJoin)
+        private void SendCycleToServer(double interval, double window, bool onPlayerJoin, bool onArrival)
         {
             using MemoryStream stream = new MemoryStream();
             using BinaryWriter writer = new BinaryWriter(stream);
@@ -652,6 +691,7 @@ namespace SignalsLink.src.signals.chunkanchor
             writer.Write(interval);
             writer.Write(window);
             writer.Write(onPlayerJoin);
+            writer.Write(onArrival);
 
             (Api as ICoreClientAPI)?.Network.SendBlockEntityPacket(Pos, PacketIdSetCycle, stream.ToArray());
         }
@@ -691,11 +731,17 @@ namespace SignalsLink.src.signals.chunkanchor
             }
             if (packetid == PacketIdSetCycle)
             {
-                if (data == null || data.Length != 17) return;
+                // 17 bytes is the older client without the arrival switch.
+                if (data == null || (data.Length != 17 && data.Length != 18)) return;
                 using MemoryStream cycle = new MemoryStream(data);
                 using BinaryReader read = new BinaryReader(cycle);
 
-                SetWakeCycle(read.ReadDouble(), read.ReadDouble(), read.ReadBoolean());
+                double interval = read.ReadDouble();
+                double window = read.ReadDouble();
+                bool onJoin = read.ReadBoolean();
+                bool onArrival = data.Length == 18 && read.ReadBoolean();
+
+                SetWakeCycle(interval, window, onJoin, onArrival);
                 return;
             }
 
@@ -792,6 +838,8 @@ namespace SignalsLink.src.signals.chunkanchor
 
             WakeIntervalHours = tree.GetDouble("wakeinterval", 0);
             WakeOnPlayerJoin = tree.GetBool("wakeonjoin", true);
+            WakeOnArrival = tree.GetBool("wakeonarrival", false);
+            ArrivalSourceLangKey = tree.GetString("arrivalsource", "");
             WakeWindowHours = tree.GetDouble("wakewindow", 0.5);
             inputSignal = (byte)tree.GetInt("inputsignal", 0);
             outputSignal = (byte)tree.GetInt("outputsignal", 0);
@@ -803,6 +851,8 @@ namespace SignalsLink.src.signals.chunkanchor
             ActiveBlocks = tree.GetInt("activeblocks", 0);
             Creatures = tree.GetInt("creatures", 0);
             CensusReady = tree.GetBool("censusready", false);
+            haloCount = tree.GetInt("halocount", 0);
+            guests = tree.GetBool("guests", false);
             syncedWakeAt = tree.HasAttribute("wakesat") ? tree.GetDouble("wakesat") : null;
             if (worldForResolving?.Side == EnumAppSide.Client)
             {
@@ -829,6 +879,8 @@ namespace SignalsLink.src.signals.chunkanchor
 
             tree.SetDouble("wakeinterval", WakeIntervalHours);
             tree.SetBool("wakeonjoin", WakeOnPlayerJoin);
+            tree.SetBool("wakeonarrival", WakeOnArrival);
+            tree.SetString("arrivalsource", ArrivalSourceLangKey);
             tree.SetDouble("wakewindow", WakeWindowHours);
             tree.SetInt("inputsignal", inputSignal);
             tree.SetInt("outputsignal", outputSignal);
@@ -839,6 +891,8 @@ namespace SignalsLink.src.signals.chunkanchor
             tree.SetInt("activeblocks", ActiveBlocks);
             tree.SetInt("creatures", Creatures);
             tree.SetBool("censusready", CensusReady);
+            tree.SetInt("halocount", haloCount);
+            tree.SetBool("guests", guests);
             if (Anchors?.WakesAt(Pos) is double wakeAt) tree.SetDouble("wakesat", wakeAt);
             else tree.RemoveAttribute("wakesat");
             tree.SetFloat("anchorReference", Config.AnchorReferenceLoad);
@@ -862,11 +916,12 @@ namespace SignalsLink.src.signals.chunkanchor
             }
 
             sb.AppendLine(Lang.Get("signalslink:chunkanchor-holding", columns.Count));
+            if (haloCount > 0) sb.AppendLine(Lang.Get("signalslink:chunkanchor-halo", haloCount));
 
             // The price is shown WHATEVER state it is in. It used to be hidden while the anchor was
             // out of charge, which is precisely the moment the player is deciding whether feeding
             // it is worth a gear.
-            float units = AnchorCensus.AnchorUnits(ActiveBlocks, Creatures, columns.Count, Config.AnchorCreatureWeight, Config.AnchorColumnWeight);
+            float units = AnchorCensus.AnchorUnits(ActiveBlocks, Creatures, HeldColumns, Config.AnchorCreatureWeight, Config.AnchorColumnWeight);
 
             sb.AppendLine(CensusReady ? Lang.Get("signalslink:chunkanchor-census", ActiveBlocks, Creatures, (int)units) : "�");
 
@@ -897,8 +952,9 @@ namespace SignalsLink.src.signals.chunkanchor
 
             if (wakes != null)
             {
-                sb.AppendLine(Lang.Get("signalslink:chunkanchor-asleep",
-                    (wakes.Value - Api.World.Calendar.TotalHours).ToString("0.#")));
+                sb.AppendLine(double.IsPositiveInfinity(wakes.Value)
+                    ? Lang.Get("signalslink:chunkanchor-asleep-prompted")
+                    : Lang.Get("signalslink:chunkanchor-asleep", (wakes.Value - Api.World.Calendar.TotalHours).ToString("0.#")));
             }
             else if (!Alive)
             {
@@ -907,6 +963,10 @@ namespace SignalsLink.src.signals.chunkanchor
             else if (HeldAwake)
             {
                 sb.AppendLine(Lang.Get("signalslink:chunkanchor-heldawake"));
+            }
+            else if (guests)
+            {
+                sb.AppendLine(Lang.Get("signalslink:chunkanchor-guests"));
             }
         }
 

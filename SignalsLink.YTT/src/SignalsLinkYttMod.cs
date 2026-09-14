@@ -1,4 +1,5 @@
 using SignalsLink.src.signals.cargo;
+using SignalsLink.src.signals.chunkanchor;
 using SignalsLink.YTT.src.dump;
 using SignalsLink.YTT.src.probe;
 using SignalsLink.YTT.src.train;
@@ -34,6 +35,24 @@ namespace SignalsLink.YTT.src
 
         public YttSurface Surface { get; private set; }
 
+        private TrainApproachWatch approach;
+
+        /// <summary>
+        /// The header vocabulary, on both sides. The client checks a paper's headers for the block
+        /// info, and a <c>train</c> it does not know reads as a mistake there - which it did the
+        /// moment the registry had more than one kind of holder to choose from. No probe here:
+        /// reading a header needs no game and no other mod. The server replaces this with the
+        /// probed finder below.
+        /// </summary>
+        public override void Start(ICoreAPI api)
+        {
+            base.Start(api);
+
+            if (!api.ModLoader.IsModEnabled(YttModId)) return;
+
+            api.ModLoader.GetModSystem<CargoHolderRegistry>()?.Register(new TrainCargoHolderFinder());
+        }
+
         public override void StartServerSide(Vintagestory.API.Server.ICoreServerAPI api)
         {
             base.StartServerSide(api);
@@ -49,10 +68,23 @@ namespace SignalsLink.YTT.src
             // to see what YTT is thinking.
             SlyttCommand.Register(api);
 
+            // Needs no reflection, so it is not behind the probe: an anchor must never split a
+            // train, whatever this version of YTT lets the bridge do with its cargo.
+            api.ModLoader.GetModSystem<KeepTogetherRegistry>()?.Register(new TrainKeepTogether());
+
             // The last moment at which the answer can still be "do nothing" rather than
             // "lose somebody's cargo".
             Surface = YttSurface.Probe(api);
             Surface.Report(api, VersionOf(api));
+
+            // Independent of cargo: seeing a train coming needs the simulation, not the wagons.
+            ArrivalSourceRegistry arrivals = api.ModLoader.GetModSystem<ArrivalSourceRegistry>();
+            if (Surface.CanWatchApproach && arrivals != null)
+            {
+                approach = new TrainApproachWatch(api, Surface, arrivals);
+                arrivals.Register(approach);
+                approach.Start();
+            }
 
             if (!Surface.CanCarry) return;
 
@@ -70,6 +102,12 @@ namespace SignalsLink.YTT.src
 
             Enabled = true;
             api.Logger.Notification("[SignalsLink.YTT] trains can be loaded and unloaded.");
+        }
+
+        public override void Dispose()
+        {
+            approach?.Stop();
+            base.Dispose();
         }
 
         /// <summary>The other mod's version, for the log line that matters when something breaks.</summary>

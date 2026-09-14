@@ -203,5 +203,10 @@
   "recycler-settings": "Definições de reciclagem",
   "recycler-trigger": "Iniciar reciclagem",
   "recyclerchest-help": "Ao atingir o nível de enchimento definido, recicla os lotes mais antigos. Agachar + botão direito do rato abre as definições.",
-  "recyclerchest-title": "Baú de reciclagem"
+  "recyclerchest-title": "Baú de reciclagem",
+  "signalslink:chunkanchor-asleep-prompted": "Está adormecida — só acordará com um sinal, a chegada de um jogador ou um veículo",
+  "signalslink:chunkanchor-guests": "Há um comboio no seu território — não adormecerá até que ele parta",
+  "signalslink:chunkanchor-halo": "Além disso, mantém {0} colunas carregadas para que o comboio não se divida",
+  "signalslink:chunkanchor-wake-prompted": "Acordar apenas por estímulo",
+  "signalslink:papererror-vehiclespec": "um barco ou animal é selecionado apenas pela direção cardinal - por exemplo, north ou north5"
 }

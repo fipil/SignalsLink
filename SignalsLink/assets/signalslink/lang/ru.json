@@ -203,5 +203,10 @@
   "recycler-settings": "Настройки утилизации",
   "recycler-trigger": "Запустить утилизацию",
   "recyclerchest-help": "При достижении заданного заполнения утилизирует самые старые партии. Красться + правая кнопка мыши открывает настройки.",
-  "recyclerchest-title": "Сундук-утилизатор"
+  "recyclerchest-title": "Сундук-утилизатор",
+  "signalslink:chunkanchor-asleep-prompted": "Спит — её разбудит только сигнал, появление игрока или транспортное средство",
+  "signalslink:chunkanchor-guests": "На её территории находится состав — она не уснёт, пока он не уедет",
+  "signalslink:chunkanchor-halo": "Кроме того, удерживает {0} столбцов, чтобы состав не разделился",
+  "signalslink:chunkanchor-wake-prompted": "Будить только по сигналу",
+  "signalslink:papererror-vehiclespec": "корабль или животное выбирается только стороной света — например north или north5"
 }

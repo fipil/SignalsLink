@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using SignalsLink.src.signals.vehicle;
 using SignalsLink.YTT.src.probe;
 
 namespace SignalsLink.Tests

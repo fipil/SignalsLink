@@ -331,9 +331,11 @@ namespace SignalsLink.YTT.src.dump
                 Line(entity.EntityId + " " + Vehicle(entity)
                     + " chunkLoaded=" + (api.World.BlockAccessor.GetChunkAtBlockPos(entity.Pos.AsBlockPos) != null)
                     + " | authority: " + record + " trusted=" + trusted
-                    + " | attrs: convoyHeadId=" + entity.WatchedAttributes.GetLong("convoyHeadId", 0)
+                    + " | attrs: convoyHeadId=" + train.TrainKeepTogether.HeadOf(entity)
                     + " convoyCount=" + entity.WatchedAttributes.GetInt("convoyCount", 1)
-                    + " derailed=" + entity.WatchedAttributes.GetBool("derailed"));
+                    + " derailed=" + entity.WatchedAttributes.GetBool("derailed")
+                    // What the dock's readiness reads: 2 = waiting at a station, 1 = going.
+                    + " action=" + entity.WatchedAttributes.GetInt(train.TrainSignals.ActionAttribute, 0));
             }
         }
 

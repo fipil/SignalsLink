@@ -203,5 +203,10 @@
   "recycler-settings": "Impostazioni di smaltimento",
   "recycler-trigger": "Avvia smaltimento",
   "recyclerchest-help": "Al raggiungimento del riempimento impostato, smaltisce i lotti più vecchi. Accovacciarsi + clic destro apre le impostazioni.",
-  "recyclerchest-title": "Forziere di smaltimento"
+  "recyclerchest-title": "Forziere di smaltimento",
+  "signalslink:chunkanchor-asleep-prompted": "Dormiente — si sveglierà solo con un segnale, l'arrivo del giocatore o un veicolo",
+  "signalslink:chunkanchor-guests": "Sul suo territorio si trova un convoglio — non si addormenterà finché non partirà",
+  "signalslink:chunkanchor-halo": "Inoltre mantiene {0} colonne, affinché il convoglio non si divida",
+  "signalslink:chunkanchor-wake-prompted": "Sveglia solo su richiesta",
+  "signalslink:papererror-vehiclespec": "una nave o un animale si seleziona solo con una direzione cardinale - ad esempio north o north5"
 }

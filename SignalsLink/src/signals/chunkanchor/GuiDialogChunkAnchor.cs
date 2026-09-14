@@ -29,12 +29,13 @@ namespace SignalsLink.src.signals.chunkanchor
         private const string WakeKey = "wake";
         private const string WindowKey = "window";
         private const string JoinKey = "wakeonjoin";
+        private const string ArrivalKey = "wakeonarrival";
 
         /// <summary>
         /// What the player may pick, in in-game hours. Zero is "never sleeps", which has to be
         /// first because it is what an anchor does until somebody decides otherwise.
         /// </summary>
-        private static readonly double[] WakeChoices = { 0, 1, 4, 24 };
+        private static readonly double[] WakeChoices = { 0, 1, 4, 24, double.PositiveInfinity };
 
         /// <summary>And how long it stays up each time, also in in-game hours.</summary>
         private static readonly double[] WindowChoices = { 0.25, 0.5, 1, 2 };
@@ -66,8 +67,11 @@ namespace SignalsLink.src.signals.chunkanchor
         private readonly HashSet<long> held;
         private readonly Action<IReadOnlyCollection<long>> save;
         private readonly Action<bool> setSwitch;
-        private readonly Action<double, double, bool> setCycle;
+        private readonly Action<double, double, bool, bool> setCycle;
         private readonly BEChunkAnchor anchor;
+
+        /// <summary>The switch exists only while some mod can report an approaching vehicle.</summary>
+        private bool HasArrivalSwitch => !string.IsNullOrEmpty(anchor?.ArrivalSourceLangKey);
 
         private bool switchedOn;
 
@@ -82,7 +86,7 @@ namespace SignalsLink.src.signals.chunkanchor
         public GuiDialogChunkAnchor(ICoreClientAPI capi, BlockPos pos, int chunkSize,
             IEnumerable<long> held, int mapRadius, bool switchedOn, int maxColumns,
             Action<IReadOnlyCollection<long>> save, Action<bool> setSwitch,
-            Action<double, double, bool> setCycle, BEChunkAnchor anchor) : base(capi)
+            Action<double, double, bool, bool> setCycle, BEChunkAnchor anchor) : base(capi)
         {
             this.pos = pos;
             this.anchor = anchor;
@@ -157,6 +161,8 @@ namespace SignalsLink.src.signals.chunkanchor
             ElementBounds windowDrop = ElementBounds.Fixed(right, top + 134, SideColumn, 28);
             ElementBounds joinBounds = ElementBounds.Fixed(right, top + 174, 30, 22);
             ElementBounds joinLabel = ElementBounds.Fixed(right + 38, top + 172, SideColumn - 38, 40);
+            ElementBounds arrivalBounds = ElementBounds.Fixed(right, top + 218, 30, 22);
+            ElementBounds arrivalLabel = ElementBounds.Fixed(right + 38, top + 216, SideColumn - 38, 40);
 
             // The gear sits on the same line the map ends on, which leaves the whole middle of the
             // column free for the wake settings when they arrive.
@@ -204,6 +210,11 @@ namespace SignalsLink.src.signals.chunkanchor
                     .AddSwitch(OnJoinToggled, joinBounds, JoinKey)
                     .AddStaticText(Lang.Get("signalslink:chunkanchor-wakeonjoin"),
                         CairoFont.WhiteDetailText(), joinLabel)
+                    .AddIf(HasArrivalSwitch)
+                        .AddSwitch(OnArrivalToggled, arrivalBounds, ArrivalKey)
+                        .AddStaticText(Lang.Get(anchor?.ArrivalSourceLangKey ?? ""),
+                            CairoFont.WhiteDetailText(), arrivalLabel)
+                    .EndIf()
                     .AddDynamicText("", CairoFont.WhiteSmallText(), chargeLabel, ChargeKey)
                     .AddStaticText(Lang.Get("signalslink:chunkanchor-slotlabel"),
                         CairoFont.WhiteSmallText(), slotLabel)
@@ -228,6 +239,7 @@ namespace SignalsLink.src.signals.chunkanchor
 
             SingleComposer.GetSwitch(SwitchKey)?.SetValue(switchedOn);
             SingleComposer.GetSwitch(JoinKey)?.SetValue(anchor?.WakeOnPlayerJoin ?? true);
+            if (HasArrivalSwitch) SingleComposer.GetSwitch(ArrivalKey)?.SetValue(anchor?.WakeOnArrival ?? false);
 
             ShowWakeSettings();
 
@@ -269,7 +281,11 @@ namespace SignalsLink.src.signals.chunkanchor
         private static string[] WakeCodes()
         {
             string[] codes = new string[WakeChoices.Length];
-            for (int i = 0; i < codes.Length; i++) codes[i] = WakeChoices[i].ToString("0.##");
+            for (int i = 0; i < codes.Length; i++)
+            {
+                codes[i] = double.IsPositiveInfinity(WakeChoices[i]) ? "prompted" : WakeChoices[i].ToString("0.##");
+            }
+
             return codes;
         }
 
@@ -279,8 +295,8 @@ namespace SignalsLink.src.signals.chunkanchor
 
             for (int i = 0; i < names.Length; i++)
             {
-                names[i] = WakeChoices[i] <= 0
-                    ? Lang.Get("signalslink:chunkanchor-wake-never")
+                names[i] = WakeChoices[i] <= 0 ? Lang.Get("signalslink:chunkanchor-wake-never")
+                    : double.IsPositiveInfinity(WakeChoices[i]) ? Lang.Get("signalslink:chunkanchor-wake-prompted")
                     : Lang.Get("signalslink:chunkanchor-wake-every", WakeChoices[i].ToString("0.##"));
             }
 
@@ -318,6 +334,8 @@ namespace SignalsLink.src.signals.chunkanchor
 
             for (int i = 1; i < choices.Length; i++)
             {
+                // Infinity minus infinity is not a number, so "the same" has to be asked first.
+                if (choices[i] == value) return i;
                 if (Math.Abs(choices[i] - value) < Math.Abs(choices[best] - value)) best = i;
             }
 
@@ -357,6 +375,9 @@ namespace SignalsLink.src.signals.chunkanchor
             GuiElementSwitch join = SingleComposer.GetSwitch(JoinKey);
             if (join != null) join.Enabled = sleeps;
 
+            GuiElementSwitch arrival = HasArrivalSwitch ? SingleComposer.GetSwitch(ArrivalKey) : null;
+            if (arrival != null) arrival.Enabled = sleeps;
+
             // Enabled decides whether an element responds straight away, but how it LOOKS is drawn
             // in the static pass - so without a repaint the two disagree and the greying is always
             // one change behind what actually works.
@@ -374,6 +395,8 @@ namespace SignalsLink.src.signals.chunkanchor
 
         private void OnJoinToggled(bool on) => SendCycle();
 
+        private void OnArrivalToggled(bool on) => SendCycle();
+
         private void SendCycle()
         {
             SaveName();
@@ -381,8 +404,9 @@ namespace SignalsLink.src.signals.chunkanchor
             double window = WindowChoices[SingleComposer.GetDropDown(WindowKey)?.SelectedIndices?[0] ?? 1];
 
             bool onJoin = SingleComposer.GetSwitch(JoinKey)?.On ?? true;
+            bool onArrival = HasArrivalSwitch && (SingleComposer.GetSwitch(ArrivalKey)?.On ?? false);
 
-            setCycle?.Invoke(interval, window, onJoin);
+            setCycle?.Invoke(interval, window, onJoin, onArrival);
         }
 
         private void OnSelectionChanged()

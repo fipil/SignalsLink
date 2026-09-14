@@ -37,9 +37,18 @@ public sealed class AnchorColumnJobs : IDisposable
         this.ready = ready; this.load = load; this.release = release; this.scan = scan;
     }
 
-    public void Retain(long key)
+    /// <param name="census">
+    /// False for a column held only so a convoy stays whole: nobody ever asks what is in it, so
+    /// scanning it would be work for nothing.
+    /// </param>
+    public void Retain(long key, bool census = true)
     {
-        if (retained.Add(key)) Request(key);
+        if (!retained.Add(key)) return;
+
+        if (census) { Request(key); return; }
+
+        load(key);
+        pinned.Add(key);
     }
     public void LetGo(long key)
     {

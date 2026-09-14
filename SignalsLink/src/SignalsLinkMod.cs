@@ -75,8 +75,10 @@ namespace SignalsLink.src
             // The kinds of the other party a device can exchange goods with. Registered rather
             // than switched on, so that another mod adds a vehicle without either side knowing
             // about the other.
-            api.ModLoader.GetModSystem<SignalsLink.src.signals.cargo.CargoHolderRegistry>()
-                ?.Register(new SignalsLink.src.signals.yard.YardCargoHolderFinder());
+            var holders = api.ModLoader.GetModSystem<SignalsLink.src.signals.cargo.CargoHolderRegistry>();
+            holders?.Register(new SignalsLink.src.signals.yard.YardCargoHolderFinder());
+            holders?.Register(SignalsLink.src.signals.vehicle.HungCargoHolderFinder.Boats());
+            holders?.Register(SignalsLink.src.signals.vehicle.HungCargoHolderFinder.Elks());
         }
 
         public override void StartClientSide(ICoreClientAPI api)

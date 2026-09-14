@@ -203,5 +203,10 @@
   "recycler-settings": "Paramètres de recyclage",
   "recycler-trigger": "Déclencher le recyclage",
   "recyclerchest-help": "Une fois le niveau de remplissage défini atteint, recycle les lots les plus anciens. S'accroupir + clic droit ouvre les paramètres.",
-  "recyclerchest-title": "Coffre de recyclage"
+  "recyclerchest-title": "Coffre de recyclage",
+  "signalslink:chunkanchor-asleep-prompted": "Elle dort — seul un signal, l'arrivée d'un joueur ou un véhicule peut la réveiller",
+  "signalslink:chunkanchor-guests": "Un convoi se trouve sur son territoire — elle ne dormira pas avant son départ",
+  "signalslink:chunkanchor-halo": "Elle maintient également {0} colonnes afin que le convoi ne soit pas séparé",
+  "signalslink:chunkanchor-wake-prompted": "Réveiller uniquement sur sollicitation",
+  "signalslink:papererror-vehiclespec": "un navire ou un animal se sélectionne uniquement par direction cardinale - par exemple north ou north5"
 }

@@ -41,6 +41,9 @@ namespace SignalsLink.src.signals.chunkanchor
         /// <summary>As above, and each anchor also carries the hour it should next wake at.</summary>
         private const int SleepersFormat = -2;
         private const int NamedFormat = -3;
+
+        /// <summary>As above, and a sleeper also says whether an approaching vehicle wakes it.</summary>
+        private const int ArrivalFormat = -4;
         private readonly Dictionary<BlockPos, string> names = new();
 
         public void SetName(BlockPos pos, string name)
@@ -66,6 +69,15 @@ namespace SignalsLink.src.signals.chunkanchor
         private int wireCount = -1;
         private readonly Queue<BlockPos> validateClaims = new();
         private readonly Dictionary<BlockPos, List<NodePos>> wakeInputs = new();
+
+        // What an anchor holds beyond its selection so that no train on its ground is split, and
+        // which anchors have such a guest right now. See KeepGroupsWhole.
+        private KeepTogetherRegistry keepTogether;
+        private readonly Dictionary<BlockPos, HashSet<long>> halos = new();
+        private readonly HashSet<BlockPos> guests = new();
+
+        // Who can say a vehicle is coming. See OnApproaching.
+        private ArrivalSourceRegistry arrivals;
 
         public bool ColumnsReady(IEnumerable<long> columns) => columns.All(jobs.IsReady);
         public bool TryCensus(IEnumerable<long> columns, double requestStarted, out AnchorCount result)
@@ -195,6 +207,7 @@ namespace SignalsLink.src.signals.chunkanchor
                 sapi.Event.SaveGameLoaded -= Restore;
                 sapi.Event.GameWorldSave -= Store;
                 sapi.Event.PlayerNowPlaying -= OnPlayerArrived;
+                if (arrivals != null) arrivals.Approaching -= OnApproaching;
             }
             wireHooks?.UnpatchAll("signalslink.chunkanchor.wires");
             jobs?.Dispose();
@@ -222,6 +235,9 @@ namespace SignalsLink.src.signals.chunkanchor
                 key => Scan(key).GetEnumerator());
             signals = api.ModLoader.GetModSystem<SignalNetworkMod>();
             wires = api.ModLoader.GetModSystem<HangingWiresMod>();
+            keepTogether = api.ModLoader.GetModSystem<KeepTogetherRegistry>();
+            arrivals = api.ModLoader.GetModSystem<ArrivalSourceRegistry>();
+            if (arrivals != null) arrivals.Approaching += OnApproaching;
             wireHooks = new Harmony("signalslink.chunkanchor.wires");
             wireHooks.Patch(AccessTools.Method(typeof(SignalNetworkMod), nameof(SignalNetworkMod.OnWireAdded)),
                 postfix: new HarmonyMethod(AccessTools.Method(typeof(ChunkAnchors), nameof(WireAdded))));
@@ -233,8 +249,90 @@ namespace SignalsLink.src.signals.chunkanchor
 
             listeners.Add(api.Event.RegisterGameTickListener(ProcessWork, 100));
             listeners.Add(api.Event.RegisterGameTickListener(WakeSleepers, 5000));
+            // Every 5 s: the game unloads a column 12 s after the last player leaves it.
+            listeners.Add(api.Event.RegisterGameTickListener(KeepGroupsWhole, 5000));
             api.Event.PlayerNowPlaying += OnPlayerArrived;
         }
+
+        // ---------------------------------------------------------------- keeping groups whole
+
+        /// <summary>
+        /// Holds, on top of what each anchor was set to hold, every column of a group that stands
+        /// partly on its ground - so a train is never left half loaded when the player walks away
+        /// and the anchor's columns are the only ones that stay. The train mod cannot recover from
+        /// that; it can recover from a train unloaded whole.
+        /// </summary>
+        private void KeepGroupsWhole(float dt)
+        {
+            if (anchors.Count == 0 || keepTogether == null || keepTogether.Sources.Count == 0) return;
+
+            List<IReadOnlyCollection<long>> groups = new();
+            foreach (IKeepTogetherSource source in keepTogether.Sources)
+            {
+                foreach (IReadOnlyCollection<long> group in source.Groups(sapi.World, ColumnKeyOf)) groups.Add(group);
+            }
+
+            foreach (KeyValuePair<BlockPos, HashSet<long>> anchor in anchors)
+            {
+                halos.TryGetValue(anchor.Key, out HashSet<long> before);
+                (int cx, int cz) = ColumnAt(anchor.Key);
+
+                HashSet<long> after = AnchorHalo.Compute(anchor.Value, before, groups, cx, cz, AnchorArea.WindowRadius, out int standing);
+
+                if (standing > 0) guests.Add(anchor.Key); else guests.Remove(anchor.Key);
+
+                ApplyHalo(anchor.Key, before, after);
+            }
+        }
+
+        private void ApplyHalo(BlockPos pos, HashSet<long> before, HashSet<long> after)
+        {
+            int claimed = 0, released = 0;
+
+            foreach (long key in after)
+            {
+                if (before != null && before.Contains(key)) continue;
+                claimed++;
+                Claim(key, census: false);
+            }
+
+            if (before != null)
+            {
+                foreach (long key in before)
+                {
+                    if (after.Contains(key)) continue;
+                    released++;
+                    LetGo(key);
+                }
+            }
+
+            if (after.Count == 0) halos.Remove(pos);
+            else halos[pos] = after;
+
+            if (claimed == 0 && released == 0) return;
+
+            sapi.Logger.Notification("[SignalsLink] anchor at " + LogLocation(pos)
+                + (after.Count == 0 ? " let its extra columns go; " : " keeps " + after.Count + " extra column(s) so a convoy stays whole; ")
+                + held.Count + " held in all.");
+        }
+
+        private long ColumnKeyOf(double x, double z)
+        {
+            int size = sapi?.WorldManager?.ChunkSize ?? 32;
+
+            return AnchorArea.Key((int)Math.Floor(x / size), (int)Math.Floor(z / size));
+        }
+
+        /// <summary>The columns held for a guest on top of the anchor's own selection.</summary>
+        public IReadOnlyCollection<long> HaloOf(BlockPos pos)
+        {
+            if (pos != null && halos.TryGetValue(pos, out HashSet<long> halo)) return halo;
+
+            return System.Array.Empty<long>();
+        }
+
+        /// <summary>Is a group standing on this anchor's ground? Then it must not let go.</summary>
+        public bool HasGuests(BlockPos pos) => pos != null && guests.Contains(pos);
 
         // ---------------------------------------------------------------- sleeping and waking
 
@@ -252,12 +350,39 @@ namespace SignalsLink.src.signals.chunkanchor
 
             /// <summary>Also come up when somebody logs in to a server that was standing idle.</summary>
             public bool OnPlayerJoin;
+
+            /// <summary>And when a vehicle is reported heading for its ground.</summary>
+            public bool OnArrival;
+        }
+
+        /// <summary>The label for the "wake when ... is coming" switch, or empty when nothing can say so.</summary>
+        public string ArrivalLangKey => arrivals != null && arrivals.Sources.Count > 0 ? arrivals.Sources[0].LangKey ?? "" : "";
+
+        /// <summary>
+        /// A vehicle is on its way. Wake every sleeper that asked for it, whose ground the target
+        /// stands on, once the vehicle is near enough - see the AnchorApproachBlocks setting.
+        /// </summary>
+        private void OnApproaching(Vec3d vehicle, BlockPos target)
+        {
+            if (sleeping.Count == 0 || vehicle == null || target == null) return;
+            if (!ApproachRule.Close(vehicle, target, SignalsLinkConfigLoader.Current.AnchorApproachBlocks)) return;
+
+            long column = ColumnKeyOf(target.X, target.Z);
+
+            due.Clear();
+
+            foreach (KeyValuePair<BlockPos, Sleeper> one in sleeping)
+            {
+                if (one.Value.OnArrival && ApproachRule.Concerns(one.Value.Columns, column)) due.Add(one.Key);
+            }
+
+            foreach (BlockPos pos in due) QueueWake(pos, "a vehicle is on its way to " + target);
         }
 
         private readonly Dictionary<BlockPos, Sleeper> sleeping = new Dictionary<BlockPos, Sleeper>();
 
         /// <summary>Lets everything go, but remembers it, and comes back for it at the given hour.</summary>
-        public void Sleep(BlockPos pos, IEnumerable<long> columns, double wakeAtHours, bool onPlayerJoin)
+        public void Sleep(BlockPos pos, IEnumerable<long> columns, double wakeAtHours, bool onPlayerJoin, bool onArrival = false)
         {
             if (sapi == null || pos == null) return;
 
@@ -269,14 +394,28 @@ namespace SignalsLink.src.signals.chunkanchor
             {
                 WakeAtHours = wakeAtHours,
                 Columns = wanted,
-                OnPlayerJoin = onPlayerJoin
+                OnPlayerJoin = onPlayerJoin,
+                OnArrival = onArrival
             };
             if (wireCount < 0) RebuildWakeInputs(); else WatchInput(pos);
 
             sapi.Logger.Notification("[SignalsLink] anchor asleep at " + LogLocation(pos) + "; " + wanted.Count
-                + " column(s) let go, back at " + AnchorDisplay.TimeOfDay(wakeAtHours, sapi.World.Calendar.HoursPerDay)
+                + " column(s) let go, " + DueText(wakeAtHours, onPlayerJoin, onArrival) + ".");
+        }
+
+        /// <summary>When and why it will be back. An infinite hour means only a prompt brings it back.</summary>
+        private string DueText(double wakeAtHours, bool onPlayerJoin, bool onArrival)
+        {
+            if (double.IsPositiveInfinity(wakeAtHours))
+            {
+                return "back only on a signal" + (onPlayerJoin ? ", when the server wakes up" : "")
+                    + (onArrival ? ", or when a vehicle is coming" : "");
+            }
+
+            return "back at " + AnchorDisplay.TimeOfDay(wakeAtHours, sapi.World.Calendar.HoursPerDay)
                 + " (in " + AnchorDisplay.Duration(wakeAtHours - sapi.World.Calendar.TotalHours) + ")"
-                + (onPlayerJoin ? ", or sooner if the server wakes up." : "."));
+                + (onPlayerJoin ? ", or sooner if the server wakes up" : "")
+                + (onArrival ? ", or when a vehicle is coming" : "");
         }
 
         /// <summary>True while this anchor is down for its interval rather than out of charge.</summary>
@@ -290,12 +429,17 @@ namespace SignalsLink.src.signals.chunkanchor
 
         /// <summary>Brings it back now - what a signal on the input pin amounts to.</summary>
         public void WakeNow(BlockPos pos) => QueueWake(pos, "a signal");
-        public void UpdateSleep(BlockPos pos, IEnumerable<long> columns, double when, bool onJoin)
+        public void UpdateSleep(BlockPos pos, IEnumerable<long> columns, double when, bool onJoin, bool onArrival = false)
         {
             if (sleeping.TryGetValue(pos, out var one))
             {
-                sleeping[pos.Copy()] = new Sleeper { Columns = new HashSet<long>(columns), WakeAtHours = when, OnPlayerJoin = onJoin };
+                sleeping[pos.Copy()] = new Sleeper { Columns = new HashSet<long>(columns), WakeAtHours = when, OnPlayerJoin = onJoin, OnArrival = onArrival };
                 wakeQueued.Remove(pos);
+
+                // Said in the log like the original sleep was, or the last line about this anchor
+                // keeps promising a wake-up that is no longer coming.
+                sapi.Logger.Notification("[SignalsLink] anchor asleep at " + LogLocation(pos) + " now "
+                    + DueText(when, onJoin, onArrival) + ".");
             }
         }
 
@@ -415,14 +559,7 @@ namespace SignalsLink.src.signals.chunkanchor
                 if (before.Contains(key)) continue;
 
                 claimed++;
-
-                held.TryGetValue(key, out int count);
-                held[key] = count + 1;
-
-                if (count == 0)
-                {
-                    jobs.Retain(key);
-                }
+                Claim(key);
             }
 
             foreach (long key in before)
@@ -455,8 +592,16 @@ namespace SignalsLink.src.signals.chunkanchor
             if (sapi == null || pos == null || !anchors.TryGetValue(pos, out HashSet<long> columns)) return;
 
             anchors.Remove(pos);
+            guests.Remove(pos);
 
             foreach (long key in columns) LetGo(key);
+
+            // Whatever was held for a guest goes with it, in the same breath - a group let go in
+            // two halves is exactly what all of this exists to prevent.
+            if (halos.Remove(pos, out HashSet<long> halo))
+            {
+                foreach (long key in halo) LetGo(key);
+            }
 
             sapi.Logger.Notification("[SignalsLink] anchor at " + LogLocation(pos) + " let go; "
                 + held.Count + " columns still held.");
@@ -464,6 +609,14 @@ namespace SignalsLink.src.signals.chunkanchor
 
         /// <summary>Everything held by every anchor.</summary>
         public int HeldColumns => held.Count;
+
+        private void Claim(long key, bool census = true)
+        {
+            held.TryGetValue(key, out int count);
+            held[key] = count + 1;
+
+            if (count == 0) jobs.Retain(key, census);
+        }
 
         private void LetGo(long key)
         {
@@ -489,17 +642,17 @@ namespace SignalsLink.src.signals.chunkanchor
 
             // Sleepers are saved with everything else. Without that a restart would leave an
             // anchor asleep with nothing left in the world that knows to come back for it.
-            writer.Write(NamedFormat);
+            writer.Write(ArrivalFormat);
             writer.Write(anchors.Count + sleeping.Count);
 
             foreach (KeyValuePair<BlockPos, HashSet<long>> anchor in anchors)
             {
-                WriteOne(writer, anchor.Key, anchor.Value, double.NegativeInfinity, false, NameAt(anchor.Key));
+                WriteOne(writer, anchor.Key, anchor.Value, double.NegativeInfinity, false, false, NameAt(anchor.Key));
             }
 
             foreach (KeyValuePair<BlockPos, Sleeper> one in sleeping)
             {
-                WriteOne(writer, one.Key, one.Value.Columns, one.Value.WakeAtHours, one.Value.OnPlayerJoin, NameAt(one.Key));
+                WriteOne(writer, one.Key, one.Value.Columns, one.Value.WakeAtHours, one.Value.OnPlayerJoin, one.Value.OnArrival, NameAt(one.Key));
             }
 
             sapi.WorldManager.SaveGame.StoreData(SaveKey, buffer.ToArray());
@@ -507,13 +660,14 @@ namespace SignalsLink.src.signals.chunkanchor
 
         /// <summary>An hour of negative infinity means "awake"; anything else is when to wake it.</summary>
         private static void WriteOne(BinaryWriter writer, BlockPos pos, HashSet<long> columns,
-            double wakeAt, bool onPlayerJoin, string name)
+            double wakeAt, bool onPlayerJoin, bool onArrival, string name)
         {
             writer.Write(pos.X);
             writer.Write(pos.Y);
             writer.Write(pos.Z);
             writer.Write(wakeAt);
             writer.Write(onPlayerJoin);
+            writer.Write(onArrival);
             writer.Write(name);
 
             writer.Write(columns.Count);
@@ -540,6 +694,7 @@ namespace SignalsLink.src.signals.chunkanchor
 
                 saved = first switch
                 {
+                    ArrivalFormat => ReadSleepers(reader, true, true),
                     NamedFormat => ReadSleepers(reader, true),
                     SleepersFormat => ReadSleepers(reader),
                     ColumnsFormat => ReadColumns(reader),
@@ -567,7 +722,7 @@ namespace SignalsLink.src.signals.chunkanchor
         /// on the schedule, so a world that stops overnight does not wake every sleeping factory
         /// the moment it starts again.
         /// </summary>
-        private List<(BlockPos, HashSet<long>)> ReadSleepers(BinaryReader reader, bool named = false)
+        private List<(BlockPos, HashSet<long>)> ReadSleepers(BinaryReader reader, bool named = false, bool arrival = false)
         {
             List<(BlockPos, HashSet<long>)> awake = new List<(BlockPos, HashSet<long>)>();
 
@@ -578,6 +733,7 @@ namespace SignalsLink.src.signals.chunkanchor
                 BlockPos pos = new BlockPos(reader.ReadInt32(), reader.ReadInt32(), reader.ReadInt32());
                 double wakeAt = reader.ReadDouble();
                 bool onPlayerJoin = reader.ReadBoolean();
+                bool onArrival = arrival && reader.ReadBoolean();
                 if (named) SetName(pos, reader.ReadString());
 
                 HashSet<long> columns = new HashSet<long>();
@@ -590,7 +746,8 @@ namespace SignalsLink.src.signals.chunkanchor
                 {
                     WakeAtHours = wakeAt,
                     Columns = columns,
-                    OnPlayerJoin = onPlayerJoin
+                    OnPlayerJoin = onPlayerJoin,
+                    OnArrival = onArrival
                 };
             }
 

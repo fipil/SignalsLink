@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using SignalsLink.YTT.src.train;
+using SignalsLink.src.signals.vehicle;
 using Vintagestory.API.MathTools;
 using Xunit;
 

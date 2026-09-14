@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using SignalsLink.src.signals.cargo;
 using SignalsLink.src.signals.paperConditions;
+using SignalsLink.src.signals.vehicle;
 using SignalsLink.YTT.src.probe;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
@@ -162,7 +163,7 @@ namespace SignalsLink.YTT.src.train
 
             foreach (string token in tokens ?? Array.Empty<string>())
             {
-                BlockFacing facing = ParseDirection(token, out int? steps);
+                BlockFacing facing = HeaderDirection.TryParse(token, out int? steps);
 
                 if (facing != null)
                 {
@@ -200,43 +201,6 @@ namespace SignalsLink.YTT.src.train
             return true;
         }
 
-        /// <summary>
-        /// North, south, east, west - or just their first letter - and optionally how many blocks
-        /// away, written against the word: <c>north5</c>.
-        ///
-        /// Against the word, not after it, because <c>train north 5</c> would be arguing with the
-        /// wagon number over the same token.
-        /// </summary>
-        private static BlockFacing ParseDirection(string token, out int? steps)
-        {
-            steps = null;
-
-            string word = token.ToLowerInvariant();
-            int digits = word.Length;
-
-            while (digits > 0 && char.IsDigit(word[digits - 1])) digits--;
-
-            if (digits < word.Length && digits > 0)
-            {
-                if (!int.TryParse(word.Substring(digits), out int parsed)) return null;
-
-                steps = parsed;
-                word = word.Substring(0, digits);
-            }
-
-            switch (word)
-            {
-                case "n": return BlockFacing.NORTH;
-                case "s": return BlockFacing.SOUTH;
-                case "e": return BlockFacing.EAST;
-                case "w": return BlockFacing.WEST;
-            }
-
-            BlockFacing facing = BlockFacing.FromCode(word);
-
-            return facing == BlockFacing.UP || facing == BlockFacing.DOWN ? null : facing;
-        }
-
         public bool TryFind(IWorldAccessor world, BlockPos devicePos, ICargoSelector selector, out ICargoHolder holder)
         {
             holder = null;
@@ -272,6 +236,14 @@ namespace SignalsLink.YTT.src.train
 
             vehicles.Sort((a, b) => Distance(a, centre).CompareTo(Distance(b, centre)));
 
+            // Which convoys drive themselves: the conductor sits on one vehicle, the action code
+            // is written on all of them, and it is only worth believing where there is a conductor.
+            HashSet<long> automated = new HashSet<long>();
+            foreach (Entity entity in vehicles)
+            {
+                if (TrainSignals.HasConductorLocust(entity)) automated.Add(ConvoyOf(entity));
+            }
+
             List<ICargoHold> holds = new List<ICargoHold>();
             bool ready = true;
 
@@ -304,16 +276,13 @@ namespace SignalsLink.YTT.src.train
                     // A cart carries its load in a chest hung on it, which is a vanilla held bag
                     // rather than anything of the other mod's - so it goes through neither the
                     // reflection nor the save check those wagons need.
-                    holds.AddRange(YttCart.HoldsOf(entity));
+                    holds.AddRange(HungContainers.HoldsOf(entity, "cart"));
                 }
 
                 if (holds.Count == before) continue;
 
                 // Every vehicle in use has to be standing; half a train stopped is not stopped.
-                if (!standing.IsStanding(entity.EntityId, entity.Pos.X, entity.Pos.Y, entity.Pos.Z, now))
-                {
-                    ready = false;
-                }
+                if (!IsStanding(entity, now, automated.Contains(ConvoyOf(entity)))) ready = false;
             }
 
             if (holds.Count == 0) return false;
@@ -323,6 +292,26 @@ namespace SignalsLink.YTT.src.train
 
             holder = train;
             return true;
+        }
+
+        /// <summary>
+        /// YTT's word first, position samples second - but its word only on a convoy that has a
+        /// conductor, because the attribute outlives the conductor. See TrainSignals.
+        /// </summary>
+        private bool IsStanding(Entity entity, long now, bool automated)
+        {
+            int action = entity.WatchedAttributes?.GetInt(TrainSignals.ActionAttribute, 0) ?? 0;
+
+            return TrainSignals.IsStanding(action, automated,
+                () => standing.IsStanding(entity.EntityId, entity.Pos.X, entity.Pos.Y, entity.Pos.Z, now));
+        }
+
+        /// <summary>The convoy a vehicle belongs to: its head, or itself when it is on its own.</summary>
+        private static long ConvoyOf(Entity entity)
+        {
+            long head = TrainKeepTogether.HeadOf(entity);
+
+            return head != 0 ? head : entity.EntityId;
         }
 
         /// <summary>
@@ -374,7 +363,7 @@ namespace SignalsLink.YTT.src.train
 
             return entity.GetBehavior(YttSurface.StorageBehavior) != null
                 || entity.GetBehavior(YttSurface.SteamBehavior) != null
-                || YttCart.IsCart(entity);
+                || HungContainers.IsCarrier(entity);
         }
 
         private static bool Matches(Entity entity, TrainSelector wanted)
@@ -402,7 +391,7 @@ namespace SignalsLink.YTT.src.train
 
         /// <summary>
         /// Does the vehicle reach where the header says? Tested on its BODY, not its middle - a
-        /// boxcar is seven blocks long. See <see cref="TrainReach"/>.
+        /// boxcar is seven blocks long. See <see cref="BodyReach"/>.
         /// </summary>
         private static bool Reaches(Entity entity, Vec3d centre, TrainSelector wanted)
         {
@@ -410,7 +399,7 @@ namespace SignalsLink.YTT.src.train
 
             Cuboidf box = entity.SelectionBox ?? new Cuboidf(-0.5f, 0, -0.5f, 0.5f, 1, 0.5f);
 
-            return TrainReach.Covers(
+            return BodyReach.Covers(
                 entity.Pos.X + box.X1, entity.Pos.X + box.X2,
                 entity.Pos.Z + box.Z1, entity.Pos.Z + box.Z2,
                 centre, wanted.Direction, wanted.Distance);

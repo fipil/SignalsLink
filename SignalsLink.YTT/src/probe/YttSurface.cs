@@ -31,6 +31,8 @@ namespace SignalsLink.YTT.src.probe
         {
             // YTT 0.9.0, read off the log line this class prints on a first run.
             "8ded53acfa62",
+            // YTT 0.9.2, with the offscreen simulation members included.
+            "0f6917689b91",
         };
 
         /// <summary>True when goods can be moved in and out of a boxcar.</summary>
@@ -54,6 +56,28 @@ namespace SignalsLink.YTT.src.probe
 
         /// <summary>How a locomotive is asked to write its engine down. See YttEngine.</summary>
         public MethodInfo RequestSyncMethod { get; private set; }
+
+        // -------------------------------------------------------------- the offscreen simulation
+
+        /// <summary>True when trains under way in the simulation can be read. See TrainApproachWatch.</summary>
+        public bool CanWatchApproach { get; private set; }
+
+        public object OffscreenSystem { get; private set; }
+        public FieldInfo VirtualConvoysField { get; private set; }
+        public FieldInfo ConvoyAutomationField { get; private set; }
+        public FieldInfo ConvoyPosesField { get; private set; }
+        public FieldInfo ConvoyLeadIndexField { get; private set; }
+        public FieldInfo AutomationStatusField { get; private set; }
+        public FieldInfo AutomationIndexField { get; private set; }
+        public FieldInfo AutomationRouteField { get; private set; }
+        public FieldInfo RouteXField { get; private set; }
+        public FieldInfo RouteYField { get; private set; }
+        public FieldInfo RouteZField { get; private set; }
+        public FieldInfo PoseXField { get; private set; }
+        public FieldInfo PoseZField { get; private set; }
+
+        /// <summary>The status value that means "under way to the next station".</summary>
+        public object GoingStatus { get; private set; }
 
         /// <summary>Never throws: standing down beats taking the game down on startup.</summary>
         public static YttSurface Probe(ICoreAPI api)
@@ -123,8 +147,90 @@ namespace SignalsLink.YTT.src.probe
             CanCarry = true;
 
             LookAtEngine(api, members);
+            LookAtOffscreen(api, members);
 
             Surface = Fingerprint(members);
+        }
+
+        /// <summary>
+        /// Probed separately, like the engine: not being able to see trains coming is no reason
+        /// to refuse to unload one that has arrived.
+        /// </summary>
+        private void LookAtOffscreen(ICoreAPI api, List<string> members)
+        {
+            foreach (ModSystem system in api.ModLoader.Systems)
+            {
+                if (system?.GetType().Name == "OffscreenConvoySimSystem")
+                {
+                    OffscreenSystem = system;
+                    break;
+                }
+            }
+
+            if (OffscreenSystem == null) return;
+
+            Type sim = OffscreenSystem.GetType();
+            members.Add(Describe("OffscreenConvoySimSystem", sim));
+
+            VirtualConvoysField = sim.GetField("VirtualConvoys", Anywhere);
+            if (VirtualConvoysField == null || !VirtualConvoysField.FieldType.IsGenericType
+                || VirtualConvoysField.FieldType.GetGenericTypeDefinition() != typeof(Dictionary<,>)) return;
+
+            members.Add(Describe("VirtualConvoys", VirtualConvoysField.FieldType));
+
+            Type convoy = VirtualConvoysField.FieldType.GetGenericArguments()[1];
+            ConvoyAutomationField = convoy.GetField("Automation", Anywhere);
+            ConvoyPosesField = convoy.GetField("FrozenPoses", Anywhere);
+            ConvoyLeadIndexField = convoy.GetField("LeadIndex", Anywhere);
+
+            if (ConvoyAutomationField == null || ConvoyPosesField == null || !IsList(ConvoyPosesField.FieldType)
+                || ConvoyLeadIndexField == null || ConvoyLeadIndexField.FieldType != typeof(int)) return;
+
+            members.Add(Describe("VirtualConvoy.Automation", ConvoyAutomationField.FieldType));
+            members.Add(Describe("VirtualConvoy.FrozenPoses", ConvoyPosesField.FieldType));
+
+            Type pose = ConvoyPosesField.FieldType.GetGenericArguments()[0];
+            PoseXField = pose.GetField("X", Anywhere);
+            PoseZField = pose.GetField("Z", Anywhere);
+
+            if (PoseXField == null || PoseXField.FieldType != typeof(double)
+                || PoseZField == null || PoseZField.FieldType != typeof(double)) return;
+
+            members.Add(Describe("FrozenVehiclePose.X", PoseXField.FieldType));
+
+            Type automation = ConvoyAutomationField.FieldType;
+            AutomationStatusField = automation.GetField("Status", Anywhere);
+            AutomationIndexField = automation.GetField("CurrentStationIndex", Anywhere);
+            AutomationRouteField = automation.GetField("Route", Anywhere);
+
+            if (AutomationStatusField == null || !AutomationStatusField.FieldType.IsEnum
+                || AutomationIndexField == null || AutomationIndexField.FieldType != typeof(int)
+                || AutomationRouteField == null || !AutomationRouteField.FieldType.IsArray) return;
+
+            members.Add(Describe("VirtualAutomationState.Status", AutomationStatusField.FieldType));
+            members.Add(Describe("VirtualAutomationState.Route", AutomationRouteField.FieldType));
+
+            try
+            {
+                GoingStatus = Enum.Parse(AutomationStatusField.FieldType, "Going");
+            }
+            catch (Exception)
+            {
+                return;
+            }
+
+            Type stop = AutomationRouteField.FieldType.GetElementType();
+            RouteXField = stop.GetField("X", Anywhere);
+            RouteYField = stop.GetField("Y", Anywhere);
+            RouteZField = stop.GetField("Z", Anywhere);
+
+            if (RouteXField == null || RouteXField.FieldType != typeof(int)
+                || RouteYField == null || RouteYField.FieldType != typeof(int)
+                || RouteZField == null || RouteZField.FieldType != typeof(int)) return;
+
+            members.Add(Describe("TimetableRouteEntryPacket.X", RouteXField.FieldType));
+
+            CanWatchApproach = true;
         }
 
         /// <summary>Probed separately: no engine is no reason to refuse to unload a boxcar.</summary>
@@ -226,6 +332,12 @@ namespace SignalsLink.YTT.src.probe
             {
                 api.Logger.Notification("[SignalsLink.YTT] the steam engine cannot be reached on this version;"
                     + " cargo still works, stoking and lighting do not.");
+            }
+
+            if (!CanWatchApproach)
+            {
+                api.Logger.Notification("[SignalsLink.YTT] the offscreen simulation cannot be read on this version;"
+                    + " anchors will not wake for approaching trains.");
             }
         }
     }

@@ -175,7 +175,7 @@ def load_state(cs_json, langs):
         print("          pro uplny preklad pouzij --force.")
         return {lang: {k: fingerprint(v) for k, v in cs_json.items()} for lang in langs}
 
-    print("Zakladam stav prekladu podle posledniho commitu (scripts/localize-state.json).")
+    print("Zakladam stav prekladu podle posledniho commitu (scripts/%s)." % STATE_PATH.name)
 
     state = {}
     for lang in langs:

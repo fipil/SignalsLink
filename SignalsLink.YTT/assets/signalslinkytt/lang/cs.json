@@ -1,3 +1,4 @@
 {
-  "signalslink:papererror-holderspec": "vlak se vybírá světovou stranou, číslem vagonu, nebo slovem engine"
+  "signalslink:papererror-holderspec": "vlak se vybírá světovou stranou, číslem vagonu, nebo slovem engine",
+  "signalslink:chunkanchor-wakeon-train": "Probudit, když se blíží vlak"
 }

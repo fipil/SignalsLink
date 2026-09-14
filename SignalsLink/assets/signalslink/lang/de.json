@@ -203,5 +203,10 @@
   "recycler-settings": "Entsorgungseinstellungen",
   "recycler-trigger": "Entsorgung auslösen",
   "recyclerchest-help": "Bei Erreichen der eingestellten Füllmenge werden die ältesten Chargen entsorgt. Schleichen + Rechtsklick öffnet die Einstellungen.",
-  "recyclerchest-title": "Entsorgungstruhe"
+  "recyclerchest-title": "Entsorgungstruhe",
+  "signalslink:chunkanchor-asleep-prompted": "Sie schläft – nur ein Signal, die Ankunft eines Spielers oder ein Fahrzeug weckt sie",
+  "signalslink:chunkanchor-guests": "In ihrem Bereich steht ein Zugverband – sie schläft nicht ein, bis er wegfährt",
+  "signalslink:chunkanchor-halo": "Zusätzlich hält sie {0} Spalten geladen, damit der Zugverband nicht geteilt wird",
+  "signalslink:chunkanchor-wake-prompted": "Nur auf Anstoß wecken",
+  "signalslink:papererror-vehiclespec": "Schiff oder Tier wird nur über die Himmelsrichtung ausgewählt – zum Beispiel north oder north5"
 }

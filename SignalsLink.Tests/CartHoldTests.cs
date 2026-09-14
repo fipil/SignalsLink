@@ -1,4 +1,4 @@
-using SignalsLink.YTT.src.train;
+using SignalsLink.src.signals.vehicle;
 using Vintagestory.API.Common;
 using Vintagestory.GameContent;
 using Xunit;
@@ -23,7 +23,7 @@ namespace SignalsLink.Tests
         [Fact]
         public void A_workspace_that_has_never_been_filled_must_be_filled()
         {
-            Assert.True(YttCart.NeedsReload(null, null, TestStacks.Item("game:chest", 1)));
+            Assert.True(HungContainers.NeedsReload(null, null, TestStacks.Item("game:chest", 1)));
         }
 
         [Fact]
@@ -33,7 +33,7 @@ namespace SignalsLink.Tests
             // change - the dock's and the player's - comes back through those slots anyway.
             ItemStack chest = TestStacks.Item("game:chest", 1);
 
-            Assert.False(YttCart.NeedsReload(new InventoryGeneric(4, "signalslink-fakewrapper", null), chest, chest));
+            Assert.False(HungContainers.NeedsReload(new InventoryGeneric(4, "signalslink-fakewrapper", null), chest, chest));
         }
 
         [Fact]
@@ -41,7 +41,7 @@ namespace SignalsLink.Tests
         {
             // Same hook, same kind of chest, so the game hands back the same cached workspace -
             // which would otherwise pour the old chest's contents into the new one.
-            Assert.True(YttCart.NeedsReload(
+            Assert.True(HungContainers.NeedsReload(
                 new InventoryGeneric(4, "signalslink-fakewrapper", null),
                 TestStacks.Item("game:chest", 1),
                 TestStacks.Item("game:chest", 1)));
@@ -64,21 +64,21 @@ namespace SignalsLink.Tests
                     : new CollectibleBehaviorBoatableCrate(item)
             };
 
-            Assert.NotNull(YttCart.BagOn(item));
+            Assert.NotNull(HungContainers.BagOn(item));
         }
 
         [Fact]
         public void And_a_lantern_is_not_a_container()
         {
-            Assert.Null(YttCart.BagOn(new Item()));
-            Assert.Null(YttCart.BagOn(null));
+            Assert.Null(HungContainers.BagOn(new Item()));
+            Assert.Null(HungContainers.BagOn(null));
         }
 
         [Fact]
         public void Nothing_without_an_entity()
         {
-            Assert.False(YttCart.IsCart(null));
-            Assert.Empty(YttCart.HoldsOf(null));
+            Assert.False(HungContainers.IsCarrier(null));
+            Assert.Empty(HungContainers.HoldsOf(null));
         }
     }
 }

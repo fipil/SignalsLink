@@ -68,6 +68,16 @@ namespace SignalsLink.src
 
         public int AnchorMaxColumns = 64;
 
+        [JsonProperty("AnchorApproachBlocks-description")]
+        public string AnchorApproachBlocksDescription =
+            "How near a vehicle heading for an anchor's ground has to be before a sleeping anchor "
+            + "set to wake for it does so - in blocks, measured flat. Only used when another mod "
+            + "reports approaching vehicles (the Signals Link YTT bridge does). Big enough for the "
+            + "chunks to load before the vehicle arrives, small enough not to pay for the whole "
+            + "journey: 160 is about a chunk column ahead at a fast train's speed.";
+
+        public int AnchorApproachBlocks = 160;
+
         public bool Validate()
         {
             bool valid = true;
@@ -76,6 +86,7 @@ namespace SignalsLink.src
             if (AnchorCreatureWeight < 0) { AnchorCreatureWeight = 10; valid = false; }
             if (AnchorColumnWeight < 0) { AnchorColumnWeight = 5; valid = false; }
             if (AnchorMaxColumns < 0) { AnchorMaxColumns = 64; valid = false; }
+            if (AnchorApproachBlocks < 0) { AnchorApproachBlocks = 160; valid = false; }
             return valid;
         }
     }

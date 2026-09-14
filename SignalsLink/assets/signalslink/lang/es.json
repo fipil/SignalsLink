@@ -203,5 +203,10 @@
   "recycler-settings": "Configuración de destrucción",
   "recycler-trigger": "Iniciar destrucción",
   "recyclerchest-help": "Al alcanzar el nivel de llenado establecido, destruye los lotes más antiguos. Agacharse + clic derecho abre la configuración.",
-  "recyclerchest-title": "Cofre triturador"
+  "recyclerchest-title": "Cofre triturador",
+  "signalslink:chunkanchor-asleep-prompted": "Dormida: solo la despertará una señal, la llegada de un jugador o un vehículo",
+  "signalslink:chunkanchor-guests": "Hay un convoy en su zona; no se dormirá hasta que se vaya",
+  "signalslink:chunkanchor-halo": "Además mantiene {0} columnas para que el convoy no se divida",
+  "signalslink:chunkanchor-wake-prompted": "Despertar solo mediante señal",
+  "signalslink:papererror-vehiclespec": "el barco o el animal se selecciona solo mediante el punto cardinal; por ejemplo, north o north5"
 }

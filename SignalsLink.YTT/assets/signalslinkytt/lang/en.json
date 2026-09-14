@@ -1,3 +1,4 @@
 {
-  "signalslink:papererror-holderspec": "a train can be picked by a direction, a wagon number, or the word engine"
+  "signalslink:papererror-holderspec": "a train can be picked by a direction, a wagon number, or the word engine",
+  "signalslink:chunkanchor-wakeon-train": "Wake when a train approaches"
 }

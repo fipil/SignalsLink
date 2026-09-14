@@ -144,7 +144,7 @@ public class AnchorLifecycleTests
 
     [Theory]
     [InlineData(double.NaN, .5)]
-    [InlineData(double.PositiveInfinity, .5)]
+    [InlineData(double.NegativeInfinity, .5)]
     [InlineData(2, .5)]
     [InlineData(1, -.5)]
     public void Invalid_wake_settings_are_rejected(double interval, double window)
@@ -153,6 +153,22 @@ public class AnchorLifecycleTests
         be.SetWakeCycle(interval, window, true);
         Assert.Equal(0, be.WakeIntervalHours);
         Assert.Equal(.5, be.WakeWindowHours);
+    }
+
+    [Fact]
+    public void Prompted_only_sleeps_after_its_window_and_never_wakes_by_the_clock()
+    {
+        // An infinite interval: down after the window, and up again only when something asks.
+        var f = new Fixture(); var be = f.Create(1000);
+        be.SetWakeCycle(double.PositiveInfinity, .25, false); f.Tick(be);
+        Assert.Equal(double.PositiveInfinity, be.WakeIntervalHours);
+        f.Now = .5; f.Tick(be);
+        Assert.True(f.Manager.IsAsleep(f.Pos));
+        Assert.Equal(double.PositiveInfinity, f.Manager.WakesAt(f.Pos));
+        f.Now = 10000; Call(f.Manager, "WakeSleepers", 5f); Call(f.Manager, "ProcessWork", .1f);
+        Assert.True(f.Manager.IsAsleep(f.Pos));
+        f.Manager.WakeNow(f.Pos); Call(f.Manager, "ProcessWork", .1f);
+        Assert.False(f.Manager.IsAsleep(f.Pos));
     }
 
     [Fact]
