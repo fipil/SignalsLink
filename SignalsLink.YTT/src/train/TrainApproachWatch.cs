@@ -58,19 +58,8 @@ namespace SignalsLink.YTT.src.train
                     if (automation == null) continue;
                     if (!Equals(surface.AutomationStatusField.GetValue(automation), surface.GoingStatus)) continue;
 
-                    if (surface.AutomationRouteField.GetValue(automation) is not Array route || route.Length == 0) continue;
-
-                    // The simulation reads an index out of range as the first stop; so does this.
-                    int index = (int)surface.AutomationIndexField.GetValue(automation);
-                    if (index < 0 || index >= route.Length) index = 0;
-
-                    object stop = route.GetValue(index);
-                    if (stop == null) continue;
-
-                    BlockPos target = new BlockPos(
-                        (int)surface.RouteXField.GetValue(stop),
-                        (int)surface.RouteYField.GetValue(stop),
-                        (int)surface.RouteZField.GetValue(stop));
+                    BlockPos target = ResolvedTarget(automation) ?? TimetableTarget(automation);
+                    if (target == null) continue;
 
                     if (surface.ConvoyPosesField.GetValue(convoy) is not IList poses || poses.Count == 0) continue;
 
@@ -93,6 +82,49 @@ namespace SignalsLink.YTT.src.train
                     + " Anchors will not wake for approaching trains this session.");
                 Stop();
             }
+        }
+
+        /// <summary>
+        /// Where the simulation is really taking the train: the station it resolved, by name,
+        /// for this leg. Null before a route exists, or on a version without the member.
+        /// </summary>
+        private BlockPos ResolvedTarget(object automation)
+        {
+            if (!surface.CanResolveTarget) return null;
+
+            object target = surface.AutomationTargetField.GetValue(automation);
+            if (target == null) return null;
+
+            object key = surface.TargetStationKeyProperty.GetValue(target);
+            if (key == null) return null;
+
+            int x = (int)surface.StationKeyXProperty.GetValue(key);
+            int y = (int)surface.StationKeyYProperty.GetValue(key);
+            int z = (int)surface.StationKeyZProperty.GetValue(key);
+
+            // An unset key is all zeros, and nobody builds a station at the world origin.
+            return x == 0 && y == 0 && z == 0 ? null : new BlockPos(x, y, z);
+        }
+
+        /// <summary>
+        /// The timetable's own word, as written - which is the station's position at the time
+        /// the timetable was made. Only a fallback: a moved station keeps its name, not its place.
+        /// </summary>
+        private BlockPos TimetableTarget(object automation)
+        {
+            if (surface.AutomationRouteField.GetValue(automation) is not Array route || route.Length == 0) return null;
+
+            // The simulation reads an index out of range as the first stop; so does this.
+            int index = (int)surface.AutomationIndexField.GetValue(automation);
+            if (index < 0 || index >= route.Length) index = 0;
+
+            object stop = route.GetValue(index);
+            if (stop == null) return null;
+
+            return new BlockPos(
+                (int)surface.RouteXField.GetValue(stop),
+                (int)surface.RouteYField.GetValue(stop),
+                (int)surface.RouteZField.GetValue(stop));
         }
     }
 }

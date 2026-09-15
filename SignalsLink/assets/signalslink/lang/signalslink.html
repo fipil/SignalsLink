@@ -359,7 +359,12 @@
     Kotva nemusí držet pořád. V mapě si nastavíte, <strong>jak často se probouzí</strong> a <strong>jak dlouho zůstane vzhůru</strong> — a mezi tím spí a nic nestojí.<br>
     Je to postavené na továrnu, která pracuje jen občas: kotva se probudí, chunky se načtou, přijede vlak a vyloží suroviny, výroba se rozeběhne. Čidlo výroby přitom drží signál na <strong>vstupu</strong> kotvy, a dokud signál trvá, kotva neusne. Jakmile suroviny dojdou a signál zhasne, kotva po vypršení okna zase usne.<br>
     Okno vzhůru proto nemá být krátké — musí se do něj vejít nejen příjezd vlaku, ale i to, než se čidla v továrně proberou a stihnou něco říct.<br>
-    Přepínačem lze zařídit, aby se kotva probudila také vždy, když se po prázdném serveru někdo připojí. Dokud na serveru nikdo není, čas totiž neběží a žádný interval neuplyne.<br><br>
+    Přepínačem lze zařídit, aby se kotva probudila také vždy, když se po prázdném serveru někdo připojí. Dokud na serveru nikdo není, čas totiž neběží a žádný interval neuplyne.<br>
+    Volba <strong>Probudit jen na podnět</strong> znamená, že kotva po oknu usne a hodiny ji už neprobudí — probudí ji jen signál na vstupu, příchod hráče (je-li zapnut) nebo přijíždějící vozidlo (je-li zapnuto). Drát na vstupu přitom probudí spící kotvu jen tehdy, když jeho druhý konec leží v načteném chunku.<br><br>
+    <font size="20" color="6082B6">Vlaky</font><br>
+    Je-li ve hře mod s vlaky, přibude přepínač <strong>Probudit, když se blíží vlak</strong>: spící kotva se probudí, jakmile k její stanici míří vlak, a neusne, dokud nedojede. Chunky se tak načtou dřív, než vlak přijede, a vlak se u stanice zhmotní.<br>
+    <strong>Výběr sloupců musí pokrýt celý stojící vlak, ne jen stanici.</strong> Vlak se zhmotní jen tehdy, když jsou načtené chunky pod všemi jeho vozy; vlak, který se do držených sloupců nevejde, projede stanici v simulaci a nic nevyloží. Třívozová souprava obvykle potřebuje dva sloupce, když stanice leží u hranice chunku, i tři. Když se to stane, kotva to napíše do serverového logu.<br>
+    Kotva nikdy nerozdělí stojící vlak: drží navíc i sloupce, do kterých jeho vozy zasahují, dokud neodjede — účtují se jako každý jiný držený sloupec — a dokud na jejím území vlak stojí, neusne.<br><br>
     <font size="20" color="6082B6">Konektory</font><br>
     <strong>Vstup</strong> — signál na něm brání usnutí.<br>
     <strong>Výstup</strong> — hlásí stav kolečka od 0 do 15. Hodí se na kontrolku, nebo na žlab, který kotvě doplní kolečko, jakmile jí dochází.

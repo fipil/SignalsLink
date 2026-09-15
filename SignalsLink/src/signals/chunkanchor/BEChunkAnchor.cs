@@ -69,6 +69,7 @@ namespace SignalsLink.src.signals.chunkanchor
         // and the info panel - the client has no ChunkAnchors to ask.
         private int haloCount;
         private bool guests;
+        private bool expecting;
 
         /// <summary>Everything paid for: the selection, plus what is held so a convoy stays whole.</summary>
         private int HeldColumns => columns.Count + haloCount;
@@ -232,12 +233,14 @@ namespace SignalsLink.src.signals.chunkanchor
         {
             int halo = Anchors?.HaloOf(Pos).Count ?? 0;
             bool standing = Anchors?.HasGuests(Pos) == true;
+            bool coming = WakeOnArrival && Anchors?.IsExpecting(Pos) == true;
             string arrivals = Anchors?.ArrivalLangKey ?? "";
 
-            if (halo == haloCount && standing == guests && arrivals == ArrivalSourceLangKey) return;
+            if (halo == haloCount && standing == guests && coming == expecting && arrivals == ArrivalSourceLangKey) return;
 
             haloCount = halo;
             guests = standing;
+            expecting = coming;
             ArrivalSourceLangKey = arrivals;
             MarkDirty();
         }
@@ -308,6 +311,10 @@ namespace SignalsLink.src.signals.chunkanchor
             // Not while a convoy stands on its ground. Letting go now could leave the half of it
             // that a player's chunks keep loaded - and that half never moves again.
             if (Anchors?.HasGuests(Pos) == true) return;
+
+            // Nor while a vehicle it asked to be woken for is still on its way: a fifteen-minute
+            // window is half a minute of real time, and no train covers 160 blocks in that.
+            if (WakeOnArrival && Anchors?.IsExpecting(Pos) == true) return;
 
             Alive = false;
             ShowState();
@@ -853,6 +860,7 @@ namespace SignalsLink.src.signals.chunkanchor
             CensusReady = tree.GetBool("censusready", false);
             haloCount = tree.GetInt("halocount", 0);
             guests = tree.GetBool("guests", false);
+            expecting = tree.GetBool("expecting", false);
             syncedWakeAt = tree.HasAttribute("wakesat") ? tree.GetDouble("wakesat") : null;
             if (worldForResolving?.Side == EnumAppSide.Client)
             {
@@ -893,6 +901,7 @@ namespace SignalsLink.src.signals.chunkanchor
             tree.SetBool("censusready", CensusReady);
             tree.SetInt("halocount", haloCount);
             tree.SetBool("guests", guests);
+            tree.SetBool("expecting", expecting);
             if (Anchors?.WakesAt(Pos) is double wakeAt) tree.SetDouble("wakesat", wakeAt);
             else tree.RemoveAttribute("wakesat");
             tree.SetFloat("anchorReference", Config.AnchorReferenceLoad);
@@ -967,6 +976,10 @@ namespace SignalsLink.src.signals.chunkanchor
             else if (guests)
             {
                 sb.AppendLine(Lang.Get("signalslink:chunkanchor-guests"));
+            }
+            else if (expecting)
+            {
+                sb.AppendLine(Lang.Get("signalslink:chunkanchor-expecting"));
             }
         }
 

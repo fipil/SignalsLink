@@ -79,6 +79,20 @@ namespace SignalsLink.YTT.src.probe
         /// <summary>The status value that means "under way to the next station".</summary>
         public object GoingStatus { get; private set; }
 
+        /// <summary>
+        /// The station the simulation actually resolved for the current leg. Optional and kept
+        /// out of the fingerprint: without it the timetable entry is used, which carries the
+        /// coordinates the station had when the timetable was written - and a station that has
+        /// since been moved is found by name, not by them.
+        /// </summary>
+        public FieldInfo AutomationTargetField { get; private set; }
+        public PropertyInfo TargetStationKeyProperty { get; private set; }
+        public PropertyInfo StationKeyXProperty { get; private set; }
+        public PropertyInfo StationKeyYProperty { get; private set; }
+        public PropertyInfo StationKeyZProperty { get; private set; }
+
+        public bool CanResolveTarget => StationKeyZProperty != null;
+
         /// <summary>Never throws: standing down beats taking the game down on startup.</summary>
         public static YttSurface Probe(ICoreAPI api)
         {
@@ -231,6 +245,28 @@ namespace SignalsLink.YTT.src.probe
             members.Add(Describe("TimetableRouteEntryPacket.X", RouteXField.FieldType));
 
             CanWatchApproach = true;
+
+            LookAtResolvedTarget(automation);
+        }
+
+        private void LookAtResolvedTarget(Type automation)
+        {
+            AutomationTargetField = automation.GetField("Target", Anywhere);
+            if (AutomationTargetField == null) return;
+
+            TargetStationKeyProperty = AutomationTargetField.FieldType.GetProperty("StationKey", Anywhere);
+            if (TargetStationKeyProperty == null) return;
+
+            Type key = TargetStationKeyProperty.PropertyType;
+            PropertyInfo x = key.GetProperty("X", Anywhere);
+            PropertyInfo y = key.GetProperty("Y", Anywhere);
+            PropertyInfo z = key.GetProperty("Z", Anywhere);
+
+            if (x?.PropertyType != typeof(int) || y?.PropertyType != typeof(int) || z?.PropertyType != typeof(int)) return;
+
+            StationKeyXProperty = x;
+            StationKeyYProperty = y;
+            StationKeyZProperty = z;
         }
 
         /// <summary>Probed separately: no engine is no reason to refuse to unload a boxcar.</summary>

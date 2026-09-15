@@ -76,8 +76,25 @@ namespace SignalsLink.src.signals.chunkanchor
         private readonly Dictionary<BlockPos, HashSet<long>> halos = new();
         private readonly HashSet<BlockPos> guests = new();
 
-        // Who can say a vehicle is coming. See OnApproaching.
+        // Who can say a vehicle is coming, and which anchors were last told one is. See OnApproaching.
         private ArrivalSourceRegistry arrivals;
+        private readonly Dictionary<BlockPos, Expectation> expected = new();
+
+        /// <summary>A source announces every second; this long without a word means it stopped.</summary>
+        private const long ExpectingMs = 15000;
+
+        /// <summary>
+        /// One vehicle's approach as seen from one anchor. Whether a guest turned up before the
+        /// announcements stopped is the one fact worth keeping: a train that came and went without
+        /// ever materialising is a selection that does not cover the whole train, and nobody
+        /// would work that out from a silent log.
+        /// </summary>
+        private sealed class Expectation
+        {
+            public long FirstAt;
+            public long LastAt;
+            public bool SawGuest;
+        }
 
         public bool ColumnsReady(IEnumerable<long> columns) => columns.All(jobs.IsReady);
         public bool TryCensus(IEnumerable<long> columns, double requestStarted, out AnchorCount result)
@@ -264,6 +281,12 @@ namespace SignalsLink.src.signals.chunkanchor
         /// </summary>
         private void KeepGroupsWhole(float dt)
         {
+            HoldGroups();
+            SettleExpectations();
+        }
+
+        private void HoldGroups()
+        {
             if (anchors.Count == 0 || keepTogether == null || keepTogether.Sources.Count == 0) return;
 
             List<IReadOnlyCollection<long>> groups = new();
@@ -364,10 +387,11 @@ namespace SignalsLink.src.signals.chunkanchor
         /// </summary>
         private void OnApproaching(Vec3d vehicle, BlockPos target)
         {
-            if (sleeping.Count == 0 || vehicle == null || target == null) return;
+            if (vehicle == null || target == null) return;
             if (!ApproachRule.Close(vehicle, target, SignalsLinkConfigLoader.Current.AnchorApproachBlocks)) return;
 
             long column = ColumnKeyOf(target.X, target.Z);
+            long now = sapi.World.ElapsedMilliseconds;
 
             due.Clear();
 
@@ -377,6 +401,58 @@ namespace SignalsLink.src.signals.chunkanchor
             }
 
             foreach (BlockPos pos in due) QueueWake(pos, "a vehicle is on its way to " + target);
+
+            // An anchor already up is told as well, so it does not go back to sleep with the
+            // vehicle still on its way - a short window runs out long before a train arrives.
+            foreach (KeyValuePair<BlockPos, HashSet<long>> anchor in anchors)
+            {
+                if (!ApproachRule.Concerns(anchor.Value, column) && !ApproachRule.Concerns(HaloOf(anchor.Key), column)) continue;
+
+                if (!expected.TryGetValue(anchor.Key, out Expectation one))
+                {
+                    one = new Expectation { FirstAt = now };
+                    expected[anchor.Key.Copy()] = one;
+                }
+
+                one.LastAt = now;
+            }
+        }
+
+        /// <summary>Has a vehicle been reported heading for this anchor's ground just now?</summary>
+        public bool IsExpecting(BlockPos pos)
+        {
+            return pos != null && sapi != null && expected.TryGetValue(pos, out Expectation one)
+                && sapi.World.ElapsedMilliseconds - one.LastAt < ExpectingMs;
+        }
+
+        /// <summary>
+        /// Closes the book on approaches nobody is announcing any more - and says so when the
+        /// vehicle never showed up as a guest, which is the one outcome the player cannot see.
+        /// </summary>
+        private void SettleExpectations()
+        {
+            if (expected.Count == 0) return;
+
+            long now = sapi.World.ElapsedMilliseconds;
+            due.Clear();
+
+            foreach (KeyValuePair<BlockPos, Expectation> one in expected)
+            {
+                if (guests.Contains(one.Key)) one.Value.SawGuest = true;
+                if (now - one.Value.LastAt >= ExpectingMs) due.Add(one.Key);
+            }
+
+            foreach (BlockPos pos in due)
+            {
+                Expectation one = expected[pos];
+                expected.Remove(pos);
+
+                if (one.SawGuest || !anchors.ContainsKey(pos)) continue;
+
+                sapi.Logger.Warning("[SignalsLink] anchor at " + LogLocation(pos) + " was told a vehicle was coming for "
+                    + AnchorDisplay.Duration((one.LastAt - one.FirstAt) / 3600000.0)
+                    + " and it never materialised. Does the selection cover the whole train, not just the station?");
+            }
         }
 
         private readonly Dictionary<BlockPos, Sleeper> sleeping = new Dictionary<BlockPos, Sleeper>();
@@ -593,6 +669,7 @@ namespace SignalsLink.src.signals.chunkanchor
 
             anchors.Remove(pos);
             guests.Remove(pos);
+            expected.Remove(pos);
 
             foreach (long key in columns) LetGo(key);
 
