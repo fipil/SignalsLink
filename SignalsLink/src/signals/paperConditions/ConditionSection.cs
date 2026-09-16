@@ -81,6 +81,11 @@ namespace SignalsLink.src.signals.paperConditions
         /// </summary>
         public string Text => text.ToString();
 
+        /// <summary>Does <c># debug</c> stand in this section, or above every section?</summary>
+        public bool Traced { get; private set; }
+
+        public void MarkTraced() => Traced = true;
+
         private readonly List<ConditionBlock> blocks;
         private readonly System.Text.StringBuilder text = new System.Text.StringBuilder();
 
@@ -107,7 +112,11 @@ namespace SignalsLink.src.signals.paperConditions
 
             if (text.Length > 0) text.Append('\n');
 
-            foreach (PaperLine line in lines) text.Append(line.Text).Append('\n');
+            foreach (PaperLine line in lines)
+            {
+                text.Append(line.Text).Append('\n');
+                if (ConditionDebug.IsMarked(line.Text)) Traced = true;
+            }
         }
 
         /// <summary>

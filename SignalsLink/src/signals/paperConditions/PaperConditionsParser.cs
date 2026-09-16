@@ -52,6 +52,16 @@ namespace SignalsLink.src.signals.paperConditions
                         current = header;
                     }
 
+                    // Comments beside the header belong to the section: `# debug` right under it.
+                    if (p.Count > 1) current.AddParagraph(p.FindAll(IsComment));
+
+                    continue;
+                }
+
+                // Nothing but comments makes no block, but a `# debug` in it belongs where it stands.
+                if (p.TrueForAll(IsComment))
+                {
+                    if (current != null) current.AddParagraph(p); else orphanParagraphs.Add(p);
                     continue;
                 }
 
@@ -259,6 +269,12 @@ namespace SignalsLink.src.signals.paperConditions
                 foreach (ConditionBlock block in orphans) blocks.Remove(block);
             }
 
+            // `# debug` above the first header means every section.
+            if (sections.Count > 0 && orphanParagraphs.Exists(p => p.Exists(line => ConditionDebug.IsMarked(line.Text))))
+            {
+                foreach (ConditionSection section in sections) section.MarkTraced();
+            }
+
             return new CompiledConditions(blocks, sections);
         }
 
@@ -332,6 +348,11 @@ namespace SignalsLink.src.signals.paperConditions
 
             if (current.Count > 0) paragraphs.Add(current);
             return paragraphs;
+        }
+
+        private static bool IsComment(PaperLine line)
+        {
+            return line.Text.StartsWith("#") || line.Text.StartsWith("//");
         }
 
         private static bool TryParseScopeDirective(string line, out InventoryConditionScope scope)

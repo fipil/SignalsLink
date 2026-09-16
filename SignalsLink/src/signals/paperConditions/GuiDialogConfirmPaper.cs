@@ -68,7 +68,8 @@ namespace SignalsLink.src.signals.paperConditions
                     .BeginClip(leftClip)
                         .AddRichtext(current, font, leftText, "currentText")
                     .EndClip()
-                    .AddVerticalScrollbar(value => Scroll("currentText", leftClip, value), leftBar, "currentBar");
+                    .AddInteractiveElement(new GuiElementHoverScrollbar(capi,
+                        value => Scroll("currentText", leftClip, value), leftBar, leftClip), "currentBar");
 
             if (!Clearing)
             {
@@ -77,7 +78,8 @@ namespace SignalsLink.src.signals.paperConditions
                     .BeginClip(rightClip)
                         .AddRichtext(wanted, font, rightText, "newText")
                     .EndClip()
-                    .AddVerticalScrollbar(value => Scroll("newText", rightClip, value), rightBar, "newBar");
+                    .AddInteractiveElement(new GuiElementHoverScrollbar(capi,
+                        value => Scroll("newText", rightClip, value), rightBar, rightClip), "newBar");
             }
 
             SingleComposer = composer

@@ -82,15 +82,10 @@ namespace SignalsLink.src.signals.managedchute.transporting
             // ordinary conditions work against it: `in target game:firewood 96` counts the WHOLE
             // column, not the one pile the chute happens to point at. Same trick the anvil uses to
             // expose its work item - a throw-away inventory, read-only as far as conditions go.
+            // Not traced here: a dock builds this once per yard tile per rule, and the output
+            // line already describes the target inventory.
             IInventory column = BuildGroundColumnInventory();
             if (column != null) ctx["targetInventory"] = column;
-
-            if (ConditionDebug.Enabled)
-            {
-                ConditionDebug.Log("  ground column at " + targetPos + " block="
-                    + (api.World.BlockAccessor.GetBlock(targetPos)?.Code?.ToString() ?? "?")
-                    + " -> " + ConditionDebug.Describe(column));
-            }
         }
 
         // Deliberately the ground-storage view and not the general one: this class PLACES things,

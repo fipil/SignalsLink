@@ -150,7 +150,7 @@ namespace SignalsLink.src.signals.manageddock
             if (Api?.World == null || Api is not ICoreServerAPI) return;
 
             // Starts BEFORE the early outs: "no credit" is exactly what this gets switched on for.
-            bool trace = ConditionDebug.IsMarked(conditionsText);
+            bool trace = ConditionDebug.IsMarked(conditionsText) && Traces(ConditionsEvaluator.GetSections());
             if (trace) ConditionDebug.Begin(Api.Logger, "dock@" + Pos);
 
             try
@@ -206,11 +206,36 @@ namespace SignalsLink.src.signals.manageddock
             SetTickRate(DockTickRate.Next(sawHolder, actionPerformed, searchedLive));
         }
 
+        /// <summary>Any section asked for by <c># debug</c>; the others run muted.</summary>
+        private static bool Traces(IReadOnlyList<ConditionSection> sections)
+        {
+            if (sections == null) return false;
+
+            foreach (ConditionSection section in sections) if (section.Traced) return true;
+
+            return false;
+        }
+
+        private SectionPassResult RunSection(ConditionSection section, bool actionsBlocked, ref bool sawHolder)
+        {
+            bool muted = ConditionDebug.Enabled && !section.Traced;
+            if (muted) ConditionDebug.Mute();
+
+            try
+            {
+                return RunSectionAloud(section, actionsBlocked, ref sawHolder);
+            }
+            finally
+            {
+                if (muted) ConditionDebug.Unmute();
+            }
+        }
+
         /// <summary>
         /// One section. Null when there is nothing to run against - a train that has not arrived
         /// must not stop the section below it.
         /// </summary>
-        private SectionPassResult RunSection(ConditionSection section, bool actionsBlocked, ref bool sawHolder)
+        private SectionPassResult RunSectionAloud(ConditionSection section, bool actionsBlocked, ref bool sawHolder)
         {
             if (section.Direction == null) return null;      // no header: reported as a paper error
             if (!section.EndsAreComplete) return null;       // half-written header: likewise
@@ -425,14 +450,17 @@ namespace SignalsLink.src.signals.manageddock
         private bool Move(PaperConditionsEvaluator evaluator,
             IReadOnlyList<ICargoHold> sources, IReadOnlyList<ICargoHold> targets, bool needsSource, int order)
         {
-            return actionCursor.TryRun(sources, targets, needsSource, (source, target) =>
+            int tried = 0;
+            bool moved = actionCursor.TryRun(sources, targets, needsSource, (source, target) =>
             {
+                tried++;
                 IItemTransfer transfer = TransferFor(source, target, evaluator);
                 if (transfer == null)
                 {
                     var block = evaluator.GetBlocks()[0];
                     var ctx = ConditionContext.Build(Api, null, source.Inventory, source.Pos, target.Inventory, target.Pos);
                     if (!ConditionActions.RunOn(block, ctx)) return false;
+                    if (ConditionDebug.Enabled) ConditionDebug.Log("  " + source.Code + " -> " + target.Code + ": actions ran");
                     source.MarkDirty(); target.MarkDirty();
                     if (!unlimited) remaining = Math.Max(0, remaining - 1);
                     MarkDirty();
@@ -441,17 +469,19 @@ namespace SignalsLink.src.signals.manageddock
                 var op = new ItemStackMoveOperation(Api.World, EnumMouseButton.Left, 0,
                     EnumMergePriority.DirectMerge, EverythingThatMatches);
                 TransferOperationResult result = transfer.TryMove(op);
-                if (!result.Success)
-                {
-                    if (ConditionDebug.Enabled) ConditionDebug.Log("  " + source.Code + " -> " + target.Code + ": moved nothing");
-                    return false;
-                }
+                if (!result.Success) return false;
+                if (ConditionDebug.Enabled) ConditionDebug.Log("  " + source.Code + " -> " + target.Code + ": moved " + result.MovedAmount);
                 source.MarkDirty();
                 target.MarkDirty();
                 if (!unlimited) remaining = Math.Max(0, remaining - 1);
                 MarkDirty();
                 return true;
             }, order);
+
+            // One line for every pair that refused, not one each: a yard has dozens.
+            if (!moved && tried > 0 && ConditionDebug.Enabled) ConditionDebug.Log("  " + tried + " pair(s) tried, moved nothing");
+
+            return moved;
         }
 
         /// <summary>How many pairs one tick may try before giving up until the next one.</summary>

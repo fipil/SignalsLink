@@ -40,14 +40,14 @@ namespace SignalsLink.src.signals.paperConditions
         /// <summary>
         /// And one pass never writes more than this many lines, plus its last one.
         ///
-        /// A dock names every pair it tried and every column it read, so a yard of twelve tiles
-        /// costs three dozen lines - and a yard may have four hundred. Capping the rate alone was
-        /// not enough: two passes a second of that is still a hundred lines a second.
+        /// A device says a line or two per section, so a paper of several sections must fit; at
+        /// eight the sections at the bottom were never seen at all. Capping the rate alone was
+        /// not enough: two passes a second of a chatty device is still a hundred lines a second.
         ///
         /// The last line is always kept, because a device says what came of the whole pass at the
         /// end of it, and cutting the tail off would throw away the one line worth reading.
         /// </summary>
-        public const int MaxLinesPerPass = 8;
+        public const int MaxLinesPerPass = 24;
 
         private sealed class Scope
         {
@@ -56,6 +56,8 @@ namespace SignalsLink.src.signals.paperConditions
             public readonly List<string> Lines = new List<string>();
             public int Dropped;
             public string LastLine;
+            public string LastMessage;
+            public int LastCount;
             public Scope Parent;
         }
         [ThreadStatic] private static Scope current;
@@ -82,6 +84,11 @@ namespace SignalsLink.src.signals.paperConditions
         {
             current = new Scope { Logger = apiLogger, Tag = scopeTag, Parent = current };
         }
+
+        /// <summary>Silences the trace until <see cref="Unmute"/>: a section without its own marker.</summary>
+        public static void Mute() => Begin(null, null);
+
+        public static void Unmute() => End();
 
         /// <summary>
         /// Closes the scope and writes the pass out - but only if it says something the last one
@@ -110,12 +117,14 @@ namespace SignalsLink.src.signals.paperConditions
             }
             string text = string.Join("\n", scope.Lines);
             long skipped = 0;
+            bool unchanged = false;
             lock (repeatLock)
             {
                 long now = Environment.TickCount64;
                 if (lastPass.TryGetValue(scope.Tag, out Repeat before))
                 {
-                    long quiet = before.Text == text ? HeartbeatMs : MinIntervalMs;
+                    unchanged = before.Text == text;
+                    long quiet = unchanged ? HeartbeatMs : MinIntervalMs;
                     if (now - before.At < quiet)
                     {
                         lastPass[scope.Tag] = new Repeat(before.Text, before.At, before.Skipped + 1);
@@ -126,6 +135,12 @@ namespace SignalsLink.src.signals.paperConditions
                 lastPass[scope.Tag] = new Repeat(text, now, 0);
             }
             // Never hold the shared throttle lock while calling an external logger.
+            // The heartbeat is one line, not the whole pass again: it is above, unchanged.
+            if (unchanged)
+            {
+                scope.Logger.Notification("[sl-dbg " + scope.Tag + "] (unchanged, " + (skipped + 1) + " passes)");
+                return;
+            }
             if (skipped > 0) scope.Logger.Notification("[sl-dbg " + scope.Tag + "] (" + skipped + " passes not shown)");
             foreach (string line in scope.Lines) scope.Logger.Notification("[sl-dbg " + scope.Tag + "] " + line);
         }
@@ -134,6 +149,12 @@ namespace SignalsLink.src.signals.paperConditions
         {
             Scope scope = current;
             if (scope?.Logger == null) return;
+            // The same line again is counted, not repeated: a transfer reads one column per pair.
+            if (scope.LastLine == null && scope.Lines.Count > 0 && message == scope.LastMessage)
+            {
+                scope.Lines[scope.Lines.Count - 1] = message + " (x" + ++scope.LastCount + ")";
+                return;
+            }
             if (scope.Lines.Count >= MaxLinesPerPass)
             {
                 if (scope.LastLine != null) scope.Dropped++;
@@ -141,6 +162,8 @@ namespace SignalsLink.src.signals.paperConditions
                 return;
             }
             scope.Lines.Add(message);
+            scope.LastMessage = message;
+            scope.LastCount = 1;
         }
 
         private readonly struct Repeat

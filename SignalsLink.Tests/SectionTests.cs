@@ -27,6 +27,41 @@ namespace SignalsLink.Tests
         }
 
         [Fact]
+        public void A_debug_marker_inside_a_section_traces_that_section_alone()
+        {
+            // On its own paragraph, under the header, or inside a rule paragraph - all the same.
+            foreach (string paper in new[]
+            {
+                "unload\n\ngame:firewood\ntarget 2\n\nload\n\n# debug\n\ngame:plank\ntarget 3\n",
+                "unload\n\ngame:firewood\ntarget 2\n\nload\n#debug\n\ngame:plank\ntarget 3\n",
+                "unload\n\ngame:firewood\ntarget 2\n\nload\n\ngame:plank\n# debug\ntarget 3\n",
+            })
+            {
+                CompiledConditions compiled = Parse(paper);
+
+                Assert.Equal(2, compiled.Sections.Count);
+                Assert.False(compiled.Sections[0].Traced);
+                Assert.True(compiled.Sections[1].Traced);
+                Assert.Single(compiled.Sections[1].Blocks);
+            }
+        }
+
+        [Fact]
+        public void A_debug_marker_above_the_first_header_traces_every_section()
+        {
+            CompiledConditions compiled = Parse("# debug\n\nunload\n\ngame:firewood\ntarget 2\n\nload\n\ngame:plank\ntarget 3\n");
+
+            Assert.All(compiled.Sections, section => Assert.True(section.Traced));
+        }
+
+        [Fact]
+        public void A_paper_without_a_header_is_traced_whole_or_not_at_all()
+        {
+            Assert.True(Assert.Single(Parse("game:firewood\ntarget 2\n\n# debug\n").Sections).Traced);
+            Assert.False(Assert.Single(Parse("game:firewood\ntarget 2\n").Sections).Traced);
+        }
+
+        [Fact]
         public void A_header_opens_a_section_and_the_blocks_below_belong_to_it()
         {
             CompiledConditions compiled = Parse(

@@ -89,7 +89,46 @@ namespace SignalsLink.Tests
         {
             var logger=Pass("one-above-cap",ConditionDebug.MaxLinesPerPass+1);
             Assert.Equal(ConditionDebug.MaxLinesPerPass+1,logger.Lines.Count);
-            Assert.EndsWith("line 8",logger.Lines[^1]);
+            Assert.EndsWith("line "+ConditionDebug.MaxLinesPerPass,logger.Lines[^1]);
+        }
+
+        [Fact]
+        public void The_same_line_again_is_counted_rather_than_repeated()
+        {
+            // A dock read the same ground column once per pair it tried, four lines apart by nothing.
+            Log logger = new Log();
+
+            ConditionDebug.Begin(logger, "repeated");
+            ConditionDebug.Log("column");
+            ConditionDebug.Log("column");
+            ConditionDebug.Log("column");
+            ConditionDebug.Log("end");
+            ConditionDebug.End();
+
+            Assert.Equal(2, logger.Lines.Count);
+            Assert.EndsWith("column (x3)", logger.Lines[0]);
+            Assert.EndsWith("end", logger.Lines[1]);
+        }
+
+        [Fact]
+        public void A_muted_stretch_writes_nothing_and_the_pass_carries_on_after_it()
+        {
+            // A section without its own `# debug` on a paper that has one elsewhere.
+            Log logger = new Log();
+
+            ConditionDebug.Begin(logger, "muted");
+            ConditionDebug.Log("before");
+            ConditionDebug.Mute();
+            Assert.False(ConditionDebug.Enabled);
+            ConditionDebug.Log("silenced");
+            ConditionDebug.Unmute();
+            Assert.True(ConditionDebug.Enabled);
+            ConditionDebug.Log("after");
+            ConditionDebug.End();
+
+            Assert.Equal(2, logger.Lines.Count);
+            Assert.EndsWith("before", logger.Lines[0]);
+            Assert.EndsWith("after", logger.Lines[1]);
         }
 
         [Fact]

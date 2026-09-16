@@ -197,6 +197,14 @@ namespace SignalsLink.src.signals.chunkanchor
                 && AnchorArea.InWindow(hoverCx, hoverCz, anchorCx, anchorCz, mapRadius);
         }
 
+        /// <summary>The composer offers an unhandled wheel to every element; taken only over the map.</summary>
+        public override void OnMouseWheel(ICoreClientAPI api, MouseWheelEventArgs args)
+        {
+            if (!IsInside(api.Input.MouseX, api.Input.MouseY)) return;
+
+            base.OnMouseWheel(api, args);
+        }
+
         private bool IsInside(int x, int y)
         {
             return x >= Bounds.renderX && y >= Bounds.renderY

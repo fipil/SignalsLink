@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using SignalsLink.src.signals.cargo;
 using SignalsLink.src.signals.paperConditions;
 using SignalsLink.src.signals.vehicle;
+using Vintagestory.API.Common;
 using Vintagestory.API.MathTools;
 using Xunit;
 
@@ -64,6 +65,23 @@ namespace SignalsLink.Tests
             Assert.Equal("vehiclespec", Assert.Single(errors).Reason);
             Assert.Equal(4, errors[0].Line);
             Assert.Contains(token, errors[0].Text);
+        }
+
+        [Theory]
+        [InlineData("game:boat-sailed", true, false)]
+        [InlineData("game:boat-raft", true, false)]
+        [InlineData("game:tameddeer-female", false, true)]      // the tamed elk, as the game names it
+        [InlineData("game:semitameddeer-male", false, false)]  // cannot carry bags yet
+        [InlineData("game:deer-adult-female", false, false)]   // wild
+        [InlineData("yangtransport:minecart", false, false)]   // another mod's, another keyword
+        public void A_vehicle_is_told_by_its_entity_code(string code, bool boat, bool elk)
+        {
+            // Found in game: the file is elk-tamed.json but the entity is "tameddeer", and a
+            // predicate on "elk" found nothing at all.
+            AssetLocation location = new AssetLocation(code);
+
+            Assert.Equal(boat, HungCargoHolderFinder.LooksLikeBoat(location));
+            Assert.Equal(elk, HungCargoHolderFinder.LooksLikeElk(location));
         }
 
         [Fact]

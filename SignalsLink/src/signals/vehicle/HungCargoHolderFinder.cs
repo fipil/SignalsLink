@@ -67,21 +67,27 @@ namespace SignalsLink.src.signals.vehicle
         /// <summary>Vanilla boats: chests, baskets and crates on a sailed boat, baskets on a raft.</summary>
         public static HungCargoHolderFinder Boats()
         {
-            return new HungCargoHolderFinder("boat", entity => IsVanilla(entity, "boat"), mustStand: true);
+            return new HungCargoHolderFinder("boat", entity => LooksLikeBoat(entity?.Code) && HungContainers.IsCarrier(entity), mustStand: true);
         }
 
         /// <summary>A tamed elk with saddlebags on.</summary>
         public static HungCargoHolderFinder Elks()
         {
-            return new HungCargoHolderFinder("elk", entity => IsVanilla(entity, "elk"), mustStand: false);
+            return new HungCargoHolderFinder("elk", entity => LooksLikeElk(entity?.Code) && HungContainers.IsCarrier(entity), mustStand: false);
         }
 
-        private static bool IsVanilla(Entity entity, string codePrefix)
+        public static bool LooksLikeBoat(AssetLocation code)
         {
-            AssetLocation code = entity?.Code;
-            if (code == null || code.Domain != "game" || !code.Path.StartsWith(codePrefix)) return false;
+            return code != null && code.Domain == "game" && code.Path.StartsWith("boat");
+        }
 
-            return HungContainers.IsCarrier(entity);
+        /// <summary>
+        /// The game calls the tamed elk "tameddeer" - the file is elk-tamed.json, the entity is
+        /// not. Matched on the entity code, because that is what a loaded entity carries.
+        /// </summary>
+        public static bool LooksLikeElk(AssetLocation code)
+        {
+            return code != null && code.Domain == "game" && code.Path.StartsWith("tameddeer");
         }
 
         public string Keyword { get; }
