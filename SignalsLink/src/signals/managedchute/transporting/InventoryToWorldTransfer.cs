@@ -68,7 +68,43 @@ namespace SignalsLink.src.signals.managedchute.transporting
 
             // ManagedChute may place a filled bucket, but must never eject the liquid portions
             // stored in barrels and other liquid inventories.
-            return !IsLiquidContainer(slot?.Itemstack) || slot.Itemstack.Block is BlockLiquidContainerBase;
+            if (IsLiquidContainer(slot?.Itemstack) && slot.Itemstack.Block is not BlockLiquidContainerBase) return false;
+
+            return CanSetDown(slot?.Itemstack);
+        }
+
+        /// <summary>
+        /// Only what this mode can actually set down. Asked before the slot is chosen: a stack
+        /// of chests in the first slot was chosen, could not be placed, and the bucket behind it
+        /// was never tried.
+        /// </summary>
+        private bool CanSetDown(ItemStack stack)
+        {
+            if (stack == null) return false;
+
+            switch (mode)
+            {
+                case 1: return stack.Block != null;
+                case 2: return stack.Block is BlockLiquidContainerBase || stack.Item is ItemPileable || SamePileAt(stack);
+                default: return true;
+            }
+        }
+
+        /// <summary>Is there a pile of this very thing on the target, with the top-up path open?</summary>
+        private bool SamePileAt(ItemStack stack)
+        {
+            if (targetPos == null) return false;
+
+            BlockEntity be = api?.World?.BlockAccessor?.GetBlockEntity(targetPos);
+            IInventory inventory = (be as BlockEntityItemPile)?.inventory ?? (be as BlockEntityGroundStorage)?.Inventory;
+            if (inventory == null) return false;
+
+            foreach (ItemSlot slot in inventory)
+            {
+                if (!slot.Empty && slot.Itemstack.Collectible == stack.Collectible) return true;
+            }
+
+            return false;
         }
 
         protected override void AddConditionContext(IDictionary<string, object> ctx)
