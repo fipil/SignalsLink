@@ -49,6 +49,11 @@ namespace SignalsLink.src.signals.link
 
         public LinkNetworkData data = new LinkNetworkData();
 
+        public event Action<LinkConnection,bool> ConnectionChanged;
+        public event Action NetworkReset;
+        private readonly Dictionary<LinkConnection,bool> pendingChanges=new();
+        private bool awaitingSnapshot;
+        private long syncListener, clientListener;
         // Watches placed sleeves for blocks growing into them (server side only).
         LinkObstructionMonitor obstructionMonitor;
 
@@ -70,12 +75,18 @@ namespace SignalsLink.src.signals.link
             {
                 clientChannel = ((ICoreClientAPI)api).Network.RegisterChannel(ChannelName)
                     .RegisterMessageType(typeof(LinkNetworkData))
-                    .SetMessageHandler<LinkNetworkData>(OnDataFromServer);
+                    .RegisterMessageType(typeof(LinkNetworkDelta))
+                    .RegisterMessageType(typeof(LinkSnapshotRequest))
+                    .SetMessageHandler<LinkNetworkData>(OnDataFromServer)
+                    .SetMessageHandler<LinkNetworkDelta>(OnDeltaFromServer);
             }
             else
             {
                 serverChannel = ((ICoreServerAPI)api).Network.RegisterChannel(ChannelName)
-                    .RegisterMessageType(typeof(LinkNetworkData));
+                    .RegisterMessageType(typeof(LinkNetworkData))
+                    .RegisterMessageType(typeof(LinkNetworkDelta))
+                    .RegisterMessageType(typeof(LinkSnapshotRequest))
+                    .SetMessageHandler<LinkSnapshotRequest>((player, _) => Event_OnPlayerJoin(player));
             }
         }
 
@@ -85,9 +96,9 @@ namespace SignalsLink.src.signals.link
             capi = api;
 
             capi.Event.ChunkDirty += OnChunkDirty;
-            capi.Event.RegisterGameTickListener(OnClientTick, 16);
+            clientListener=capi.Event.RegisterGameTickListener(OnClientTick, 16);
             capi.Event.BlockTexturesLoaded += OnBlockTexturesLoaded;
-            capi.Event.LeaveWorld += () => Renderer?.Dispose();
+            capi.Event.LeaveWorld += OnLeaveWorld;
         }
 
         public override void StartServerSide(ICoreServerAPI api)
@@ -103,17 +114,19 @@ namespace SignalsLink.src.signals.link
             linkItems[LinkKind.Sleeve] = api.World.GetItem(new AssetLocation(SleeveItemCode));
 
             obstructionMonitor = new LinkObstructionMonitor(api, this);
+            syncListener=api.Event.RegisterGameTickListener(_=>FlushChanges(),50);
         }
 
         private void OnBlockTexturesLoaded()
         {
+            Renderer?.Dispose();
             Renderer = new HangingLinksRenderer(capi, this);
             Renderer.RequestFullRebuild();
         }
 
         private void OnChunkDirty(Vec3i chunkCoord, IWorldChunk chunk, EnumChunkDirtyReason reason)
         {
-            if (reason == EnumChunkDirtyReason.NewlyLoaded) Renderer?.RequestFullRebuild();
+            Renderer?.RequestChunkRebuild(chunkCoord, chunk, reason);
         }
 
         private void OnClientTick(float dt)
@@ -125,6 +138,8 @@ namespace SignalsLink.src.signals.link
         {
             this.data = data;
             InvalidateIndex();
+            awaitingSnapshot=false;
+            NetworkReset?.Invoke();
             Renderer?.RequestIncrementalRebuild(data);
         }
 
@@ -138,7 +153,7 @@ namespace SignalsLink.src.signals.link
             byte[] blob = sapi.WorldManager.SaveGame.GetData(SaveKey);
             try
             {
-                this.data = SerializerUtil.Deserialize<LinkNetworkData>(blob);
+                this.data = SerializerUtil.Deserialize<LinkNetworkData>(blob) ?? new LinkNetworkData();
             }
             catch (Exception)
             {
@@ -146,11 +161,43 @@ namespace SignalsLink.src.signals.link
             }
 
             InvalidateIndex();
+            pendingChanges.Clear();
+            NetworkReset?.Invoke();
         }
 
         private void Event_OnPlayerJoin(IServerPlayer player)
         {
+            FlushChanges();
             serverChannel.SendPacket(data, player);
+        }
+
+        private void OnDeltaFromServer(LinkNetworkDelta delta)
+        {
+            if(awaitingSnapshot) return;
+            if(!delta.Apply(data)) { awaitingSnapshot=true; clientChannel.SendPacket(new LinkSnapshotRequest()); return; }
+            InvalidateIndex();
+            Renderer?.ApplyDelta(delta);
+        }
+        private void Changed(LinkConnection con,bool added)
+        {
+            pendingChanges.Remove(con); pendingChanges.Add(con,added);
+            ConnectionChanged?.Invoke(con,added);
+        }
+        private void FlushChanges()
+        {
+            if(pendingChanges.Count==0 || serverChannel==null) return;
+            var delta=new LinkNetworkDelta { Before=data.Revision, After=data.Revision+1 };
+            foreach(var change in pendingChanges) (change.Value?delta.Added:delta.Removed).Add(change.Key);
+            pendingChanges.Clear(); data.Revision=delta.After;
+            serverChannel.BroadcastPacket(delta);
+        }
+        private void OnLeaveWorld() { Renderer?.Dispose(); Renderer=null; }
+        public override void Dispose()
+        {
+            OnLeaveWorld(); obstructionMonitor?.Dispose();
+            if(capi!=null) { capi.Event.ChunkDirty-=OnChunkDirty; capi.Event.BlockTexturesLoaded-=OnBlockTexturesLoaded; capi.Event.LeaveWorld-=OnLeaveWorld; capi.Event.UnregisterGameTickListener(clientListener); }
+            if(sapi!=null) { sapi.Event.UnregisterGameTickListener(syncListener); sapi.Event.GameWorldSave-=Event_GameWorldSave; sapi.Event.SaveGameLoaded-=Event_SaveGameLoaded; sapi.Event.PlayerNowPlaying-=Event_OnPlayerJoin; }
+            base.Dispose();
         }
 
         #region Queries
@@ -371,7 +418,7 @@ namespace SignalsLink.src.signals.link
             if (!added) return AddResult.Duplicate;
 
             InvalidateIndex();
-            serverChannel?.BroadcastPacket(data);
+            Changed(connection,true);
             return AddResult.Added;
         }
 
@@ -383,9 +430,8 @@ namespace SignalsLink.src.signals.link
 
             if (toRemove.Count == 0) return false;
 
-            foreach (LinkConnection con in toRemove) data.connections.Remove(con);
+            foreach (LinkConnection con in toRemove) { data.connections.Remove(con); Changed(con,false); }
             InvalidateIndex();
-            serverChannel?.BroadcastPacket(data);
             return true;
         }
 
@@ -413,9 +459,9 @@ namespace SignalsLink.src.signals.link
         {
             if (api.Side == EnumAppSide.Client || con == null) return;
             if (!data.connections.Remove(con)) return;
+            Changed(con,false);
 
             InvalidateIndex();
-            serverChannel?.BroadcastPacket(data);
 
             Item item = ItemForKind(con.kind);
             if (item != null) api.World.SpawnItemEntity(new ItemStack(item), dropPos ?? con.pos1.blockPos);
@@ -432,9 +478,8 @@ namespace SignalsLink.src.signals.link
 
             if (toRemove.Count == 0) return;
 
-            foreach (LinkConnection con in toRemove) data.connections.Remove(con);
+            foreach (LinkConnection con in toRemove) { data.connections.Remove(con); Changed(con,false); }
             InvalidateIndex();
-            serverChannel?.BroadcastPacket(data);
 
             // A block carries lines of a single kind today, but group anyway so a future block
             // with mixed anchors cannot silently hand back the wrong item.
@@ -492,10 +537,11 @@ namespace SignalsLink.src.signals.link
         }
     }
 
-    [ProtoContract(ImplicitFields = ImplicitFields.AllPublic)]
+    [ProtoContract]
     public class LinkNetworkData
     {
-        public HashSet<LinkConnection> connections = new HashSet<LinkConnection>();
+        [ProtoMember(1)] public HashSet<LinkConnection> connections = new HashSet<LinkConnection>();
+        [ProtoMember(2)] public long Revision;
     }
 
     /// <summary>

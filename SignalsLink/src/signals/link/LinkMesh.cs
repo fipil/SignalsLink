@@ -50,7 +50,7 @@ namespace SignalsLink.src.signals.link
         /// mounting axis, then turns diagonally toward the hanging middle. Texture coordinates are
         /// based on distance travelled along the resulting path, rather than its end-to-end chord.
         /// </summary>
-        static public MeshData MakeLinkMesh(Vec3f pos1, Vec3f pos2, Vec3f p1ExitDir, Vec3f p2ExitDir, Vec3f swayDir, float swayAmount, LinkProfile profile)
+        static public MeshData MakeLinkMesh(Vec3f pos1, Vec3f pos2, Vec3f p1ExitDir, Vec3f p2ExitDir, Vec3f swayDir, float swayAmount, LinkProfile profile, List<float> weights = null)
         {
             float t = profile.Thickness;
             float catenaryA = profile.CatenaryA;
@@ -72,18 +72,6 @@ namespace SignalsLink.src.signals.link
             int nSec = (int)Math.Floor(middleDist * 2);
             nSec = nSec > 5 ? nSec : 5;
 
-            MeshData mesh = new MeshData(4, 6);
-            mesh.SetMode(EnumDrawMode.Triangles);
-
-            MeshData mesh_top = new MeshData(4, 6);
-            mesh_top.SetMode(EnumDrawMode.Triangles);
-            MeshData mesh_bot = new MeshData(4, 6);
-            mesh_bot.SetMode(EnumDrawMode.Triangles);
-            MeshData mesh_side = new MeshData(4, 6);
-            mesh_side.SetMode(EnumDrawMode.Triangles);
-            MeshData mesh_side2 = new MeshData(4, 6);
-            mesh_side2.SetMode(EnumDrawMode.Triangles);
-
             // Preferred seam axis. It is projected onto the plane perpendicular to each local
             // segment below: at a sharp valve bend it can otherwise become parallel to the first
             // segment and collapse the hose's square cross-section into a flat line.
@@ -92,11 +80,6 @@ namespace SignalsLink.src.signals.link
             {
                 preferredB = new Vec3f(1, 0, 0);
             }
-
-            mesh_top.Flags.Fill(0);
-            mesh_bot.Flags.Fill(0);
-            mesh_side.Flags.Fill(0);
-            mesh_side2.Flags.Fill(0);
 
             List<Vec3f> positions = new List<Vec3f>();
             List<float> dyArr = new List<float>();
@@ -128,6 +111,17 @@ namespace SignalsLink.src.signals.link
             }
 
             int pointCount = positions.Count;
+            int faceVertices=pointCount*2, faceIndices=(pointCount-1)*6;
+            MeshData mesh=new MeshData(faceVertices*4,faceIndices*4);
+            MeshData mesh_top=new MeshData(faceVertices,faceIndices);
+            MeshData mesh_bot=new MeshData(faceVertices,faceIndices);
+            MeshData mesh_side=new MeshData(faceVertices,faceIndices);
+            MeshData mesh_side2=new MeshData(faceVertices,faceIndices);
+            if(weights!=null)
+                for(int face=0;face<4;face++)
+                    for(int j=0;j<pointCount;j++)
+                    { float w=minDy<0 ? dyArr[j]/minDy : 0; weights.Add(w); weights.Add(w); }
+
             // Let the hose enter its attachment holes by half its thickness. This matters most
             // for very short valve-to-valve connections, where an exactly flush endpoint reads
             // as a flattened cap instead of a hose disappearing into the anchor.
@@ -179,17 +173,18 @@ namespace SignalsLink.src.signals.link
                 float seamLo = SeamCenter - uv_v * 0.5f;
                 float seamHi = SeamCenter + uv_v * 0.5f;
 
-                mesh_top.AddVertex((pos - b * t + a * t).X, (pos - b * t + a * t).Y, (pos - b * t + a * t).Z, u, 0, color);
-                mesh_top.AddVertex((pos + b * t + a * t).X, (pos + b * t + a * t).Y, (pos + b * t + a * t).Z, u, uv_v, color);
-
-                mesh_bot.AddVertex((pos - b * t - a * t).X, (pos - b * t - a * t).Y, (pos - b * t - a * t).Z, u, 0, color);
-                mesh_bot.AddVertex((pos + b * t - a * t).X, (pos + b * t - a * t).Y, (pos + b * t - a * t).Z, u, uv_v, color);
-
-                mesh_side.AddVertex((pos - b * t + a * t).X, (pos - b * t + a * t).Y, (pos - b * t + a * t).Z, u, seamHi, color);
-                mesh_side.AddVertex((pos - b * t - a * t).X, (pos - b * t - a * t).Y, (pos - b * t - a * t).Z, u, seamLo, color);
-
-                mesh_side2.AddVertex((pos + b * t + a * t).X, (pos + b * t + a * t).Y, (pos + b * t + a * t).Z, u, uv_v, color);
-                mesh_side2.AddVertex((pos + b * t - a * t).X, (pos + b * t - a * t).Y, (pos + b * t - a * t).Z, u, 0, color);
+                var topLeft=pos-b*t+a*t;
+                var topRight=pos+b*t+a*t;
+                var bottomLeft=pos-b*t-a*t;
+                var bottomRight=pos+b*t-a*t;
+                mesh_top.AddVertex(topLeft.X,topLeft.Y,topLeft.Z,u,0,color);
+                mesh_top.AddVertex(topRight.X,topRight.Y,topRight.Z,u,uv_v,color);
+                mesh_bot.AddVertex(bottomLeft.X,bottomLeft.Y,bottomLeft.Z,u,0,color);
+                mesh_bot.AddVertex(bottomRight.X,bottomRight.Y,bottomRight.Z,u,uv_v,color);
+                mesh_side.AddVertex(topLeft.X,topLeft.Y,topLeft.Z,u,seamHi,color);
+                mesh_side.AddVertex(bottomLeft.X,bottomLeft.Y,bottomLeft.Z,u,seamLo,color);
+                mesh_side2.AddVertex(topRight.X,topRight.Y,topRight.Z,u,uv_v,color);
+                mesh_side2.AddVertex(bottomRight.X,bottomRight.Y,bottomRight.Z,u,0,color);
 
                 mesh_top.Flags[2 * j] = VertexFlags.PackNormal(new Vec3f(0, 1, 0));
                 mesh_top.Flags[2 * j + 1] = VertexFlags.PackNormal(new Vec3f(0, 1, 0));

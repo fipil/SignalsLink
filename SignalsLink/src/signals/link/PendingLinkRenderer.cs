@@ -21,6 +21,9 @@ namespace SignalsLink.src.signals.link
 
         MeshRef linkMesh;
         int textureId = -1;
+        Vec3f previousEnd;
+        int vertexCount, indexCount;
+        float updateTime;
         Matrixf ModelMat = new Matrixf();
 
         public PendingLinkRenderer(ICoreClientAPI capi, PlacingLinksMod mod, BlockPos pos, Vec3f offset, byte kind)
@@ -55,11 +58,21 @@ namespace SignalsLink.src.signals.link
             prog.ViewMatrix = rpi.CameraMatrixOriginf;
 
             Vec3d offset = blockPos.ToVec3d();
-            // Rebuilds the mesh every frame (not ideal, but matches the Signals pending renderer).
-            MeshData mesh = LinkMesh.MakeLinkMesh(posOffset, camPos.SubCopy(offset).ToVec3f(), profile);
-            mesh.SetMode(EnumDrawMode.Triangles);
-            linkMesh?.Dispose();
-            linkMesh = capi.Render.UploadMesh(mesh);
+            Vec3f end=camPos.SubCopy(offset).ToVec3f();
+            updateTime+=deltaTime;
+            if(linkMesh==null || updateTime>=1f/30f && (previousEnd==null || end.DistanceTo(previousEnd)>.01f))
+            {
+                updateTime=0; previousEnd=end;
+                MeshData mesh=LinkMesh.MakeLinkMesh(posOffset,end,profile);
+                mesh.SetMode(EnumDrawMode.Triangles);
+                if(linkMesh!=null && vertexCount==mesh.VerticesCount && indexCount==mesh.IndicesCount)
+                    rpi.UpdateMesh(linkMesh,mesh);
+                else
+                {
+                    linkMesh?.Dispose(); linkMesh=rpi.UploadMesh(mesh);
+                    vertexCount=mesh.VerticesCount; indexCount=mesh.IndicesCount;
+                }
+            }
 
             ModelMat = ModelMat.Identity().Translate(offset.X - camPos.X, offset.Y - camPos.Y, offset.Z - camPos.Z);
             prog.ModelMatrix = ModelMat.Values;
