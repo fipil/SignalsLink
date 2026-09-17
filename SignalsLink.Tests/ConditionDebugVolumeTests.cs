@@ -178,6 +178,96 @@ namespace SignalsLink.Tests
             Assert.False(ConditionDebug.Enabled);
         }
 
+        private static void FreezeBudget(Log logger, long now = 10000)
+        {
+            var budget = typeof(ConditionDebug).GetMethod("ForLogger", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic).Invoke(null, new object[] { logger });
+            var type = budget.GetType();
+            type.GetField("Clock").SetValue(budget, (System.Func<long>)(() => now));
+            type.GetField("Refilled").SetValue(budget, now);
+        }
+
+        [Fact]
+        public void Throttled_capture_skips_formatting_but_does_not_skip_work()
+        {
+            var logger = new Log(); FreezeBudget(logger);
+            int formatted = 0, transfers = 0;
+            for (int i = 0; i < 100; i++)
+            {
+                ConditionDebug.Begin(logger, "early-throttle");
+                try
+                {
+                    transfers++;
+                    if (ConditionDebug.Enabled) { formatted++; ConditionDebug.Log("captured"); }
+                }
+                finally { ConditionDebug.End(); }
+            }
+            Assert.Equal(100, transfers); Assert.Equal(1, formatted); Assert.Single(logger.Lines);
+            Assert.Equal(1, logger.Calls);
+        }
+
+        [Fact]
+        public void Shared_budget_limits_many_devices_and_summarizes_suppression()
+        {
+            var logger = new Log(); FreezeBudget(logger);
+            int captures = 0;
+            for (int i = 0; i < 100; i++)
+            {
+                ConditionDebug.Begin(logger, "device-" + i);
+                if (ConditionDebug.Enabled) { captures++; ConditionDebug.Log("state"); }
+                ConditionDebug.End();
+            }
+            Assert.Equal(ConditionDebug.BurstPasses, captures);
+            Assert.Equal(2, logger.Calls);
+            // Advance the injected clock, leaving refill time at its original value.
+            var budget = typeof(ConditionDebug).GetMethod("ForLogger", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic).Invoke(null, new object[] { logger });
+            budget.GetType().GetField("Clock").SetValue(budget, (System.Func<long>)(() => 11000));
+            ConditionDebug.Begin(logger, "after-burst"); ConditionDebug.Log("state"); ConditionDebug.End();
+            Assert.Contains(logger.Lines, line => line.Contains("98 captures suppressed"));
+            Assert.Equal(3, logger.Calls);
+        }
+
+        [Fact]
+        public void Long_pass_uses_one_logger_call_and_messages_cannot_inject_extra_lines()
+        {
+            var logger = new Log(); FreezeBudget(logger);
+            ConditionDebug.Begin(logger, "bounded-lines");
+            for (int i = 0; i < 100; i++) ConditionDebug.Log(i + new string('x', 2000) + "\\nextra");
+            ConditionDebug.End();
+            Assert.Equal(1, logger.Calls);
+            Assert.Equal(ConditionDebug.MaxLinesPerPass + 2, logger.Lines.Count);
+            Assert.All(logger.Lines, line => Assert.True(line.Length < ConditionDebug.MaxMessageChars + 100));
+        }
+
+        [Fact]
+        public void Large_empty_inventory_is_only_sampled_and_is_not_reported_as_wholly_empty()
+        {
+            int reads = 0;
+            var inventory = AnchorLifecycleTests.Proxy.Make<IInventory>((m, a) =>
+            {
+                if (m.Name == "get_Count") return 100000;
+                if (m.Name == "get_Item") { reads++; return null; }
+                return AnchorLifecycleTests.Proxy.Unhandled;
+            });
+            string description = ConditionDebug.Describe(inventory);
+            Assert.Equal(ConditionDebug.MaxInspectedSlots, reads);
+            Assert.Contains("slots not inspected", description);
+            Assert.DoesNotContain("[empty]", description);
+        }
+
+        [Fact]
+        public void Device_history_is_bounded_and_loggers_do_not_share_a_budget()
+        {
+            var first = new Log(); FreezeBudget(first);
+            for (int i = 0; i < ConditionDebug.MaxTrackedDevices + 50; i++)
+            { ConditionDebug.Begin(first, "bounded-" + i); ConditionDebug.End(); }
+            var budget = typeof(ConditionDebug).GetMethod("ForLogger", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic).Invoke(null, new object[] { first });
+            var devices = (System.Collections.IDictionary)budget.GetType().GetField("Devices").GetValue(budget);
+            Assert.Equal(ConditionDebug.MaxTrackedDevices, devices.Count);
+            var second = new Log(); FreezeBudget(second);
+            ConditionDebug.Begin(second, "fresh-server"); Assert.True(ConditionDebug.Enabled);
+            ConditionDebug.Log("fresh"); ConditionDebug.End(); Assert.Single(second.Lines);
+        }
+
         private static Log Pass(string tag, int lines)
         {
             Log logger = new Log();
@@ -192,12 +282,14 @@ namespace SignalsLink.Tests
         private sealed class Log : LoggerBase
         {
             public Action Callback { get; set; }
+            public int Calls { get; private set; }
             public List<string> Lines { get; } = new List<string>();
 
             protected override void LogImpl(EnumLogType logType, string format, params object[] args)
             {
+                Calls++;
                 Callback?.Invoke();
-                Lines.Add(args == null || args.Length == 0 ? format : string.Format(format, args));
+                Lines.AddRange((args == null || args.Length == 0 ? format : string.Format(format, args)).Split(new[] { "\r\n", "\n" }, StringSplitOptions.None));
             }
         }
     }

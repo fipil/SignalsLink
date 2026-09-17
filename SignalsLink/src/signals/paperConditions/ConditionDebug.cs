@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Runtime.CompilerServices;
 using Vintagestory.API.Common;
 
 namespace SignalsLink.src.signals.paperConditions
@@ -49,11 +50,54 @@ namespace SignalsLink.src.signals.paperConditions
         /// </summary>
         public const int MaxLinesPerPass = 24;
 
+        public const int MaxInspectedSlots = 64;
+        public const int MaxMessageChars = 512;
+        public const int MaxTrackedDevices = 1024;
+        // At most two full passes in a burst; four new captures per second for one logger/server.
+        public const int BurstPasses = 2;
+        public const int PassesPerSecond = 4;
+
+        private sealed class Device
+        {
+            public long NextCapture, LastWrite = long.MinValue / 2, Skipped;
+            public string Text;
+            public LinkedListNode<string> Node;
+        }
+        private sealed class Budget
+        {
+            public readonly object Sync = new object();
+            public System.Func<long> Clock = () => Environment.TickCount64;
+            public readonly Dictionary<string, Device> Devices = new Dictionary<string, Device>();
+            public readonly LinkedList<string> Recent = new LinkedList<string>();
+            public double Tokens = BurstPasses;
+            public long Refilled = Environment.TickCount64, Suppressed;
+            public Device Get(string tag)
+            {
+                if (!Devices.TryGetValue(tag, out Device device))
+                {
+                    if (Devices.Count >= MaxTrackedDevices)
+                    {
+                        string oldest = Recent.First.Value;
+                        Recent.RemoveFirst(); Devices.Remove(oldest);
+                    }
+                    device = new Device { Node = Recent.AddLast(tag) };
+                    Devices.Add(tag, device);
+                }
+                else { Recent.Remove(device.Node); Recent.AddLast(device.Node); }
+                return device;
+            }
+        }
+        // A world's logger owns its budget. It can be collected after leaving that world.
+        private static readonly ConditionalWeakTable<ILogger, Budget> budgets = new();
+        private static Budget ForLogger(ILogger logger) => budgets.GetValue(logger, _ => new Budget());
+
         private sealed class Scope
         {
             public ILogger Logger;
             public string Tag;
-            public readonly List<string> Lines = new List<string>();
+            public List<string> Lines;
+            public Budget Budget;
+            public Device Device;
             public int Dropped;
             public string LastLine;
             public string LastMessage;
@@ -61,9 +105,6 @@ namespace SignalsLink.src.signals.paperConditions
             public Scope Parent;
         }
         [ThreadStatic] private static Scope current;
-        private static readonly object repeatLock = new object();
-        private static readonly Dictionary<string, Repeat> lastPass = new Dictionary<string, Repeat>();
-
         /// <summary>True while a traced pass is running. Check before building log strings.</summary>
         public static bool Enabled => current?.Logger != null;
 
@@ -82,7 +123,30 @@ namespace SignalsLink.src.signals.paperConditions
         /// <summary>Opens a traced scope. Always pair with <see cref="End"/> in a finally block.</summary>
         public static void Begin(ILogger apiLogger, string scopeTag)
         {
-            current = new Scope { Logger = apiLogger, Tag = scopeTag, Parent = current };
+            var scope = new Scope { Parent = current };
+            current = scope;
+            if (apiLogger == null) return;
+            var budget = ForLogger(apiLogger);
+            lock (budget.Sync)
+            {
+                long now = budget.Clock();
+                var device = budget.Get(scopeTag ?? "");
+                if (now < device.NextCapture) { device.Skipped++; return; }
+                budget.Tokens = Math.Min(BurstPasses, budget.Tokens + Math.Max(0, now - budget.Refilled) * PassesPerSecond / 1000d);
+                budget.Refilled = now;
+                if (budget.Tokens < 1)
+                {
+                    device.Skipped++; budget.Suppressed++;
+                    // Spread retries so a fixed tick order does not always favour the same blocks.
+                    device.NextCapture = now + MinIntervalMs + (uint)(scopeTag ?? "").GetHashCode() % 500;
+                    return;
+                }
+                budget.Tokens--;
+                device.NextCapture = now + MinIntervalMs;
+                scope.Logger = apiLogger; scope.Tag = Short(scopeTag ?? "");
+                scope.Budget = budget; scope.Device = device;
+                scope.Lines = new List<string>(MaxLinesPerPass + 4);
+            }
         }
 
         /// <summary>Silences the trace until <see cref="Unmute"/>: a section without its own marker.</summary>
@@ -116,39 +180,48 @@ namespace SignalsLink.src.signals.paperConditions
                 scope.Lines.Add(scope.LastLine);
             }
             string text = string.Join("\n", scope.Lines);
-            long skipped = 0;
-            bool unchanged = false;
-            lock (repeatLock)
+            long skipped, globalSkipped;
+            bool unchanged;
+            lock (scope.Budget.Sync)
             {
-                long now = Environment.TickCount64;
-                if (lastPass.TryGetValue(scope.Tag, out Repeat before))
+                long now = scope.Budget.Clock();
+                var device = scope.Device;
+                unchanged = device.Text == text;
+                if (unchanged && now - device.LastWrite < HeartbeatMs)
+                { device.Skipped++; return; }
+                skipped = device.Skipped; device.Skipped = 0;
+                globalSkipped = scope.Budget.Suppressed; scope.Budget.Suppressed = 0;
+                device.Text = text; device.LastWrite = now;
+            }
+            // One bounded logger call, outside the lock, instead of one call per line.
+            var output = new StringBuilder();
+            string prefix = "[sl-dbg " + scope.Tag + "] ";
+            if (globalSkipped > 0) output.Append(prefix).Append("(server trace budget: ").Append(globalSkipped).Append(" captures suppressed)").AppendLine();
+            if (unchanged) output.Append(prefix).Append("(unchanged sampled state, ").Append(skipped + 1).Append(" passes since last report)");
+            else
+            {
+                if (skipped > 0) output.Append(prefix).Append('(').Append(skipped).Append(" passes not captured or unchanged)").AppendLine();
+                for (int i = 0; i < scope.Lines.Count; i++)
                 {
-                    unchanged = before.Text == text;
-                    long quiet = unchanged ? HeartbeatMs : MinIntervalMs;
-                    if (now - before.At < quiet)
-                    {
-                        lastPass[scope.Tag] = new Repeat(before.Text, before.At, before.Skipped + 1);
-                        return;
-                    }
-                    skipped = before.Skipped;
+                    if (i > 0) output.AppendLine();
+                    output.Append(prefix).Append(scope.Lines[i]);
                 }
-                lastPass[scope.Tag] = new Repeat(text, now, 0);
             }
-            // Never hold the shared throttle lock while calling an external logger.
-            // The heartbeat is one line, not the whole pass again: it is above, unchanged.
-            if (unchanged)
-            {
-                scope.Logger.Notification("[sl-dbg " + scope.Tag + "] (unchanged, " + (skipped + 1) + " passes)");
-                return;
-            }
-            if (skipped > 0) scope.Logger.Notification("[sl-dbg " + scope.Tag + "] (" + skipped + " passes not shown)");
-            foreach (string line in scope.Lines) scope.Logger.Notification("[sl-dbg " + scope.Tag + "] " + line);
+            scope.Logger.Notification(output.ToString());
+        }
+
+        private static string Short(string message)
+        {
+            if (message == null) return "";
+            if (message.Length > MaxMessageChars) message = message.Substring(0, MaxMessageChars - 3) + "...";
+            return message.Replace('\r', ' ').Replace('\n', ' ');
         }
 
         public static void Log(string message)
         {
             Scope scope = current;
             if (scope?.Logger == null) return;
+            message = Short(message);
             // The same line again is counted, not repeated: a transfer reads one column per pair.
             if (scope.LastLine == null && scope.Lines.Count > 0 && message == scope.LastMessage)
             {
@@ -166,20 +239,6 @@ namespace SignalsLink.src.signals.paperConditions
             scope.LastCount = 1;
         }
 
-        private readonly struct Repeat
-        {
-            public Repeat(string text, long at, int skipped)
-            {
-                Text = text;
-                At = at;
-                Skipped = skipped;
-            }
-
-            public string Text { get; }
-            public long At { get; }
-            public int Skipped { get; }
-        }
-
         /// <summary>What an inventory holds, short enough to read in a log line.</summary>
         public static string Describe(IInventory inventory)
         {
@@ -188,9 +247,11 @@ namespace SignalsLink.src.signals.paperConditions
             var sb = new StringBuilder();
             sb.Append(inventory.Count).Append(" slots [");
 
-            int shown = 0;
-            for (int i = 0; i < inventory.Count; i++)
+            int shown = 0, inspected = 0;
+            int count = inventory.Count;
+            for (int i = 0; i < count && i < MaxInspectedSlots; i++)
             {
+                inspected++;
                 ItemSlot slot = inventory[i];
                 if (slot == null || slot.Empty) continue;
 
@@ -198,10 +259,11 @@ namespace SignalsLink.src.signals.paperConditions
                 sb.Append(i).Append(':').Append(slot.Itemstack?.Collectible?.Code?.ToString() ?? "?")
                   .Append(" x").Append(slot.StackSize);
 
-                if (++shown >= 8) { sb.Append(", ..."); break; }
+                if (++shown >= 8) break;
             }
 
-            if (shown == 0) sb.Append("empty");
+            if (shown == 0) sb.Append(inspected == count ? "empty" : "no items in inspected slots");
+            if (inspected < count) sb.Append("; ").Append(count - inspected).Append(" slots not inspected");
             return sb.Append(']').ToString();
         }
 

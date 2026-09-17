@@ -259,7 +259,7 @@ namespace SignalsLink.src.signals.sleeve
 
             try
             {
-                EvaluateOutputsCore(trace);
+                EvaluateOutputsCore(ConditionDebug.Enabled);
             }
             finally
             {
