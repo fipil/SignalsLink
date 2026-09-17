@@ -171,6 +171,7 @@
   "signalslink:chunkanchor-dialogtitle": "Kotva chunkov",
   "signalslink:chunkanchor-free": "Nič neudržiava — koleso sa nemíňa",
   "signalslink:chunkanchor-off": "Vypnutá — nič neudržiava a nič nestojí.",
+  "signalslink:chunkanchor-calculating": "Počítam spotrebu koliesok...",
   "signalslink:chunkanchor-price": "Udržiavané stĺpce: {0} z {1}",
   "signalslink:chunkanchor-rate": "Jedno koleso vydrží {0} dní",
   "signalslink:chunkanchor-slotlabel": "Náhradné koliesko",

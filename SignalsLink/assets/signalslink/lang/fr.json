@@ -171,6 +171,7 @@
   "signalslink:chunkanchor-dialogtitle": "Ancre de chunks",
   "signalslink:chunkanchor-free": "Ne maintient rien — la roue ne s'use pas",
   "signalslink:chunkanchor-off": "Désactivée — ne maintient rien et ne coûte rien.",
+  "signalslink:chunkanchor-calculating": "Calcul de la consommation de roues...",
   "signalslink:chunkanchor-price": "Colonnes maintenues : {0} sur {1}",
   "signalslink:chunkanchor-rate": "Une roue dure {0} jours",
   "signalslink:chunkanchor-slotlabel": "Rouage de rechange",

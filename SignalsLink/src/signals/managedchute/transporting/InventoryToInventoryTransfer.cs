@@ -138,7 +138,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
             }
             if (targets.Count == 0) return TransferOperationResult.None;
             long targetRoom = 0;
-            foreach (ItemSlot slot in targets) targetRoom += slot.GetRemainingSlotSpace(src.Itemstack);
+            foreach (ItemSlot slot in targets) targetRoom += Math.Max(0, Math.Min(src.Itemstack.Collectible.MaxStackSize - slot.StackSize, slot.GetRemainingSlotSpace(src.Itemstack)));
 
             decimal requestedAmount = selection.Directives.Amount ?? opTemplate.RequestedQuantity;
 
@@ -147,7 +147,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
 
             // A floor - `amount N` or `amount N+` - waits until the whole of it is there. A ceiling
             // - `amount N-` - never waits; fewer than ten is fewer than ten.
-            if (selection.Directives.IsAtomicAmount && (available < CappedByKeep(requestedQuantity, selection)
+            if (selection.Directives.IsAtomicAmount && !selection.Directives.HasKeep && (available < CappedByKeep(requestedQuantity, selection)
                 || targetRoom < CappedByKeep(requestedQuantity, selection)))
             {
                 return TransferOperationResult.None;

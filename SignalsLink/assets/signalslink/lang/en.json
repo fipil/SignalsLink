@@ -177,6 +177,7 @@
   "signalslink:chunkanchor-dialogtitle": "Chunk Anchor",
   "signalslink:chunkanchor-free": "Holding nothing — the wheel is not consumed",
   "signalslink:chunkanchor-off": "Off — holding nothing and costs nothing.",
+  "signalslink:chunkanchor-calculating": "Calculating wheel consumption...",
   "signalslink:chunkanchor-price": "Held columns: {0} of {1}",
   "signalslink:chunkanchor-rate": "One wheel lasts {0} days",
   "signalslink:chunkanchor-slotlabel": "Spare gear",

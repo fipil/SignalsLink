@@ -439,7 +439,7 @@ namespace SignalsLink.src.signals.chunkanchor
             string line = Lang.Get("signalslink:chunkanchor-price", held.Count, maxColumns);
 
             if (anchor == null) return line;
-            if (!anchor.CensusReady) return line + "\n�";
+            if (!anchor.CensusReady) return line + "\n" + Lang.Get("signalslink:chunkanchor-calculating");
 
             float units = AnchorCensus.AnchorUnits(anchor.ActiveBlocks, anchor.Creatures, held.Count,
                 anchor.Settings.AnchorCreatureWeight,

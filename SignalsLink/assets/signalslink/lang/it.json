@@ -171,6 +171,7 @@
   "signalslink:chunkanchor-dialogtitle": "Ancora dei chunk",
   "signalslink:chunkanchor-free": "Non mantiene nulla — la ruota non si consuma",
   "signalslink:chunkanchor-off": "Spenta — non mantiene nulla e non costa nulla.",
+  "signalslink:chunkanchor-calculating": "Calcolo del consumo di ruote...",
   "signalslink:chunkanchor-price": "Colonne mantenute: {0} di {1}",
   "signalslink:chunkanchor-rate": "Una ruota dura {0} giorni",
   "signalslink:chunkanchor-slotlabel": "Ingranaggio di riserva",

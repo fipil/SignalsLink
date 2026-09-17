@@ -172,6 +172,7 @@
   "signalslink:confirmpaper-clear-yes": "Smazat",
   "signalslink:chunkanchor-name": "Jméno kotvy",
   "signalslink:chunkanchor-dialogtitle": "Kotva chunků",
+  "signalslink:chunkanchor-calculating": "Počítám spotřebu koleček...",
   "signalslink:chunkanchor-price": "Držené sloupce: {0} z {1}",
   "signalslink:chunkanchor-census": "Drží při životě: {0} aktivních bloků, {1} zvířat ({2} jednotek)",
   "signalslink:chunkanchor-rate": "Jedno kolečko vydrží {0} dní",

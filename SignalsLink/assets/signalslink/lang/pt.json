@@ -171,6 +171,7 @@
   "signalslink:chunkanchor-dialogtitle": "Âncora de chunks",
   "signalslink:chunkanchor-free": "Não mantém nada — a roda não se desgasta",
   "signalslink:chunkanchor-off": "Desligada — não mantém nada e não custa nada.",
+  "signalslink:chunkanchor-calculating": "Calculando o consumo de rodas...",
   "signalslink:chunkanchor-price": "Colunas mantidas: {0} de {1}",
   "signalslink:chunkanchor-rate": "Uma roda dura {0} dias",
   "signalslink:chunkanchor-slotlabel": "Engrenagem de reserva",

@@ -105,26 +105,70 @@ namespace SignalsLink.src.signals.managedchute.transporting
                 return TryMovePlacedLiquidContainer(containerStack, block);
             }
 
-            EntityItem entity = FindItemEntityNearSource(block);
-            if (entity == null || entity.Itemstack == null || entity.Itemstack.StackSize <= 0) return TransferOperationResult.None;
+            return TryTakeLooseItems(block);
+        }
 
-            ItemStack stack = entity.Itemstack;
-            if (!TryGetMatchedDirectives(stack, out PaperConditionDirectives directives, null, block) || !directives.Evaluate(BuildDirectiveContext())) return TransferOperationResult.None;
+        private TransferOperationResult TryTakeLooseItems(ConditionBlock block)
+        {
+            var min = sourcePos.AddCopy(-1, -1, -1);
+            var max = sourcePos.AddCopy(2, 2, 2);
+            Entity[] entities = api.World.GetEntitiesInsideCuboid(min, max, e =>
+                e is EntityItem item && item.Itemstack?.StackSize > 0 && !IsLiquidContainer(item.Itemstack));
+            if (entities == null) return TransferOperationResult.None;
 
-            int moved = TryPutOneIntoInventory(stack, EffectiveTargetSlot(directives));
-            if (moved <= 0) return TransferOperationResult.None;
-
-            stack.StackSize -= moved;
-            if (stack.StackSize <= 0)
+            // Group only stack-compatible drops. One world query per rule, and each candidate's
+            // conditions are checked once before any inventory or entity is changed.
+            var groups = new List<List<EntityItem>>();
+            var byCollectible = new Dictionary<CollectibleObject, List<List<EntityItem>>>();
+            foreach (Entity entity in entities)
             {
-                entity.Die(EnumDespawnReason.PickedUp);
-            }
-            else
-            {
-                entity.Itemstack = stack;
+                if (entity is not EntityItem item || !IsConditionMet(item.Itemstack, block)) continue;
+                if (!byCollectible.TryGetValue(item.Itemstack.Collectible, out var sameType))
+                    byCollectible[item.Itemstack.Collectible] = sameType = new List<List<EntityItem>>();
+                var group = sameType.Find(g => g[0].Itemstack.Equals(api.World, item.Itemstack, GlobalConstants.IgnoredStackAttributes));
+                if (group == null)
+                {
+                    group = new List<EntityItem>();
+                    sameType.Add(group);
+                    groups.Add(group);
+                }
+                group.Add(item);
             }
 
-            return new TransferOperationResult(moved, moved, false);
+            PaperConditionDirectives directives = block?.Directives ?? PaperConditionDirectives.Empty;
+            if (!directives.Evaluate(BuildDirectiveContext())) return TransferOperationResult.None;
+            int targetSignal = EffectiveTargetSlot(directives);
+            foreach (var group in groups)
+            {
+                int available = (int)Math.Min(int.MaxValue, group.Sum(e => (long)e.Itemstack.StackSize));
+                int batch = PickupBatch(available, group[0].Itemstack, directives, block);
+                if (batch <= 0) continue;
+
+                int total = 0;
+                foreach (EntityItem entity in group)
+                {
+                    ItemStack stack = entity.Itemstack;
+                    int moved = TryPutIntoInventory(stack, targetSignal, Math.Min(stack.StackSize, batch - total));
+                    if (moved <= 0) break;
+                    stack.StackSize -= moved;
+                    entity.Itemstack = stack;
+                    entity.WatchedAttributes.MarkPathDirty("itemstack");
+                    if (stack.StackSize == 0) entity.Die(EnumDespawnReason.PickedUp);
+                    total += moved;
+                    if (total == batch) break;
+                }
+                if (total > 0) return new TransferOperationResult(total, total, false);
+            }
+            return TransferOperationResult.None;
+        }
+
+        private int PickupBatch(int available, ItemStack stack, PaperConditionDirectives directives, ConditionBlock block)
+        {
+            int floor = CappedByKeep(Math.Max(1, (int)(directives.Amount ?? defaultQuantity)), directives, block);
+            int room = RoomFor(stack, EffectiveTargetSlot(directives));
+            if (directives.IsAtomicAmount && !directives.HasKeep && (available < floor || room < floor)) return 0;
+            int requested = CappedByKeep(directives.TakesEverythingAvailable ? available : floor, directives, block);
+            return Math.Max(0, Math.Min(requested, Math.Min(available, room)));
         }
 
         /// <summary>
@@ -158,7 +202,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
             }
             int floor = CappedByKeep(Math.Max(1, (int)(directives.Amount ?? defaultQuantity)), directives, block);
             int targetSignal = EffectiveTargetSlot(directives);
-            if (directives.IsAtomicAmount && (available < floor || RoomFor(stack, targetSignal) < floor)) return TransferOperationResult.None;
+            if (directives.IsAtomicAmount && !directives.HasKeep && (available < floor || RoomFor(stack, targetSignal) < floor)) return TransferOperationResult.None;
             int batch = CappedByKeep(directives.TakesEverythingAvailable ? available : floor, directives, block);
             if (batch <= 0) return TransferOperationResult.None;
 
@@ -230,7 +274,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
             int floor = CappedByKeep(Math.Max(1, (int)(directives.Amount ?? Math.Max(perLayer, defaultQuantity))), directives, paperBlock);
             int targetSignal = EffectiveTargetSlot(directives);
             // A layer cannot be split. Never round a ceiling or keep upwards.
-            if (directives.IsAtomicAmount && (floor % perLayer != 0 || available < floor || RoomFor(layerStack, targetSignal) < floor)) return TransferOperationResult.None;
+            if (directives.IsAtomicAmount && !directives.HasKeep && (floor % perLayer != 0 || available < floor || RoomFor(layerStack, targetSignal) < floor)) return TransferOperationResult.None;
             int requested = CappedByKeep(directives.TakesEverythingAvailable ? available : floor, directives, paperBlock);
             requested -= requested % perLayer;
             if (requested <= 0) return TransferOperationResult.None;
@@ -375,10 +419,10 @@ namespace SignalsLink.src.signals.managedchute.transporting
             if (slot == null || stack?.Collectible == null) return 0;
             if (!slot.CanHold(new DummySlot(stack))) return 0;
             if (!slot.CanTakeFrom(new DummySlot(stack), EnumMergePriority.DirectMerge)) return 0;
-            if (slot.Empty) return slot.GetRemainingSlotSpace(stack);
+            if (slot.Empty) return Math.Min(stack.Collectible.MaxStackSize, slot.GetRemainingSlotSpace(stack));
             if (!slot.Itemstack.Equals(api.World, stack, GlobalConstants.IgnoredStackAttributes)) return 0;
 
-            return System.Math.Max(0, slot.GetRemainingSlotSpace(stack));
+            return Math.Max(0, Math.Min(stack.Collectible.MaxStackSize - slot.StackSize, slot.GetRemainingSlotSpace(stack)));
         }
 
         #endregion
@@ -404,7 +448,8 @@ namespace SignalsLink.src.signals.managedchute.transporting
         {
             if (!TryGetMatchedDirectives(containerStack, out PaperConditionDirectives directives, null, block) || !directives.Evaluate(BuildDirectiveContext())) return TransferOperationResult.None;
 
-            int moved = TryPutOneIntoInventory(containerStack, EffectiveTargetSlot(directives));
+            int batch = PickupBatch(1, containerStack, directives, block);
+            int moved = TryPutIntoInventory(containerStack, EffectiveTargetSlot(directives), batch);
             if (moved <= 0) return TransferOperationResult.None;
 
             api.World.BlockAccessor.SetBlock(0, sourcePos);
@@ -479,35 +524,6 @@ namespace SignalsLink.src.signals.managedchute.transporting
         private IDictionary<string, object> BuildConditionContext(ItemStack stack, IInventory sourceInv)
         {
             return ConditionContext.Build(api, stack, sourceInv, sourcePos, targetInv, targetPos);
-        }
-
-        private EntityItem FindItemEntityNearSource(ConditionBlock block)
-        {
-            IWorldAccessor world = api.World;
-
-            var min = new Vec3d(sourcePos.X - 1, sourcePos.Y - 1, sourcePos.Z - 1);
-            var max = new Vec3d(sourcePos.X + 2, sourcePos.Y + 2, sourcePos.Z + 2);
-
-            EntityItem found = null;
-
-            world.GetEntitiesInsideCuboid(min.AsBlockPos, max.AsBlockPos, e =>
-            {
-                if (e is not EntityItem itemEntity) return false;
-
-                var stack = itemEntity.Itemstack;
-                if (stack == null || stack.StackSize <= 0) return false;
-                if (IsLiquidContainer(stack) || !IsConditionMet(stack, block)) return false;
-
-                found = itemEntity;
-                return true;
-            });
-
-            return found;
-        }
-
-        private int TryPutOneIntoInventory(ItemStack fromStack, int effectiveTargetSlotSignal)
-        {
-            return TryPutIntoInventory(fromStack, effectiveTargetSlotSignal, 1);
         }
 
         /// <summary>

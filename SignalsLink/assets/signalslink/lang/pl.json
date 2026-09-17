@@ -171,6 +171,7 @@
   "signalslink:chunkanchor-dialogtitle": "Kotwica chunków",
   "signalslink:chunkanchor-free": "Nie utrzymuje niczego — koło się nie zużywa",
   "signalslink:chunkanchor-off": "Wyłączona — niczego nie utrzymuje i nic nie kosztuje.",
+  "signalslink:chunkanchor-calculating": "Obliczanie zużycia kół...",
   "signalslink:chunkanchor-price": "Utrzymywane kolumny: {0} z {1}",
   "signalslink:chunkanchor-rate": "Jedno koło wystarcza na {0} dni",
   "signalslink:chunkanchor-slotlabel": "Zapasowe koło",

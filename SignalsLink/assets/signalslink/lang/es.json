@@ -171,6 +171,7 @@
   "signalslink:chunkanchor-dialogtitle": "Ancla de chunks",
   "signalslink:chunkanchor-free": "No mantiene nada: la rueda no se consume",
   "signalslink:chunkanchor-off": "Apagada: no mantiene nada y no cuesta nada.",
+  "signalslink:chunkanchor-calculating": "Calculando el consumo de ruedas...",
   "signalslink:chunkanchor-price": "Columnas mantenidas: {0} de {1}",
   "signalslink:chunkanchor-rate": "Una rueda dura {0} días",
   "signalslink:chunkanchor-slotlabel": "Rueda de reserva",

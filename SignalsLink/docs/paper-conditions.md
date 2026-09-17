@@ -483,6 +483,10 @@ Tady je to jen pokyn místo otázky.
 až bude zboží docházet. `amount 10+` je naopak práh: dokud není deset, nesahá se na to; jakmile je,
 odveze se celá hromada.
 
+Dávky fungují i při sbírání volně ležících předmětů, vyhazování z inventáře a ukládání do hromad. Počítají **kusy**, ne počet stacků či objektů na zemi. Jedna dávka může spojit více stejných stacků, ale nemíchá různé předměty ani neslučitelné atributy. Přesná dávka i minimum `N+` vyžadují dostatek zásoby a místa v cíli.
+
+Při položení jednoho bloku nebo zvednutí položeného vědra je k dispozici jen jeden kus: `amount 2` a `amount 2+` proto nic nepřenesou, `amount 2-` dovolí jeden. Stavba ohniště zůstává po jednom stupni; kovadlina používá své dosavadní dávkování.
+
 U kapalin platí totéž, jen se počítá v litrech.
 
 ### `target ground` / `target ground N`
