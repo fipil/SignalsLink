@@ -53,6 +53,7 @@ namespace SignalsLink.src.signals.link
         public event Action NetworkReset;
         private readonly Dictionary<LinkConnection,bool> pendingChanges=new();
         private bool awaitingSnapshot;
+        private bool serverDataLoaded;
         private long syncListener, clientListener;
         // Watches placed sleeves for blocks growing into them (server side only).
         LinkObstructionMonitor obstructionMonitor;
@@ -160,6 +161,7 @@ namespace SignalsLink.src.signals.link
                 this.data = new LinkNetworkData();
             }
 
+            serverDataLoaded = true;
             InvalidateIndex();
             pendingChanges.Clear();
             NetworkReset?.Invoke();
@@ -194,6 +196,14 @@ namespace SignalsLink.src.signals.link
         private void OnLeaveWorld() { Renderer?.Dispose(); Renderer=null; }
         public override void Dispose()
         {
+            // VS disposes mod systems BEFORE the shutdown world save. Commit the current graph
+            // to SaveGame now, before detaching GameWorldSave; the game's final save flushes it.
+            // Never overwrite a world that has not reached SaveGameLoaded (failed startup).
+            if (sapi != null && serverDataLoaded)
+            {
+                Event_GameWorldSave();
+                serverDataLoaded = false;
+            }
             OnLeaveWorld(); obstructionMonitor?.Dispose();
             if(capi!=null) { capi.Event.ChunkDirty-=OnChunkDirty; capi.Event.BlockTexturesLoaded-=OnBlockTexturesLoaded; capi.Event.LeaveWorld-=OnLeaveWorld; capi.Event.UnregisterGameTickListener(clientListener); }
             if(sapi!=null) { sapi.Event.UnregisterGameTickListener(syncListener); sapi.Event.GameWorldSave-=Event_GameWorldSave; sapi.Event.SaveGameLoaded-=Event_SaveGameLoaded; sapi.Event.PlayerNowPlaying-=Event_OnPlayerJoin; }

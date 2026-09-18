@@ -20,6 +20,54 @@ public class LinkPerformanceTests
     [ProtoContract(ImplicitFields=ImplicitFields.AllPublic)]
     public class OldData { public HashSet<LinkConnection> connections=new(); }
     [Fact]
+    public void Coalesced_remove_then_add_preserves_replacement_kind_on_client()
+    {
+        var packets = new List<LinkNetworkDelta>();
+        var mod = new LinkNetworkMod();
+        Set(mod, "serverChannel", Proxy.Make<IServerNetworkChannel>((m, a) => {
+            if (m.Name == "BroadcastPacket") { packets.Add((LinkNetworkDelta)a[0]); return null; }
+            return Proxy.Unhandled;
+        }));
+        var old = Link(0, 5, LinkKind.Hose);
+        var replacement = Link(0, 5, LinkKind.Sleeve);
+        var client = new LinkNetworkData(); client.connections.Add(old);
+        mod.data.connections.Add(old);
+        mod.TryToRemoveConnection(old.pos1, old.pos2);
+        mod.data.connections.Add(replacement); Call(mod, "Changed", replacement, true);
+        Call(mod, "FlushChanges");
+        var wire = SerializerUtil.Deserialize<LinkNetworkDelta>(SerializerUtil.Serialize(Assert.Single(packets)));
+        Assert.True(wire.Apply(client));
+        Assert.Equal(LinkKind.Sleeve, Assert.Single(client.connections).kind);
+    }
+
+    [Fact]
+    public void Snapshot_kind_replacement_rebuilds_mesh_and_releases_old_gpu_buffer()
+    {
+        using var f = new RenderFixture();
+        f.Mod.data.connections.Add(Link(0, 5)); f.Renderer.RequestFullRebuild(); f.Drain();
+        var old = Assert.Single(f.Meshes);
+        f.Mod.data = new LinkNetworkData(); f.Mod.data.connections.Add(Link(0, 5, LinkKind.Sleeve));
+        f.Renderer.RequestFullRebuild(); f.Drain();
+        Assert.True(old.Disposed); Assert.Single(f.Meshes, m => !m.Disposed);
+    }
+
+    [Fact]
+    public void Chunk_load_in_another_dimension_restores_a_previously_unloaded_link()
+    {
+        using var f = new RenderFixture();
+        f.Player.Pos.Dimension = 1;
+        f.Loaded = false;
+        f.Mod.data.connections.Add(new(Port(0, dimension: 1), Port(5, dimension: 1)));
+        f.Renderer.RequestFullRebuild(); f.Drain();
+        Assert.Empty(f.Meshes);
+        f.Loaded = true;
+        // The game encodes the dimension in chunk Y, using BlockPos.InternalY / chunk size.
+        f.Renderer.RequestChunkRebuild(new Vec3i(0, BlockPos.DimensionBoundary / 32, 0), null, EnumChunkDirtyReason.NewlyLoaded);
+        f.Drain();
+        Assert.Single(f.Meshes, m => !m.Disposed);
+    }
+
+    [Fact]
     public void Existing_world_graph_keeps_protobuf_field_identity()
     {
         var old=new OldData(); old.connections.Add(Link(0,5,LinkKind.Sleeve));
@@ -108,6 +156,9 @@ public class LinkPerformanceTests
         var c=f.Mod.data.connections.First(); f.Mod.data.connections.Remove(c);
         f.Renderer.ApplyDelta(new LinkNetworkDelta {Removed=new(){c}}); f.Drain(); Assert.Equal(before+1,f.Uploads);
         f.Loaded=false; f.Drain(); Assert.All(f.Meshes,m=>Assert.True(m.Disposed));
+        f.Loaded=true;
+        f.Renderer.RequestChunkRebuild(new Vec3i(0,0,0),null,EnumChunkDirtyReason.NewlyLoaded);
+        f.Drain(); Assert.Equal(2,f.Meshes.Count(m=>!m.Disposed));
     }
     [Fact]
     public void Sway_updates_only_positions_and_preserves_the_eight_segment_cap()
@@ -203,11 +254,12 @@ public class LinkPerformanceTests
         public int Uploads,Updates;
         public readonly Anchor Anchor=new();
         public bool Loaded=true;
+        public readonly EntityPlayer Player=new();
         public List<FakeMesh> Meshes=new();
         public List<MeshData> UpdateData=new();
         public RenderFixture()
         {
-            var entity=new EntityPlayer(); var anchor=Anchor;
+            var entity=Player; var anchor=Anchor;
             var chunk=Proxy.Make<IWorldChunk>((m,a)=>Proxy.Unhandled);
             var shader=Proxy.Make<IStandardShaderProgram>((m,a)=>Proxy.Unhandled);
             var frustum=new FrustumCulling();

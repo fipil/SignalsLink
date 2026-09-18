@@ -16,6 +16,77 @@ namespace SignalsLink.Tests;
 public class AnchorLifecycleTests
 {
     [Fact]
+    public void Aborted_load_before_claims_are_restored_preserves_saved_anchors()
+    {
+        var original = new Fixture(); Call(original.Manager, "Restore"); original.Manager.SetColumns(original.Pos, new[] { 0L, 1L }); Call(original.Manager, "Store");
+        var f = new Fixture { Saved = original.Saved, HoldRunPhase = true };
+        Call(f.Manager, "Restore"); f.Manager.Dispose();
+        Assert.Same(original.Saved, f.Saved);
+    }
+
+    [Fact]
+    public void Autosave_before_claims_are_restored_does_not_replace_saved_anchors()
+    {
+        // The same window as above, but it is the autosave that comes, not the shutdown.
+        var original = new Fixture(); Call(original.Manager, "Restore"); original.Manager.SetColumns(original.Pos, new[] { 0L, 1L }); Call(original.Manager, "Store");
+        var f = new Fixture { Saved = original.Saved, HoldRunPhase = true };
+        Call(f.Manager, "Restore"); Call(f.Manager, "Store");
+        Assert.Same(original.Saved, f.Saved);
+    }
+
+    [Fact]
+    public void Anchors_saved_by_a_newer_mod_are_neither_loaded_nor_saved_over()
+    {
+        // Formats count downwards; -99 is one this version has never heard of. Read as a count
+        // it would load nothing, and the next save would wipe the real list.
+        var newer = new byte[] { 0x9D, 0xFF, 0xFF, 0xFF, 7, 7, 7, 7 };
+        var f = new Fixture { Saved = newer }; Call(f.Manager, "Restore");
+        f.Manager.SetColumns(f.Pos, new[] { 0L }); Call(f.Manager, "Store"); f.Manager.Dispose();
+        Assert.Same(newer, f.Saved);
+    }
+
+    [Fact]
+    public void Anchors_cut_short_are_not_saved_over()
+    {
+        var original = new Fixture(); Call(original.Manager, "Restore"); original.Manager.SetColumns(original.Pos, new[] { 0L, 1L }); Call(original.Manager, "Store");
+        var cut = original.Saved.Take(original.Saved.Length - 3).ToArray();
+        var f = new Fixture { Saved = cut }; Call(f.Manager, "Restore");
+        Call(f.Manager, "Store"); f.Manager.Dispose();
+        Assert.Same(cut, f.Saved);
+        Assert.Empty(f.Manager.ColumnsOf(f.Pos));
+    }
+
+    [Fact]
+    public void Shutdown_does_not_restore_a_sleeper_removed_since_autosave()
+    {
+        var f = new Fixture(); Call(f.Manager, "Restore");
+        f.Manager.Sleep(f.Pos, new[] { 0L }, 42, true); Call(f.Manager, "Store");
+        f.Manager.Release(f.Pos); f.Manager.Dispose();
+        var restored = new Fixture { Saved = f.Saved }; Call(restored.Manager, "Restore");
+        Assert.False(restored.Manager.IsAsleep(f.Pos)); Assert.Empty(restored.Manager.ColumnsOf(f.Pos));
+    }
+
+    [Fact]
+    public void Shutdown_keeps_sleep_schedule_changed_since_last_save()
+    {
+        var f = new Fixture(); Call(f.Manager, "Restore");
+        f.Manager.Sleep(f.Pos, new[] { 0L, 1L }, 42, true);
+        f.Manager.Dispose();
+        Assert.NotNull(f.Saved);
+        var restored = new Fixture { Saved = f.Saved }; Call(restored.Manager, "Restore");
+        Assert.True(restored.Manager.IsAsleep(f.Pos));
+        Assert.Equal(42, restored.Manager.WakesAt(f.Pos));
+    }
+
+    [Fact]
+    public void Shutdown_before_restore_does_not_replace_saved_anchors()
+    {
+        var original = new byte[] { 1, 2, 3 };
+        var f = new Fixture { Saved = original }; f.Manager.Dispose();
+        Assert.Same(original, f.Saved);
+    }
+
+    [Fact]
     public void Loaded_sleeping_anchor_stays_asleep_and_wakes_with_a_new_window()
     {
         var f = new Fixture();
@@ -109,7 +180,7 @@ public class AnchorLifecycleTests
     [Fact]
     public void Sleeping_selection_and_schedule_survive_save_restore()
     {
-        var f = new Fixture(); f.Manager.Sleep(f.Pos, new[] { 0L, 1L }, 42, true);
+        var f = new Fixture(); Call(f.Manager, "Restore"); f.Manager.Sleep(f.Pos, new[] { 0L, 1L }, 42, true);
         Call(f.Manager, "Store");
         var restored = new Fixture { Saved = f.Saved };
         Call(restored.Manager, "Restore");
@@ -331,6 +402,7 @@ public class AnchorLifecycleTests
     public class Fixture
     {
         public double Now;
+        public bool HoldRunPhase;
         public byte[] Saved;
         public BlockPos Pos = new(0, 1, 0);
         public Probe Entity;
@@ -366,7 +438,7 @@ public class AnchorLifecycleTests
                     case "GetModSystem": return m.GetGenericArguments()[0] == typeof(ChunkAnchors) ? Manager : m.GetGenericArguments()[0] == typeof(SignalNetworkMod) ? Signals : null;
                     case "StoreData": Saved = (byte[])a[1]; return null;
                     case "GetData": return Saved;
-                    case "ServerRunPhase": ((Action)a[1])(); return null;
+                    case "ServerRunPhase": if (!HoldRunPhase) ((Action)a[1])(); return null;
                 }
                 return Proxy.Unhandled;
             }

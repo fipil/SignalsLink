@@ -106,7 +106,10 @@ public class HangingLinksRenderer : IRenderer
         {
             if(!changedChunks.TryRemove(change.Key,out bool loaded)) continue;
             var key=change.Key;
-            var cell=new LinkSpatialIndex.Cell(key.X,key.Y,key.Z,Player.Pos.Dimension);
+            // Chunk events use InternalY: the dimension is encoded in Y, independent of
+            // where the player currently stands (events can arrive during a dimension switch).
+            const int dimensionHeight = BlockPos.DimensionBoundary / 32;
+            var cell=new LinkSpatialIndex.Cell(key.X,key.Y % dimensionHeight,key.Z,key.Y / dimensionHeight);
             bool touched=false;
             foreach(var c in spatial.In(cell)) { Enqueue(c); touched=true; }
             if(touched && loaded) routes.InvalidateRoutes();

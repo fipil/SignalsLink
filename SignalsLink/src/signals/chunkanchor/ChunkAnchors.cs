@@ -58,6 +58,7 @@ namespace SignalsLink.src.signals.chunkanchor
         private string LogLocation(BlockPos pos) => AnchorDisplay.Location(NameAt(pos), pos);
 
         private ICoreServerAPI sapi;
+        private bool worldRestored;
         private AnchorColumnJobs jobs;
         private SignalNetworkMod signals;
         private HangingWiresMod wires;
@@ -220,6 +221,10 @@ namespace SignalsLink.src.signals.chunkanchor
         {
             if (sapi != null)
             {
+                // Mods are disposed before VS performs its final world save.
+                // Save the latest claims/sleepers before detaching that callback.
+                Store();
+                worldRestored = false;
                 foreach (long listener in listeners) sapi.Event.UnregisterGameTickListener(listener);
                 sapi.Event.SaveGameLoaded -= Restore;
                 sapi.Event.GameWorldSave -= Store;
@@ -714,6 +719,9 @@ namespace SignalsLink.src.signals.chunkanchor
 
         private void Store()
         {
+            // Nothing was read in yet, or it could not be: what is saved must not be written over.
+            if (!worldRestored) return;
+
             using MemoryStream buffer = new MemoryStream();
             using BinaryWriter writer = new BinaryWriter(buffer);
 
@@ -758,7 +766,7 @@ namespace SignalsLink.src.signals.chunkanchor
         private void Restore()
         {
             byte[] data = sapi.WorldManager.SaveGame.GetData(SaveKey);
-            if (data == null || data.Length == 0) return;
+            if (data == null || data.Length == 0) { worldRestored = true; return; }
 
             using MemoryStream buffer = new MemoryStream(data);
             using BinaryReader reader = new BinaryReader(buffer);
@@ -768,6 +776,15 @@ namespace SignalsLink.src.signals.chunkanchor
             try
             {
                 int first = reader.ReadInt32();
+
+                // Formats count downwards. An older mod must not read a newer one as "minus five
+                // anchors", load nothing and then save that over the real list.
+                if (first < ArrivalFormat)
+                {
+                    sapi.Logger.Error("[SignalsLink] the saved chunk anchors were written by a newer version of SignalsLink (format " + first
+                        + "). They are not loaded and will not be saved over; update the mod to get them back.");
+                    return;
+                }
 
                 saved = first switch
                 {
@@ -780,8 +797,8 @@ namespace SignalsLink.src.signals.chunkanchor
             }
             catch (EndOfStreamException)
             {
-                // Half a record is worth nothing, and throwing here would stop the world loading.
-                sapi.Logger.Warning("[SignalsLink] the saved chunk anchors are cut short; what could be read is kept.");
+                // Throwing here would stop the world loading. Left unrestored, so it is not saved over.
+                sapi.Logger.Error("[SignalsLink] the saved chunk anchors are cut short and were not loaded. The saved data is left untouched.");
                 return;
             }
 
@@ -791,6 +808,7 @@ namespace SignalsLink.src.signals.chunkanchor
             {
                 foreach ((BlockPos pos, HashSet<long> columns) in saved) SetColumns(pos, columns);
                 RebuildWakeInputs();
+                worldRestored = true;
             });
         }
 

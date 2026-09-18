@@ -23,6 +23,9 @@
     <Reference Include="protobuf-net">
       <HintPath>..\..\..\..\..\VintageStory\1.22\Lib\protobuf-net.dll</HintPath>
     </Reference>
+    <Reference Include="0Harmony">
+      <HintPath>..\..\..\..\..\VintageStory\1.22\Lib\0Harmony.dll</HintPath>
+    </Reference>
     <Reference Include="signals">
       <HintPath>..\dependencies\signals.dll</HintPath>
     </Reference>

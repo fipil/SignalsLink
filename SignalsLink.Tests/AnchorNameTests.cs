@@ -29,6 +29,7 @@ public class AnchorNameTests
     public void Scheduler_keeps_name_across_restart_without_loading_block(bool sleeping)
     {
         var f = new Fixture();
+        Call(f.Manager, "Restore");
         f.Manager.SetName(f.Pos, "Lom");
         if (sleeping) f.Manager.Sleep(f.Pos, new[] { 0L }, 26.5, false);
         else f.Manager.SetColumns(f.Pos, new[] { 0L });
