@@ -22,6 +22,8 @@ namespace SignalsLink.src.signals.managedchute.transporting
 
         public override bool UsesAmountAsTriggerOnly => true;
 
+        protected override IInventory TargetInventory => targetInv;
+
         protected override bool AllowsLiquidContainers => true;
 
         protected override void AddConditionContext(IDictionary<string, object> ctx)

@@ -36,6 +36,9 @@ namespace SignalsLink.src.signals.managedchute.transporting
 
         protected virtual bool AllowsLiquidContainers => false;
 
+        /// <summary>The inventory goods arrive in, when there is one.</summary>
+        protected virtual IInventory TargetInventory => null;
+
         private bool executingSelection;
         private TransferSelection currentSelection;
         protected PaperConditionDirectives ActiveDirectives => currentSelection?.Directives ?? PaperConditionDirectives.Empty;
@@ -80,7 +83,12 @@ namespace SignalsLink.src.signals.managedchute.transporting
             try
             {
                 var result = move();
-                if (result.Success) RunActionsAfterTransfer();
+                if (result.Success)
+                {
+                    RunActionsAfterTransfer();
+                    DisplayRefresh.After(api, sourceInv);
+                    DisplayRefresh.After(api, TargetInventory);
+                }
                 return result;
             }
             finally { executingSelection = false; currentSelection = null; actingBlock = null; }

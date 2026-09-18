@@ -38,6 +38,16 @@ namespace SignalsLink.src.signals.managedchute.transporting
         /// </summary>
         public TransferOperationResult TryMove(ItemStackMoveOperation opTemplate)
         {
+            TransferOperationResult result = RunPass(opTemplate);
+
+            // Picked up off the ground into a shelf or a rack: it has to be drawn there.
+            if (result.Success) DisplayRefresh.After(api, targetInv);
+
+            return result;
+        }
+
+        private TransferOperationResult RunPass(ItemStackMoveOperation opTemplate)
+        {
             defaultQuantity = Math.Max(1, opTemplate.RequestedQuantity);
             IReadOnlyList<ConditionBlock> blocks = conditionsEvaluator?.GetBlocks();
 
