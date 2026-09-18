@@ -171,7 +171,7 @@
   "signalslink:chunkanchor-dialogtitle": "Якорь чанков",
   "signalslink:chunkanchor-free": "Ничего не поддерживает — колесо не расходуется",
   "signalslink:chunkanchor-off": "Выключена — ничего не поддерживает и ничего не стоит.",
-  "signalslink:chunkanchor-calculating": "Расчёт расхода колёс...",
+  "signalslink:chunkanchor-calculating": "Рассчитываю расход колёсиков...",
   "signalslink:chunkanchor-price": "Удерживаемые столбцы: {0} из {1}",
   "signalslink:chunkanchor-rate": "Одного колеса хватает на {0} дней",
   "signalslink:chunkanchor-slotlabel": "Запасная шестерёнка",

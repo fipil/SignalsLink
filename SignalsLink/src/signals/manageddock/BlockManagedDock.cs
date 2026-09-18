@@ -27,9 +27,11 @@ namespace SignalsLink.src.signals.manageddock
         {
             if (!base.TryPlaceBlock(world, byPlayer, itemstack, blockSel, ref failureCode)) return false;
 
-            if (Turning && world.BlockAccessor.GetBlockEntity(blockSel.Position) is BEManagedDock dock)
+            if (byPlayer?.Entity != null && world.BlockAccessor.GetBlockEntity(blockSel.Position) is BEManagedDock dock)
             {
-                dock.MeshAngle = AngleTowardsPlayer(byPlayer);
+                dock.MeshAngle = AngleTowards(
+                    byPlayer.Entity.Pos.X - (blockSel.Position.X + 0.5),
+                    byPlayer.Entity.Pos.Z - (blockSel.Position.Z + 0.5));
                 dock.MarkDirty(true);
             }
 
@@ -37,33 +39,16 @@ namespace SignalsLink.src.signals.manageddock
         }
 
         /// <summary>
-        /// TODO: turn this back on once Signals is fixed.
+        /// How far to turn the crate so its working face - north as the shape is drawn, the one
+        /// carrying the anchors - looks at somebody standing (dx, dz) from its middle.
         ///
-        /// The crate itself turns fine, and so do its selection boxes - but a wire still attaches
-        /// where the anchor would be on an UNTURNED crate, and it is wrong even at a quarter turn.
-        /// Signals does not take the anchor position from what
-        /// <see cref="GetSelectionBoxes"/> returns; it reads its own from the block's attributes,
-        /// which is why turning the boxes here only looks like a fix.
-        ///
-        /// Two things are needed upstream: <c>GetAnchorPosInBlock(NodePos)</c> has to stop being
-        /// sealed, and the node positions have to come from the same place as the boxes. Until
-        /// then the crate is set down facing north and cannot be turned - which is ugly, but a
-        /// wire that ends in mid-air is worse.
+        /// From where they stand rather than which way they look, as the vanilla chest does it.
+        /// Snapped to <see cref="Steps"/> positions: free enough to stand at an angle on a
+        /// platform, tidy enough not to look dropped.
         /// </summary>
-        public const bool Turning = false;
-
-        /// <summary>
-        /// How far to turn the crate so its working corner - the one carrying the anchors - faces
-        /// whoever put it down. Reaching round the back of a crate to plug a wire in is a poor joke.
-        ///
-        /// Snapped to <see cref="Steps"/> positions round the circle, the way a vanilla crate is:
-        /// free enough to stand at an angle on a platform, tidy enough not to look dropped.
-        /// </summary>
-        public static float AngleTowardsPlayer(IPlayer byPlayer)
+        public static float AngleTowards(double dx, double dz)
         {
-            float yaw = byPlayer?.Entity?.Pos.Yaw ?? 0;
-
-            return Snap(yaw);
+            return Snap((float)Math.Atan2(dx, dz) + GameMath.PI);
         }
 
         /// <summary>Positions round the full circle. 16 is one every 22.5 degrees.</summary>
@@ -86,47 +71,61 @@ namespace SignalsLink.src.signals.manageddock
         /// </summary>
         public override Cuboidf[] GetSelectionBoxes(IBlockAccessor blockAccessor, BlockPos pos)
         {
-            return Turned(base.GetSelectionBoxes(blockAccessor, pos), blockAccessor, pos);
-        }
+            Cuboidf[] boxes = base.GetSelectionBoxes(blockAccessor, pos);
 
-        public override Cuboidf[] GetCollisionBoxes(IBlockAccessor blockAccessor, BlockPos pos)
-        {
-            return Turned(base.GetCollisionBoxes(blockAccessor, pos), blockAccessor, pos);
-        }
-
-        private static Cuboidf[] Turned(Cuboidf[] boxes, IBlockAccessor blockAccessor, BlockPos pos)
-        {
-            if (!Turning || boxes == null || boxes.Length == 0) return boxes;
+            if (boxes == null || boxes.Length == 0) return boxes;
             if (blockAccessor.GetBlockEntity(pos) is not BEManagedDock dock || dock.MeshAngle == 0) return boxes;
 
-            float degrees = dock.MeshAngle * GameMath.RAD2DEG;
+            return TurnedAnchors(boxes, wireAnchors?.Length ?? 0, dock.MeshAngle);
+        }
+
+        /// <summary>
+        /// Only the anchors turn; they come first in the list. The body stays as the blocktype
+        /// says, and so does collision: turned at an odd angle the body box swells out of the
+        /// block, and the game then lets you walk through it.
+        /// </summary>
+        public static Cuboidf[] TurnedAnchors(Cuboidf[] boxes, int anchors, float radians)
+        {
             Cuboidf[] turned = new Cuboidf[boxes.Length];
 
             for (int i = 0; i < boxes.Length; i++)
             {
-                turned[i] = boxes[i].RotatedCopy(0, degrees, 0, Centre);
+                turned[i] = i < anchors ? TurnedBox(boxes[i], radians) : boxes[i];
             }
 
             return turned;
         }
 
+        /// <summary>One box turned about the middle of the block, level - the way the mesh is.</summary>
+        public static Cuboidf TurnedBox(Cuboidf box, float radians)
+        {
+            return box.RotatedCopy(0, radians * GameMath.RAD2DEG, 0, Centre);
+        }
+
         /// <summary>
-        /// One point turned about the middle of the block, level.
-        ///
-        /// Not wired up to where a wire ENDS: <c>BlockConnection.GetAnchorPosInBlock(NodePos)</c> is
-        /// sealed in Signals, so hiding it with `new` would compile and never be called. Until that
-        /// one word changes upstream, a dock standing at an angle draws its wire to the unturned
-        /// spot - the box you click is right, the line is a little off.
+        /// Where a wire ends. Signals asks the block, which knows nothing of an angle, so the
+        /// crate standing there is asked for it. Needs a Signals where this is virtual: the
+        /// released 0.3.1 is not, and this class will not even load against it.
+        /// </summary>
+        public override Vec3f GetAnchorPosInBlock(NodePos pos)
+        {
+            Vec3f unturned = base.GetAnchorPosInBlock(pos);
+
+            if (pos?.blockPos == null) return unturned;
+            if (api?.World?.BlockAccessor.GetBlockEntity(pos.blockPos) is not BEManagedDock dock || dock.MeshAngle == 0) return unturned;
+
+            return TurnedAround(unturned, dock.MeshAngle);
+        }
+
+        /// <summary>
+        /// One point turned exactly as <see cref="TurnedBox"/> turns a box, because it IS one: the
+        /// end of the wire and the box that was clicked must not be able to part company.
         /// </summary>
         public static Vec3f TurnedAround(Vec3f point, float radians)
         {
-            float sin = GameMath.Sin(radians);
-            float cos = GameMath.Cos(radians);
+            Cuboidf turned = TurnedBox(new Cuboidf(point.X, point.Y, point.Z, point.X, point.Y, point.Z), radians);
 
-            float x = point.X - 0.5f;
-            float z = point.Z - 0.5f;
-
-            return new Vec3f(0.5f + x * cos - z * sin, point.Y, 0.5f + x * sin + z * cos);
+            return new Vec3f(turned.MidX, turned.MidY, turned.MidZ);
         }
 
         private static readonly Vec3d Centre = new Vec3d(0.5, 0.5, 0.5);

@@ -49,12 +49,14 @@ namespace SignalsLink.Tests
         // ---------------------------------------------------------------- the anchors follow
 
         [Fact]
-        public void A_point_on_the_north_face_swings_round_to_the_east()
+        public void A_point_on_the_north_face_swings_round_to_the_west()
         {
-            // A quarter turn: the anchors sit on one face and have to arrive on the next.
+            // A quarter turn: the anchors sit on one face and have to arrive on the next. WEST,
+            // because that is the way the engine turns a mesh and a box by a positive angle. This
+            // said east while turning was switched off and nothing could show it was the mirror.
             Vec3f turned = BlockManagedDock.TurnedAround(new Vec3f(0.5f, 0.9f, 0.1f), GameMath.PIHALF);
 
-            Assert.Equal(0.9f, turned.X, 4);
+            Assert.Equal(0.1f, turned.X, 4);
             Assert.Equal(0.9f, turned.Y, 4);
             Assert.Equal(0.5f, turned.Z, 4);
         }
@@ -76,6 +78,67 @@ namespace SignalsLink.Tests
 
             Assert.Equal(point.X, turned.X, 5);
             Assert.Equal(point.Z, turned.Z, 5);
+        }
+
+        [Fact]
+        public void A_wire_ends_in_the_middle_of_the_box_that_was_clicked()
+        {
+            // The one thing that must not drift apart: Signals asks for the box and for the end
+            // of the wire separately. The two anchors as the blocktype draws them.
+            Cuboidf[] anchors =
+            {
+                new Cuboidf(0.3125f, 0.84375f, 0.0625f, 0.4375f, 0.96875f, 0.1875f),
+                new Cuboidf(0.5625f, 0.84375f, 0.0625f, 0.6875f, 0.96875f, 0.1875f),
+            };
+
+            foreach (Cuboidf anchor in anchors)
+            for (int i = 0; i < BlockManagedDock.Steps; i++)
+            {
+                float angle = i * GameMath.TWOPI / BlockManagedDock.Steps;
+
+                Cuboidf box = BlockManagedDock.TurnedBox(anchor, angle);
+                Vec3f end = BlockManagedDock.TurnedAround(new Vec3f(anchor.MidX, anchor.MidY, anchor.MidZ), angle);
+
+                Assert.Equal(box.MidX, end.X, 4);
+                Assert.Equal(box.MidY, end.Y, 4);
+                Assert.Equal(box.MidZ, end.Z, 4);
+            }
+        }
+
+        [Fact]
+        public void Only_the_anchors_turn_and_the_body_stays()
+        {
+            // Found in game: a body box turned to an odd angle swells out of the block, and the
+            // crate could be walked through.
+            Cuboidf anchor = new Cuboidf(0.3125f, 0.84375f, 0.0625f, 0.4375f, 0.96875f, 0.1875f);
+            Cuboidf body = new Cuboidf(0, 0, 0, 1, 0.8125f, 1);
+
+            Cuboidf[] turned = BlockManagedDock.TurnedAnchors(new[] { anchor, body }, 1, GameMath.TWOPI / 16 * 3);
+
+            Assert.Same(body, turned[1]);
+            Assert.NotEqual(anchor.MidX, turned[0].MidX, 3);
+        }
+
+        [Theory]
+        [InlineData(0, -3)]    // north of the crate
+        [InlineData(3, 0)]     // east
+        [InlineData(0, 3)]     // south
+        [InlineData(-3, 0)]    // west
+        [InlineData(2, 2)]
+        [InlineData(-2, 2)]
+        [InlineData(-2, -2)]
+        [InlineData(2, -2)]
+        [InlineData(3, 1)]     // off the sixteen positions: near enough is near enough
+        public void The_anchors_face_whoever_set_it_down(double dx, double dz)
+        {
+            // The middle of the working face, north as the shape is drawn.
+            Vec3f face = BlockManagedDock.TurnedAround(new Vec3f(0.5f, 0.9f, 0.1f), BlockManagedDock.AngleTowards(dx, dz));
+
+            double length = System.Math.Sqrt(dx * dx + dz * dz);
+            double towards = ((face.X - 0.5) * dx + (face.Z - 0.5) * dz) / (0.4 * length);
+
+            // 1 is dead on; a sixteenth of a circle either way still looks at them.
+            Assert.True(towards > 0.95, "cos of the angle between the face and the player was " + towards);
         }
 
         [Fact]

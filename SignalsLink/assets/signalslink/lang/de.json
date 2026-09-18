@@ -171,7 +171,7 @@
   "signalslink:chunkanchor-dialogtitle": "Chunk Anchor",
   "signalslink:chunkanchor-free": "Holding nothing — wheel is not consumed",
   "signalslink:chunkanchor-off": "Disabled — holds nothing and costs nothing.",
-  "signalslink:chunkanchor-calculating": "Verbrauch der Räder wird berechnet...",
+  "signalslink:chunkanchor-calculating": "Berechne den Verbrauch der Zahnräder...",
   "signalslink:chunkanchor-price": "Gehaltene Säulen: {0} von {1}",
   "signalslink:chunkanchor-rate": "One wheel lasts {0} days",
   "signalslink:chunkanchor-slotlabel": "Ersatz-Zahnrad",

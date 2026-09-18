@@ -722,9 +722,7 @@ namespace SignalsLink.src.signals.manageddock
             tesselator.TesselateBlock(Block, out MeshData mesh);
             if (mesh == null) return false;
 
-            // Drawn unturned while turning is off, so a crate set down before it was switched off
-            // does not stand at an angle with its wires running to the wrong corner.
-            mesher.AddMeshData(BlockManagedDock.Turning ? mesh.Rotate(Origin, 0, MeshAngle, 0) : mesh);
+            mesher.AddMeshData(MeshAngle == 0 ? mesh : mesh.Rotate(Origin, 0, MeshAngle, 0));
 
             return true;
         }
