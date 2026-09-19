@@ -18,7 +18,11 @@
     <br><br>
     Pro přepravu kapalin slouží <a href="handbook://block-signalslink:hosevalve-north-down">Řízený ventil</a>. Připojte jej <a href="handbook://item-signalslink:hose">hadicí</a> k druhému ventilu nebo k <a href="handbook://block-signalslink:hoseintake">sání</a> ve vodě; delší vedení sestavíte pomocí <a href="handbook://block-signalslink:hosecoupling-north-down">hadicových spojek</a>.
     <br><br>
+    Nakládání a vykládání obstará <a href="handbook://block-signalslink:manageddock-oak">Překladiště</a>. Je to bedna, která sama najde, co vedle ní stojí — loď, soumara, a s příslušným doplňkem i vlak — a přeloží zboží tam, kam mu papír řekne. Zboží může skládat i na <a href="handbook://block-signalslink:yardtileplank-oak">skladovou plochu</a>: souvislou dlažbu, se kterou pracuje jako s jedním skladem a kterou pojmenujete <a href="handbook://block-signalslink:yardsign-north">cedulí skladové plochy</a>.
+    <br><br>
     Oheň na dálku zapálí <a href="handbook://block-signalslink:igniter-fwd-north-down">Zapalovač</a>. Signálem vystřelí dávku jisker a zapálí, na co míří, takže dokáže roztopit ohniště, aniž byste u toho stáli.
+    <br><br>
+    Aby odlehlá továrna běžela, i když u ní nikdo není, postavte k ní <a href="handbook://block-signalslink:chunkanchor-off-north">Kotvu chunků</a>. Drží vybraný kousek světa načtený, platí za to temporálními kolečky podle toho, kolik toho drží při životě, a mezi směnami umí spát, aby kolečka šetřila.
     <br><br>
     Chování všech těchto zařízení řídíte <a href="handbook://signalslink:usageinfo-paperconditions">Podmínkami na papíře</a>, které jsou pro všechna společné.
 </translation>
@@ -139,6 +143,7 @@
     <font size="20" color="6082B6">Základní princip</font><br>
     Jeden odstavec na pergamenu tvoří jeden blok. Bloky oddělte jedním nebo více prázdnými řádky. Řádky začínající <strong>#</strong> nebo <strong>//</strong> jsou komentáře a ignorují se.<br>
     Všechny podmínky v jednom bloku musí platit zároveň (AND). Bloky se procházejí shora dolů.<br>
+    <strong>Sekce s hlavičkou.</strong> Zařízení, které má dva vlastní konce — zatím je to <a href="handbook://block-signalslink:manageddock-oak">Překladiště</a> — dělí papír na <strong>sekce</strong>. Hlavička na vlastním odstavci, například <strong>load yard</strong> nebo <strong>from yard to boat</strong>, říká, odkud kam zboží jde, a platí pro všechny bloky pod sebou až do další hlavičky. Jak se hlavičky píší a co všechno umí pojmenovat, je popsáno u Překladiště. Ostatní zařízení mají zdroj i cíl dané tím, kde stojí, a hlavičky nepoužívají.<br>
     <strong>Pozor na AND.</strong> Dvě podmínky na stejný kód se nepřebíjejí, musí platit obě. To je užitečné: <strong>game:planks 5+</strong> a <strong>game:planks 20-</strong> v jednom bloku znamená mezi pěti a dvaceti. Znamená to ale také, že jediný nesplnitelný řádek zabije celý blok. Klasickým případem je <strong>game:planks *</strong> s mezerou: vypadá to jako prkna v libovolném množství, ale je to vzor pro kód, který obsahuje mezeru, a takový neexistuje. Na tohle vás papír upozorní, viz Chyby v papíru níže.<br><br>
     <font size="20" color="6082B6">Jak se papír vyhodnocuje</font><br>
     Jeden průchod shora dolů, který dělá <strong>dvě věci zároveň</strong>: určuje hodnotu Výstupu a provádí akci, tedy přenos nebo <strong>do seal</strong>.<br>
@@ -330,7 +335,7 @@
     Plocha musí mít <strong>aspoň 4 dlaždice</strong> a nejvýše <strong>400</strong>. Když se strop překročí, plocha se považuje za neplatnou a napíše se to — nic se neusekne v půlce.<br>
     Dvě plochy, které se někde dotknou, se slijí v jednu. Pokud chcete dvě oddělené, nechte mezi nimi mezeru.<br><br>
     <font size="20" color="6082B6">Jak poznáte, co jste postavili</font><br>
-    Po vnějším okraji plochy se na horní straně zesvětlí pruh, takže je vidět, kam plocha sahá.<br>
+    Po vnějším okraji plochy vede <strong>zvýšený obrubník</strong>, takže je vidět, kam plocha sahá. Mezi sousedními dlaždicemi obrubník není, a když plochu rozšíříte, posune se na nový okraj sám.<br>
     Když se na dlaždici podíváte, v informačním okně stojí, kolik dlaždic plocha má. To číslo je důležité — hned podle něj poznáte, že se vám dvě plochy omylem slily v jednu.<br><br>
     <font size="20" color="6082B6">Pojmenování</font><br>
     Postavte na plochu <a href="handbook://block-signalslink:yardsign-north">ceduli skladové plochy</a> a napište na ni jméno. Plocha se pak dá vybírat jménem, což se hodí, když jich máte na nádraží víc vedle sebe.<br><br>
