@@ -244,9 +244,40 @@ namespace SignalsLink.src.signals.chunkanchor
 
         public override bool ShouldLoad(EnumAppSide forSide) => forSide == EnumAppSide.Server;
 
+        /// <summary>Why anchors do nothing on this server, or empty when they work. See AnchorGate.</summary>
+        public string DisabledReason { get; private set; } = AnchorGate.Open;
+
+        public bool Disabled => DisabledReason.Length > 0;
+
         public override void StartServerSide(ICoreServerAPI api)
         {
             sapi = api;
+
+            SignalsLinkConfig config = SignalsLinkConfigLoader.Current;
+            DisabledReason = AnchorGate.Reason(config.AnchorsEnabled,
+                api.ModLoader.IsModEnabled(AnchorGate.TrainMod), api.ModLoader.IsModEnabled(AnchorGate.TrainBridge),
+                config.AnchorAllowWithoutTrainBridge);
+
+            if (Disabled)
+            {
+                // Nothing is restored, so nothing is saved over: what the anchors held comes back
+                // untouched once the reason is gone.
+                if (DisabledReason == AnchorGate.ByAdmin)
+                {
+                    api.Logger.Notification("[SignalsLink] chunk anchors are switched off in " + SignalsLinkConfigLoader.FileName
+                        + " (AnchorsEnabled). Placed anchors hold nothing and keep their settings.");
+                }
+                else
+                {
+                    api.Logger.Error("[SignalsLink] Yang's Transport Tycoon is installed without the Signals Link YTT bridge, so chunk "
+                        + "anchors are switched off: an anchor can leave a train half loaded, and that train then gets stuck. "
+                        + "Install SignalsLink.YTT. Placed anchors hold nothing until then and keep their settings. "
+                        + "(AnchorAllowWithoutTrainBridge in " + SignalsLinkConfigLoader.FileName + " overrides this at your own risk.)");
+                }
+
+                return;
+            }
+
             // VS 1.22 UnloadChunkColumn discards dirty chunks. Unpin only, then let the
             // ordinary unload system save them and respect players and normal chunk lifetime.
             var server = api.World as ServerMain
@@ -465,7 +496,7 @@ namespace SignalsLink.src.signals.chunkanchor
         /// <summary>Lets everything go, but remembers it, and comes back for it at the given hour.</summary>
         public void Sleep(BlockPos pos, IEnumerable<long> columns, double wakeAtHours, bool onPlayerJoin, bool onArrival = false)
         {
-            if (sapi == null || pos == null) return;
+            if (sapi == null || pos == null || Disabled) return;
 
             HashSet<long> wanted = new HashSet<long>(columns ?? System.Array.Empty<long>());
 
@@ -509,9 +540,10 @@ namespace SignalsLink.src.signals.chunkanchor
         }
 
         /// <summary>Brings it back now - what a signal on the input pin amounts to.</summary>
-        public void WakeNow(BlockPos pos) => QueueWake(pos, "a signal");
+        public void WakeNow(BlockPos pos) { if (!Disabled) QueueWake(pos, "a signal"); }
         public void UpdateSleep(BlockPos pos, IEnumerable<long> columns, double when, bool onJoin, bool onArrival = false)
         {
+            if (Disabled) return;
             if (sleeping.TryGetValue(pos, out var one))
             {
                 sleeping[pos.Copy()] = new Sleeper { Columns = new HashSet<long>(columns), WakeAtHours = when, OnPlayerJoin = onJoin, OnArrival = onArrival };
@@ -619,7 +651,7 @@ namespace SignalsLink.src.signals.chunkanchor
         /// </summary>
         public void SetColumns(BlockPos pos, IEnumerable<long> wanted)
         {
-            if (sapi == null || pos == null) return;
+            if (sapi == null || pos == null || Disabled) return;
 
             (int cx, int cz) = ColumnAt(pos);
 
@@ -666,7 +698,8 @@ namespace SignalsLink.src.signals.chunkanchor
 
         public void Release(BlockPos pos)
         {
-            if (pos == null) return;
+            // Switched off: nothing is held, and the saved list is not this server's to change.
+            if (pos == null || Disabled) return;
             sleeping.Remove(pos);
             wakeInputs.Remove(pos);
             wakeQueued.Remove(pos);

@@ -364,7 +364,10 @@
     <font size="20" color="6082B6">Vlaky</font><br>
     Je-li ve hře mod s vlaky, přibude přepínač <strong>Probudit, když se blíží vlak</strong>: spící kotva se probudí, jakmile k její stanici míří vlak, a neusne, dokud nedojede. Chunky se tak načtou dřív, než vlak přijede, a vlak se u stanice zhmotní.<br>
     <strong>Výběr sloupců musí pokrýt celý stojící vlak, ne jen stanici.</strong> Vlak se zhmotní jen tehdy, když jsou načtené chunky pod všemi jeho vozy; vlak, který se do držených sloupců nevejde, projede stanici v simulaci a nic nevyloží. Třívozová souprava obvykle potřebuje dva sloupce, když stanice leží u hranice chunku, i tři. Když se to stane, kotva to napíše do serverového logu.<br>
-    Kotva nikdy nerozdělí stojící vlak: drží navíc i sloupce, do kterých jeho vozy zasahují, dokud neodjede — účtují se jako každý jiný držený sloupec — a dokud na jejím území vlak stojí, neusne.<br><br>
+    Kotva nikdy nerozdělí stojící vlak: drží navíc i sloupce, do kterých jeho vozy zasahují, dokud neodjede — účtují se jako každý jiný držený sloupec — a dokud na jejím území vlak stojí, neusne.<br>
+    O držení vlaku pohromadě se stará mod <strong>SignalsLink.YTT</strong>. Je-li na serveru Yang's Transport Tycoon bez něj, kotvy se <strong>samy vypnou</strong>: kotva by mohla nechat vlak napůl načtený a ten by uvízl. Místo ovládání pak kotva ukazuje, co doinstalovat; její nastavení zůstává uložené a po instalaci se samo obnoví.<br><br>
+    <font size="20" color="6082B6">Vypnutí správcem</font><br>
+    Správce serveru může kotvy zakázat úplně volbou <strong>AnchorsEnabled</strong> v souboru signalslink.json. Kotva pak nic nedrží, nic nestojí a říká, že ji zakázal administrátor. Nastavení všech kotev zůstává uložené, takže po povolení pokračují tam, kde skončily.<br><br>
     <font size="20" color="6082B6">Konektory</font><br>
     <strong>Vstup</strong> — signál na něm brání usnutí.<br>
     <strong>Výstup</strong> — hlásí stav kolečka od 0 do 15. Hodí se na kontrolku, nebo na žlab, který kotvě doplní kolečko, jakmile jí dochází.

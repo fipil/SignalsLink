@@ -78,6 +78,24 @@ namespace SignalsLink.src
 
         public int AnchorApproachBlocks = 160;
 
+        [JsonProperty("AnchorsEnabled-description")]
+        public string AnchorsEnabledDescription =
+            "Set to false to switch chunk anchors off on this server altogether. Placed anchors "
+            + "then hold nothing and cost nothing, and tell the player the server owner has "
+            + "switched them off. Their settings are kept, so setting this back to true brings "
+            + "every anchor back as it was.";
+
+        public bool AnchorsEnabled = true;
+
+        [JsonProperty("AnchorAllowWithoutTrainBridge-description")]
+        public string AnchorAllowWithoutTrainBridgeDescription =
+            "Chunk anchors switch themselves off when Yang's Transport Tycoon is installed without "
+            + "the Signals Link YTT bridge: an anchor can leave a train half loaded, and that train "
+            + "then gets stuck until the server restarts. The bridge keeps trains whole. Set to true "
+            + "only if no anchor on this server stands anywhere near a track - at your own risk.";
+
+        public bool AnchorAllowWithoutTrainBridge = false;
+
         public bool Validate()
         {
             bool valid = true;

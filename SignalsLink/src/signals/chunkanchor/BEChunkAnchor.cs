@@ -147,6 +147,9 @@ namespace SignalsLink.src.signals.chunkanchor
         /// </summary>
         public string ArrivalSourceLangKey { get; private set; } = "";
 
+        /// <summary>Why this anchor does nothing, or empty. Set on the server, mirrored to the client.</summary>
+        public string DisabledReason { get; private set; } = AnchorGate.Open;
+
         /// <summary>The columns this anchor is set to hold.</summary>
         public IReadOnlyCollection<long> Columns => columns;
 
@@ -168,6 +171,18 @@ namespace SignalsLink.src.signals.chunkanchor
             gearSlot.LateInitialize(InventoryClassName + "-" + Pos, api);
 
             if (api is not ICoreServerAPI) return;
+
+            // Switched off on this server: holds nothing, bills nothing, takes no gear, and leaves
+            // every setting as it was for the day it is switched back on.
+            DisabledReason = Anchors?.DisabledReason ?? AnchorGate.Open;
+            if (DisabledReason.Length > 0)
+            {
+                Alive = false;
+
+                // It has no tick to do this from. A moment later, not while the chunk is coming up.
+                RegisterDelayedCallback(_ => ShowState(), 500);
+                return;
+            }
 
             // A newly placed anchor holds the ground it stands on and nothing else, so that the
             // first thing it costs is nothing and the player goes to the map to decide the rest.
@@ -665,6 +680,16 @@ namespace SignalsLink.src.signals.chunkanchor
 
             // The slot has to be open for the player before its grid will accept anything.
             capi.World.Player.InventoryManager.OpenInventory(gearSlot);
+
+            // Switched off: the reason instead of the controls, and the slot, so a gear left
+            // inside can still be taken out.
+            string why = AnchorGate.LangKey(DisabledReason);
+            if (why != null)
+            {
+                new GuiDialogAnchorDisabled(capi, Pos, Lang.Get(why), gearSlot).TryOpen();
+                return;
+            }
+
             capi.Network.SendBlockEntityPacket(Pos, PacketIdRefreshCensus);
 
             new GuiDialogChunkAnchor(capi, Pos, GlobalConstants.ChunkSize, columns, MapRadius,
@@ -719,6 +744,9 @@ namespace SignalsLink.src.signals.chunkanchor
                 Api.World.BlockAccessor.GetChunkAtBlockPos(Pos)?.MarkModified();
                 return;
             }
+
+            // Switched off: the slot and the closing of the dialog, and nothing that sets anything.
+            if (DisabledReason.Length > 0 && packetid != (int)EnumBlockEntityPacketId.Close) return;
 
             if (packetid == PacketIdSetName)
             {
@@ -834,6 +862,9 @@ namespace SignalsLink.src.signals.chunkanchor
         {
             base.FromTreeAttributes(tree, worldForResolving);
             AnchorName = AnchorDisplay.CleanName(tree.GetString("anchorName", ""));
+
+            // The server's word, never the save's: a reason written last week may be gone today.
+            if (worldForResolving?.Side == EnumAppSide.Client) DisabledReason = tree.GetString("disabledreason", AnchorGate.Open);
             if (Api is ICoreServerAPI) Anchors?.SetName(Pos, AnchorName);
 
             columns.Clear();
@@ -879,6 +910,7 @@ namespace SignalsLink.src.signals.chunkanchor
         {
             base.ToTreeAttributes(tree);
             tree.SetString("anchorName", AnchorName);
+            tree.SetString("disabledreason", DisabledReason);
 
             long[] keys = new long[columns.Count];
             columns.CopyTo(keys);
@@ -922,6 +954,14 @@ namespace SignalsLink.src.signals.chunkanchor
             if (!string.IsNullOrEmpty(AnchorName))
             {
                 sb.AppendLine(AnchorName.Replace("<", "&lt;").Replace(">", "&gt;"));
+            }
+
+            // Switched off: that is all there is to say, and figures would only suggest otherwise.
+            string why = AnchorGate.LangKey(DisabledReason);
+            if (why != null)
+            {
+                sb.AppendLine(Lang.Get(why));
+                return;
             }
 
             sb.AppendLine(Lang.Get("signalslink:chunkanchor-holding", columns.Count));
