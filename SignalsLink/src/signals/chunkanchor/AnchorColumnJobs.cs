@@ -31,6 +31,13 @@ public sealed class AnchorColumnJobs : IDisposable
     public const int StartsPerTick = 2;
     public const int StepsPerTick = 256;
 
+    /// <summary>
+    /// Done every tick whatever the clock says. With the time limit alone a busy server could
+    /// spend its three milliseconds before the first step, tick after tick, and a census would
+    /// never finish. Sixteen steps cost nothing next to that.
+    /// </summary>
+    public const int MinStepsPerTick = 16;
+
     public AnchorColumnJobs(Func<long, bool> ready, Action<long> load, Action<long> release,
         Func<long, IEnumerator<AnchorCount>> scan)
     {
@@ -86,7 +93,8 @@ public sealed class AnchorColumnJobs : IDisposable
             running.Add(new Job { Key = key, Started = seconds });
         }
         int budget = StepsPerTick;
-        for (int i = 0; i < running.Count && budget > 0 && watch.ElapsedMilliseconds < 3;)
+        bool MayGoOn() => budget > 0 && (StepsPerTick - budget < MinStepsPerTick || watch.ElapsedMilliseconds < 3);
+        for (int i = 0; i < running.Count && MayGoOn();)
         {
             Job job = running[i];
             if (!ready(job.Key))
@@ -98,8 +106,9 @@ public sealed class AnchorColumnJobs : IDisposable
             }
             job.Scan ??= scan(job.Key);
             bool finished = false;
-            while (budget-- > 0 && watch.ElapsedMilliseconds < 3)
+            while (MayGoOn())
             {
+                budget--;
                 if (!job.Scan.MoveNext()) { finished = true; break; }
                 job.Count = job.Scan.Current;
             }

@@ -10,7 +10,7 @@ using Vintagestory.Client.NoObf;
 [assembly: ModInfo("Signals Link EP", "signalslinkep",
     Description = "Extends Signals mod with control elements for interacting with the Electrical Progressive mod.",
     Website = "",
-    Version = "0.2.2",
+    Version = "1.0.0",
     Authors = new[] { "fipil" }
 )]
 

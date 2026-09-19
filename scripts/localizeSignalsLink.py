@@ -130,7 +130,7 @@ def seed_cs_from_html():
     if cs_after != cs_before:
         write_json(CS_PATH, cs_after)
 
-    print("Krok 1: v signalslink.html je %d zaznamu, cs.json ma %d klicu." % (len(entries), len(cs_after)))
+    print("Krok 1: v %s je %d zaznamu, cs.json ma %d klicu." % (HTML_PATH.name, len(entries), len(cs_after)))
     return cs_after
 
 
@@ -385,7 +385,7 @@ def main():
     save_state(state)
 
     print("\nHotovo, prelozeno %d klicu celkem. Zkontroluj `git diff` a pak commitni" % total)
-    print("vcetne scripts/localize-state.json.")
+    print("vcetne scripts/%s." % STATE_PATH.name)
     return 0
 
 

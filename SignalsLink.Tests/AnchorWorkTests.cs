@@ -41,6 +41,23 @@ public class AnchorWorkTests
     }
 
     [Fact]
+    public void A_tick_that_ran_out_of_time_before_it_began_still_does_its_minimum()
+    {
+        // Found by the packaging script: right after a build, with everything cold, the three
+        // milliseconds were gone before the first step and the test above counted none. On a
+        // busy server that is every tick, and a census would never finish.
+        int steps = 0;
+        IEnumerable<AnchorCount> Scan()
+        {
+            for (int i = 0; i < 10000; i++) { steps++; yield return new AnchorCount(1, i); }
+        }
+        var jobs = new AnchorColumnJobs(_ => true, _ => System.Threading.Thread.Sleep(20), _ => {}, _ => Scan().GetEnumerator());
+        jobs.Request(1);
+        jobs.Tick(0);
+        Assert.Equal(AnchorColumnJobs.MinStepsPerTick, steps);
+    }
+
+    [Fact]
     public void Preview_releases_its_pin_but_does_not_release_a_retained_column()
     {
         var released = new List<long>();
