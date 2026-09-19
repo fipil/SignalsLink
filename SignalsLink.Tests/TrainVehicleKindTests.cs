@@ -89,6 +89,34 @@ namespace SignalsLink.Tests
             Assert.Equal(7, errors[0].Line);
         }
 
+        [Theory]
+        [InlineData("unload train north")]
+        [InlineData("load train boxcar")]
+        [InlineData("load train fridge 2 south")]
+        [InlineData("load train engine")]
+        [InlineData("load train ice")]
+        [InlineData("unload train boxcar")]
+        [InlineData("from train cart to yard north")]
+        [InlineData("from yard to train")]
+        public void Every_header_shown_in_the_guide_is_one_the_paper_accepts(string header)
+        {
+            // The guide is what players copy from; an example that does not parse is a bug report.
+            Assert.True(ConditionSection.TryParseHeader(header, 1, out ConditionSection section));
+            Assert.True(section.EndsAreComplete);
+
+            foreach (IReadOnlyList<string> end in new[] { section.SourceTokens, section.TargetTokens })
+            {
+                if (end.Count == 0 || end[0] != TrainCargoHolderFinder.KeywordText) continue;
+
+                var errors = new List<PaperConditionError>();
+                List<string> words = new List<string>(end);
+                words.RemoveAt(0);
+
+                Assert.True(new TrainCargoHolderFinder().TryParseHeader(words, new PaperErrorSink(errors), out _));
+                Assert.Empty(errors);
+            }
+        }
+
         // ---------------------------------------------------------------- telling a kind
 
         [Theory]

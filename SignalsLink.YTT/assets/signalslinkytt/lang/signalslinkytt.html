@@ -1,45 +1,57 @@
 <translation key="signalslinkytt:usageinfo-signalslinkytt-text">
     <font size="25"><strong>SignalsLink.YTT</strong></font>
     <br>
-    Propojuje <a href="handbook://block-signalslink:manageddock-oak">Překladiště</a> a <a href="handbook://block-signalslink:chunkanchor-off-north">Kotvu chunků</a> s vlaky z modu Yang's Transport Tycoon.
+    Propojuje <a href="handbook://block-signalslink:manageddock-oak">Překladiště</a> a <a href="handbook://block-signalslink:chunkanchor-off-north">Kotvu chunků</a> s vlaky z modu Yang's Transport Tycoon. Překladiště díky němu umí nakládat a vykládat vlak, který u něj zastaví, a kotva se umí probudit, když se k ní vlak blíží.
     <br><br>
     <font size="20" color="6082B6">Nakládání a vykládání vlaku</font><br>
-    Na papír překladiště napište hlavičku se slovem <strong>train</strong>:<br>
-    <strong>unload train</strong> — z vlaku do bedny překladiště<br>
-    <strong>load train</strong> — z bedny do vlaku<br>
-    <strong>from train to yard</strong> — z vlaku rovnou na <a href="handbook://block-signalslink:yardtileplank-oak">skladovou plochu</a><br>
-    <strong>from yard to train</strong> — ze skladové plochy do vlaku<br>
-    Pod hlavičku pište pravidla jako u jiných zařízení, viz <a href="handbook://signalslink:usageinfo-paperconditions">Podmínky na papíře</a>.<br>
-    Vlak musí <strong>stát</strong>. Hledá se do 12 bloků od překladiště a nakládá se od nejbližšího vozu.
+    Na papír překladiště napište hlavičku se slovem <strong>train</strong>. Hlavička stojí na vlastním řádku a od pravidel pod sebou ji oddělte prázdným řádkem:<br>
+    • <strong>unload train</strong> — z vlaku do bedny překladiště<br>
+    • <strong>load train</strong> — z bedny překladiště do vlaku<br>
+    • <strong>from train to yard</strong> — z vlaku rovnou na <a href="handbook://block-signalslink:yardtileplank-oak">skladovou plochu</a><br>
+    • <strong>from yard to train</strong> — ze skladové plochy rovnou do vlaku<br>
+    Pod hlavičku píšete pravidla stejně jako u ostatních zařízení, viz <a href="handbook://signalslink:usageinfo-paperconditions">Podmínky na papíře</a>. Jak hlavičky fungují obecně, je popsáno u Překladiště.<br>
+    Překladiště čeká, až vlak <strong>zastaví</strong>. Stát musí každý vůz, se kterým pracuje. Vlak se hledá do 12 bloků od překladiště, a když je vozů v dosahu víc, začíná se od nejbližšího.<br>
+    Samotné slovo <strong>train</strong> znamená nákladový prostor všech vozů v dosahu: skříňových i chladicích vozů a důlních vozíků.
+    <br><br>
+    Ukázka papíru se dvěma sekcemi:<br>
+    <strong>unload train boxcar</strong><br>
+    <br>
+    <strong>game:ingot-*</strong><br>
+    <br>
+    <strong>load train engine</strong><br>
+    <br>
+    <strong>game:charcoal</strong><br>
+    <strong>keep 16</strong><br>
+    První sekce vyloží ze skříňových vozů všechny ingoty do bedny. Druhá doplňuje do topeniště dřevěné uhlí a udržuje ho tam 16 kusů.
     <br><br>
     <font size="20" color="6082B6">Upřesnění za slovem train</font><br>
-    Slova můžete kombinovat, na pořadí nezáleží.<br>
-    <strong>north</strong>, <strong>south</strong>, <strong>east</strong>, <strong>west</strong> — jen vlak na té straně. Stačí i <strong>n</strong>, <strong>s</strong>, <strong>e</strong>, <strong>w</strong>.<br>
-    <strong>north5</strong> — jen vlak, který stojí pět bloků na sever. Číslo může být 1 až 12.<br>
-    <strong>2</strong> — jen druhé vozidlo soupravy, počítáno od čela.<br>
-    <strong>boxcar</strong> — jen skříňové vozy.<br>
-    <strong>fridge</strong> — jen chladicí vozy.<br>
-    <strong>cart</strong> — jen důlní vozíky.<br>
-    <strong>fridge 2</strong> — druhý chladicí vůz od čela. S druhem vozu se číslo počítá jen mezi vozy toho druhu.<br>
-    <strong>engine</strong> — palivo a voda parního stroje.<br>
-    <strong>ice</strong> — chladicí sloty chladicího vozu, tedy místo pro led.<br>
-    Bez slova <strong>engine</strong> se do topeniště nic nenakládá. Bez slova <strong>ice</strong> jde led do nákladového prostoru jako každé jiné zboží.
+    Za slovo <strong>train</strong> můžete napsat, kterého vlaku a které jeho části se sekce týká. Slova lze kombinovat a na jejich pořadí nezáleží.<br>
+    • <strong>north</strong>, <strong>south</strong>, <strong>east</strong>, <strong>west</strong> — jen vlak na té straně překladiště. Stačí i <strong>n</strong>, <strong>s</strong>, <strong>e</strong>, <strong>w</strong>.<br>
+    • <strong>north5</strong> — jen vlak, který stojí přesně pět bloků na sever od překladiště. Hodí se tam, kde vedle sebe vede víc kolejí. Číslo může být 1 až 12.<br>
+    • <strong>2</strong> — jen druhé vozidlo soupravy. Počítá se od čela soupravy, čelo má číslo 1.<br>
+    • <strong>boxcar</strong> — jen skříňové vozy.<br>
+    • <strong>fridge</strong> — jen chladicí vozy, a to jejich nákladový prostor.<br>
+    • <strong>cart</strong> — jen důlní vozíky s bednou.<br>
+    • <strong>fridge 2</strong> — druhý chladicí vůz od čela. S druhem vozu se číslo počítá jen mezi vozy toho druhu, takže platí, i když soupravu přeřadíte.<br>
+    • <strong>engine</strong> — palivo a voda parního stroje, u lokomotivy i u parního vozíku. Bez tohoto slova se do topeniště nic nenakládá.<br>
+    • <strong>ice</strong> — chladicí sloty chladicího vozu, tedy místo pro led. Bez tohoto slova jde led do nákladového prostoru jako každé jiné zboží.<br>
+    Slova, která spolu nedávají smysl, třeba <strong>boxcar ice</strong> nebo <strong>engine fridge</strong>, ohlásí papír jako chybu.
     <br><br>
-    <font size="20" color="6082B6">Příklady</font><br>
-    <strong>unload train north</strong><br>
-    <strong>load train boxcar</strong><br>
-    <strong>load train fridge 2 south</strong><br>
-    <strong>load train engine</strong><br>
-    <strong>load train ice</strong>
+    Příklady hlaviček:<br>
+    <strong>unload train north</strong> — vyloží vlak stojící na severu<br>
+    <strong>load train boxcar</strong> — nakládá jen do skříňových vozů<br>
+    <strong>load train fridge 2 south</strong> — do druhého chladicího vozu vlaku na jihu<br>
+    <strong>load train engine</strong> — doplňuje palivo a vodu<br>
+    <strong>load train ice</strong> — doplňuje led do chladicích vozů<br>
+    <strong>from train cart to yard north</strong> — z důlních vozíků rovnou na plochu na severu
     <br><br>
     <font size="20" color="6082B6">Kotva chunků</font><br>
-    V dialogu kotvy přibude přepínač <strong>Probudit, když se blíží vlak</strong>. Spící kotva se pak probudí, jakmile k její stanici míří vlak, i když jede mimo dohled hráčů.<br>
-    Dokud na území kotvy stojí vlak, kotva drží i sloupce pod jeho vozy a neusne.<br>
-    Výběr sloupců má pokrýt <strong>celý stojící vlak</strong>, ne jen stanici.<br>
-    Bez tohoto modu se kotvy na serveru s Yang's Transport Tycoon vypnou.
+    V dialogu kotvy přibude přepínač <strong>Probudit, když se blíží vlak</strong>. Spící kotva se pak probudí, jakmile k její stanici míří vlak, i když jede mimo dohled hráčů, a neusne, dokud vlak nepřijede. Chunky se tak načtou dřív, než vlak dorazí, a ten se ve stanici objeví a může se vyložit.<br>
+    Dokud na území kotvy stojí vlak, kotva drží navíc i sloupce pod jeho vozy a neusne. Tyto sloupce se účtují jako každé jiné.<br>
+    Výběr sloupců má pokrýt <strong>celý stojící vlak</strong>, ne jen budovu stanice. Vlak, který se do držených sloupců nevejde, stanicí jen projede a nic nevyloží.<br>
+    Bez tohoto modu se kotvy na serveru s Yang's Transport Tycoon vypnou a napíší vám proč.
     <br><br>
     <font size="20" color="6082B6">Pro správce serveru</font><br>
-    Při startu mod ověří, že nainstalované verzi Yang's Transport Tycoon rozumí. Když ne, nakládání vlaků vypne a napíše to do logu.<br>
-    Jak daleko před stanicí se kotva budí, určuje volba <strong>AnchorApproachBlocks</strong> v souboru signalslink.json.<br>
-    Příkaz <strong>/slytt dump</strong> vypíše do logu serveru stav všech souprav. S číslem, třeba <strong>/slytt dump 64</strong>, jen těch do tolika bloků od vás.
+    Při startu mod ověří, že nainstalované verzi Yang's Transport Tycoon rozumí. Když ne, nakládání vlaků vypne a napíše to do logu serveru. Ostatní části SignalsLinku běží dál.<br>
+    Jak daleko před stanicí se kotva budí, určuje volba <strong>AnchorApproachBlocks</strong> v souboru signalslink.json. Výchozí hodnota je 160 bloků.
 </translation>
