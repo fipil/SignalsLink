@@ -35,10 +35,25 @@ namespace SignalsLink.YTT.src.probe
         /// <summary>False once something has been found wrong. Nothing is moved after that.</summary>
         public bool Trusted { get; private set; } = true;
 
-        public YttPersistence(ICoreAPI api, Assembly other)
+        private readonly string treeKey;
+        private readonly string standDownNote;
+
+        public YttPersistence(ICoreAPI api, Assembly other, string treeKey = InventoryTreeKey,
+            string standDownNote = "No more goods will be moved to or from trains this session.")
         {
             this.api = api;
             this.other = other;
+            this.treeKey = treeKey;
+            this.standDownNote = standDownNote;
+        }
+
+        /// <summary>
+        /// The same checks for another of the other mod's inventories, with a trust of its own: an
+        /// extra that stops being saved must cost that extra, not every train on the server.
+        /// </summary>
+        public YttPersistence For(string otherTreeKey, string otherStandDownNote)
+        {
+            return new YttPersistence(api, other, otherTreeKey, otherStandDownNote);
         }
 
         /// <summary>Asked once per inventory, before it is ever written to.</summary>
@@ -82,7 +97,7 @@ namespace SignalsLink.YTT.src.probe
         /// <summary>What the vehicle's saved goods look like right now, or null when there is nothing.</summary>
         public string Snapshot(Entity entity)
         {
-            return Describe(entity?.WatchedAttributes?[InventoryTreeKey] as ITreeAttribute);
+            return Describe(entity?.WatchedAttributes?[treeKey] as ITreeAttribute);
         }
 
         /// <summary>
@@ -142,8 +157,7 @@ namespace SignalsLink.YTT.src.probe
         {
             if (Trusted)
             {
-                api.Logger.Error("[SignalsLink.YTT] standing down: " + what
-                    + " No more goods will be moved to or from trains this session.");
+                api.Logger.Error("[SignalsLink.YTT] standing down: " + what + " " + standDownNote);
             }
 
             Trusted = false;

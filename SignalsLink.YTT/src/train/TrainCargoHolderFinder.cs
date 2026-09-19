@@ -29,12 +29,24 @@ namespace SignalsLink.YTT.src.train
         /// <summary>Only the steam engine's own holds - its fuel and its water.</summary>
         public bool EngineOnly { get; }
 
-        public TrainSelector(BlockFacing direction, int? wagonIndex, bool engineOnly, int? distance = null)
+        /// <summary>
+        /// Only vehicles of this kind (see <see cref="TrainVehicleKind"/>), or null for any. With a
+        /// kind, <see cref="WagonIndex"/> counts among vehicles of that kind.
+        /// </summary>
+        public string Kind { get; }
+
+        /// <summary>Only the refrigerant slots of refrigerated wagons - where the ice goes.</summary>
+        public bool IceOnly { get; }
+
+        public TrainSelector(BlockFacing direction, int? wagonIndex, bool engineOnly, int? distance = null,
+            string kind = null, bool iceOnly = false)
         {
             Direction = direction;
             WagonIndex = wagonIndex;
             EngineOnly = engineOnly;
             Distance = distance;
+            Kind = kind;
+            IceOnly = iceOnly;
         }
     }
 
@@ -142,7 +154,10 @@ namespace SignalsLink.YTT.src.train
             this.persistence = persistence;
             storage = new YttStorage(surface, persistence);
             engine = new YttEngine(surface);
+            refrigeration = new YttRefrigeration(surface, persistence);
         }
+
+        private readonly YttRefrigeration refrigeration;
 
         public string Keyword => KeywordText;
 
@@ -160,6 +175,9 @@ namespace SignalsLink.YTT.src.train
             int? distance = null;
             int? wagon = null;
             bool engine = false;
+            string kind = null;
+            string kindToken = null;
+            bool ice = false;
 
             foreach (string token in tokens ?? Array.Empty<string>())
             {
@@ -186,6 +204,20 @@ namespace SignalsLink.YTT.src.train
                     continue;
                 }
 
+                if (token.Equals("ice", StringComparison.OrdinalIgnoreCase))
+                {
+                    ice = true;
+                    continue;
+                }
+
+                string named = TrainVehicleKind.FromToken(token);
+                if (named != null)
+                {
+                    kind = named;
+                    kindToken = token;
+                    continue;
+                }
+
                 if (int.TryParse(token, out int index) && index >= 1)
                 {
                     wagon = index;
@@ -197,7 +229,23 @@ namespace SignalsLink.YTT.src.train
                 return false;
             }
 
-            selector = new TrainSelector(direction, wagon, engine, distance);
+            // Words that cannot both be meant. Said now, or the header simply never matches.
+            if (engine && (kind != null || ice))
+            {
+                errors?.Add(kindToken ?? "ice", "holderspec");
+                return false;
+            }
+
+            if (ice && kind != null && kind != TrainVehicleKind.Fridge)
+            {
+                errors?.Add(kindToken, "holderspec");
+                return false;
+            }
+
+            // Only a refrigerated wagon has ice slots, so `ice` alone names the kind as well.
+            if (ice) kind = TrainVehicleKind.Fridge;
+
+            selector = new TrainSelector(direction, wagon, engine, distance, kind, ice);
             return true;
         }
 
@@ -249,11 +297,22 @@ namespace SignalsLink.YTT.src.train
 
             foreach (Entity entity in vehicles)
             {
-                if (!Matches(entity, wanted)) continue;
+                if (!Matches(world, entity, wanted)) continue;
 
                 int before = holds.Count;
 
-                if (wanted.EngineOnly)
+                if (wanted.IceOnly)
+                {
+                    // Only when asked for by name, like the engine: ice on a plain `load train`
+                    // is cargo, and goes where cargo goes.
+                    InventoryBase inventory = refrigeration.InventoryOf(entity);
+
+                    if (inventory != null)
+                    {
+                        holds.Add(new TrainHold(refrigeration.Persistence, entity, inventory, "ice"));
+                    }
+                }
+                else if (wanted.EngineOnly)
                 {
                     // Only when asked for by name, or a firebox swallows every delivery's
                     // first coal on a plain `load train`.
@@ -366,27 +425,65 @@ namespace SignalsLink.YTT.src.train
                 || HungContainers.IsCarrier(entity);
         }
 
-        private static bool Matches(Entity entity, TrainSelector wanted)
+        private static bool Matches(IWorldAccessor world, Entity entity, TrainSelector wanted)
         {
+            if (!TrainVehicleKind.Matches(wanted.Kind, entity.Code)) return false;
             if (wanted.WagonIndex == null) return true;
 
-            return ConvoyIndex(entity) == wanted.WagonIndex.Value;
+            // Without a kind the number is the place in the train.
+            if (wanted.Kind == null) return PlaceOf(entity) == wanted.WagonIndex.Value;
+
+            return TrainVehicleKind.RankAmong(PlaceOf(entity), SameKindInConvoy(world, entity, wanted.Kind))
+                == wanted.WagonIndex.Value;
         }
 
         /// <summary>
-        /// Where this vehicle rides in its convoy, counted from the head - assembled from plain
-        /// attributes because the other mod publishes no index. The head is not necessarily the
-        /// locomotive, and the order follows how the train was coupled, not which way it parked.
+        /// The place of every loaded vehicle of this kind in the same convoy. From the whole
+        /// world, not from what the device can see: the first refrigerated wagon may stand out of
+        /// reach, and the one in reach is still the second.
         /// </summary>
-        private static int ConvoyIndex(Entity entity)
+        private static List<double> SameKindInConvoy(IWorldAccessor world, Entity entity, string kind)
         {
-            ITreeAttribute attributes = entity.Attributes;
-            if (attributes == null) return 1;
+            List<double> distances = new List<double>();
+            long convoy = ConvoyOf(entity);
 
-            double distance = attributes.GetDouble("convoyDistanceBehindHead", 0);
+            if (world is not Vintagestory.API.Server.IServerWorldAccessor server) return distances;
 
-            // Roughly a wagon length apart; the head itself is 1.
-            return 1 + (int)System.Math.Round(distance / 1.2);
+            foreach (Entity other in server.LoadedEntities.Values)
+            {
+                if (other?.Code?.Domain != Domain || !TrainVehicleKind.Matches(kind, other.Code)) continue;
+                if (ConvoyOf(other) != convoy) continue;
+
+                distances.Add(PlaceOf(other));
+            }
+
+            return distances;
+        }
+
+        /// <summary>
+        /// Where this vehicle rides in its convoy, the head being 1 - which is not necessarily the
+        /// locomotive, and follows how the train was coupled, not which way it parked. Read off
+        /// plain attributes, because the other mod publishes nothing else.
+        /// </summary>
+        private static int PlaceOf(Entity entity)
+        {
+            const string key = "convoyIndex";
+
+            int? index = entity.Attributes?.HasAttribute(key) == true ? entity.Attributes.GetInt(key, 0)
+                : entity.WatchedAttributes?.HasAttribute(key) == true ? entity.WatchedAttributes.GetInt(key, 0)
+                : null;
+
+            return TrainVehicleKind.PlaceInConvoy(index, BehindHead(entity));
+        }
+
+        /// <summary>A mine cart keeps this in its plain attributes, a wagon in the watched ones.</summary>
+        private static double BehindHead(Entity entity)
+        {
+            const string key = "convoyDistanceBehindHead";
+
+            if (entity.Attributes?.HasAttribute(key) == true) return entity.Attributes.GetDouble(key, 0);
+
+            return entity.WatchedAttributes?.GetDouble(key, 0) ?? 0;
         }
 
         /// <summary>

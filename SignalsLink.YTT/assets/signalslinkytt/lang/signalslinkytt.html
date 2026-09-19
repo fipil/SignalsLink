@@ -1,0 +1,45 @@
+<translation key="signalslinkytt:usageinfo-signalslinkytt-text">
+    <font size="25"><strong>SignalsLink.YTT</strong></font>
+    <br>
+    Propojuje <a href="handbook://block-signalslink:manageddock-oak">Překladiště</a> a <a href="handbook://block-signalslink:chunkanchor-off-north">Kotvu chunků</a> s vlaky z modu Yang's Transport Tycoon.
+    <br><br>
+    <font size="20" color="6082B6">Nakládání a vykládání vlaku</font><br>
+    Na papír překladiště napište hlavičku se slovem <strong>train</strong>:<br>
+    <strong>unload train</strong> — z vlaku do bedny překladiště<br>
+    <strong>load train</strong> — z bedny do vlaku<br>
+    <strong>from train to yard</strong> — z vlaku rovnou na <a href="handbook://block-signalslink:yardtileplank-oak">skladovou plochu</a><br>
+    <strong>from yard to train</strong> — ze skladové plochy do vlaku<br>
+    Pod hlavičku pište pravidla jako u jiných zařízení, viz <a href="handbook://signalslink:usageinfo-paperconditions">Podmínky na papíře</a>.<br>
+    Vlak musí <strong>stát</strong>. Hledá se do 12 bloků od překladiště a nakládá se od nejbližšího vozu.
+    <br><br>
+    <font size="20" color="6082B6">Upřesnění za slovem train</font><br>
+    Slova můžete kombinovat, na pořadí nezáleží.<br>
+    <strong>north</strong>, <strong>south</strong>, <strong>east</strong>, <strong>west</strong> — jen vlak na té straně. Stačí i <strong>n</strong>, <strong>s</strong>, <strong>e</strong>, <strong>w</strong>.<br>
+    <strong>north5</strong> — jen vlak, který stojí pět bloků na sever. Číslo může být 1 až 12.<br>
+    <strong>2</strong> — jen druhé vozidlo soupravy, počítáno od čela.<br>
+    <strong>boxcar</strong> — jen skříňové vozy.<br>
+    <strong>fridge</strong> — jen chladicí vozy.<br>
+    <strong>cart</strong> — jen důlní vozíky.<br>
+    <strong>fridge 2</strong> — druhý chladicí vůz od čela. S druhem vozu se číslo počítá jen mezi vozy toho druhu.<br>
+    <strong>engine</strong> — palivo a voda parního stroje.<br>
+    <strong>ice</strong> — chladicí sloty chladicího vozu, tedy místo pro led.<br>
+    Bez slova <strong>engine</strong> se do topeniště nic nenakládá. Bez slova <strong>ice</strong> jde led do nákladového prostoru jako každé jiné zboží.
+    <br><br>
+    <font size="20" color="6082B6">Příklady</font><br>
+    <strong>unload train north</strong><br>
+    <strong>load train boxcar</strong><br>
+    <strong>load train fridge 2 south</strong><br>
+    <strong>load train engine</strong><br>
+    <strong>load train ice</strong>
+    <br><br>
+    <font size="20" color="6082B6">Kotva chunků</font><br>
+    V dialogu kotvy přibude přepínač <strong>Probudit, když se blíží vlak</strong>. Spící kotva se pak probudí, jakmile k její stanici míří vlak, i když jede mimo dohled hráčů.<br>
+    Dokud na území kotvy stojí vlak, kotva drží i sloupce pod jeho vozy a neusne.<br>
+    Výběr sloupců má pokrýt <strong>celý stojící vlak</strong>, ne jen stanici.<br>
+    Bez tohoto modu se kotvy na serveru s Yang's Transport Tycoon vypnou.
+    <br><br>
+    <font size="20" color="6082B6">Pro správce serveru</font><br>
+    Při startu mod ověří, že nainstalované verzi Yang's Transport Tycoon rozumí. Když ne, nakládání vlaků vypne a napíše to do logu.<br>
+    Jak daleko před stanicí se kotva budí, určuje volba <strong>AnchorApproachBlocks</strong> v souboru signalslink.json.<br>
+    Příkaz <strong>/slytt dump</strong> vypíše do logu serveru stav všech souprav. S číslem, třeba <strong>/slytt dump 64</strong>, jen těch do tolika bloků od vás.
+</translation>

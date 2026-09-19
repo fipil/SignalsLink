@@ -22,6 +22,10 @@ namespace SignalsLink.YTT.src.probe
     {
         public const string StorageBehavior = "SGStorage";
         public const string SteamBehavior = "SteamPowered";
+        public const string RefrigerationBehavior = "SGRefrigeration";
+
+        /// <summary>Where the refrigerant slots are written down, unless the other mod says otherwise.</summary>
+        public const string DefaultRefrigerantTreeKey = "sgrefrigerationInv";
 
         private const BindingFlags Anywhere =
             BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic;
@@ -56,6 +60,19 @@ namespace SignalsLink.YTT.src.probe
 
         /// <summary>How a locomotive is asked to write its engine down. See YttEngine.</summary>
         public MethodInfo RequestSyncMethod { get; private set; }
+
+        // -------------------------------------------------------------- the refrigerated wagon
+
+        /// <summary>
+        /// True when a refrigerated wagon's refrigerant slots can be reached. Optional and kept out
+        /// of the fingerprint, like the resolved target: it is an extra, and the known-good
+        /// surfaces must not all become unknown because of it.
+        /// </summary>
+        public bool CanReachRefrigerant => RefrigerantInventoryProperty != null;
+
+        public PropertyInfo RefrigerantInventoryProperty { get; private set; }
+
+        public string RefrigerantTreeKey { get; private set; } = DefaultRefrigerantTreeKey;
 
         // -------------------------------------------------------------- the offscreen simulation
 
@@ -162,8 +179,50 @@ namespace SignalsLink.YTT.src.probe
 
             LookAtEngine(api, members);
             LookAtOffscreen(api, members);
+            LookAtRefrigeration(api);
 
             Surface = Fingerprint(members);
+        }
+
+        /// <summary>Probed separately and last: no ice is no reason to refuse anything else.</summary>
+        private void LookAtRefrigeration(ICoreAPI api)
+        {
+            try
+            {
+                Type refrigeration = api.ClassRegistry.GetEntityBehaviorClass(RefrigerationBehavior);
+
+                RefrigerantInventoryProperty = RefrigerantInventoryOn(refrigeration);
+                if (RefrigerantInventoryProperty != null) RefrigerantTreeKey = RefrigerantTreeKeyOn(refrigeration);
+            }
+            catch (Exception)
+            {
+                // An extra must never cost the probe its answer about cargo.
+                RefrigerantInventoryProperty = null;
+            }
+        }
+
+        /// <summary>The slots, when the behavior still offers them as an inventory this can use.</summary>
+        public static PropertyInfo RefrigerantInventoryOn(Type refrigeration)
+        {
+            PropertyInfo inventory = refrigeration?.GetProperty("Inventory", Anywhere);
+
+            if (inventory == null || !inventory.CanRead) return null;
+            if (!typeof(InventoryBase).IsAssignableFrom(inventory.PropertyType)) return null;
+
+            return inventory;
+        }
+
+        /// <summary>
+        /// Where it says it writes them down, read off its own constant so that renaming the key
+        /// does not quietly blind the save check. The name known today when it says nothing.
+        /// </summary>
+        public static string RefrigerantTreeKeyOn(Type refrigeration)
+        {
+            FieldInfo key = refrigeration?.GetField("InventoryTreeAttribute", Anywhere);
+
+            if (key == null || !key.IsLiteral || key.FieldType != typeof(string)) return DefaultRefrigerantTreeKey;
+
+            return key.GetRawConstantValue() as string ?? DefaultRefrigerantTreeKey;
         }
 
         /// <summary>
@@ -368,6 +427,12 @@ namespace SignalsLink.YTT.src.probe
             {
                 api.Logger.Notification("[SignalsLink.YTT] the steam engine cannot be reached on this version;"
                     + " cargo still works, stoking and lighting do not.");
+            }
+
+            if (!CanReachRefrigerant)
+            {
+                api.Logger.Notification("[SignalsLink.YTT] a refrigerated wagon's refrigerant slots cannot be reached on this"
+                    + " version; its cargo still works, `ice` does not.");
             }
 
             if (!CanWatchApproach)
