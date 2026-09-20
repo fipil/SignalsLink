@@ -1,0 +1,104 @@
+{
+  "languages": {
+    "de": {
+      "game:tabname-signalslink": "11b25adfa6f4",
+      "signals:con-input": "8595f62b7965",
+      "signalslinkep:block-epmeter-*": "1afaea969016",
+      "signalslinkep:block-epswitch-*": "e245d4404e7b",
+      "signalslinkep:block-handbooktext-epmeter": "c220e41f4ffb",
+      "signalslinkep:block-handbooktext-epswitch": "6939b53fd9a1",
+      "signalslinkep:block-handbooktitle-signalslinkep": "14ed31e8bdbd",
+      "signalslinkep:usageinfo-signalslinkep-text": "33faa73e6051",
+      "signalslinkep:usageinfo-signalslinkep-title": "4f4235491a8b"
+    },
+    "en": {
+      "game:tabname-signalslink": "11b25adfa6f4",
+      "signals:con-input": "8595f62b7965",
+      "signalslinkep:block-epmeter-*": "1afaea969016",
+      "signalslinkep:block-epswitch-*": "e245d4404e7b",
+      "signalslinkep:block-handbooktext-epmeter": "c220e41f4ffb",
+      "signalslinkep:block-handbooktext-epswitch": "6939b53fd9a1",
+      "signalslinkep:block-handbooktitle-signalslinkep": "14ed31e8bdbd",
+      "signalslinkep:usageinfo-signalslinkep-text": "33faa73e6051",
+      "signalslinkep:usageinfo-signalslinkep-title": "4f4235491a8b"
+    },
+    "es": {
+      "game:tabname-signalslink": "11b25adfa6f4",
+      "signals:con-input": "8595f62b7965",
+      "signalslinkep:block-epmeter-*": "1afaea969016",
+      "signalslinkep:block-epswitch-*": "e245d4404e7b",
+      "signalslinkep:block-handbooktext-epmeter": "c220e41f4ffb",
+      "signalslinkep:block-handbooktext-epswitch": "6939b53fd9a1",
+      "signalslinkep:block-handbooktitle-signalslinkep": "14ed31e8bdbd",
+      "signalslinkep:usageinfo-signalslinkep-text": "33faa73e6051",
+      "signalslinkep:usageinfo-signalslinkep-title": "4f4235491a8b"
+    },
+    "fr": {
+      "game:tabname-signalslink": "11b25adfa6f4",
+      "signals:con-input": "8595f62b7965",
+      "signalslinkep:block-epmeter-*": "1afaea969016",
+      "signalslinkep:block-epswitch-*": "e245d4404e7b",
+      "signalslinkep:block-handbooktext-epmeter": "c220e41f4ffb",
+      "signalslinkep:block-handbooktext-epswitch": "6939b53fd9a1",
+      "signalslinkep:block-handbooktitle-signalslinkep": "14ed31e8bdbd",
+      "signalslinkep:usageinfo-signalslinkep-text": "33faa73e6051",
+      "signalslinkep:usageinfo-signalslinkep-title": "4f4235491a8b"
+    },
+    "it": {
+      "game:tabname-signalslink": "11b25adfa6f4",
+      "signals:con-input": "8595f62b7965",
+      "signalslinkep:block-epmeter-*": "1afaea969016",
+      "signalslinkep:block-epswitch-*": "e245d4404e7b",
+      "signalslinkep:block-handbooktext-epmeter": "c220e41f4ffb",
+      "signalslinkep:block-handbooktext-epswitch": "6939b53fd9a1",
+      "signalslinkep:block-handbooktitle-signalslinkep": "14ed31e8bdbd",
+      "signalslinkep:usageinfo-signalslinkep-text": "33faa73e6051",
+      "signalslinkep:usageinfo-signalslinkep-title": "4f4235491a8b"
+    },
+    "pl": {
+      "game:tabname-signalslink": "11b25adfa6f4",
+      "signals:con-input": "8595f62b7965",
+      "signalslinkep:block-epmeter-*": "1afaea969016",
+      "signalslinkep:block-epswitch-*": "e245d4404e7b",
+      "signalslinkep:block-handbooktext-epmeter": "c220e41f4ffb",
+      "signalslinkep:block-handbooktext-epswitch": "6939b53fd9a1",
+      "signalslinkep:block-handbooktitle-signalslinkep": "14ed31e8bdbd",
+      "signalslinkep:usageinfo-signalslinkep-text": "33faa73e6051",
+      "signalslinkep:usageinfo-signalslinkep-title": "4f4235491a8b"
+    },
+    "pt": {
+      "game:tabname-signalslink": "11b25adfa6f4",
+      "signals:con-input": "8595f62b7965",
+      "signalslinkep:block-epmeter-*": "1afaea969016",
+      "signalslinkep:block-epswitch-*": "e245d4404e7b",
+      "signalslinkep:block-handbooktext-epmeter": "c220e41f4ffb",
+      "signalslinkep:block-handbooktext-epswitch": "6939b53fd9a1",
+      "signalslinkep:block-handbooktitle-signalslinkep": "14ed31e8bdbd",
+      "signalslinkep:usageinfo-signalslinkep-text": "33faa73e6051",
+      "signalslinkep:usageinfo-signalslinkep-title": "4f4235491a8b"
+    },
+    "ru": {
+      "game:tabname-signalslink": "11b25adfa6f4",
+      "signals:con-input": "8595f62b7965",
+      "signalslinkep:block-epmeter-*": "1afaea969016",
+      "signalslinkep:block-epswitch-*": "e245d4404e7b",
+      "signalslinkep:block-handbooktext-epmeter": "c220e41f4ffb",
+      "signalslinkep:block-handbooktext-epswitch": "6939b53fd9a1",
+      "signalslinkep:block-handbooktitle-signalslinkep": "14ed31e8bdbd",
+      "signalslinkep:usageinfo-signalslinkep-text": "33faa73e6051",
+      "signalslinkep:usageinfo-signalslinkep-title": "4f4235491a8b"
+    },
+    "sk": {
+      "game:tabname-signalslink": "11b25adfa6f4",
+      "signals:con-input": "8595f62b7965",
+      "signalslinkep:block-epmeter-*": "1afaea969016",
+      "signalslinkep:block-epswitch-*": "e245d4404e7b",
+      "signalslinkep:block-handbooktext-epmeter": "c220e41f4ffb",
+      "signalslinkep:block-handbooktext-epswitch": "6939b53fd9a1",
+      "signalslinkep:block-handbooktitle-signalslinkep": "14ed31e8bdbd",
+      "signalslinkep:usageinfo-signalslinkep-text": "33faa73e6051",
+      "signalslinkep:usageinfo-signalslinkep-title": "4f4235491a8b"
+    }
+  },
+  "version": 1
+}

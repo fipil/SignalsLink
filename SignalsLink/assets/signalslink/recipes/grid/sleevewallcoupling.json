@@ -1,0 +1,153 @@
+[
+  {
+    "ingredientPattern": "SSS,MCM,SSS",
+    "ingredients": {
+      "C": {
+        "type": "block",
+        "code": "signalslink:sleevecoupling-*"
+      },
+      "S": {
+        "type": "item",
+        "code": "game:stone-{material}"
+      },
+      "M": {
+        "type": "item",
+        "code": "game:mortar"
+      }
+    },
+    "allowedVariants": {
+      "material": [
+        "andesite",
+        "basalt",
+        "chalk",
+        "chert",
+        "conglomerate",
+        "granite",
+        "limestone",
+        "peridotite",
+        "phyllite",
+        "sandstone",
+        "shale",
+        "slate",
+        "bauxite"
+      ]
+    },
+    "width": 3,
+    "height": 3,
+    "output": {
+      "type": "block",
+      "code": "signalslink:sleevewallcoupling-rock-{material}-north-down",
+      "quantity": 1
+    }
+  },
+  {
+    "ingredientPattern": "SSS,SCM,SSS",
+    "ingredients": {
+      "C": {
+        "type": "block",
+        "code": "signalslink:sleevecoupling-*"
+      },
+      "S": {
+        "type": "item",
+        "code": "game:plank-{material}"
+      },
+      "M": {
+        "type": "item",
+        "code": "game:mortar"
+      }
+    },
+    "allowedVariants": {
+      "material": [
+        "oak",
+        "acacia",
+        "birch",
+        "kapok",
+        "maple",
+        "pine",
+        "redwood",
+        "walnut",
+        "aged"
+      ]
+    },
+    "width": 3,
+    "height": 3,
+    "output": {
+      "type": "block",
+      "code": "signalslink:sleevewallcoupling-wood-{material}-north-down",
+      "quantity": 1
+    }
+  },
+  {
+    "ingredientPattern": "SSS,GCM,SSS",
+    "ingredients": {
+      "C": {
+        "type": "block",
+        "code": "signalslink:sleevecoupling-*"
+      },
+      "S": {
+        "type": "item",
+        "code": "game:stone-{material}"
+      },
+      "G": {
+        "type": "block",
+        "code": "game:gravel-{material}"
+      },
+      "M": {
+        "type": "item",
+        "code": "game:mortar"
+      }
+    },
+    "allowedVariants": {
+      "material": [
+        "andesite",
+        "basalt",
+        "chalk",
+        "chert",
+        "conglomerate",
+        "granite",
+        "limestone",
+        "peridotite",
+        "phyllite",
+        "sandstone",
+        "shale",
+        "slate",
+        "bauxite"
+      ]
+    },
+    "width": 3,
+    "height": 3,
+    "output": {
+      "type": "block",
+      "code": "signalslink:sleevewallcoupling-cobble-{material}-north-down",
+      "quantity": 1
+    }
+  },
+  {
+    "ingredientPattern": "_H_,_W_,_C_",
+    "ingredients": {
+      "W": {
+        "type": "item",
+        "code": "game:chisel-*",
+        "isTool": true,
+        "toolDurabilityCost": 2
+      },
+      "H": {
+        "type": "item",
+        "code": "game:hammer-*",
+        "isTool": true,
+        "toolDurabilityCost": 2
+      },
+      "C": {
+        "type": "block",
+        "code": "signalslink:sleevewallcoupling-*"
+      }
+    },
+    "width": 3,
+    "height": 3,
+    "output": {
+      "type": "block",
+      "code": "signalslink:sleevecoupling-north-down",
+      "quantity": 1
+    }
+  }
+]

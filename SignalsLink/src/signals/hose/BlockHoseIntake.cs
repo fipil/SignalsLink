@@ -1,4 +1,5 @@
 using signals.src.signalNetwork;
+using SignalsLink.src.signals.link;
 
 namespace SignalsLink.src.signals.hose
 {
@@ -8,9 +9,9 @@ namespace SignalsLink.src.signals.hose
     /// This lets a player place it first and flood it later (e.g. via a hatch). One hose anchor on
     /// top; the liquid is pulled out of it by an active Valve — it moves nothing itself.
     /// </summary>
-    public class BlockHoseIntake : BlockHoseAnchorBase
+    public class BlockHoseIntake : BlockLinkAnchorBase
     {
         // The intake is a source that can feed many targets — its anchor accepts multiple hoses.
-        public override bool AllowsMultipleHoses(NodePos pos) => true;
+        public override bool AllowsMultipleLinks(NodePos pos) => true;
     }
 }

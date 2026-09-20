@@ -46,7 +46,7 @@ namespace SignalsLink.src.signals.blocksensor.scanners
 
                         ctx["inventory"] = inventory;
 
-                        if (conditionsEvaluator.Evaluate(stackForEval, ctx, out byte output))
+                        if (conditionsEvaluator.RunSensorPass(stackForEval, ctx, out byte output))
                         {
                             if (output == ConditionBlock.DefaultOutputValue)
                             {

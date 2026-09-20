@@ -38,6 +38,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
         protected override void AddConditionContext(IDictionary<string, object> ctx)
         {
             ctx["targetInventory"] = BuildAnvilTargetInventory();
+            if (targetAnvil?.Pos != null) ctx["targetBlockPos"] = targetAnvil.Pos;
         }
 
         private IInventory BuildAnvilTargetInventory()
@@ -59,6 +60,9 @@ namespace SignalsLink.src.signals.managedchute.transporting
         }
 
         public TransferOperationResult TryMove(ItemStackMoveOperation opTemplate)
+            => RunTransferPass(opTemplate, () => MoveSelected(opTemplate));
+
+        private TransferOperationResult MoveSelected(ItemStackMoveOperation opTemplate)
         {
             if (targetAnvil == null) return TransferOperationResult.None;
 
@@ -99,8 +103,6 @@ namespace SignalsLink.src.signals.managedchute.transporting
         }
 
         public int TryMoveOneItem(ItemStackMoveOperation opTemplate)
-        {
-            return (int)TryMove(opTemplate).MovedAmount;
-        }
+            => (int)TryMove(opTemplate).MovedAmount;
     }
 }

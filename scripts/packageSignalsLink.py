@@ -4,6 +4,7 @@ import zipfile
 from pathlib import Path
 
 modFile: str = "SignalsLink"
+testsProject: str = "SignalsLink.Tests"
 
 
 def find_build_outputs(project_root: Path) -> tuple[Path, Path]:
@@ -20,6 +21,34 @@ def find_build_outputs(project_root: Path) -> tuple[Path, Path]:
         raise FileNotFoundError(f"Expected PDB next to DLL, but not found: {pdb_path}")
 
     return dll_path, pdb_path
+
+
+def run_tests(solution_root: Path) -> None:
+    """Run the unit tests, and refuse to package if any of them fails.
+
+    A released archive nobody tested is worse than no archive: the whole point of the suite is to
+    stop a regression before it reaches a world someone plays in.
+    """
+    tests_path = solution_root / testsProject / f"{testsProject}.csproj"
+
+    if not tests_path.exists():
+        raise FileNotFoundError(f"Missing test project: {tests_path}")
+
+    print("Running unit tests...")
+    result = subprocess.run(
+        ["dotnet", "test", str(tests_path), "-c", "Debug", "--nologo"],
+        cwd=solution_root,
+    )
+
+    if result.returncode != 0:
+        raise SystemExit(
+            "\nUnit tests FAILED - no archive was created.\n"
+            "Fix them (or the code they are testing) and run this script again.\n"
+            "Note: an archive of this version from an earlier run is left untouched, "
+            "so check the date on it before uploading anything."
+        )
+
+    print("Unit tests passed.")
 
 
 def load_version(modinfo_path: Path) -> str:
@@ -55,6 +84,8 @@ def main() -> int:
         cwd=project_root,
         check=True,
     )
+
+    run_tests(solution_root)
 
     version = load_version(modinfo_path)
     zip_name = f"{modFile}.{version}.zip"

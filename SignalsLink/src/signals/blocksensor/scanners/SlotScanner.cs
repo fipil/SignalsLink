@@ -46,7 +46,7 @@ namespace SignalsLink.src.signals.blocksensor.scanners
                 // Use dummy stack when slot is empty so parser doesn't crash on Collectible==null
                 ItemStack evalStack = stackForEval ?? (ItemStack)null;
 
-                conditionsEvaluator.Evaluate(evalStack, ctx, out byte matchedBlockIndex);
+                conditionsEvaluator.RunSensorPass(evalStack, ctx, out byte matchedBlockIndex);
                 if (matchedBlockIndex == ConditionBlock.DefaultOutputValue)
                 {
                     return GetDefaultSlotSignal(slot);

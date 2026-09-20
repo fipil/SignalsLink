@@ -1,4 +1,4 @@
-using HarmonyLib;
+using System.Reflection;
 using System.Collections.Generic;
 using SignalsLink.src.signals.paperConditions;
 using Vintagestory.API.Common;
@@ -12,6 +12,8 @@ namespace SignalsLink.src.signals.managedchute.transporting
     // Přenos: inventář -> svět (spawn item entity).
     public class InventoryToWorldTransfer : InventorySourcedTransferBase, IItemTransfer
     {
+        private static readonly PropertyInfo PileBlockCodeProperty = typeof(ItemPileable)
+            .GetProperty("PileBlockCode", BindingFlags.Instance | BindingFlags.NonPublic);
         private readonly BlockPos targetPos;
         private readonly byte mode; // targetInv signal
 
@@ -24,45 +26,185 @@ namespace SignalsLink.src.signals.managedchute.transporting
 
         protected override bool AllowsLiquidContainers => true;
 
+        /// <summary>
+        /// The target IS the ground, whether or not the paper says so.
+        ///
+        /// Set by a device whose other end is a place rather than a container - a storage yard,
+        /// where a section header has already said that goods go on the ground and there is
+        /// nothing left for `target ground` to add. Without it a block would only ever top up a
+        /// pile that happened to be there already, never start one.
+        /// </summary>
+        public bool GroundImplied { get; set; }
+
+        /// <summary>
+        /// This column belongs to a storage yard, which holds it to two rules a loose
+        /// <c>target ground</c> is not held to.
+        ///
+        /// <b>One kind of goods per column.</b> A column is what the paper reads as a single slot,
+        /// and a slot holds one thing. Without this, growing a column steps over a pile of
+        /// something else and starts a new pile on top of it - ingots, ingots, planks.
+        ///
+        /// <b>Stacking goods only.</b> Anything else gets PLACED as a block on the tile, one per
+        /// tile, and can then never be picked up again: reading a yard understands piles and
+        /// nothing else. Better not to accept it in the first place.
+        /// </summary>
+        public bool YardColumn { get; set; }
+
+
         protected override bool CanTransferSelection(ItemSlot slot, PaperConditionDirectives directives)
         {
+            // A firepit stage wants one particular material, and the source is walked slot by slot.
+            // Without this a slot of firewood standing before the dry grass would be selected -
+            // the directive only says there IS something to build - and then do nothing all tick,
+            // so the firepit would only ever get started when the grass happened to come first.
+            if (directives.TargetFirepit)
+            {
+                return FirepitConstruction.Matches(api.World.BlockAccessor.GetBlock(targetPos), slot?.Itemstack);
+            }
+
+            // A column with nowhere left to put anything is not a valid target. Without this the
+            // block would keep winning the evaluation after the column filled up, and every block
+            // below it on the paper — an `output` that reports the column is full, say — would
+            // never be reached.
+            if (directives.TargetGround || GroundImplied) return HasGroundRoom(slot, directives);
+
             // ManagedChute may place a filled bucket, but must never eject the liquid portions
             // stored in barrels and other liquid inventories.
-            return !IsLiquidContainer(slot?.Itemstack) || slot.Itemstack.Block is BlockLiquidContainerBase;
+            if (IsLiquidContainer(slot?.Itemstack) && slot.Itemstack.Block is not BlockLiquidContainerBase) return false;
+
+            return CanSetDown(slot?.Itemstack);
         }
 
+        /// <summary>
+        /// Only what this mode can actually set down. Asked before the slot is chosen: a stack
+        /// of chests in the first slot was chosen, could not be placed, and the bucket behind it
+        /// was never tried.
+        /// </summary>
+        private bool CanSetDown(ItemStack stack)
+        {
+            if (stack == null) return false;
+
+            switch (mode)
+            {
+                case 1: return stack.Block != null;
+                case 2: return stack.Block is BlockLiquidContainerBase || stack.Item is ItemPileable || SamePileAt(stack);
+                default: return true;
+            }
+        }
+
+        /// <summary>Is there a pile of this very thing on the target, with the top-up path open?</summary>
+        private bool SamePileAt(ItemStack stack)
+        {
+            if (targetPos == null) return false;
+
+            BlockEntity be = api?.World?.BlockAccessor?.GetBlockEntity(targetPos);
+            IInventory inventory = (be as BlockEntityItemPile)?.inventory ?? (be as BlockEntityGroundStorage)?.Inventory;
+            if (inventory == null) return false;
+            if (be is BlockEntityItemPile && inventory.Empty) return true;
+
+            foreach (ItemSlot slot in inventory)
+            {
+                if (!slot.Empty && slot.Itemstack.Collectible == stack.Collectible) return true;
+            }
+
+            return false;
+        }
+
+        protected override void AddConditionContext(IDictionary<string, object> ctx)
+        {
+            if (targetPos == null) return;
+
+            // Block-state conditions (isBurning) want to know which block is being aimed at.
+            ctx["targetBlockPos"] = targetPos;
+
+            // And the ground column standing there is offered as the target inventory, so the
+            // ordinary conditions work against it: `in target game:firewood 96` counts the WHOLE
+            // column, not the one pile the chute happens to point at. Same trick the anvil uses to
+            // expose its work item - a throw-away inventory, read-only as far as conditions go.
+            // Not traced here: a dock builds this once per yard tile per rule, and the output
+            // line already describes the target inventory.
+            IInventory column = BuildGroundColumnInventory();
+            if (column != null) ctx["targetInventory"] = column;
+        }
+
+        // Deliberately the ground-storage view and not the general one: this class PLACES things,
+        // and it may only ever grow a column of piles. Reading a layered block here would invite it
+        // to stack firewood on top of a charcoal pile.
+        private IInventory BuildGroundColumnInventory()
+        {
+            return TargetInventoryResolver.ResolveGroundColumn(api, targetPos);
+        }
+
+        public TransferOperationResult TryMove(ItemStackMoveOperation opTemplate)
+            => RunTransferPass(opTemplate, () =>
+            {
+                int moved = MoveOneItem(opTemplate);
+                return moved > 0 ? new TransferOperationResult(moved, moved, false) : TransferOperationResult.None;
+            });
+
         public int TryMoveOneItem(ItemStackMoveOperation opTemplate)
+            => (int)TryMove(opTemplate).MovedAmount;
+
+        private int MoveOneItem(ItemStackMoveOperation opTemplate)
         {
             TransferSelection selection = GetTransferSelection();
             ItemSlot src = selection?.SourceSlot;
             if (src == null || src.Empty) return 0;
 
-            // Zkontroluj blok pod cílem – musí být solid pro „placing na zem“
-            BlockPos belowPos = targetPos.DownCopy();
-            Block blockBelow = api.World.BlockAccessor.GetBlock(belowPos);
-            bool hasSolidBelow = blockBelow.SideSolid[BlockFacing.UP.Index];
+            // Is there a footing under the target? Asked through GroundSupport, so a pile of
+            // firewood counts as well - a charcoal pit needs its firepit built on top of one.
+            bool hasSolidBelow = GroundSupport.HasFooting(api.World, targetPos);
 
-            bool targetGround = selection.Directives.TargetGround;
+            // `target firepit` on open ground lays the tinder that starts a firepit off. From the
+            // next stage onwards there is a block to build on and InventoryToFirepitTransfer takes
+            // over, so this only ever handles the very first step.
+            if (selection.Directives.TargetFirepit)
+            {
+                if (!hasSolidBelow) return 0;
+                if (!FirepitConstruction.Advance(api.World, targetPos, src.Itemstack)) return 0;
+
+                src.TakeOut(1);
+                src.MarkDirty();
+                return 1;
+            }
+
+            bool targetGround = selection.Directives.TargetGround || GroundImplied;
 
             // `amount N` batches the ground placement (without it a single item is placed, as before).
             // Like the chute's item batches it is atomic on the source, but the batch is gathered from
             // ALL matching source slots - N routinely exceeds the item's max stack size (ingots stack
             // to 16 while a pile holds 64), so a single-slot check could never be satisfied.
-            int groundBatch = 1;
+            int groundBatch = Math.Max(1, opTemplate.RequestedQuantity);
             decimal? amountDirective = selection.Directives.Amount;
             if (amountDirective.HasValue)
             {
                 groundBatch = (int)decimal.Truncate(amountDirective.Value);
                 if (groundBatch < 1) groundBatch = 1;
             }
-            bool groundAtomic = amountDirective.HasValue;
+
+            // `amount N+` reaches past its floor, so the batch is everything the source can muster;
+            // the floor itself is still checked, atomically, below.
+            if (selection.Directives.TakesEverythingAvailable)
+            {
+                int available = (int)Math.Min(int.MaxValue, GetMatchingSourceSlots(src).Sum(s => (long)s.StackSize));
+
+                if (available > groundBatch) groundBatch = available;
+            }
+
+            // `keep N` has the last word: it is the level on the ground, not a batch size.
+            groundBatch = CappedByKeep(groundBatch, selection);
+            if (groundBatch <= 0) return 0;
+
+            bool groundAtomic = selection.Directives.IsAtomicAmount && !selection.Directives.HasKeep;
+            int floor = CappedByKeep(Math.Max(1, (int)(amountDirective ?? opTemplate.RequestedQuantity)), selection);
+            bool canPlaceSingle = !groundAtomic || floor <= 1;
 
             // Without `target ground` we still top up an existing ground-storage pile at the target.
             // That is what the plain inventory route did before piles were sent here, so keeping it
             // avoids a regression; creating new piles and growing the column needs the directive.
             if (!targetGround && api.World.BlockAccessor.GetBlockEntity(targetPos) is BlockEntityGroundStorage)
             {
-                int toppedUp = TryGroundStorageStack(src, 1, createNew: false, maxItems: groundBatch, atomic: groundAtomic);
+                int toppedUp = TryGroundStorageStack(src, 1, createNew: false, maxItems: groundBatch, atomic: groundAtomic, atomicFloor: (int)decimal.Truncate(amountDirective ?? 0));
                 if (toppedUp > 0)
                 {
                     src.MarkDirty();
@@ -75,13 +217,22 @@ namespace SignalsLink.src.signals.managedchute.transporting
             {
                 if (!hasSolidBelow) return 0;
 
-                if (TryPlaceBlockOnGround(src, targetPos) || TryStackOnGround(src, targetPos))
+                // On a yard, goods that cannot be stacked into a pile are refused rather than set
+                // down as a block: a block on a tile can never be picked up again, because reading
+                // a yard understands piles and nothing else.
+                if (!YardColumn && canPlaceSingle && TryPlaceBlockOnGround(src, targetPos))
                 {
                     src.MarkDirty();
                     return 1;
                 }
 
-                int placed = TryGroundStorageStack(src, selection.Directives.TargetGroundHeight, createNew: true, maxItems: groundBatch, atomic: groundAtomic);
+                if (!YardColumn)
+                {
+                    int legacy = TryStackOnGround(src, targetPos, groundBatch, groundAtomic ? floor : 0);
+                    if (legacy > 0) return legacy;
+                }
+
+                int placed = TryGroundStorageStack(src, selection.Directives.TargetGroundHeight, createNew: true, maxItems: groundBatch, atomic: groundAtomic, atomicFloor: (int)decimal.Truncate(amountDirective ?? 0));
                 if (placed > 0)
                 {
                     src.MarkDirty();
@@ -93,7 +244,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
 
             if (mode == 1 && hasSolidBelow)
             {
-                if (TryPlaceBlockOnGround(src, targetPos))
+                if (canPlaceSingle && TryPlaceBlockOnGround(src, targetPos))
                 {
                     src.MarkDirty();
                     return 1;
@@ -104,33 +255,33 @@ namespace SignalsLink.src.signals.managedchute.transporting
 
             if (mode == 2 && hasSolidBelow)
             {
-                if (TryPlaceLiquidContainerOnGround(src, targetPos))
+                if (canPlaceSingle && TryPlaceLiquidContainerOnGround(src, targetPos))
                 {
                     src.MarkDirty();
                     return 1;
                 }
 
-                if (TryStackOnGround(src, targetPos))
-                {
-                    src.MarkDirty();
-                    return 1;
-                }
-                else 
-                {
-                    // Pokud se nepodaří stackovat, nespadá to dál – režim je „pouze stackovat“
-                    return 0;
-                }
-                // Když se nepodaří, spadne to dál na „throw“
+                return TryStackOnGround(src, targetPos, groundBatch, groundAtomic ? floor : 0);
             }
 
-            ItemStack taken = src.TakeOut(1);
-            if (taken == null || taken.StackSize <= 0) return 0;
-
+            List<ItemSlot> sources = GetMatchingSourceSlots(src);
+            long availableToThrow = sources.Sum(s => (long)s.StackSize);
+            if (groundAtomic && availableToThrow < floor) return 0;
+            int remaining = (int)Math.Min(groundBatch, availableToThrow);
+            int total = 0;
             Vec3d spawnPos = targetPos.ToVec3d().Add(0.5, 0.5, 0.5);
-            api.World.SpawnItemEntity(taken, spawnPos);
-
-            src.MarkDirty();
-            return 1;
+            foreach (ItemSlot slot in sources)
+            {
+                // Preserve stack attributes and normal stack sizes; do not spawn one entity per piece.
+                if (remaining <= 0) break;
+                ItemStack taken = slot.TakeOut(Math.Min(remaining, slot.StackSize));
+                if (taken == null || taken.StackSize <= 0) continue;
+                api.World.SpawnItemEntity(taken, spawnPos);
+                remaining -= taken.StackSize;
+                total += taken.StackSize;
+                slot.MarkDirty();
+            }
+            return total;
         }
 
         private bool TryPlaceBlockOnGround(ItemSlot src, BlockPos pos)
@@ -183,13 +334,18 @@ namespace SignalsLink.src.signals.managedchute.transporting
         /// climbs up to <paramref name="maxHeight"/> blocks, creating new piles on the way.
         /// The legacy ItemPileable path (coal, ore) is handled by TryStackOnGround instead.
         /// </summary>
-        private int TryGroundStorageStack(ItemSlot src, int maxHeight, bool createNew, int maxItems, bool atomic)
+        private int TryGroundStorageStack(ItemSlot src, int maxHeight, bool createNew, int maxItems, bool atomic, int atomicFloor = 0)
         {
+            if (atomicFloor <= 0) atomicFloor = maxItems;
+            atomicFloor = Math.Min(atomicFloor, maxItems);
+
             ItemStack stack = src.Itemstack;
             if (stack?.Collectible == null) return 0;
 
             GroundStorageProperties props = stack.Collectible.GetBehavior<CollectibleBehaviorGroundStorable>()?.StorageProps;
             if (props == null || props.Layout != EnumGroundStorageLayout.Stacking) return 0;
+
+            if (YardColumn && ColumnHoldsSomethingElse(stack, maxHeight)) return 0;
 
             if (maxItems < 1) maxItems = 1;
 
@@ -199,7 +355,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
             {
                 int available = 0;
                 foreach (ItemSlot s in srcSlots) available += s.StackSize;
-                if (available < maxItems) return 0; // all of it or nothing
+                if (available < atomicFloor || GroundCapacity(stack, props, maxHeight, createNew) < atomicFloor) return 0;
             }
 
             IBlockAccessor ba = api.World.BlockAccessor;
@@ -236,6 +392,30 @@ namespace SignalsLink.src.signals.managedchute.transporting
         /// A batch usually spans several slots because the item's max stack size is smaller than
         /// the pile capacity - the inventory-to-inventory transfer gathers the same way.
         /// </summary>
+        private long GroundCapacity(ItemStack stack, GroundStorageProperties props, int maxHeight, bool createNew)
+        {
+            long room = 0;
+            var ba = api.World.BlockAccessor;
+            bool supported = HasGroundSupport(targetPos);
+            for (int dy = 0; dy < Math.Max(1, maxHeight); dy++)
+            {
+                var pos = targetPos.AddCopy(0, dy, 0);
+                if (ba.GetBlockEntity(pos) is BlockEntityGroundStorage pile)
+                {
+                    var slot = pile.Inventory?[0];
+                    if (slot != null && (slot.Empty || slot.Itemstack.Equals(api.World, stack, GlobalConstants.IgnoredStackAttributes)))
+                        room += Math.Max(0, pile.Capacity - pile.TotalStackSize);
+                    supported = true;
+                }
+                else
+                {
+                    if (!createNew || !supported || ba.GetBlock(pos).Replaceable < 6000) break;
+                    room += props.StackingCapacity;
+                }
+            }
+            return room;
+        }
+
         private List<ItemSlot> GetMatchingSourceSlots(ItemSlot initial)
         {
             List<ItemSlot> list = new List<ItemSlot>();
@@ -244,24 +424,95 @@ namespace SignalsLink.src.signals.managedchute.transporting
             list.Add(initial);
             ItemStack reference = initial.Itemstack;
 
-            for (int i = 0; i < sourceInv.Count; i++)
+            for (var ids = CandidateSlots(ActiveDirectives).GetEnumerator(); ids.MoveNext();)
             {
+                int i = ids.Current;
+                if (i < 0 || i >= sourceInv.Count) continue;
                 ItemSlot slot = sourceInv[i];
                 if (slot == null || ReferenceEquals(slot, initial) || slot.Empty) continue;
                 if (slot.Itemstack?.Collectible != reference.Collectible) continue;
                 if (!slot.Itemstack.Equals(api.World, reference, GlobalConstants.IgnoredStackAttributes)) continue;
 
+                if (!MatchesActiveBlock(slot.Itemstack)) continue;
                 list.Add(slot);
             }
 
             return list;
         }
 
+        /// <summary>
+        /// Is there still somewhere in the column to put this? Either a pile of the same thing that
+        /// is not full yet, or a free cell with a footing where a new pile can be started — within
+        /// the height `target ground N` allows.
+        /// </summary>
+        private bool HasGroundRoom(ItemSlot slot, PaperConditionDirectives directives)
+        {
+            if (slot?.Itemstack == null || targetPos == null) return false;
+
+            int maxHeight = System.Math.Max(1, directives.TargetGroundHeight);
+
+            if (YardColumn)
+            {
+                GroundStorageProperties props = slot.Itemstack.Collectible
+                    ?.GetBehavior<CollectibleBehaviorGroundStorable>()?.StorageProps;
+
+                if (props == null || props.Layout != EnumGroundStorageLayout.Stacking) return false;
+                if (ColumnHoldsSomethingElse(slot.Itemstack, maxHeight)) return false;
+            }
+            IBlockAccessor ba = api.World.BlockAccessor;
+
+            for (int dy = 0; dy < maxHeight; dy++)
+            {
+                BlockPos pos = targetPos.AddCopy(0, dy, 0);
+
+                if (ba.GetBlockEntity(pos) is BlockEntityGroundStorage pile)
+                {
+                    ItemSlot pileSlot = pile.Inventory?[0];
+                    bool sameThing = pileSlot == null || pileSlot.Empty
+                        || pileSlot.Itemstack.Equals(api.World, slot.Itemstack, GlobalConstants.IgnoredStackAttributes);
+
+                    if (sameThing && pile.TotalStackSize < pile.Capacity) return true;
+                    continue; // full, or holding something else - try the next one up
+                }
+
+                // Not a pile: an open cell with something to stand on can become one.
+                Block block = ba.GetBlock(pos);
+                if (block != null && block.Replaceable >= 6000 && GroundSupport.HasFooting(api.World, pos)) return true;
+
+                return false; // something solid is in the way; the column ends here
+            }
+
+            return false; // the height limit is reached and every pile below it is full
+        }
+
+        /// <summary>
+        /// Is there a pile in this column holding something other than what is being carried?
+        ///
+        /// The whole column counts, not just the top of it: a yard column is one slot as far as the
+        /// paper is concerned, and half a slot of planks over ingots is not a slot of anything.
+        /// </summary>
+        private bool ColumnHoldsSomethingElse(ItemStack stack, int maxHeight)
+        {
+            IBlockAccessor ba = api.World.BlockAccessor;
+
+            for (int dy = 0; dy < System.Math.Max(1, maxHeight); dy++)
+            {
+                if (ba.GetBlockEntity(targetPos.AddCopy(0, dy, 0)) is not BlockEntityGroundStorage pile) break;
+
+                ItemSlot slot = pile.Inventory?[0];
+                if (slot == null || slot.Empty) continue;
+
+                if (!slot.Itemstack.Equals(api.World, stack, GlobalConstants.IgnoredStackAttributes)) return true;
+            }
+
+            return false;
+        }
+
         private bool HasGroundSupport(BlockPos pos)
         {
             BlockPos below = pos.DownCopy();
             if (api.World.BlockAccessor.GetBlockEntity(below) is BlockEntityGroundStorage) return true;
-            return api.World.BlockAccessor.GetBlock(below).SideSolid[BlockFacing.UP.Index];
+            return GroundSupport.HasFooting(api.World, pos);
         }
 
         private int TryAddToPile(BlockEntityGroundStorage pile, List<ItemSlot> srcSlots, int maxCount)
@@ -352,44 +603,64 @@ namespace SignalsLink.src.signals.managedchute.transporting
             return src.Itemstack?.Block is BlockLiquidContainerBase && TryPlaceBlockOnGround(src, pos);
         }
 
-        private bool TryStackOnGround(ItemSlot src, BlockPos pos)
+        private int TryStackOnGround(ItemSlot src, BlockPos pos, int requested, int floor)
         {
             ItemStack stack = src.Itemstack;
-            if (stack == null) return false;
+            if (stack == null || requested <= 0) return 0;
+            List<ItemSlot> sources = GetMatchingSourceSlots(src);
+            int available = (int)Math.Min(int.MaxValue, sources.Sum(s => (long)s.StackSize));
+            if (available < floor) return 0;
 
-            // Zkus najít existující pile na cílovém bloku
-            BlockEntityItemPile pile = api.World.BlockAccessor.GetBlockEntity<BlockEntityItemPile>(pos);
-            if (pile != null)
+            var ba = api.World.BlockAccessor;
+            BlockEntityItemPile pile = ba.GetBlockEntity(pos) as BlockEntityItemPile;
+            Block newPileBlock = null;
+            if (pile == null)
             {
-                // Musí být stejný typ itemu
-                ItemSlot pileSlot = pile.inventory[0];
-                if (!pileSlot.Empty &&
-                    stack.Equals(api.World, pileSlot.Itemstack, GlobalConstants.IgnoredStackAttributes) &&
-                    pile.OwnStackSize < pile.MaxStackSize)
-                {
-                    pileSlot.Itemstack.StackSize++;
-                    pileSlot.MarkDirty();
-                    pile.MarkDirty(false, null);
-
-                    src.TakeOut(1);
-                    return true;
-                }
+                if (stack.Item is not ItemPileable item || !item.IsPileable) return 0;
+                if (ba.GetBlockEntity(pos) != null || ba.GetBlock(pos).Replaceable < 6000) return 0;
+                var code = PileBlockCodeProperty?.GetValue(item) as AssetLocation;
+                if (code == null) return 0;
+                newPileBlock = api.World.GetBlock(code);
+                if (newPileBlock is not IBlockItemPile || newPileBlock.EntityClass == null) return 0;
+                // Read capacity before changing the world. Vanilla Construct requires a player;
+                // create and fill the BE directly, as with modern ground storage.
+                pile = api.ClassRegistry.CreateBlockEntity(newPileBlock.EntityClass) as BlockEntityItemPile;
+                if (pile == null) return 0;
             }
 
-            // Pokud není existující pile, zkus vytvořit nový, pokud je item pileable
-            if (stack.Item is ItemPileable pileableItem)
+            ItemSlot target = pile.inventory?[0];
+            if (target == null || (!target.Empty && !target.Itemstack.Equals(api.World, stack, GlobalConstants.IgnoredStackAttributes))) return 0;
+            int count = Math.Min(requested, Math.Min(available, pile.MaxStackSize - target.StackSize));
+            if (count <= 0 || count < floor) return 0;
+
+            if (newPileBlock != null)
             {
-                var pileableItemTraverse = Traverse.Create(pileableItem);
-                var pileBlock = api.World.GetBlock(pileableItemTraverse.Property("PileBlockCode").GetValue<AssetLocation>());
-                if (pileBlock is IBlockItemPile pileBlockImpl)
+                int previousBlockId = ba.GetBlock(pos).BlockId;
+                ba.SetBlock(newPileBlock.BlockId, pos);
+                pile = ba.GetBlockEntity(pos) as BlockEntityItemPile;
+                if (pile?.inventory?[0] == null)
                 {
-                    bool success = pileBlockImpl.Construct(src, api.World, pos, null);
-                    return success;
+                    ba.SetBlock(previousBlockId, pos);
+                    return 0;
                 }
+                target = pile.inventory[0];
             }
 
-            return false;
+            int total = 0;
+            foreach (ItemSlot source in sources)
+            {
+                if (total >= count) break;
+                ItemStack taken = source.TakeOut(Math.Min(count - total, source.StackSize));
+                if (taken == null) continue;
+                if (target.Empty) target.Itemstack = taken;
+                else target.Itemstack.StackSize += taken.StackSize;
+                total += taken.StackSize;
+                source.MarkDirty();
+            }
+            target.MarkDirty();
+            pile.MarkDirty(true);
+            ba.MarkBlockDirty(pos);
+            return total;
         }
-
     }
 }

@@ -15,45 +15,170 @@ namespace SignalsLink.src.signals.managedchute.transporting
         private readonly byte targetSlotSignal;
         private readonly PaperConditionsEvaluator conditionsEvaluator;
 
-        public WorldToInventoryTransfer(ICoreAPI api, BlockPos sourcePos, IInventory targetInv, byte targetSlotSignal, PaperConditionsEvaluator conditionsEvaluator)
+        // Where the target inventory lives. Optional only because a caller may not know it; with
+        // it, `in target isBurning` and `do seal` work in this direction too.
+        private readonly BlockPos targetPos;
+        private int defaultQuantity = 1;
+
+        public WorldToInventoryTransfer(ICoreAPI api, BlockPos sourcePos, IInventory targetInv, byte targetSlotSignal, PaperConditionsEvaluator conditionsEvaluator, BlockPos targetPos = null)
         {
             this.api = api;
             this.sourcePos = sourcePos;
             this.targetInv = targetInv;
             this.targetSlotSignal = targetSlotSignal;
             this.conditionsEvaluator = conditionsEvaluator;
+            this.targetPos = targetPos;
         }
 
+        /// <summary>
+        /// One evaluation pass. The paper is the outer loop and the ways of picking something up
+        /// out of the world are the inner one, so a block higher on the paper gets to try every
+        /// pickup before a block below it is asked at all — the same order of priority the other
+        /// devices follow.
+        /// </summary>
         public TransferOperationResult TryMove(ItemStackMoveOperation opTemplate)
         {
-            TransferOperationResult fromPile = TryTakeFromGroundStorageColumn();
+            TransferOperationResult result = RunPass(opTemplate);
+
+            // Picked up off the ground into a shelf or a rack: it has to be drawn there.
+            if (result.Success) DisplayRefresh.After(api, targetInv);
+
+            return result;
+        }
+
+        private TransferOperationResult RunPass(ItemStackMoveOperation opTemplate)
+        {
+            defaultQuantity = Math.Max(1, opTemplate.RequestedQuantity);
+            IReadOnlyList<ConditionBlock> blocks = conditionsEvaluator?.GetBlocks();
+
+            if (blocks == null || blocks.Count == 0)
+            {
+                OutputSink?.ApplyOutput(0, 0);   // no paper, nothing can drive the pin
+                return TryPickUp(null);
+            }
+
+            TransferOperationResult moved = TransferOperationResult.None;
+            IDictionary<string, object> outputCtx = null;
+            IDictionary<string, object> actionCtx = null;
+
+            DriverResult result = ConditionDriver.Run(
+                blocks,
+                false,
+                block =>
+                {
+                    outputCtx = BuildOutputContext();
+                    bool holds = block.OutputConditionsHold(outputCtx);
+
+                    if (ConditionDebug.Enabled)
+                    {
+                        ConditionDebug.Log("  output block value=" + block.OutputValue + " holds=" + holds
+                            + " | " + ConditionDebug.Describe(outputCtx, "targetInventory"));
+                    }
+
+                    return holds;
+                },
+                block =>
+                {
+                    moved = TryPickUp(block);
+
+                    // Picking something up is this device's transfer; anything else the block says
+                    // to do follows it, and still runs when there was nothing to pick up. A paper
+                    // that seals the barrel because the ground is finally clear would otherwise be
+                    // stopped by the very emptiness it is waiting for.
+                    actionCtx = BuildDirectiveContext();
+
+                    bool acted = moved.Success ? ConditionActions.ExecuteMatched(block, actionCtx) : ConditionActions.RunOn(block, actionCtx);
+
+                    if (acted && !moved.Success) moved = TransferOperationResult.ActionOnly;
+                    return moved.Success;
+                });
+
+            OutputSink?.ApplyOutput(0, result.GetOutput());
+            return moved;
+        }
+
+        /// <summary>
+        /// Every way of taking something out of the world, tried in turn for ONE block of the
+        /// paper. <paramref name="block"/> null means there is no paper at all.
+        /// </summary>
+        private TransferOperationResult TryPickUp(ConditionBlock block)
+        {
+            if (block != null && !block.CanSelectSource) return TransferOperationResult.None;
+            TransferOperationResult fromPile = TryTakeFromGroundStorageColumn(block);
             if (fromPile.Success) return fromPile;
+
+            TransferOperationResult fromLayers = TryTakeFromLayeredBlock(block);
+            if (fromLayers.Success) return fromLayers;
 
             if (TryGetPlacedLiquidContainer(out ItemStack containerStack))
             {
-                return TryMovePlacedLiquidContainer(containerStack);
+                return TryMovePlacedLiquidContainer(containerStack, block);
             }
 
-            EntityItem entity = FindItemEntityNearSource();
-            if (entity == null || entity.Itemstack == null || entity.Itemstack.StackSize <= 0) return TransferOperationResult.None;
+            return TryTakeLooseItems(block);
+        }
 
-            ItemStack stack = entity.Itemstack;
-            if (!TryGetMatchedDirectives(stack, out PaperConditionDirectives directives) || !directives.Evaluate(BuildDirectiveContext())) return TransferOperationResult.None;
+        private TransferOperationResult TryTakeLooseItems(ConditionBlock block)
+        {
+            var min = sourcePos.AddCopy(-1, -1, -1);
+            var max = sourcePos.AddCopy(2, 2, 2);
+            Entity[] entities = api.World.GetEntitiesInsideCuboid(min, max, e =>
+                e is EntityItem item && item.Itemstack?.StackSize > 0 && !IsLiquidContainer(item.Itemstack));
+            if (entities == null) return TransferOperationResult.None;
 
-            int moved = TryPutOneIntoInventory(stack, directives.TargetSlot ?? targetSlotSignal);
-            if (moved <= 0) return TransferOperationResult.None;
-
-            stack.StackSize -= moved;
-            if (stack.StackSize <= 0)
+            // Group only stack-compatible drops. One world query per rule, and each candidate's
+            // conditions are checked once before any inventory or entity is changed.
+            var groups = new List<List<EntityItem>>();
+            var byCollectible = new Dictionary<CollectibleObject, List<List<EntityItem>>>();
+            foreach (Entity entity in entities)
             {
-                entity.Die(EnumDespawnReason.PickedUp);
-            }
-            else
-            {
-                entity.Itemstack = stack;
+                if (entity is not EntityItem item || !IsConditionMet(item.Itemstack, block)) continue;
+                if (!byCollectible.TryGetValue(item.Itemstack.Collectible, out var sameType))
+                    byCollectible[item.Itemstack.Collectible] = sameType = new List<List<EntityItem>>();
+                var group = sameType.Find(g => g[0].Itemstack.Equals(api.World, item.Itemstack, GlobalConstants.IgnoredStackAttributes));
+                if (group == null)
+                {
+                    group = new List<EntityItem>();
+                    sameType.Add(group);
+                    groups.Add(group);
+                }
+                group.Add(item);
             }
 
-            return new TransferOperationResult(moved, moved, false);
+            PaperConditionDirectives directives = block?.Directives ?? PaperConditionDirectives.Empty;
+            if (!directives.Evaluate(BuildDirectiveContext())) return TransferOperationResult.None;
+            int targetSignal = EffectiveTargetSlot(directives);
+            foreach (var group in groups)
+            {
+                int available = (int)Math.Min(int.MaxValue, group.Sum(e => (long)e.Itemstack.StackSize));
+                int batch = PickupBatch(available, group[0].Itemstack, directives, block);
+                if (batch <= 0) continue;
+
+                int total = 0;
+                foreach (EntityItem entity in group)
+                {
+                    ItemStack stack = entity.Itemstack;
+                    int moved = TryPutIntoInventory(stack, targetSignal, Math.Min(stack.StackSize, batch - total));
+                    if (moved <= 0) break;
+                    stack.StackSize -= moved;
+                    entity.Itemstack = stack;
+                    entity.WatchedAttributes.MarkPathDirty("itemstack");
+                    if (stack.StackSize == 0) entity.Die(EnumDespawnReason.PickedUp);
+                    total += moved;
+                    if (total == batch) break;
+                }
+                if (total > 0) return new TransferOperationResult(total, total, false);
+            }
+            return TransferOperationResult.None;
+        }
+
+        private int PickupBatch(int available, ItemStack stack, PaperConditionDirectives directives, ConditionBlock block)
+        {
+            int floor = CappedByKeep(Math.Max(1, (int)(directives.Amount ?? defaultQuantity)), directives, block);
+            int room = RoomFor(stack, EffectiveTargetSlot(directives));
+            if (directives.IsAtomicAmount && !directives.HasKeep && (available < floor || room < floor)) return 0;
+            int requested = CappedByKeep(directives.TakesEverythingAvailable ? available : floor, directives, block);
+            return Math.Max(0, Math.Min(requested, Math.Min(available, room)));
         }
 
         /// <summary>
@@ -62,7 +187,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
         /// bottom block of the column. Also refreshes the pile mesh (otherwise the pile keeps
         /// rendering its old size) and removes the block once it runs empty.
         /// </summary>
-        private TransferOperationResult TryTakeFromGroundStorageColumn()
+        private TransferOperationResult TryTakeFromGroundStorageColumn(ConditionBlock block)
         {
             List<BlockEntityGroundStorage> column = GetColumnTopDown();
             if (column.Count == 0) return TransferOperationResult.None;
@@ -72,23 +197,25 @@ namespace SignalsLink.src.signals.managedchute.transporting
             if (topSlot == null || topSlot.Empty) return TransferOperationResult.None;
 
             ItemStack stack = topSlot.Itemstack;
-            if (!TryGetMatchedDirectives(stack, out PaperConditionDirectives directives, top.Inventory)) return TransferOperationResult.None;
+            if (!TryGetMatchedDirectives(stack, out PaperConditionDirectives directives, top.Inventory, block)) return TransferOperationResult.None;
             if (!directives.Evaluate(BuildDirectiveContext())) return TransferOperationResult.None;
 
-            // `amount N` takes a whole batch at once, spanning several piles of the column if needed
-            // (mirrors the placing side). It is atomic on the source: the column must hold all of N.
-            int batch = 1;
-            if (directives.Amount.HasValue)
+            // `amount N` takes a whole batch at once, spanning several piles of the column if
+            // needed (mirrors the placing side). Whether it waits for the whole of N is what the
+            // mark says: a plain amount and `N+` are floors, `N-` is a ceiling and never waits.
+            int available = 0;
+            foreach (BlockEntityGroundStorage p in column)
             {
-                batch = (int)decimal.Truncate(directives.Amount.Value);
-                if (batch < 1) batch = 1;
-
-                int available = 0;
-                foreach (BlockEntityGroundStorage p in column) available += p.TotalStackSize;
-                if (available < batch) return TransferOperationResult.None;
+                var held = p.Inventory?[0]?.Itemstack;
+                if (held == null || !held.Equals(api.World, stack, GlobalConstants.IgnoredStackAttributes)) break;
+                available += held.StackSize;
             }
+            int floor = CappedByKeep(Math.Max(1, (int)(directives.Amount ?? defaultQuantity)), directives, block);
+            int targetSignal = EffectiveTargetSlot(directives);
+            if (directives.IsAtomicAmount && !directives.HasKeep && (available < floor || RoomFor(stack, targetSignal) < floor)) return TransferOperationResult.None;
+            int batch = CappedByKeep(directives.TakesEverythingAvailable ? available : floor, directives, block);
+            if (batch <= 0) return TransferOperationResult.None;
 
-            byte targetSignal = directives.TargetSlot ?? targetSlotSignal;
             int movedTotal = 0;
 
             foreach (BlockEntityGroundStorage pile in column)
@@ -126,6 +253,190 @@ namespace SignalsLink.src.signals.managedchute.transporting
             return new TransferOperationResult(movedTotal, movedTotal, false);
         }
 
+        #region Layered blocks (charcoal)
+
+        /// <summary>
+        /// Takes charcoal — or anything else built as a layered block — off the top of the column
+        /// standing on the source position.
+        ///
+        /// A layered block is not a pile and needs its own path: charcoalpile has no block entity
+        /// and no inventory at all, only a variant group counting its layers
+        /// (<c>attributes.layerGroupCode</c>), which is why neither the ground-storage nor the
+        /// item-entity route can see it. A layer is the unit that can be removed, so <c>amount N</c>
+        /// — which counts PIECES — is converted into whole layers here, and a layer is never broken
+        /// apart: it is taken whole or left alone, so nothing is lost when the target runs out of
+        /// room halfway through one.
+        /// </summary>
+        private TransferOperationResult TryTakeFromLayeredBlock(ConditionBlock paperBlock)
+        {
+            List<BlockPos> column = GetLayeredColumnTopDown(out Block block, out string layerGroup);
+            if (column.Count == 0) return TransferOperationResult.None;
+
+            ItemStack layerStack = GetLayerDrop(block);
+            if (layerStack?.Collectible == null || layerStack.StackSize <= 0) return TransferOperationResult.None;
+
+            if (!TryGetMatchedDirectives(layerStack, out PaperConditionDirectives directives, null, paperBlock)) return TransferOperationResult.None;
+            if (!directives.Evaluate(BuildDirectiveContext())) return TransferOperationResult.None;
+
+            int perLayer = layerStack.StackSize;
+            int available = 0;
+            foreach (BlockPos p in column) available += GetLayerCount(api.World.BlockAccessor.GetBlock(p), layerGroup) * perLayer;
+            int floor = CappedByKeep(Math.Max(1, (int)(directives.Amount ?? Math.Max(perLayer, defaultQuantity))), directives, paperBlock);
+            int targetSignal = EffectiveTargetSlot(directives);
+            // A layer cannot be split. Never round a ceiling or keep upwards.
+            if (directives.IsAtomicAmount && !directives.HasKeep && (floor % perLayer != 0 || available < floor || RoomFor(layerStack, targetSignal) < floor)) return TransferOperationResult.None;
+            int requested = CappedByKeep(directives.TakesEverythingAvailable ? available : floor, directives, paperBlock);
+            requested -= requested % perLayer;
+            if (requested <= 0) return TransferOperationResult.None;
+
+            int movedTotal = 0;
+
+            foreach (BlockPos pos in column)
+            {
+                while (movedTotal < requested)
+                {
+                    Block cur = api.World.BlockAccessor.GetBlock(pos);
+                    int layers = GetLayerCount(cur, layerGroup);
+                    if (layers <= 0) break;
+
+                    if (RoomFor(layerStack, targetSignal) < perLayer) return LayerResult(movedTotal);
+
+                    int moved = TryPutIntoInventory(layerStack, targetSignal, perLayer);
+                    if (moved <= 0) return LayerResult(movedTotal);
+
+                    movedTotal += moved;
+                    RemoveOneLayer(pos, cur, layers, layerGroup);
+                }
+
+                if (movedTotal >= requested) break;
+            }
+
+            return LayerResult(movedTotal);
+        }
+
+        private static TransferOperationResult LayerResult(int movedTotal)
+        {
+            return movedTotal > 0 ? new TransferOperationResult(movedTotal, movedTotal, false) : TransferOperationResult.None;
+        }
+
+        /// <summary>
+        /// The contiguous column of one and the same layered block standing on the source position,
+        /// topmost first — a stack is taken from the top. <paramref name="block"/> is the bottom
+        /// one, which is what the drops and the layer group are read from.
+        /// </summary>
+        private List<BlockPos> GetLayeredColumnTopDown(out Block block, out string layerGroup)
+        {
+            block = null;
+            layerGroup = null;
+
+            IBlockAccessor ba = api.World.BlockAccessor;
+            List<BlockPos> column = new List<BlockPos>();
+
+            for (int dy = 0; dy < 64; dy++)
+            {
+                BlockPos pos = sourcePos.AddCopy(0, dy, 0);
+                Block cur = ba.GetBlock(pos);
+                string group = cur?.Attributes?["layerGroupCode"].AsString(null);
+                if (group == null) break;
+
+                if (block == null)
+                {
+                    block = cur;
+                    layerGroup = group;
+                }
+                else if (cur.FirstCodePart() != block.FirstCodePart())
+                {
+                    break; // a different material ends the column; one batch never mixes items
+                }
+
+                column.Add(pos);
+            }
+
+            column.Reverse();
+            return column;
+        }
+
+        private static int GetLayerCount(Block block, string layerGroup)
+        {
+            string value = block?.Variant?[layerGroup];
+            return value != null && int.TryParse(value, out int layers) ? layers : 0;
+        }
+
+        /// <summary>
+        /// What one layer is worth. The JSON drops of a layered block describe a single layer — the
+        /// game multiplies them by the layer count when the whole block is broken — so one entry
+        /// taken as-is is exactly one layer of yield.
+        /// </summary>
+        private static ItemStack GetLayerDrop(Block block)
+        {
+            BlockDropItemStack[] drops = block?.Drops;
+            if (drops == null || drops.Length == 0) return null;
+
+            return drops[0].GetNextItemStack();
+        }
+
+        /// <summary>
+        /// Peels one layer off, or removes the block once its last layer is gone. SetBlock notifies
+        /// the neighbours, so anything resting on top (charcoal carries UnstableFalling) collapses
+        /// down by itself — which is what keeps a column feeding the endpoint below it.
+        /// </summary>
+        private void RemoveOneLayer(BlockPos pos, Block block, int layers, string layerGroup)
+        {
+            IBlockAccessor ba = api.World.BlockAccessor;
+
+            if (layers <= 1)
+            {
+                ba.SetBlock(0, pos);
+                ba.MarkBlockDirty(pos);
+                return;
+            }
+
+            Block thinner = api.World.GetBlock(block.CodeWithVariant(layerGroup, (layers - 1).ToString()));
+            if (thinner == null) return;
+
+            ba.SetBlock(thinner.BlockId, pos);
+            ba.MarkBlockDirty(pos);
+        }
+
+        /// <summary>
+        /// How many pieces the target could still take. Asked BEFORE a layer is removed, because a
+        /// layer cannot be put back once it is gone.
+        /// </summary>
+        /// <summary>Which target slot a block asks for: `target last`, `target N`, or the pin.</summary>
+        private int EffectiveTargetSlot(PaperConditionDirectives directives)
+        {
+            if (directives == null) return targetSlotSignal;
+            if (directives.TargetLast) return targetInv?.Count ?? 0;
+            return directives.TargetSlot ?? targetSlotSignal;
+        }
+
+        private int RoomFor(ItemStack stack, int effectiveTargetSlotSignal)
+        {
+            if (effectiveTargetSlotSignal > 0)
+            {
+                int index = effectiveTargetSlotSignal - 1;
+                if (index < 0 || index >= targetInv.Count) return 0;
+                return RoomInSlot(targetInv[index], stack);
+            }
+
+            int room = 0;
+            for (int i = 0; i < targetInv.Count; i++) room += RoomInSlot(targetInv[i], stack);
+            return room;
+        }
+
+        private int RoomInSlot(ItemSlot slot, ItemStack stack)
+        {
+            if (slot == null || stack?.Collectible == null) return 0;
+            if (!slot.CanHold(new DummySlot(stack))) return 0;
+            if (!slot.CanTakeFrom(new DummySlot(stack), EnumMergePriority.DirectMerge)) return 0;
+            if (slot.Empty) return Math.Min(stack.Collectible.MaxStackSize, slot.GetRemainingSlotSpace(stack));
+            if (!slot.Itemstack.Equals(api.World, stack, GlobalConstants.IgnoredStackAttributes)) return 0;
+
+            return Math.Max(0, Math.Min(stack.Collectible.MaxStackSize - slot.StackSize, slot.GetRemainingSlotSpace(stack)));
+        }
+
+        #endregion
+
         /// <summary>The contiguous ground-storage column standing on the source position, topmost
         /// pile first - items are taken off the top of a stack.</summary>
         private List<BlockEntityGroundStorage> GetColumnTopDown()
@@ -143,11 +454,12 @@ namespace SignalsLink.src.signals.managedchute.transporting
             return piles;
         }
 
-        private TransferOperationResult TryMovePlacedLiquidContainer(ItemStack containerStack)
+        private TransferOperationResult TryMovePlacedLiquidContainer(ItemStack containerStack, ConditionBlock block)
         {
-            if (!TryGetMatchedDirectives(containerStack, out PaperConditionDirectives directives) || !directives.Evaluate(BuildDirectiveContext())) return TransferOperationResult.None;
+            if (!TryGetMatchedDirectives(containerStack, out PaperConditionDirectives directives, null, block) || !directives.Evaluate(BuildDirectiveContext())) return TransferOperationResult.None;
 
-            int moved = TryPutOneIntoInventory(containerStack, directives.TargetSlot ?? targetSlotSignal);
+            int batch = PickupBatch(1, containerStack, directives, block);
+            int moved = TryPutIntoInventory(containerStack, EffectiveTargetSlot(directives), batch);
             if (moved <= 0) return TransferOperationResult.None;
 
             api.World.BlockAccessor.SetBlock(0, sourcePos);
@@ -160,33 +472,68 @@ namespace SignalsLink.src.signals.managedchute.transporting
             return (int)TryMove(opTemplate).MovedAmount;
         }
 
-        private EntityItem FindItemEntityNearSource()
+        public void EvaluateOutputs()
         {
-            IWorldAccessor world = api.World;
-
-            var min = new Vec3d(sourcePos.X - 1, sourcePos.Y - 1, sourcePos.Z - 1);
-            var max = new Vec3d(sourcePos.X + 2, sourcePos.Y + 2, sourcePos.Z + 2);
-
-            EntityItem found = null;
-
-            world.GetEntitiesInsideCuboid(min.AsBlockPos, max.AsBlockPos, e =>
-            {
-                if (e is not EntityItem itemEntity) return false;
-
-                var stack = itemEntity.Itemstack;
-                if (stack == null || stack.StackSize <= 0) return false;
-                if (IsLiquidContainer(stack) || !IsConditionMet(stack)) return false;
-
-                found = itemEntity;
-                return true;
-            });
-
-            return found;
+            RunOutputRail();
         }
 
-        private int TryPutOneIntoInventory(ItemStack fromStack, byte effectiveTargetSlotSignal)
+        // NOTE: TryMove runs the output rail as part of its own pass; RunOutputRail below is for
+        // the ticks where the host cannot carry anything at all.
+
+        /// <summary>
+        /// The output rail of one evaluation pass. Picking things up out of the world is not slot
+        /// based, so the action rail below is still the older per-candidate walk (see the note in
+        /// paper-conditions-rules-v2.md); the pin, however, is computed the v2 way — from the
+        /// current state on every pass, reading 0 when no output block holds, instead of freezing
+        /// on whatever last moved it.
+        /// </summary>
+        private void RunOutputRail()
         {
-            return TryPutIntoInventory(fromStack, effectiveTargetSlotSignal, 1);
+            if (OutputSink == null) return;
+
+            IReadOnlyList<ConditionBlock> blocks = conditionsEvaluator?.GetBlocks();
+            if (blocks == null || blocks.Count == 0)
+            {
+                OutputSink.ApplyOutput(0, 0);
+                return;
+            }
+
+            IDictionary<string, object> ctx = null;
+
+            DriverResult result = ConditionDriver.Run(
+                blocks,
+                true,   // the action rail lives outside the driver here
+                block =>
+                {
+                    ctx ??= BuildOutputContext();
+                    bool holds = block.OutputConditionsHold(ctx);
+
+                    if (ConditionDebug.Enabled)
+                    {
+                        ConditionDebug.Log("  output block value=" + block.OutputValue + " holds=" + holds
+                            + " | " + ConditionDebug.Describe(ctx, "targetInventory"));
+                    }
+
+                    return holds;
+                },
+                null);
+
+            OutputSink.ApplyOutput(0, result.GetOutput());
+        }
+
+        private IDictionary<string, object> BuildOutputContext()
+        {
+            return BuildConditionContext(null, null);
+        }
+
+        /// <summary>
+        /// The two ends as the conditions see them. The source here is a spot in the world rather
+        /// than an inventory, which is why it is given as a position - block-state conditions
+        /// (`isBurning`) asked `in source` then have something to look at.
+        /// </summary>
+        private IDictionary<string, object> BuildConditionContext(ItemStack stack, IInventory sourceInv)
+        {
+            return ConditionContext.Build(api, stack, sourceInv, sourcePos, targetInv, targetPos);
         }
 
         /// <summary>
@@ -194,7 +541,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
         /// does not fit one slot (a chest slot caps at the item's max stack size), so without a
         /// specific target slot it is spread over as many slots as needed.
         /// </summary>
-        private int TryPutIntoInventory(ItemStack fromStack, byte effectiveTargetSlotSignal, int maxCount)
+        private int TryPutIntoInventory(ItemStack fromStack, int effectiveTargetSlotSignal, int maxCount)
         {
             if (fromStack == null || maxCount < 1) return 0;
 
@@ -260,32 +607,53 @@ namespace SignalsLink.src.signals.managedchute.transporting
             return false;
         }
 
-        private bool IsConditionMet(ItemStack stack)
+        private bool IsConditionMet(ItemStack stack, ConditionBlock block)
         {
-            return TryGetMatchedDirectives(stack, out _);
+            return TryGetMatchedDirectives(stack, out _, null, block);
         }
 
-        private bool TryGetMatchedDirectives(ItemStack stack, out PaperConditionDirectives directives, IInventory sourceInv = null)
+        /// <summary>
+        /// The host's Output pin, when it has one. Null for the ManagedChute, which has none.
+        /// </summary>
+        public IConditionOutputSink OutputSink { get; set; }
+
+        /// <param name="block">
+        /// The block of the paper currently being tried. The driver has already chosen it, so the
+        /// question here is only whether it accepts this particular candidate. Null means there is
+        /// no paper at all, and everything is accepted.
+        /// </param>
+        private bool TryGetMatchedDirectives(ItemStack stack, out PaperConditionDirectives directives, IInventory sourceInv = null, ConditionBlock block = null)
         {
             directives = PaperConditionDirectives.Empty;
-            if (!conditionsEvaluator.HasConditions) return true;
+            if (!conditionsEvaluator.HasConditions || block == null) return true;
 
-            var ctx = ItemConditionContextUtil.BuildContext(api.World, stack);
-            ctx["targetInventory"] = targetInv;
-            if (sourceInv != null)
-            {
-                ctx["sourceInventory"] = sourceInv;
-                ctx["inventory"] = sourceInv;
-            }
-            return conditionsEvaluator.Evaluate(stack, ctx, out byte _, out directives);
+            IDictionary<string, object> ctx = BuildConditionContext(stack, sourceInv);
+
+            if (block.IsOutputBlock || !block.TryMatch(stack, ctx)) return false;
+
+            directives = block.Directives;
+            return true;
+        }
+
+        /// <summary>
+        /// The batch, held down to what `keep N` still wants in the target. A level is not a
+        /// batch: it never waits for a full one and it never overshoots.
+        /// </summary>
+        private int CappedByKeep(int quantity, PaperConditionDirectives directives, ConditionBlock block)
+        {
+            if (directives?.HasKeep != true || block == null) return quantity;
+
+            decimal room = directives.Keep.Value - block.CountInTarget(targetInv, BuildDirectiveContext());
+            if (room <= 0) return 0;
+
+            int capped = (int)decimal.Truncate(room);
+
+            return quantity > capped ? capped : quantity;
         }
 
         private IDictionary<string, object> BuildDirectiveContext()
         {
-            return new Dictionary<string, object>
-            {
-                ["targetInventory"] = targetInv
-            };
+            return BuildConditionContext(null, null);
         }
     }
 }

@@ -1,0 +1,510 @@
+using System;
+using System.Collections.Generic;
+using SignalsLink.src.signals.cargo;
+using SignalsLink.src.signals.paperConditions;
+using SignalsLink.src.signals.vehicle;
+using SignalsLink.YTT.src.probe;
+using Vintagestory.API.Common;
+using Vintagestory.API.Common.Entities;
+using Vintagestory.API.Datastructures;
+using Vintagestory.API.MathTools;
+
+namespace SignalsLink.YTT.src.train
+{
+    /// <summary>What <c>unload train north 3 engine</c> asked for.</summary>
+    public sealed class TrainSelector : ICargoSelector
+    {
+        /// <summary>Narrows the search to one side of the device, or null for all round.</summary>
+        public BlockFacing Direction { get; }
+
+        /// <summary>
+        /// How many blocks away the track is, counted by stepping off the device - <c>north5</c>.
+        /// Null means any distance on that side.
+        /// </summary>
+        public int? Distance { get; }
+
+        /// <summary>Which vehicle, counted from the head of the convoy; null for all of them.</summary>
+        public int? WagonIndex { get; }
+
+        /// <summary>Only the steam engine's own holds - its fuel and its water.</summary>
+        public bool EngineOnly { get; }
+
+        /// <summary>
+        /// Only vehicles of this kind (see <see cref="TrainVehicleKind"/>), or null for any. With a
+        /// kind, <see cref="WagonIndex"/> counts among vehicles of that kind.
+        /// </summary>
+        public string Kind { get; }
+
+        /// <summary>Only the refrigerant slots of refrigerated wagons - where the ice goes.</summary>
+        public bool IceOnly { get; }
+
+        public TrainSelector(BlockFacing direction, int? wagonIndex, bool engineOnly, int? distance = null,
+            string kind = null, bool iceOnly = false)
+        {
+            Direction = direction;
+            WagonIndex = wagonIndex;
+            EngineOnly = engineOnly;
+            Distance = distance;
+            Kind = kind;
+            IceOnly = iceOnly;
+        }
+    }
+
+    /// <summary>One storage point of one vehicle.</summary>
+    public sealed class TrainHold : ICargoHold
+    {
+        private readonly YttPersistence persistence;
+        private readonly Entity entity;
+        private readonly InventoryBase inventory;
+        private readonly Action<Entity> onSaved;
+
+        public TrainHold(YttPersistence persistence, Entity entity, InventoryBase inventory, string code,
+            Action<Entity> onSaved = null)
+        {
+            this.persistence = persistence;
+            this.entity = entity;
+            this.inventory = inventory;
+            this.onSaved = onSaved;
+
+            Code = code + " " + entity.EntityId;
+        }
+
+        public string Code { get; }
+
+        public IInventory Inventory => inventory;
+
+        /// <summary>A wagon is an inventory, not a place: its slots are written to directly.</summary>
+        public BlockPos Pos => null;
+
+        public bool IsEmpty => inventory.Empty;
+
+        public void MarkDirty()
+        {
+            // A wagon saves itself off its dirty slots; an engine has to be asked.
+            onSaved?.Invoke(entity);
+
+            persistence.VerifyFirstTransfer(entity, snapshot);
+        }
+
+        /// <summary>Before anything moves, and only while that one check is still to come.</summary>
+        public string TakeSnapshot()
+        {
+            if (persistence?.NeedsSnapshot != true) return null;
+
+            snapshot ??= persistence.Snapshot(entity);
+            return snapshot;
+        }
+
+        private string snapshot;
+    }
+
+    /// <summary>
+    /// A train standing at the platform: every hold of every vehicle that matched, nearest first.
+    /// </summary>
+    public sealed class TrainHolder : ICargoHolder
+    {
+        public IReadOnlyList<ICargoHold> Holds { get; }
+
+        /// <summary>Stopped - which for a train is what "ready" means.</summary>
+        public bool IsReady { get; }
+
+        public TrainHolder(IReadOnlyList<ICargoHold> holds, bool ready)
+        {
+            Holds = holds;
+            IsReady = ready;
+        }
+
+        public void Refresh()
+        {
+            foreach (ICargoHold hold in Holds)
+            {
+                if (hold is TrainHold train) train.TakeSnapshot();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Finds the train standing at the dock. Vehicles are recognised by the domain of their
+    /// entity code and the name of a behavior, never by a type.
+    /// </summary>
+    public class TrainCargoHolderFinder : ICargoHolderFinder
+    {
+        public const string KeywordText = "train";
+
+        /// <summary>The mod whose vehicles these are.</summary>
+        public const string Domain = "yangtransport";
+
+        /// <summary>How far from the device to look. A boxcar alone is seven blocks long.</summary>
+        public const int SearchRadius = 12;
+
+        private readonly YttSurface surface;
+        private readonly YttPersistence persistence;
+        private readonly YttStorage storage;
+        private readonly YttEngine engine;
+        private readonly StandingWatch standing = new StandingWatch();
+        private readonly VehicleSightings sightings = new VehicleSightings();
+
+        /// <summary>
+        /// The probe is left out when only the header vocabulary is wanted - reading a header must
+        /// work with no game and no other mod.
+        /// </summary>
+        public TrainCargoHolderFinder(YttSurface surface = null, YttPersistence persistence = null)
+        {
+            this.surface = surface;
+            this.persistence = persistence;
+            storage = new YttStorage(surface, persistence);
+            engine = new YttEngine(surface);
+            refrigeration = new YttRefrigeration(surface, persistence);
+        }
+
+        private readonly YttRefrigeration refrigeration;
+
+        public string Keyword => KeywordText;
+
+        /// <summary>
+        /// A train moves, so nothing about it may be remembered between ticks - and stopped-or-not
+        /// needs a fresh look anyway.
+        /// </summary>
+        public bool Cacheable => false;
+
+        public bool TryParseHeader(IReadOnlyList<string> tokens, PaperErrorSink errors, out ICargoSelector selector)
+        {
+            selector = null;
+
+            BlockFacing direction = null;
+            int? distance = null;
+            int? wagon = null;
+            bool engine = false;
+            string kind = null;
+            string kindToken = null;
+            bool ice = false;
+
+            foreach (string token in tokens ?? Array.Empty<string>())
+            {
+                BlockFacing facing = HeaderDirection.TryParse(token, out int? steps);
+
+                if (facing != null)
+                {
+                    // Out of reach can never match, and a header that matches nothing is the
+                    // hardest kind to debug. Say so while the paper is being written.
+                    if (steps != null && (steps < 1 || steps > SearchRadius))
+                    {
+                        errors?.Add(token, "holderspec");
+                        return false;
+                    }
+
+                    direction = facing;
+                    distance = steps;
+                    continue;
+                }
+
+                if (token.Equals("engine", StringComparison.OrdinalIgnoreCase))
+                {
+                    engine = true;
+                    continue;
+                }
+
+                if (token.Equals("ice", StringComparison.OrdinalIgnoreCase))
+                {
+                    ice = true;
+                    continue;
+                }
+
+                string named = TrainVehicleKind.FromToken(token);
+                if (named != null)
+                {
+                    kind = named;
+                    kindToken = token;
+                    continue;
+                }
+
+                if (int.TryParse(token, out int index) && index >= 1)
+                {
+                    wagon = index;
+                    continue;
+                }
+
+                // Reported rather than ignored, or the header quietly means something else.
+                errors?.Add(token, "holderspec");
+                return false;
+            }
+
+            // Words that cannot both be meant. Said now, or the header simply never matches.
+            if (engine && (kind != null || ice))
+            {
+                errors?.Add(kindToken ?? "ice", "holderspec");
+                return false;
+            }
+
+            if (ice && kind != null && kind != TrainVehicleKind.Fridge)
+            {
+                errors?.Add(kindToken, "holderspec");
+                return false;
+            }
+
+            // Only a refrigerated wagon has ice slots, so `ice` alone names the kind as well.
+            if (ice) kind = TrainVehicleKind.Fridge;
+
+            selector = new TrainSelector(direction, wagon, engine, distance, kind, ice);
+            return true;
+        }
+
+        public bool TryFind(IWorldAccessor world, BlockPos devicePos, ICargoSelector selector, out ICargoHolder holder)
+        {
+            holder = null;
+
+            // Deliberately NOT gated on the probe or on the save check. Those belong to the other
+            // mod's own inventories, and each of the three readers below asks for itself: wagons
+            // and the engine stand down when the surface moved, a cart carries a vanilla bag and
+            // has nothing to stand down from. So a YTT update that moves a private field costs the
+            // wagons and leaves the carts working.
+            if (world?.Api is not Vintagestory.API.Server.ICoreServerAPI) return false;
+
+            TrainSelector wanted = selector as TrainSelector ?? new TrainSelector(null, null, false);
+            Vec3d centre = devicePos.ToVec3d().Add(0.5, 0.5, 0.5);
+
+            IReadOnlyList<Entity> found = VehiclesNear(world, devicePos, centre);
+            if (found.Count == 0) return false;
+
+            long now = world.ElapsedMilliseconds;
+            List<Entity> vehicles = new List<Entity>();
+
+            foreach (Entity entity in found)
+            {
+                if (!Reaches(entity, centre, wanted)) continue;
+
+                vehicles.Add(entity);
+            }
+
+            // By age, not by what this one device can see: one finder serves every dock, and
+            // clearing the rest wiped the other dock's train on every tick.
+            standing.Forget(now);
+
+            if (vehicles.Count == 0) return false;
+
+            vehicles.Sort((a, b) => Distance(a, centre).CompareTo(Distance(b, centre)));
+
+            // Which convoys drive themselves: the conductor sits on one vehicle, the action code
+            // is written on all of them, and it is only worth believing where there is a conductor.
+            HashSet<long> automated = new HashSet<long>();
+            foreach (Entity entity in vehicles)
+            {
+                if (TrainSignals.HasConductorLocust(entity)) automated.Add(ConvoyOf(entity));
+            }
+
+            List<ICargoHold> holds = new List<ICargoHold>();
+            bool ready = true;
+
+            foreach (Entity entity in vehicles)
+            {
+                if (!Matches(world, entity, wanted)) continue;
+
+                int before = holds.Count;
+
+                if (wanted.IceOnly)
+                {
+                    // Only when asked for by name, like the engine: ice on a plain `load train`
+                    // is cargo, and goes where cargo goes.
+                    InventoryBase inventory = refrigeration.InventoryOf(entity);
+
+                    if (inventory != null)
+                    {
+                        holds.Add(new TrainHold(refrigeration.Persistence, entity, inventory, "ice"));
+                    }
+                }
+                else if (wanted.EngineOnly)
+                {
+                    // Only when asked for by name, or a firebox swallows every delivery's
+                    // first coal on a plain `load train`.
+                    InventoryBase inventory = engine.InventoryOf(entity);
+
+                    if (inventory != null)
+                    {
+                        holds.Add(new TrainHold(persistence, entity, inventory, "engine", engine.Save));
+                    }
+                }
+                else
+                {
+                    int index = 0;
+
+                    foreach (InventoryBase inventory in storage.InventoriesOf(entity))
+                    {
+                        holds.Add(new TrainHold(persistence, entity, inventory, "wagon" + index++));
+                    }
+
+                    // A cart carries its load in a chest hung on it, which is a vanilla held bag
+                    // rather than anything of the other mod's - so it goes through neither the
+                    // reflection nor the save check those wagons need.
+                    holds.AddRange(HungContainers.HoldsOf(entity, "cart"));
+                }
+
+                if (holds.Count == before) continue;
+
+                // Every vehicle in use has to be standing; half a train stopped is not stopped.
+                if (!IsStanding(entity, now, automated.Contains(ConvoyOf(entity)))) ready = false;
+            }
+
+            if (holds.Count == 0) return false;
+
+            TrainHolder train = new TrainHolder(holds, ready);
+            train.Refresh();
+
+            holder = train;
+            return true;
+        }
+
+        /// <summary>
+        /// YTT's word first, position samples second - but its word only on a convoy that has a
+        /// conductor, because the attribute outlives the conductor. See TrainSignals.
+        /// </summary>
+        private bool IsStanding(Entity entity, long now, bool automated)
+        {
+            int action = entity.WatchedAttributes?.GetInt(TrainSignals.ActionAttribute, 0) ?? 0;
+
+            return TrainSignals.IsStanding(action, automated,
+                () => standing.IsStanding(entity.EntityId, entity.Pos.X, entity.Pos.Y, entity.Pos.Z, now));
+        }
+
+        /// <summary>The convoy a vehicle belongs to: its head, or itself when it is on its own.</summary>
+        private static long ConvoyOf(Entity entity)
+        {
+            long head = TrainKeepTogether.HeadOf(entity);
+
+            return head != 0 ? head : entity.EntityId;
+        }
+
+        /// <summary>
+        /// Every vehicle within reach of the device, from the last search or from a new one.
+        ///
+        /// What is remembered is ids, and only for half a second. They are exchanged for live
+        /// entities on every call, so a position sample is always fresh and a vehicle that has
+        /// gone comes back null instead of coming back writable.
+        ///
+        /// The search itself depends on nothing but the device's position - direction, wagon index
+        /// and `engine` are applied to its result - so one sighting serves whatever the header says.
+        /// </summary>
+        private IReadOnlyList<Entity> VehiclesNear(IWorldAccessor world, BlockPos devicePos, Vec3d centre)
+        {
+            long now = world.ElapsedMilliseconds;
+            long[] remembered = sightings.Recall(devicePos, now, id => world.GetEntityById(id) != null);
+
+            if (remembered != null)
+            {
+                List<Entity> live = new List<Entity>(remembered.Length);
+
+                foreach (long id in remembered) live.Add(world.GetEntityById(id));
+
+                return live;
+            }
+
+            Entity[] found = world.GetEntitiesAround(centre, SearchRadius, SearchRadius, IsVehicle)
+                ?? Array.Empty<Entity>();
+
+            long[] ids = new long[found.Length];
+            for (int i = 0; i < found.Length; i++) ids[i] = found[i].EntityId;
+
+            sightings.Remember(devicePos, now, ids);
+
+            return found;
+        }
+
+        /// <summary>
+        /// By domain and behavior name, never by type - naming a type would mean referencing the
+        /// other mod's assembly.
+        ///
+        /// A locomotive carries no SGStorage, only SteamPowered, so asking for cargo alone left it
+        /// invisible and `load train engine` could never find one. Its holds still only appear when
+        /// the header asks for them by name.
+        /// </summary>
+        private static bool IsVehicle(Entity entity)
+        {
+            if (entity?.Code?.Domain != Domain) return false;
+
+            return entity.GetBehavior(YttSurface.StorageBehavior) != null
+                || entity.GetBehavior(YttSurface.SteamBehavior) != null
+                || HungContainers.IsCarrier(entity);
+        }
+
+        private static bool Matches(IWorldAccessor world, Entity entity, TrainSelector wanted)
+        {
+            if (!TrainVehicleKind.Matches(wanted.Kind, entity.Code)) return false;
+            if (wanted.WagonIndex == null) return true;
+
+            // Without a kind the number is the place in the train.
+            if (wanted.Kind == null) return PlaceOf(entity) == wanted.WagonIndex.Value;
+
+            return TrainVehicleKind.RankAmong(PlaceOf(entity), SameKindInConvoy(world, entity, wanted.Kind))
+                == wanted.WagonIndex.Value;
+        }
+
+        /// <summary>
+        /// The place of every loaded vehicle of this kind in the same convoy. From the whole
+        /// world, not from what the device can see: the first refrigerated wagon may stand out of
+        /// reach, and the one in reach is still the second.
+        /// </summary>
+        private static List<double> SameKindInConvoy(IWorldAccessor world, Entity entity, string kind)
+        {
+            List<double> distances = new List<double>();
+            long convoy = ConvoyOf(entity);
+
+            if (world is not Vintagestory.API.Server.IServerWorldAccessor server) return distances;
+
+            foreach (Entity other in server.LoadedEntities.Values)
+            {
+                if (other?.Code?.Domain != Domain || !TrainVehicleKind.Matches(kind, other.Code)) continue;
+                if (ConvoyOf(other) != convoy) continue;
+
+                distances.Add(PlaceOf(other));
+            }
+
+            return distances;
+        }
+
+        /// <summary>
+        /// Where this vehicle rides in its convoy, the head being 1 - which is not necessarily the
+        /// locomotive, and follows how the train was coupled, not which way it parked. Read off
+        /// plain attributes, because the other mod publishes nothing else.
+        /// </summary>
+        private static int PlaceOf(Entity entity)
+        {
+            const string key = "convoyIndex";
+
+            int? index = entity.Attributes?.HasAttribute(key) == true ? entity.Attributes.GetInt(key, 0)
+                : entity.WatchedAttributes?.HasAttribute(key) == true ? entity.WatchedAttributes.GetInt(key, 0)
+                : null;
+
+            return TrainVehicleKind.PlaceInConvoy(index, BehindHead(entity));
+        }
+
+        /// <summary>A mine cart keeps this in its plain attributes, a wagon in the watched ones.</summary>
+        private static double BehindHead(Entity entity)
+        {
+            const string key = "convoyDistanceBehindHead";
+
+            if (entity.Attributes?.HasAttribute(key) == true) return entity.Attributes.GetDouble(key, 0);
+
+            return entity.WatchedAttributes?.GetDouble(key, 0) ?? 0;
+        }
+
+        /// <summary>
+        /// Does the vehicle reach where the header says? Tested on its BODY, not its middle - a
+        /// boxcar is seven blocks long. See <see cref="BodyReach"/>.
+        /// </summary>
+        private static bool Reaches(Entity entity, Vec3d centre, TrainSelector wanted)
+        {
+            if (wanted.Direction == null) return true;
+
+            Cuboidf box = entity.SelectionBox ?? new Cuboidf(-0.5f, 0, -0.5f, 0.5f, 1, 0.5f);
+
+            return BodyReach.Covers(
+                entity.Pos.X + box.X1, entity.Pos.X + box.X2,
+                entity.Pos.Z + box.Z1, entity.Pos.Z + box.Z2,
+                centre, wanted.Direction, wanted.Distance);
+        }
+
+        private static double Distance(Entity entity, Vec3d centre)
+        {
+            return entity.Pos.XYZ.SquareDistanceTo(centre);
+        }
+    }
+}

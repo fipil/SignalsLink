@@ -28,6 +28,11 @@
 
   ],
   "attributes": {
+    "handbook": {
+      "extraSections": [
+        { "title": "signalslinkep:block-handbooktitle-signalslinkep", "text": "signalslinkep:block-handbooktext-epmeter" }
+      ]
+    },
     "signalNodes": [
       {
         "index": 0,

@@ -10,6 +10,7 @@ using Vintagestory.API.Config;
 using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Server;
+using SignalsLink.src.signals.link;
 
 namespace SignalsLink.src.signals.hose
 {
@@ -19,7 +20,7 @@ namespace SignalsLink.src.signals.hose
     /// tick, like the BlockSensor). Index 2 = hose anchor (handled by the block, not the BE).
     /// Liquid transfer, host detection and shape swap are added in step 5+.
     /// </summary>
-    public class BlockEntityHoseValve : BlockEntity, IBESignalReceptor, IPaperConditionsHost, ISignalBuffer
+    public class BlockEntityHoseValve : BlockEntity, IBESignalReceptor, IPaperConditionsHost, ISignalBuffer, ILinkMountHost
     {
         public const int INPUT = 0;
         public const int OUTPUT = 1;
@@ -33,11 +34,15 @@ namespace SignalsLink.src.signals.hose
         private decimal maxLitresPerTick = 1.0m;
 
         public byte signalState;
-        private int remaining;
+        private decimal remaining;
         private bool unlimited;
 
         /// <summary>Does this valve currently have Input credit (a batch, or continuous)?</summary>
         public bool HasInput => unlimited || remaining > 0;
+
+        // The far end of the hose IS the source, so there is no slot to pick and a block needs no
+        // source-scoped condition to be a valid transfer.
+        public bool RequiresTransferSelector => false;
 
         // Output anchor (index 1) — holds its last value until paper conditions override it.
         public byte outputState;
@@ -173,7 +178,14 @@ namespace SignalsLink.src.signals.hose
         /// </summary>
         private void MoveLiquid(float dt)
         {
+            using var regexDiagnostics = RegexDiagnostics.Begin(Api, Pos, "HoseValve");
             if (Api is not ICoreServerAPI) return;
+
+            // Blocks with an `output` action are evaluated on EVERY tick, whatever the Input pin
+            // says. That is what makes the pin a reading of the current state rather than a memory
+            // of the last thing that moved it.
+            EvaluateOutputs();
+
             if (!HasInput) { noWorkStreak = 0; tickSkip = 0; return; } // truly idle → cheap no-op
 
             // A valve whose conditions produce an `output` acts like a sensor — it must stay
@@ -199,6 +211,47 @@ namespace SignalsLink.src.signals.hose
         }
 
         /// <summary>
+        /// One evaluation pass with the action rail closed, run every tick so the Output pin keeps
+        /// reporting the current state. A valve that cannot see anything to report on says 0
+        /// rather than being left alone: a pin that is merely not written is how it used to freeze
+        /// on a stale value.
+        /// </summary>
+        private void EvaluateOutputs()
+        {
+            using var regexDiagnostics = RegexDiagnostics.Begin(Api, Pos, "HoseValve");
+            if (conditionsEvaluator == null || !conditionsEvaluator.HasAnyOutput) { SetOutput(0); return; }
+
+            LinkNetworkMod linkMod = Api.ModLoader.GetModSystem<LinkNetworkMod>();
+            if (linkMod == null) { SetOutput(0); return; }
+
+            List<LinkSource> sources = linkMod.GetOtherEndpoints(Api.World, new NodePos(Pos, HOSE));
+            if (sources.Count == 0) { SetOutput(0); return; }
+
+            bool discard = GetSideFace() == BlockFacing.DOWN;
+            IInventory hostInv = null;
+            BlockPos hostPos;
+
+            if (discard)
+            {
+                hostPos = Pos.AddCopy(GetOrientationFace());
+            }
+            else
+            {
+                hostInv = GetHostInventory(out hostPos);
+                if (hostInv == null) { SetOutput(0); return; }
+            }
+
+            // Whichever source the rotation is on, so `in source` means the same thing here as it
+            // would during a real pull.
+            int index = sources.FindIndex(s => s.Endpoint == currentSource);
+            NodePos far = sources[index < 0 ? 0 : index].Endpoint;
+
+            var transfer = new HoseLiquidTransfer(Api, hostInv, hostPos, far, conditionsEvaluator, discard);
+            HoseLiquidTransfer.Result result = transfer.TryMove(0m, actionsBlocked: true);
+            if (result.OutputComputed) SetOutput(result.Output);
+        }
+
+        /// <summary>
         /// One pull attempt. The valve may have several hoses on its anchor; it round-robins over
         /// the connected sources, staying on one for as long as that source keeps delivering and
         /// moving on to the next as soon as it does not.
@@ -206,11 +259,11 @@ namespace SignalsLink.src.signals.hose
         /// <returns>0 = moved, 1 = blocked (nothing to do), 2 = waiting for our arbitration turn.</returns>
         private int TryPull()
         {
-            HoseNetworkMod hoseMod = Api.ModLoader.GetModSystem<HoseNetworkMod>();
-            if (hoseMod == null) return 1;
+            LinkNetworkMod linkMod = Api.ModLoader.GetModSystem<LinkNetworkMod>();
+            if (linkMod == null) return 1;
 
             NodePos myAnchor = new NodePos(Pos, HOSE);
-            List<HoseSource> sources = hoseMod.GetOtherEndpoints(Api.World, myAnchor);
+            List<LinkSource> sources = linkMod.GetOtherEndpoints(Api.World, myAnchor);
             if (sources.Count == 0) return 1;
 
             // Placement decides the mode; this is a property of the valve, not of the line, so it
@@ -242,8 +295,8 @@ namespace SignalsLink.src.signals.hose
             // one must still be found within the same tick, or throughput would collapse.
             for (int i = 0; i < sources.Count; i++)
             {
-                HoseSource candidate = sources[(start + i) % sources.Count];
-                int status = TryPullFrom(hoseMod, myAnchor, candidate, hostInv, hostPos, discard);
+                LinkSource candidate = sources[(start + i) % sources.Count];
+                int status = TryPullFrom(linkMod, myAnchor, candidate, hostInv, hostPos, discard);
 
                 if (status == 0)
                 {
@@ -264,24 +317,24 @@ namespace SignalsLink.src.signals.hose
         /// One pull attempt from a single source (the far endpoint of one hose line).
         /// </summary>
         /// <returns>0 = moved, 1 = nothing to pull here, 2 = waiting for our arbitration turn.</returns>
-        private int TryPullFrom(HoseNetworkMod hoseMod, NodePos myAnchor, HoseSource source, IInventory hostInv, BlockPos hostPos, bool discard)
+        private int TryPullFrom(LinkNetworkMod linkMod, NodePos myAnchor, LinkSource source, IInventory hostInv, BlockPos hostPos, bool discard)
         {
             NodePos far = source.Endpoint;
 
             // Contention only exists when the far end is ALSO an active valve; then the two
             // valves must take turns (arbitration), otherwise they fight and stall.
             bool contested = IsFarActiveValve(far);
-            if (contested && !hoseMod.IsOnTurn(myAnchor, far)) return 2;
+            if (contested && !linkMod.IsOnTurn(myAnchor, far)) return 2;
 
             decimal litres = unlimited ? maxLitresPerTick : System.Math.Min((decimal)remaining, maxLitresPerTick);
             // Buffer model B: the remaining Input buffer is a hard cap on litres this move (an
             // `amount M` block never moves more than what's left). Unlimited → no cap.
             decimal bufferCap = unlimited ? decimal.MaxValue : remaining;
 
-            var transfer = new HoseLiquidTransfer(Api, hostInv, hostPos, far, conditionsEvaluator, discard, outputState, bufferCap);
+            var transfer = new HoseLiquidTransfer(Api, hostInv, hostPos, far, conditionsEvaluator, discard, bufferCap);
             HoseLiquidTransfer.Result result = transfer.TryMove(litres);
 
-            if (result.HasExplicitOutput) SetOutput(result.OutputValue);
+            if (result.OutputComputed) SetOutput(result.Output);
 
             bool moved = result.Transfer.Success;
 
@@ -295,14 +348,14 @@ namespace SignalsLink.src.signals.hose
 
             if (moved && !unlimited)
             {
-                remaining -= result.Transfer.TriggerCost;
+                remaining -= result.Transfer.CreditCost;
                 if (remaining < 0) remaining = 0;
                 MarkDirty();
             }
 
             // Occasional water splash while transporting (mirrors the chute's random sound). The
             // hose wobbles in sync with this audible pulse (see flowPulse → client TriggerWobble).
-            if (moved && Api.World.Rand.NextDouble() < 0.2)
+            if (result.Transfer.MovedAmount > 0 && Api.World.Rand.NextDouble() < 0.2)
             {
                 Api.World.PlaySoundAt(waterSound, Pos, 0.0, range: 8f, volume: 0.5f);
                 flowFar = source.FirstHop; // only this segment should wobble
@@ -316,7 +369,7 @@ namespace SignalsLink.src.signals.hose
             if (contested)
             {
                 bool finishedBatch = !unlimited && remaining <= 0;
-                if (!moved || finishedBatch) hoseMod.PassToken(myAnchor, far);
+                if (!moved || finishedBatch) linkMod.PassToken(myAnchor, far);
             }
 
             return moved ? 0 : 1;
@@ -400,7 +453,7 @@ namespace SignalsLink.src.signals.hose
             if (flowPulse != lastClientFlowPulse)
             {
                 lastClientFlowPulse = flowPulse;
-                Api.ModLoader.GetModSystem<HoseNetworkMod>()?.Renderer?.TriggerWobble(new NodePos(Pos, HOSE), flowFar);
+                Api.ModLoader.GetModSystem<LinkNetworkMod>()?.Renderer?.TriggerWobble(new NodePos(Pos, HOSE), flowFar);
             }
 
             if (drainPulse != lastClientPulse)
@@ -512,7 +565,7 @@ namespace SignalsLink.src.signals.hose
             base.FromTreeAttributes(tree, worldForResolving);
             ConditionsText = tree.GetString("conditionsText", null);
             unlimited = tree.GetBool("unlimited", false);
-            remaining = tree.GetInt("remaining", 0);
+            remaining = LiquidCredit.Read(tree);
             signalState = (byte)tree.GetInt("signalState", 0);
             outputState = (byte)tree.GetInt("outputState", 0);
             drainPulse = tree.GetInt("drainPulse", 0);
@@ -533,7 +586,7 @@ namespace SignalsLink.src.signals.hose
             base.ToTreeAttributes(tree);
             tree.SetString("conditionsText", ConditionsText);
             tree.SetBool("unlimited", unlimited);
-            tree.SetInt("remaining", remaining);
+            LiquidCredit.Write(tree, remaining);
             tree.SetInt("signalState", signalState);
             tree.SetInt("outputState", outputState);
             tree.SetInt("drainPulse", drainPulse);

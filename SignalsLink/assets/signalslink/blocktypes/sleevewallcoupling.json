@@ -1,0 +1,309 @@
+{
+  "code": "sleevewallcoupling",
+  "class": "SleeveWallCoupling",
+  "entityclass": "SleeveWallCoupling",
+  "variantgroups": [
+    {
+      "code": "type",
+      "states": [
+        "wood",
+        "rock",
+        "cobble"
+      ]
+    },
+    {
+      "code": "material",
+      "states": [
+        "oak",
+        "acacia",
+        "birch",
+        "kapok",
+        "maple",
+        "pine",
+        "redwood",
+        "walnut",
+        "aged",
+        "andesite",
+        "basalt",
+        "chalk",
+        "chert",
+        "conglomerate",
+        "granite",
+        "limestone",
+        "peridotite",
+        "phyllite",
+        "sandstone",
+        "shale",
+        "slate",
+        "bauxite"
+      ]
+    },
+    {
+      "code": "orientation",
+      "states": [
+        "north",
+        "east",
+        "south",
+        "west",
+        "up",
+        "down"
+      ]
+    },
+    {
+      "code": "side",
+      "states": [
+        "north",
+        "east",
+        "south",
+        "west",
+        "up",
+        "down"
+      ]
+    }
+  ],
+  "skipVariants": [
+    "*-rock-oak-*",
+    "*-cobble-oak-*",
+    "*-rock-acacia-*",
+    "*-cobble-acacia-*",
+    "*-rock-birch-*",
+    "*-cobble-birch-*",
+    "*-rock-kapok-*",
+    "*-cobble-kapok-*",
+    "*-rock-maple-*",
+    "*-cobble-maple-*",
+    "*-rock-pine-*",
+    "*-cobble-pine-*",
+    "*-rock-redwood-*",
+    "*-cobble-redwood-*",
+    "*-rock-walnut-*",
+    "*-cobble-walnut-*",
+    "*-rock-aged-*",
+    "*-cobble-aged-*",
+    "*-wood-andesite-*",
+    "*-wood-basalt-*",
+    "*-wood-chalk-*",
+    "*-wood-chert-*",
+    "*-wood-conglomerate-*",
+    "*-wood-granite-*",
+    "*-wood-limestone-*",
+    "*-wood-peridotite-*",
+    "*-wood-phyllite-*",
+    "*-wood-sandstone-*",
+    "*-wood-shale-*",
+    "*-wood-slate-*",
+    "*-wood-bauxite-*"
+  ],
+  "attributes": {
+    "linkNodes": [
+      {
+        "x2": 0.0,
+        "y2": 0.6875,
+        "z2": 0.6875,
+        "y1": 0.3125,
+        "index": 0,
+        "x1": -0.09375,
+        "name": "con-sleeve",
+        "z1": 0.3125,
+        "rotateXbytype": {
+          "*-*-north": 90,
+          "*-*-south": 270,
+          "@*-up-(east|west)": 90,
+          "@*-down-(east|west)": 270,
+          "@*-south-(east|west)": 180
+        },
+        "rotateYbytype": {
+          "@*-east-(up|down|north|south)": 270,
+          "@*-south-(up|down)": 180,
+          "@*-west-(up|down|north|south)": 90,
+          "@*-(down-north|up-south)": 180
+        },
+        "rotateZbyType": {
+          "*-*-up": 180,
+          "*-*-east": 90,
+          "*-*-west": 270
+        }
+      },
+      {
+        "x2": 1.09375,
+        "y2": 0.6875,
+        "z2": 0.6875,
+        "y1": 0.3125,
+        "index": 1,
+        "x1": 1.0,
+        "name": "con-sleeve",
+        "z1": 0.3125,
+        "rotateXbytype": {
+          "*-*-north": 90,
+          "*-*-south": 270,
+          "@*-up-(east|west)": 90,
+          "@*-down-(east|west)": 270,
+          "@*-south-(east|west)": 180
+        },
+        "rotateYbytype": {
+          "@*-east-(up|down|north|south)": 270,
+          "@*-south-(up|down)": 180,
+          "@*-west-(up|down|north|south)": 90,
+          "@*-(down-north|up-south)": 180
+        },
+        "rotateZbyType": {
+          "*-*-up": 180,
+          "*-*-east": 90,
+          "*-*-west": 270
+        }
+      }
+    ],
+    "handbook": {
+      "extraSections": [
+        {
+          "title": "signalslink:block-handbooktitle-signalslink",
+          "text": "signalslink:block-handbooktext-sleevewallcoupling"
+        }
+      ]
+    },
+    "linkMountExemption": false
+  },
+  "shape": {
+    "base": "block/sleeve/sleevewallcoupling",
+    "rotateXbytype": {
+      "*-*-north": 90,
+      "*-*-south": 270,
+      "@*-up-(east|west)": 90,
+      "@*-down-(east|west)": 270,
+      "@*-south-(east|west)": 180
+    },
+    "rotateYbytype": {
+      "@*-east-(up|down|north|south)": 270,
+      "@*-south-(up|down)": 180,
+      "@*-west-(up|down|north|south)": 90,
+      "@*-(down-north|up-south)": 180
+    },
+    "rotateZbyType": {
+      "*-*-up": 180,
+      "*-*-east": 90,
+      "*-*-west": 270
+    }
+  },
+  "textures": {
+    "copper1": {
+      "base": "signalslink:block/copper1"
+    }
+  },
+  "texturesByType": {
+    "sleevewallcoupling-wood-aged-*": {
+      "mat": {
+        "base": "game:block/wood/planks/aged/aged1",
+        "alternates": [
+          {
+            "base": "game:block/wood/planks/aged/aged2"
+          },
+          {
+            "base": "game:block/wood/planks/aged/aged3"
+          },
+          {
+            "base": "game:block/wood/planks/aged/aged4"
+          }
+        ]
+      }
+    },
+    "@sleevewallcoupling-wood-(oak|acacia|birch|elm|kapok|ladder|maple|pine|redwood|walnut)-.*": {
+      "mat": {
+        "base": "game:block/wood/planks/{material}1",
+        "alternates": [
+          {
+            "base": "game:block/wood/planks/{material}2"
+          },
+          {
+            "base": "game:block/wood/planks/{material}3"
+          },
+          {
+            "base": "game:block/wood/planks/{material}4"
+          }
+        ]
+      }
+    },
+    "@sleevewallcoupling-rock-(andesite|basalt|chalk|chert|conglomerate|granite|limestone|peridotite|phyllite|sandstone|shale|slate|bauxite)-.*": {
+      "mat": {
+        "base": "game:block/stone/rock/{material}1",
+        "alternates": [
+          {
+            "base": "game:block/stone/rock/{material}2"
+          },
+          {
+            "base": "game:block/stone/rock/{material}3"
+          },
+          {
+            "base": "game:block/stone/rock/{material}4"
+          }
+        ]
+      }
+    },
+    "@sleevewallcoupling-cobble-(andesite|basalt|chalk|chert|conglomerate|granite|limestone|peridotite|phyllite|sandstone|shale|slate|bauxite)-.*": {
+      "mat": {
+        "base": "game:block/stone/cobblestone/{material}1",
+        "alternates": [
+          {
+            "base": "game:block/stone/cobblestone/{material}2"
+          },
+          {
+            "base": "game:block/stone/cobblestone/{material}3"
+          },
+          {
+            "base": "game:block/stone/cobblestone/{material}4"
+          }
+        ]
+      }
+    }
+  },
+  "blockmaterialByType": {
+    "*-wood-*": "Wood",
+    "*-rock-*": "Stone",
+    "*-cobble-*": "Stone"
+  },
+  "lightAbsorption": 0,
+  "drawtype": "json",
+  "replaceable": 0,
+  "resistance": 3,
+  "sidesolid": {
+    "all": true
+  },
+  "sideopaque": {
+    "all": false
+  },
+  "collisionSelectionBoxes": [
+    {
+      "x2": 1,
+      "y2": 1,
+      "z1": 0,
+      "x1": 0,
+      "y1": 0,
+      "z2": 1
+    }
+  ],
+  "creativeinventory": {
+    "general": [
+      "*-north-down"
+    ],
+    "signalslink": [
+      "*-north-down"
+    ]
+  },
+  "drops": [
+    {
+      "code": "sleevewallcoupling-{type}-{material}-north-down",
+      "type": "block",
+      "quantity": { "avg": 1, "var": 0 }
+    }
+  ],
+  "sounds": {
+    "hit": "game:block/chute",
+    "break": "game:block/chute",
+    "walk": "game:walk/stone",
+    "place": "game:block/chute"
+  },
+  "behaviors": [
+    {
+      "name": "BlockBehaviorCoverWithDirection"
+    }
+  ]
+}

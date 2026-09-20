@@ -12,6 +12,9 @@
     <Reference Include="protobuf-net">
       <HintPath>..\..\..\..\..\VintageStory\1.22\Lib\protobuf-net.dll</HintPath>
     </Reference>
+    <Reference Include="cairo-sharp">
+      <HintPath>..\..\..\..\..\VintageStory\1.22\Lib\cairo-sharp.dll</HintPath>
+    </Reference>
     <Reference Include="signals">
       <HintPath>..\dependencies\signals.dll</HintPath>
     </Reference>
@@ -33,9 +36,9 @@
     </Reference>
   </ItemGroup>
 
-  <Target Name="PostBuild" BeforeTargets="PostBuildEvent">
-    <Exec Command="copy &quot;$(TargetPath)&quot; &quot;c:\Develope\VintageStory\Projects\SignalsLink\Publish\&quot;" />
-    <Exec Command="copy &quot;$(TargetDir)\$(TargetName).pdb&quot; &quot;c:\Develope\VintageStory\Projects\SignalsLink\Publish\&quot;" />
+  <Target Name="PostBuild" BeforeTargets="PostBuildEvent" Condition="'$(SkipPublishCopy)' != 'true'">
+    <Exec ContinueOnError="true" Command="copy &quot;$(TargetPath)&quot; &quot;c:\Develope\VintageStory\Projects\SignalsLink\Publish\&quot;" />
+    <Exec ContinueOnError="true" Command="copy &quot;$(TargetDir)\$(TargetName).pdb&quot; &quot;c:\Develope\VintageStory\Projects\SignalsLink\Publish\&quot;" />
   </Target>
 
 </Project>

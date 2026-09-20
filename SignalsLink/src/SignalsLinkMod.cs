@@ -1,4 +1,4 @@
-﻿using signals.src;
+using signals.src;
 using signals.src.signalNetwork;
 using SignalsLink.src.signals.behaviours;
 using SignalsLink.src.signals.blocksensor;
@@ -9,11 +9,12 @@ using SignalsLink.src.signals.paperConditions;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Server;
+using SignalsLink.src.signals.link;
 
 [assembly: ModInfo("Signals Link", "signalslink",
     Description = "Extends Signals mod with sensors and control elements for interacting with other mods and vanilla blocks.",
     Website = "",
-    Version = "0.2.8",
+    Version = "1.0.0",
     Authors = new[] { "fipil" }
 )]
 
@@ -30,13 +31,14 @@ namespace SignalsLink.src
 
             api.RegisterBlockBehaviorClass("BlockBehaviorTemporalCharge", typeof(BlockBehaviorTemporalCharge));
             api.RegisterBlockBehaviorClass("BlockBehaviorPaperConditions", typeof(BlockBehaviorPaperConditions));
-            api.RegisterBlockBehaviorClass("BlockBehaviorHoseCover", typeof(SignalsLink.src.signals.hose.BlockBehaviorHoseCover));
-            api.RegisterCollectibleBehaviorClass("HoseCutterBehavior", typeof(SignalsLink.src.signals.hose.HoseCutterBehavior));
-            api.RegisterCollectibleBehaviorClass("WrenchBufferClear", typeof(SignalsLink.src.signals.WrenchBufferClearBehavior));
+            api.RegisterBlockBehaviorClass("BlockBehaviorLinkCover", typeof(SignalsLink.src.signals.link.BlockBehaviorLinkCover));
+            api.RegisterCollectibleBehaviorClass("LinkCutterBehavior", typeof(SignalsLink.src.signals.link.LinkCutterBehavior));
+            api.RegisterCollectibleBehaviorClass("WrenchActions", typeof(SignalsLink.src.signals.WrenchActionsBehavior));
 
             api.RegisterBlockClass("BlockSensor", typeof(BlockSensor));
             api.RegisterBlockClass("EntitySensor", typeof(EntitySensor));
             api.RegisterBlockClass("ManagedChute", typeof(ManagedChute));
+            api.RegisterBlockEntityClass("SignalsLinkTestChest", typeof(SignalsLink.src.signals.testchest.BETestChest));
             api.RegisterBlockClass("ManagedWallChute", typeof(ManagedWallChute));
 
             // ManagedHose — řízená hadice (kapaliny)
@@ -44,10 +46,39 @@ namespace SignalsLink.src
             api.RegisterBlockClass("HoseCoupling", typeof(BlockHoseCoupling));
             api.RegisterBlockClass("HoseIntake", typeof(BlockHoseIntake));
 
+            // Managed Igniter - zapalovac
+            api.RegisterBlockClass("Igniter", typeof(SignalsLink.src.signals.igniter.BlockIgniter));
+            api.RegisterBlockEntityClass("BlockEntityIgniter", typeof(SignalsLink.src.signals.igniter.BEIgniter));
+
+            // ManagedSleeve - rukav (predmety a bloky)
+            api.RegisterBlockClass("SleeveDamper", typeof(SignalsLink.src.signals.sleeve.BlockSleeveDamper));
+            api.RegisterBlockClass("SleeveCoupling", typeof(SignalsLink.src.signals.sleeve.BlockSleeveCoupling));
+            api.RegisterBlockClass("SleeveWallCoupling", typeof(SignalsLink.src.signals.sleeve.BlockSleeveWallCoupling));
+            api.RegisterBlockEntityClass("SleeveWallCoupling", typeof(SignalsLink.src.signals.sleeve.BESleeveWallCoupling));
+
+
+            // Skladova plocha - dlazdice a cedule se jmenem
+            api.RegisterBlockClass("ManagedDock", typeof(SignalsLink.src.signals.manageddock.BlockManagedDock));
+            api.RegisterBlockEntityClass("BlockEntityManagedDock", typeof(SignalsLink.src.signals.manageddock.BEManagedDock));
+            api.RegisterBlockEntityClass("BlockEntityChunkAnchor", typeof(SignalsLink.src.signals.chunkanchor.BEChunkAnchor));
+            api.RegisterBlockClass("ChunkAnchor", typeof(SignalsLink.src.signals.chunkanchor.BlockChunkAnchor));
+            api.RegisterBlockClass("YardTile", typeof(SignalsLink.src.signals.yard.BlockYardTile));
+            api.RegisterBlockClass("YardSign", typeof(SignalsLink.src.signals.yard.BlockYardSign));
+            api.RegisterBlockEntityClass("YardSign", typeof(SignalsLink.src.signals.yard.BEYardSign));
+
+            api.RegisterBlockEntityClass("BlockEntitySleeveDamper", typeof(SignalsLink.src.signals.sleeve.BlockEntitySleeveDamper));
             api.RegisterBlockEntityClass("BlockEntityHoseValve", typeof(BlockEntityHoseValve));
             api.RegisterBlockEntityClass("BlockEntityBlockSensor", typeof(BEBlockSensor));
             api.RegisterBlockEntityClass("BlockEntityEntitySensor", typeof(BEEntitySensor));
             api.RegisterBlockEntityClass("BlockEntityManagedChute", typeof(BEManagedChute));
+
+            // The kinds of the other party a device can exchange goods with. Registered rather
+            // than switched on, so that another mod adds a vehicle without either side knowing
+            // about the other.
+            var holders = api.ModLoader.GetModSystem<SignalsLink.src.signals.cargo.CargoHolderRegistry>();
+            holders?.Register(new SignalsLink.src.signals.yard.YardCargoHolderFinder());
+            holders?.Register(SignalsLink.src.signals.vehicle.HungCargoHolderFinder.Boats());
+            holders?.Register(SignalsLink.src.signals.vehicle.HungCargoHolderFinder.Elks());
         }
 
         public override void StartClientSide(ICoreClientAPI api)

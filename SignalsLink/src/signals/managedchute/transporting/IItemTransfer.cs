@@ -14,5 +14,12 @@ namespace SignalsLink.src.signals.managedchute.transporting
             int moved = TryMoveOneItem(opTemplate);
             return moved > 0 ? new TransferOperationResult(moved, moved, false) : TransferOperationResult.None;
         }
+
+        /// <summary>
+        /// Run the paper conditions for their <c>output</c> blocks only, moving nothing. This is
+        /// what lets a host with an Output pin behave like a sensor: reporting on its ends every
+        /// tick, whether or not anything can be carried. Transfers with no output support do nothing.
+        /// </summary>
+        void EvaluateOutputs() { }
     }
 }

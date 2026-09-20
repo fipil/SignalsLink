@@ -1,0 +1,40 @@
+[
+	{
+		"ingredientPattern": "F__,LLL,WWW",
+		"ingredients": {
+			"F": { "type": "item", "code": "game:flaxtwine", "quantity": 3 },
+			"L": { "type": "item", "code": "game:cloth-plain", "quantity": 2 },
+			"W": { "type": "item", "code": "game:beeswax" }
+		},
+		"width": 3,
+		"height": 3,
+		"output": { "type": "item", "code": "signalslink:sleeve", "quantity": 3 }
+	},
+	{
+		"ingredientPattern": "WH_,ICE,_P_",
+		"ingredients": {
+			"W": { "type": "item", "code": "game:wrench-*",	"isTool": true, "toolDurabilityCost": 2	},
+			"H": { "type": "item", "code": "game:hammer-*",	"isTool": true, "toolDurabilityCost": 2	},
+			"E": { "type": "item", "code": "signals:el_wire" },
+			"P": { "type": "item", "code": "game:plank-*"	},
+			"C": { "type": "item", "code": "game:chutesection-copper"	},
+			"I": { "type": "item", "code": "game:metalbit-iron"	}
+		},
+		"width": 3,
+		"height": 3,
+		"output": {	"type": "block",	"code": "signalslink:sleevedamper-north-down",	"quantity": 1	}
+	},
+	{
+		"ingredientPattern": "WH_,_C_,_P_",
+		"ingredients": {
+			"W": { "type": "item", "code": "game:wrench-*",	"isTool": true, "toolDurabilityCost": 2	},
+			"H": { "type": "item", "code": "game:hammer-*", "isTool": true, "toolDurabilityCost": 2 },
+			"P": { "type": "item", "code": "game:metalnailsandstrips-*" },
+			"C": { "type": "item", "code": "game:chutesection-copper"	}
+		},
+		"width": 3,
+		"height": 3,
+		"output": { "type": "block", "code": "signalslink:sleevecoupling-north-down", "quantity": 1 }
+	}
+
+]

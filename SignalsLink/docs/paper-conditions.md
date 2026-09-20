@@ -5,10 +5,11 @@ Podmínky na papíře jsou **sdílený systém**, kterým se pravidly napsanými
 **Používají je:**
 
 - **ManagedChute** — řízený žlab (přenos předmětů);
+- **ManagedSleeve** — řízený rukáv / klapka (přenos předmětů na dálku);
 - **ManagedHose** — řízená hadice / ventil (přenos kapalin);
 - **senzory** (např. BlockSensor) — výstup signálu podle sledovaného bloku.
 
-Všechna tato zařízení sdílí **stejnou syntaxi podmínek i stejné vyhodnocovací pravidlo** ([Model vyhodnocení bloků](#model-vyhodnocení-bloků)). Liší se jen v tom, co je pro ně **zdroj** a **cíl**, jaká je jejich **defaultní akce** a které **direktivy/akce** podporují — viz [Odlišnosti podle zařízení](#odlišnosti-podle-zařízení).
+Všechna tato zařízení běží na **jednom společném jádře**: stejná syntaxe, stejný průchod, stejný význam výstupního pinu ([Model vyhodnocení bloků](#model-vyhodnocení-bloků)). Liší se jen v tom, co je pro ně **zdroj** a **cíl**, jaká je jejich **defaultní akce** a které **direktivy/akce** podporují — viz [Odlišnosti podle zařízení](#odlišnosti-podle-zařízení).
 
 ## Základy
 
@@ -23,7 +24,9 @@ podmínka C
 instrukce
 ```
 
-V rámci jednoho bloku musí být splněny **všechny podmínky** (mezi podmínkami platí logické AND). Bloky se vyhodnocují **shora dolů** a provede se **první platný blok** — přesná pravidla viz [Model vyhodnocení bloků](#model-vyhodnocení-bloků).
+V rámci jednoho bloku musí být splněny **všechny podmínky** (mezi podmínkami platí logické AND). Bloky se vyhodnocují **shora dolů** — přesná pravidla viz [Model vyhodnocení bloků](#model-vyhodnocení-bloků).
+
+> **Pozor na AND.** Dvě podmínky na stejný kód se nepřebíjejí, musí platit obě. To je užitečné — `game:planks 5+` a `game:planks 20-` v jednom bloku znamená „mezi pěti a dvaceti". Ale znamená to taky, že **jediný nesplnitelný řádek zabije celý blok**. Klasika je `game:planks *` s mezerou: vypadá to jako „prkna, jakékoli množství", ale je to vzor pro kód, který obsahuje mezeru — a ten neexistuje. Na tohle papír upozorní, viz [Chyby v papíru](#chyby-v-papíru).
 
 Komentáře a prázdné řádky uvnitř bloku se ignorují:
 
@@ -38,44 +41,47 @@ Pro komentář použijte na začátku řádku `#` nebo `//`.
 
 ## Model vyhodnocení bloků
 
-Vyhodnocení má **jedno jednoduché pravidlo, které platí všude stejně** — pro ManagedChute, ManagedHose i senzory. Liší se jen **defaultní akce** dané třídy, ne pravidlo samotné.
+Jeden průchod papírem odshora dolů, který dělá **dvě věci zároveň**: určuje hodnotu výstupního pinu a provádí akci (přenos, `do seal`).
 
-**Blok = podmínky + právě jedna akce.** Bloky se procházejí **shora dolů** a provede se **první _platný_ blok**. Blok je platný, když jsou splněny **všechny jeho podmínky** (AND) **a jeho akci lze fyzicky provést**.
+Podle toho se dělí i bloky. Blok s direktivou `output` je **output blok** a nic nepřenáší; každý jiný je **akční blok**.
 
-### Akce bloku
+Jeden průchod tedy může **zároveň** nastavit výstup i něco přenést. Nejsou to dva oddělené průchody: bloky se procházejí **v pořadí, jak jsou napsané**.
 
-Každý blok má právě jednu akci:
+- **Output blok** — blok s direktivou `output`. Nic nepřenáší.
+- **Akční blok** — blok bez `output`. Provádí defaultní akci své třídy, tvarovanou direktivami (`target`, `amount`, `ifEmpty`), nebo explicitní akci `do seal`.
 
-- Blok **bez** explicitně uvedené akce → provede **defaultní akci své třídy**, tvarovanou direktivami (`target`, `amount`, `ifEmpty`).
-- Blok s **explicitní akcí** (`output X`, `do seal`) → tuto akci provede a defaultní akci tím **nahradí** (takže např. blok s `output X` ani blok s `do seal` **nic nepřenáší**).
+### Tři pravidla
 
-| Třída | Defaultní akce | `output X` | `do seal` |
-|---|---|---|---|
-| ManagedChute | přenos předmětů | — (nemá výstupní pin) | ✅ |
-| ManagedHose (ventil) | přenos kapalin | ✅ | ✅ |
-| Senzory | výstup signálu | ✅ (to je jeho výstup) | — |
+**Vyhrává první platný output blok.** Jakmile nějaký platí, další output bloky se přeskočí.
 
-Explicitní akci musí daná třída podporovat: `output` má smysl jen tam, kde je výstupní pin (ManagedHose, senzory — **ne** ManagedChute); `do seal` jen tam, kde se pracuje se sudem (ManagedChute, ManagedHose — **ne** senzory).
+**Když neplatí žádný output blok, pin je 0.** Pin je **obraz aktuálního stavu**. Papír bez jediného `output` bloku znamená pin trvale na nule.
 
-### Fyzická platnost bloku
+**Provede se jedna akce za průchod** — první akční blok, jehož akce opravdu odvede práci. Blok, jehož přenos nic nepřesune (prázdný zdroj, plný cíl, neplatné `ifEmpty`), **propadne na další blok**. Na tom stojí řetěz `target N ifEmpty` bloků, které plní slot za slotem.
 
-Platnost nezáleží jen na podmínkách, ale i na tom, zda **akce bloku reálně proběhne**:
+### Na pořadí záleží
 
-- **Přenos** je platný, jen když opravdu něco přesune — zdroj má co odebrat a cíl má kam vložit (a je-li uvedeno `target N ifEmpty`, je cílový slot prázdný). Když by přenos nic nepřesunul (zdroj prázdný / cíl plný / `ifEmpty` neplatí), je **blok neplatný** a vyhodnocení **pokračuje dalším blokem**.
-- **`output X`** je platný, jen když výstupní pin **reálně změní**. Pokud už pin hodnotu X má, akce nic neudělá → **blok je neplatný** a vyhodnocení **pokračuje dalším blokem** (stejně jako u přenosu, který nic nepřesune).
-- **`do seal`** je platný, když je co zapečetit.
+Protože jde o jeden průchod, **záleží na tom, kde output blok stojí vůči akčnímu**. Akce mění stav cíle, takže tentýž output blok nad akcí a pod akcí odpoví v témž tiku jinak. Je to na tobě, kam ho napíšeš.
 
-Díky tomu lze bloky skládat do sekvence: horní bloky plní, a jakmile „dojedou" (nemají co přenášet nebo už neplatí jejich `ifEmpty`), spadne vyhodnocení na další blok.
+Stejně tak **pořadí bloků poráží pořadí slotů**: blok výš na papíře prohledá všechny sloty, které smí, a teprve pak pustí ke slovu blok pod sebou. O prioritě rozhoduje papír, ne rozložení truhly.
 
 ### Jak často
 
-Bloky se vyhodnocují **opakovaně** — ManagedChute i ManagedHose je procházejí při každém svém pracovním tiku, dokud jsou aktivní (u ManagedHose navíc jen když ventil právě drží token střídání). Dokud je vybraný blok platný a má co přenášet, přenos pokračuje; jakmile přestane platit, nastupuje další blok.
+Průchod běží **při každém pracovním tiku** zařízení, a to **nezávisle** na vstupním signálu, na tokenu střídání i na zpomalení při nečinnosti. Tyhle tři věci zastaví jen **akční bloky** — pin se počítá dál.
 
-U ManagedHose platí ještě: ventil, jehož podmínky obsahují `output`, vyhodnocuje **každý tik**, aby výstup reagoval okamžitě (např. hned spadl na 0, když se zdroj vyprázdní). Čistě přenášecí ventil, který zrovna nemá co dělat (prázdný zdroj / plný cíl), může frekvenci vyhodnocování dočasně snížit kvůli výkonu a vrátí se na plný takt, jakmile je zase co přenášet.
+Díky tomu se zařízení s `output` blokem chová jako senzor: hlásí stav svého konce, i když zrovna nemá kredit, nemá co přenášet nebo čeká, až na něj přijde řada.
 
-### Výstupní pin drží hodnotu
+Jediná výjimka je výkonová: když na papíře **není žádný output blok** a zároveň jsou akce zablokované, průchod se přeskočí. Není co dělat ani co počítat.
 
-Kde má zařízení výstupní pin, **drží poslední nastavenou hodnotu**, dokud ji nepřepíše jiný platný blok s `output X`. Když žádný `output` blok neplatí, hodnota se nemění.
+### Akce podle tříd
+
+| Třída | Defaultní akce | výstupní pin | `do seal` |
+|---|---|---|---|
+| ManagedChute (žlab) | přenos předmětů | ✅ | ✅ |
+| ManagedSleeve (klapka) | přenos předmětů | ✅ | ✅ |
+| ManagedHose (ventil) | přenos kapalin | ✅ | ✅ |
+| Senzory | výstup signálu | ✅ (to je jeho výstup) | — |
+
+Klapka nemá piny Zdroj a Cíl, takže na ní **nejsou dostupné signálové režimy 1–14 pro výběr slotu ani režimy Cíle „polož blok / polož nádobu na zem"**. Výběr slotů se dělá direktivami `source N` / `target N` a režim na zem výhradně direktivou `target ground`.
 
 ## Odlišnosti podle zařízení
 
@@ -85,15 +91,16 @@ Pravidlo je stejné pro všechny, ale **zdroj**, **cíl**, defaultní akce a pod
 
 - **Přenáší předměty.** Zdroj = inventář bloku na vstupní straně, cíl = inventář bloku na výstupní straně.
 - Defaultní akce: **přenos předmětů**.
-- Podporuje direktivy `source` / `target` / `amount` / `ifEmpty` a akci `do seal`.
-- **Nemá výstupní pin → `output` nepodporuje.**
+- Podporuje direktivy `source` / `target` / `amount` / `keep` / `ifEmpty` a akci `do seal`.
+- **Má výstupní pin** (kotva Output), takže `output` podporuje stejně jako ostatní. Už postavené žlaby ve starých světech novou kotvu dostanou samy při načtení.
 - Zdroj prochází po slotech (podle signálu zdrojového slotu) a hledá kandidátní předmět.
 
 ### ManagedHose (ventil)
 
 - **Přenáší kapaliny.** Zdroj = vzdálený konec hadice (hostitel protějšího ventilu, nebo **Sání** = voda ve světě), cíl = **vlastní** hostitelský blok ventilu.
 - Defaultní akce: **přenos kapalin**.
-- Podporuje `target` / `amount` / `ifEmpty`, `do seal` **i `output`** (má výstupní pin, hodnoty 0–15).
+- Podporuje `source` / `target` / `amount` / `keep` (v litrech) / `ifEmpty`, `do seal` **i `output`** (výstupní pin, hodnoty 0–15).
+- `source N` u ventilu vybírá slot kapaliny na vzdáleném konci hadice.
 - Kapalinová specifika: **lávu nepřenáší** a **horkou vodu v cíli ochladí** na okolní teplotu.
 - Vyhodnocuje jen když ventil zrovna drží **token střídání** (dva protilehlé ventily se ve čerpání střídají).
 
@@ -102,7 +109,7 @@ Pravidlo je stejné pro všechny, ale **zdroj**, **cíl**, defaultní akce a pod
 - **Nic nepřenáší — dává signál na výstup.** „Zdroj" = sledovaný blok / jeho inventář; **cíl ve smyslu přenosu neexistuje**.
 - Defaultní akce: **výstup signálu** (bez `output` vrací výchozí hodnotu — např. úroveň zaplnění nebo číslo slotu).
 - Podporuje `output` (včetně `output .` = číslo shodného slotu).
-- **Přenosové direktivy (`target` / `amount` / `ifEmpty`) ani `do seal` nedávají smysl** — senzor nepřenáší.
+- **Přenosové direktivy (`target` / `amount` / `keep` / `ifEmpty`) ani `do seal` nedávají smysl** — senzor nepřenáší.
 
 ## Co se vyhodnocuje ve výchozím stavu
 
@@ -294,6 +301,50 @@ game:water-* 50
 *weaktannin* 20+
 ```
 
+### Množství v konkrétním slotu: `slot N`
+
+Za množství můžeš připsat `slot N` a ptát se jen na **jeden slot** místo na celý inventář. Sloty
+se počítají **od jedničky**, stejně jako u `target N` a `source N`.
+
+```text
+in target
+game:firewood 96+ slot 2
+```
+
+Slot mimo rozsah inventáře se čte jako **prázdný**, ne jako „nevím" — inventář ten slot prostě
+nemá a poctivá odpověď na „kolik je v něm" je nula.
+
+Rozdíl proti dotazu na celý inventář je podstatný:
+
+```text
+# dva sloty po padesáti: dohromady sto, ale ani v jednom není 96
+in target
+game:firewood 96+          # platí
+game:firewood 96+ slot 1   # neplatí
+```
+
+**Podmínka se slotem je hlídka, ne výběr.** Ptá se na inventář, ne na nesený předmět, takže:
+
+- neúčastní se pravidla „kandidátní předmět musí sedět na kód" (viz níže),
+- a **sama o sobě blok nekvalifikuje k přenosu** — kdyby v bloku stála jediná, nebylo by podle
+  čeho vybrat, co se má nést. Takový blok je neplatný.
+
+Díky tomu jde jedním blokem přenášet jednu věc a podmiňovat to jinou:
+
+```text
+# ber polena, ale jen dokud je ve slotu 5 aspoň deset prken
+game:firewood 23+
+game:plank 10+ slot 5
+target 1
+```
+
+Bez `slot 5` by ten druhý řádek žádal, aby nesený předmět byl zároveň poleno i prkno — a blok by
+nikdy neplatil.
+
+Nejvíc se to hodí v rozsahu `in target`, kde se dá podle obsahu konkrétních slotů poznat, **v jaké
+fázi** vícekrokového postupu zařízení právě je (co se zrovna vaří v hrnci, jestli už je hotový
+meziprodukt odebraný, a tak dál).
+
 ## Direktivy rozsahu: `in source` a `in target`
 
 Direktiva rozsahu mění inventář vyhodnocovaný následujícími podmínkami ve stejném bloku.
@@ -379,6 +430,65 @@ Dokud je slot 4 prázdný, platí první blok a nalijí se do něj 2. Jakmile sl
 
 U varných slotů ohniště / EP sporáku není neaktivní varný slot použitelný; musí v něm být hrnec nebo jiná varná nádoba.
 
+### `target firepit`
+
+Postaví na cíli ohniště místo toho, aby do něj něco vkládala. Stavba jde po stupních přesně jako u hráče a materiál se čte z drop tabulky vanilla ohniště: **1× suchá tráva** založí `construct1`, další **4× polena** posunou `construct2` → `construct3` → `construct4` → hotové ohniště.
+
+Direktiva znamená „tenhle materiál patří ohništi na cíli": dokud se staví, posouvá stupeň, a jakmile ohniště stojí, přiloží do něj palivo. Jeden pokus o přenos = jeden stupeň.
+
+```text
+game:drygrass
+target firepit
+---
+game:firewood
+target firepit
+```
+
+**O pořadí se starat nemusíš.** Blok se vybírá podle toho, co cíl zrovna potřebuje: na prázdné zemi projde jen tráva, na rozestavěném ohništi jen polena. Stačí mít ve zdroji obojí.
+
+Je to **vlastní direktiva schválně**: shodit trávu na zem přes `target ground` je normální věc a nemá se z ní potichu stávat stavba.
+
+> Milíř nevzniká zapálením hromady polen, ale z ohniště postaveného na odkrytém stacku v utěsněné jámě. Proto ten krok jde automatizovat právě takhle.
+
+### `isBurning`
+
+Platí pro **blok**, ne pro předmět — ptá se, jestli to, co je na dané pozici, právě hoří. Ve scope `in target` se ptá na cílový blok, jinak na zdrojový; když daná třída pro ten scope pozici nezná, podmínka je nepravdivá (nikdy pravdivá naslepo).
+
+```text
+in target
+isBurning
+output 3
+```
+
+Funguje i s vykřičníkem: `!isBurning`.
+
+Hoření se nezjišťuje podle seznamu typů, ale podle toho, jestli block entity (nebo některý její behavior) vystavuje `IsBurning` / `Lit`. Chytne tedy ohniště, hromádku na zemi, hromadu uhlí i doutnající hromadu polen — a bez úprav i bloky z jiných modů, které to takhle pojmenovaly. Samotný blok ohně se počítá jako hořící vždycky.
+
+### `amount N-` a `amount N+`
+
+Holé `amount N` je **atomické**: přenese se N kusů, nebo nic. To je dobré, když chceš dvanáct kůží
+na recept — devět ti k ničemu nejsou a má se počkat. Pro dvě jiné situace se to ale nehodí, a od
+téhle verze se dají napsat:
+
+| zápis | znamená |
+|---|---|
+| `amount 10` | **přesně deset**, jinak nic. Beze změny. |
+| `amount 10-` | **nejvýš deset**, a co je míň, to se přenese taky. Nikdy nečeká. |
+| `amount 10+` | **nejmíň deset**, a když je toho víc, vezme se **všechno najednou**. |
+
+Značky `+` a `-` znamenají totéž co u podmínek: `game:firewood 96+` je „devadesát šest a víc".
+Tady je to jen pokyn místo otázky.
+
+`amount 10-` je tedy strop na jeden zásah — hodí se, když chceš dávkovat po deseti a nezastavit se,
+až bude zboží docházet. `amount 10+` je naopak práh: dokud není deset, nesahá se na to; jakmile je,
+odveze se celá hromada.
+
+Dávky fungují i při sbírání volně ležících předmětů, vyhazování z inventáře a ukládání do hromad. Počítají **kusy**, ne počet stacků či objektů na zemi. Jedna dávka může spojit více stejných stacků, ale nemíchá různé předměty ani neslučitelné atributy. Přesná dávka i minimum `N+` vyžadují dostatek zásoby a místa v cíli.
+
+Při položení jednoho bloku nebo zvednutí položeného vědra je k dispozici jen jeden kus: `amount 2` a `amount 2+` proto nic nepřenesou, `amount 2-` dovolí jeden. Stavba ohniště zůstává po jednom stupni; kovadlina používá své dosavadní dávkování.
+
+U kapalin platí totéž, jen se počítá v litrech.
+
 ### `target ground` / `target ground N`
 
 Platí pro ManagedChute, když její cíl míří do vzduchu. Ignoruje signál na pinu Cíl a pokusí se položit vybraný blok, vědro včetně obsahu nebo položku, která umí vytvořit hromádku na zemi. Pokud na cíli není pevná zem nebo položku nelze umístit, blok podmínek neprovede přenos a může propadnout na další blok.
@@ -428,9 +538,30 @@ Chování na konci/okrajích se liší podle média:
 - **ManagedHose (kapaliny):** přenese se **až** `amount` — kolik zdroj má, cíl pojme a zbývající buffer dovolí (klidně i méně). Např. buffer 3 a `amount 6` → přeteče jen 3.
 - **Hromádky na zemi (`target ground`):** dávka je **atomická** a funguje oběma směry. Při pokládání se posbírá i z několika zdrojových slotů (zadané množství bývá větší než velikost stacku) a při naplnění hromádky přeteče do vyšší v sloupci. Při sbírání se naopak bere přes několik pater odshora a v cílovém inventáři se rozloží do tolika slotů, kolik je potřeba.
 
+### `keep <hladina>`
+
+Hladina, kterou se má **držet v cíli** — ne velikost dávky.
+
+```text
+game:beeswax
+keep 17
+```
+
+Blok doveze jen to, co do 17 chybí. Jakmile je tam 17, blok **nedělá nic a propadne na další** — `keep` je tedy zároveň brána. Když z cíle něco ubude, doplní se to zpátky.
+
+**Rozdíl proti `amount`:** `amount N` je dávka a je atomická (buď celá, nebo nic). `keep N` je hladina: **nikdy nečeká** na plnou dávku (jsou-li k dispozici tři kusy z chybějících deseti, veze tři) a **nikdy nepřestřelí**. Obojí jde napsat naráz — `keep 17` + `amount 5` znamená „po pěti, dokud jich tam není sedmnáct".
+
+**Co se počítá.** Všechno, co ten blok veze, tedy `game:ingot-*` s `keep 17` je sedmnáct ingotů dohromady, jedno jakých. Je to **stejné počítání**, jakým se ptá podmínka `in target game:ingot-* 17-` (`ConditionBlock.CountInTarget` volá `InventoryConditionResolver.GetStackAmount` po slotech), takže si ty dva řádky nemohou protiřečit. U kapalin se počítá v litrech.
+
+**Past, kvůli které to vzniklo.** Podmínka `in target game:beeswax 17-` je **brána, ne strop** — řekne jen, jestli blok platí. Překladiště bez `amount` veze *všechno, co odpovídá*, takže pod otevřenou bránou naložilo rovnou celý stack. Brána říká *kdy*, `keep` říká *kolik*.
+
+Podporuje: žlab, klapka, překladiště, ventil (v litrech). Nedává smysl u `target firepit` a u kovadliny — to jsou stavební kroky, ne hladiny.
+
 ## `output` — akce nastavení výstupu
 
-`output X` je **akce**, ne přílepek k přenosu: platný blok s `output X` nastaví **výstupní pin** zařízení na hodnotu X a **defaultní akci (přenos) tím nahradí** — takový blok nic nepřenáší. Přípustné hodnoty jsou **0 až 15**.
+Blok s `output X` nastaví **výstupní pin** zařízení na hodnotu X a nic nepřenáší. Přípustné hodnoty jsou **0 až 15**.
+
+**Output bloky se ptají vždy na cíl** — tedy na ten konec, na kterém zařízení samo sedí. Prefix `in target` v nich psát nemusíš (a `in source` v nich nedává smysl; papír to nahlásí). Důvod je prostý: output bloky se vyhodnocují i tehdy, když se zrovna nic nepřenáší, takže není žádný předmět ze zdroje, kterého by se šlo zeptat.
 
 ```text
 in target
@@ -439,33 +570,26 @@ in target
 output 5
 ```
 
-Blok nastaví výstup na 5, jakmile je v cíli aspoň 5 kůží a 30 vody. Výstup ovládaný podmínkou zapiš na vhodné místo (typicky **za** přenosové bloky): dokud přenosové bloky nad ním pracují, jsou platné a output blok se ke slovu nedostane; jakmile „dojedou" a podmínky output bloku platí, výstup se nastaví.
+Blok nastaví výstup na 5, jakmile je v cíli aspoň 5 kůží a 30 vody.
 
-Výstupní pin **drží poslední hodnotu**, dokud ji nepřepíše jiný platný `output` blok.
+Output bloky **nebrání přenosu**. Jeden průchod zvládne obojí, takže si zařízení může současně něco přenést a hlásit stav. Na tom, kam output blok napíšeš, přesto záleží — akce mění stav cíle, a output blok nad ní a pod ní odpoví v témž tiku jinak.
 
-### `output X` propadne, když nic nezmění
+### Nulování je automatické
 
-Protože `output X` je platný jen když pin **reálně změní** (viz [Fyzická platnost bloku](#fyzická-platnost-bloku)), blok s `output X`, jehož hodnota už na pinu je, **nic neudělá a vyhodnocení propadne na další blok**. Díky tomu můžeš dát `output` i jako **první** blok — reset dřívějšího signálu **před** tím, než začneš plnit:
+Když v daném průchodu **neplatí žádný** output blok, pin je **0** — pin je obraz aktuálního stavu. Resetovací `output 0` nad plnicími bloky tedy není potřeba.
 
 ```text
-# 1) když je cíl prázdný, shoď dřívější "plno" signál na 0
+# hlásí 15, dokud je v cíli plný sloup polen; jinak sám spadne na 0
 in target
-*water* 0
-output 0
-
-# 2) plň cíl vodou
-game:water-*
-target 2 ifEmpty
-amount 6
+game:firewood 96
+output 15
 ```
 
-Když je sud prázdný a pin je na 5, první blok pin změní na 0 (vyhraje). Další tik už je pin na 0 → první blok propadne a spustí se plnění. Kdyby `output X` platil „vždy", zůstal by první blok navěky platný a k plnění pod ním by se nikdy nedošlo.
-
-> `output` má smysl jen u zařízení s výstupním pinem — **ManagedHose (ventil)** a **senzory**. **ManagedChute výstupní pin nemá**, takže u něj `output` nedává smysl.
+Staré papíry s resetovacím `output 0` nahoře fungují dál, jen v nich ten blok už není potřeba.
 
 ### `output .` (jen senzory)
 
-U senzorů tečka místo čísla znamená „vrať pořadí/slot, ve kterém došlo ke shodě" (typicky číslo slotu). U ManagedChute/ManagedHose se nepoužívá.
+Tečka místo čísla znamená „ohlas hodnotu, kterou blok spočítal" — u senzoru typicky číslo shodného slotu nebo úroveň zaplnění. U přenosových zařízení se zatím nepoužívá.
 
 ```text
 game:resin
@@ -511,14 +635,13 @@ target 2 ifEmpty
 amount 12
 ```
 
-### Přesuň vodu, jen pokud cíl již obsahuje tanin
+### Nalij vodu, jen když je v sudu kláda
 
 ```text
 game:water-*
-in target
-inventoryAny *tannin*
-in source
 amount 5
+in target
+inventoryAny game:log-placed-*
 ```
 
 ### Přesuň položku pouze tehdy, když zdroj obsahuje přesný počet
@@ -555,7 +678,7 @@ do seal
 
 Dokud je slot 2 prázdný, platí první blok a lije vodu. Jakmile se naplní, první blok přestane platit (`ifEmpty`) a vyhodnocení spadne na druhý blok, který sud zapečetí.
 
-### Signalizuj na výstup po naplnění (jen ManagedHose / senzory)
+### Signalizuj na výstup po naplnění
 
 ```text
 # 1) plň
@@ -570,16 +693,40 @@ game:water-* 30+
 output 5
 ```
 
-Po naplnění (30 vody a aspoň 5 kůže v cíli) přestane platit přenosový blok a druhý blok nastaví výstupní pin na 5 — třeba pro spuštění další hadice přes Signals.
+Po naplnění (30 vody a aspoň 5 kůže v cíli) nastaví druhý blok výstupní pin na 5 — třeba pro spuštění další hadice přes Signals. Dokud podmínky neplatí, pin sám drží 0.
+
+## Chyby v papíru
+
+Papír s chybou se **přijme**, nikdy neodmítne — jedna překlepnutá řádka nesmí zastavit celý stroj, když zbytek papíru ještě píšeš. Vadné řádky se chovají jako neplatné a hlásí se dvěma kanály:
+
+1. **Hned při přiložení papíru** na blok, jako ingame hláška.
+2. **Trvale v tooltipu** bloku, červeně a úplně nahoře nad textem podmínek.
+
+Hláška vždy uvádí **číslo řádku**, důvod a ten řádek:
+
+```text
+Chyby v papíru: řádek 6: target bere číslo slotu 1-14 (volitelně s ifEmpty),
+„ground“, „ground N“ nebo „firepit“ („target sideways“)
+```
+
+Hlásí se neznámý rozsah, špatný `output` / `source` / `target` / `amount` / `slot`, neznámá akce, nesrozumitelná podmínka a `in source` v output bloku.
+
+Dvě hlášení stojí za zvláštní zmínku, protože obě odhalují papír, který **vypadá správně a přitom tiše nedělá nic**:
+
+- **vzor kódu s mezerou** (`game:planks *`) — nesedí na žádný kód, a protože se v bloku ANDuje, zabije celý blok;
+- **blok, který neříká, co má přenášet** — postavený jen z `in target` podmínek nemá podle čeho vybrat náklad. Hlásí se jen tam, kde to je chyba: ventil žádný výběr nepotřebuje (zdrojem je vzdálený konec hadice) a senzor nic nepřenáší, takže ty se nehlásí.
 
 ## Omezení a důležité poznámky
 
-- Platí **jedno pravidlo**: shora dolů se provede **první platný blok** — mají-li být splněny všechny jeho podmínky (AND) a jeho akce musí jít fyzicky provést. Žádné bloky se nevyhodnocují „zvlášť"; přenos, `output` i `do seal` jsou jen různé **akce** téhož pravidla.
-- Blok, který má provést **přenos** (defaultní akce žlabu/hadice), musí obsahovat aspoň jednu podmínku v rozsahu `in source` (musí umět vybrat, co přenáší). Blok s explicitní akcí (`output`, `do seal`) tuto podmínku mít nemusí.
+- Jeden průchod dělá **obojí**: vezme první platný output blok a provede první akční blok, jehož akce odvede práci.
+- **Neplatí-li žádný output blok, pin je 0.** Pin je obraz aktuálního stavu.
+- Blok, který má u žlabu nebo klapky provést **přenos**, musí obsahovat aspoň jednu podmínku v rozsahu `in source` — jinak není podle čeho vybrat slot. U ventilu to neplatí (zdrojem je vzdálený konec hadice) a u output bloků taky ne.
+- **Output bloky se ptají vždy na cíl**, ať už prefix napíšeš nebo ne.
+- `slot N` u množství se ptá na jeden slot a je to **hlídka, ne výběr** — sama takový řádek blok
+  k přenosu nekvalifikuje.
 - `target`, `amount`, `ifEmpty` jsou **direktivy** — tvarují defaultní přenos, nejsou to samy o sobě podmínky.
-- `output` a `do seal` jsou **akce** — nahrazují defaultní akci bloku.
-- `output X` je platný, jen když výstupní pin **reálně změní**; když už hodnotu X má, blok propadne na další (umožňuje dát reset `output 0` nad plnicí bloky).
+- `do seal` je **akce** — nahrazuje defaultní akci bloku. Provede ji první platný blok, ne všechny.
 - `amount` je velikost jedné dávky; vstupní signál 1–7 naplní buffer v kusech/litrech, který se čerpá o skutečně přenesené množství (ne o počet dávek). Signál `15` = průběžně.
-- `do seal` má smysl jen tam, kde je v cílové pozici sud; `output` jen tam, kde má zařízení výstupní pin (ManagedHose, senzory — ne ManagedChute).
+- `do seal` má smysl jen tam, kde je v cílové pozici sud. `output` podporují všechna zařízení — žlab, klapka, ventil i senzor.
 - Množství kapalin se vyhodnocuje v litrech, zatímco `stackSize` u kapaliny je interní počet porcí.
 - U podmínek množství používej tečku jako desetinný oddělovač, například `2.75`.

@@ -34,7 +34,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
             return liquidContainer?.GetContent(sourceStack);
         }
 
-        public bool HasAnyLiquidTargetSlot(byte targetSlotSignal)
+        public bool HasAnyLiquidTargetSlot(int targetSlotSignal)
         {
             if (targetSlotSignal > 0)
             {
@@ -51,7 +51,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
             return false;
         }
 
-        public ItemSlot GetTargetSlot(ItemStack sourceStack, byte targetSlotSignal)
+        public ItemSlot GetTargetSlot(ItemStack sourceStack, int targetSlotSignal)
         {
             ItemStack liquidStack = GetLiquidStackForTransfer(sourceStack);
             if (liquidStack == null) return null;
@@ -62,7 +62,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
                 if (index < 0 || index >= targetInv.Count) return null;
 
                 ItemSlot explicitSlot = targetInv[index];
-                return CanAcceptLiquid(explicitSlot, index) && TryGetRemainingLiquidCapacityLitres(explicitSlot, liquidStack, index, out float remainingLitres) && remainingLitres > 0
+                return CanAcceptLiquid(explicitSlot, index) && WillHold(explicitSlot, liquidStack, index) && TryGetRemainingLiquidCapacityLitres(explicitSlot, liquidStack, index, out float remainingLitres) && remainingLitres > 0
                     ? explicitSlot
                     : null;
             }
@@ -71,6 +71,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
             {
                 ItemSlot slot = targetInv[i];
                 if (!CanAcceptLiquid(slot, i)) continue;
+                if (!WillHold(slot, liquidStack, i)) continue;
                 if (TryGetRemainingLiquidCapacityLitres(slot, liquidStack, i, out float remainingLitres) && remainingLitres > 0) return slot;
             }
 
@@ -83,7 +84,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
             return CanAcceptLiquid(dst);
         }
 
-        public TransferOperationResult TryMoveFromItemSlot(ItemSlot src, ItemSlot dst, decimal requestedAmount, bool hasAmountOverride)
+        public TransferOperationResult TryMoveFromItemSlot(ItemSlot src, ItemSlot dst, decimal requestedAmount, bool hasAmountOverride, decimal? atomicFloor = null)
         {
             if (src?.Itemstack == null || src.Itemstack.StackSize <= 0) return TransferOperationResult.None;
             if (!CanAcceptLiquid(dst)) return TransferOperationResult.None;
@@ -93,6 +94,9 @@ namespace SignalsLink.src.signals.managedchute.transporting
 
             ItemStack liquidStack = GetLiquidStackForTransfer(src.Itemstack);
             if (liquidStack == null) return TransferOperationResult.None;
+
+            if (hasAmountOverride && (AvailableLitres(liquidStack) < (atomicFloor ?? litresToMove)
+                || RemainingLitres(dst, liquidStack) < (atomicFloor ?? litresToMove))) return TransferOperationResult.None;
 
             int moved = TryMoveLiquidStackToTarget(liquidStack, dst, litresToMove);
             if (moved <= 0) return TransferOperationResult.None;
@@ -113,7 +117,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
             return CreateLiquidTransferResult(liquidStack, moved, hasAmountOverride);
         }
 
-        public TransferOperationResult TryMoveFromWorldSource(BlockPos sourcePos, ItemSlot dst, decimal requestedAmount, bool hasAmountOverride)
+        public TransferOperationResult TryMoveFromWorldSource(BlockPos sourcePos, ItemSlot dst, decimal requestedAmount, bool hasAmountOverride, decimal? atomicFloor = null)
         {
             if (!TryResolveWorldLiquidSource(sourcePos, out ItemStack liquidStack)) return TransferOperationResult.None;
             if (!CanAcceptLiquid(dst)) return TransferOperationResult.None;
@@ -121,9 +125,21 @@ namespace SignalsLink.src.signals.managedchute.transporting
             decimal litresToMove = NormalizeLiquidAmount(requestedAmount);
             if (litresToMove <= 0) return TransferOperationResult.None;
 
+            if (hasAmountOverride && (AvailableLitres(liquidStack) < (atomicFloor ?? litresToMove)
+                || RemainingLitres(dst, liquidStack) < (atomicFloor ?? litresToMove))) return TransferOperationResult.None;
+
             int moved = TryMoveLiquidStackToTarget(liquidStack, dst, litresToMove);
             return moved > 0 ? CreateLiquidTransferResult(liquidStack, moved, hasAmountOverride) : TransferOperationResult.None;
         }
+
+        public static decimal AvailableLitres(ItemStack stack)
+        {
+            var props = BlockLiquidContainerBase.GetContainableProps(stack);
+            return props?.ItemsPerLitre > 0 ? stack.StackSize / (decimal)props.ItemsPerLitre : 0;
+        }
+
+        public decimal RemainingLitres(ItemSlot slot, ItemStack stack)
+            => TryGetRemainingLiquidCapacityLitres(slot, stack, targetInv.GetSlotId(slot), out float room) ? (decimal)room : 0;
 
         public bool TryResolveWorldLiquidSource(BlockPos sourcePos, out ItemStack liquidStack)
         {
@@ -156,6 +172,8 @@ namespace SignalsLink.src.signals.managedchute.transporting
                 return liquidSink.TryPutLiquid(targetPos, liquidStack, (float)Math.Min(litresToMove, (decimal)remainingLitres));
             }
 
+            if (!WillHold(dst, liquidStack, slotIndex)) return 0;
+
             var liquidProps = BlockLiquidContainerBase.GetContainableProps(liquidStack);
             if (liquidProps == null || liquidProps.ItemsPerLitre <= 0) return 0;
 
@@ -178,6 +196,23 @@ namespace SignalsLink.src.signals.managedchute.transporting
             return moveQuantity;
         }
 
+        /// <summary>
+        /// Does the slot itself consent? Everything else here reasons about the slot's CLASS and
+        /// its capacity; this is the only question that reaches the slot's own rules. A steam
+        /// engine's water slot takes any liquid but refuses a flammable one, and that refusal is
+        /// the difference between a full tank and a boiler explosion.
+        ///
+        /// Not asked of a block-level sink: there the liquid goes through ILiquidSink.TryPutLiquid,
+        /// which does its own checking, and the slot is only a reading of the block.
+        /// </summary>
+        private bool WillHold(ItemSlot slot, ItemStack liquidStack, int slotIndex)
+        {
+            if (slot == null || liquidStack == null) return false;
+            if (RequiresBlockLevelLiquidSink(slot, slotIndex)) return true;
+
+            return slot.CanHold(new DummySlot(liquidStack));
+        }
+
         private bool CanAcceptLiquid(ItemSlot slot)
         {
             int slotIndex = slot == null ? -1 : targetInv.GetSlotId(slot);
@@ -189,6 +224,11 @@ namespace SignalsLink.src.signals.managedchute.transporting
             if (slot == null) return false;
             if (slot is ItemSlotWatertight) return !IsSmeltingCookingTarget(slotIndex) || HasCookingContainer();
             if (slot is ItemSlotLiquidOnly) return true;
+
+            // A slot of ours that holds its own litres. Asked before the block-level sink, because
+            // a slot that can answer for itself is never the block's business.
+            if (slot is ILiquidHoldingSlot) return true;
+
             if (RequiresBlockLevelLiquidSink(slot, slotIndex)) return true;
             return false;
         }
@@ -219,6 +259,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
             {
                 ItemSlotWatertight watertightSlot => watertightSlot.capacityLitres,
                 ItemSlotLiquidOnly liquidOnlySlot => liquidOnlySlot.CapacityLitres,
+                ILiquidHoldingSlot holdingSlot => holdingSlot.CapacityLitres,
                 _ => 0
             };
 
@@ -230,7 +271,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
         {
             if (targetPos == null) return false;
             if (slotIndex != 0) return false;
-            if (slot is ItemSlotWatertight || slot is ItemSlotLiquidOnly) return false;
+            if (slot is ItemSlotWatertight || slot is ItemSlotLiquidOnly || slot is ILiquidHoldingSlot) return false;
 
             return api.World.BlockAccessor.GetBlock(targetPos) is ILiquidSink;
         }
