@@ -10,7 +10,7 @@ using Vintagestory.API.Common;
 [assembly: ModInfo("Signals Link YTT", "signalslinkytt",
     Description = "Lets the Signals Link freight dock load and unload the trains of Yang's Transport Tycoon.",
     Website = "",
-    Version = "0.1.0",
+    Version = "1.0.0",
     Authors = new[] { "fipil" }
 )]
 
