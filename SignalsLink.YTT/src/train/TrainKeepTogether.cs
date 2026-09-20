@@ -52,7 +52,7 @@ namespace SignalsLink.YTT.src.train
                     byHead[head] = columns;
                 }
 
-                columns.Add(columnOf(entity.ServerPos.X, entity.ServerPos.Z));
+                columns.Add(columnOf(entity.Pos.X, entity.Pos.Z));
             }
 
             foreach (HashSet<long> columns in byHead.Values)

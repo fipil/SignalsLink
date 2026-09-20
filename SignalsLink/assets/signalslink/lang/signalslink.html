@@ -442,6 +442,19 @@
     • <strong>Vstup</strong> dává kredit. Signály 1 až 7 přidají 1, 2, 4, 8, 16, 32 nebo 64 přenosů, signál 15 pracuje trvale. Jeden přenos stojí jeden kredit, ať odveze jeden kus nebo celý stack.<br>
     • <strong>Výstup</strong> hlásí, co překladiště na svých koncích vidí. Hodnotu mu dávají bloky s direktivou <strong>output</strong>. Vyhodnocují se napříč celým papírem a platí <strong>první</strong>, který sedí, bez ohledu na to, v které sekci je napsaný.<br>
     Nevyčerpaný kredit zrušíte přidřepnutím a klepnutím <strong>hasákem</strong>.<br><br>
+    <font size="20" color="6082B6">Na co se ptá output blok</font><br>
+    Output blok se vždy ptá na <strong>cíl své sekce</strong>, nikdy na zdroj. V sekci <strong>from yard to boat</strong> se tedy ptá na loď, ne na plochu. Když chcete hlásit stav plochy, musí být plocha cílem: napište output blok do sekce <strong>load yard</strong>. Taková sekce nemusí nic přenášet, stačí v ní samotný output blok.<br>
+    Sekce, jejíž protistrana není v dosahu, se přeskočí i se svými output bloky. Dotaz na loď tedy odpovídá, jen když loď u překladiště stojí. Plocha je na místě pořád, takže se na ni můžete ptát kdykoli.<br><br>
+    Ukázka:<br>
+    <strong>from yard to boat</strong><br>
+    <br>
+    <strong>game:ingot-*</strong><br>
+    <br>
+    <strong>load yard</strong><br>
+    <br>
+    <strong>game:ingot-* 0</strong><br>
+    <strong>output 15</strong><br>
+    První sekce nakládá ingoty z plochy do lodi. Druhá nic nepřenáší a jen hlídá plochu: jakmile na ní nezbyde žádný ingot, Výstup ukáže 15.<br><br>
     <font size="20" color="6082B6">Umístění</font><br>
     Překladiště se pokládá natočené jako bedna nebo truhla: postaví se konektory k vám, v jednom ze šestnácti natočení. Bez signálu na Vstupu nic nepřekládá.
 </translation>
