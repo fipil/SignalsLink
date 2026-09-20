@@ -8,7 +8,11 @@
       "states": [
         "wood",
         "rock",
-        "cobble"
+        "cobble",
+        "claybrick",
+        "unevenrunning",
+        "unevensoldier",
+        "unevenheader"
       ]
     },
     {
@@ -35,7 +39,16 @@
         "sandstone",
         "shale",
         "slate",
-        "bauxite"
+        "bauxite",
+        "fire",
+        "black",
+        "brown",
+        "cream",
+        "gray",
+        "orange",
+        "red",
+        "tan",
+        "clinker"
       ]
     },
     {
@@ -92,7 +105,39 @@
     "*-wood-sandstone-*",
     "*-wood-shale-*",
     "*-wood-slate-*",
-    "*-wood-bauxite-*"
+    "*-wood-bauxite-*",
+    "*-wood-fire-*", "*-rock-fire-*", "*-cobble-fire-*",
+    "*-wood-black-*", "*-rock-black-*", "*-cobble-black-*",
+    "*-wood-brown-*", "*-rock-brown-*", "*-cobble-brown-*",
+    "*-wood-cream-*", "*-rock-cream-*", "*-cobble-cream-*",
+    "*-wood-gray-*", "*-rock-gray-*", "*-cobble-gray-*",
+    "*-wood-orange-*", "*-rock-orange-*", "*-cobble-orange-*",
+    "*-wood-red-*", "*-rock-red-*", "*-cobble-red-*",
+    "*-wood-tan-*", "*-rock-tan-*", "*-cobble-tan-*",
+    "*-wood-clinker-*", "*-rock-clinker-*", "*-cobble-clinker-*",
+    "*-claybrick-oak-*", "*-claybrick-acacia-*", "*-claybrick-birch-*", "*-claybrick-kapok-*", "*-claybrick-maple-*",
+    "*-claybrick-pine-*", "*-claybrick-redwood-*", "*-claybrick-walnut-*", "*-claybrick-aged-*",
+    "*-claybrick-andesite-*", "*-claybrick-basalt-*", "*-claybrick-chalk-*", "*-claybrick-chert-*",
+    "*-claybrick-conglomerate-*", "*-claybrick-granite-*", "*-claybrick-limestone-*", "*-claybrick-peridotite-*",
+    "*-claybrick-phyllite-*", "*-claybrick-sandstone-*", "*-claybrick-shale-*", "*-claybrick-slate-*", "*-claybrick-bauxite-*",
+    "*-unevenrunning-oak-*", "*-unevenrunning-acacia-*", "*-unevenrunning-birch-*", "*-unevenrunning-kapok-*", "*-unevenrunning-maple-*",
+    "*-unevenrunning-pine-*", "*-unevenrunning-redwood-*", "*-unevenrunning-walnut-*", "*-unevenrunning-aged-*",
+    "*-unevenrunning-andesite-*", "*-unevenrunning-basalt-*", "*-unevenrunning-chalk-*", "*-unevenrunning-chert-*",
+    "*-unevenrunning-conglomerate-*", "*-unevenrunning-granite-*", "*-unevenrunning-limestone-*", "*-unevenrunning-peridotite-*",
+    "*-unevenrunning-phyllite-*", "*-unevenrunning-sandstone-*", "*-unevenrunning-shale-*", "*-unevenrunning-slate-*",
+    "*-unevenrunning-bauxite-*", "*-unevenrunning-clinker-*",
+    "*-unevensoldier-oak-*", "*-unevensoldier-acacia-*", "*-unevensoldier-birch-*", "*-unevensoldier-kapok-*", "*-unevensoldier-maple-*",
+    "*-unevensoldier-pine-*", "*-unevensoldier-redwood-*", "*-unevensoldier-walnut-*", "*-unevensoldier-aged-*",
+    "*-unevensoldier-andesite-*", "*-unevensoldier-basalt-*", "*-unevensoldier-chalk-*", "*-unevensoldier-chert-*",
+    "*-unevensoldier-conglomerate-*", "*-unevensoldier-granite-*", "*-unevensoldier-limestone-*", "*-unevensoldier-peridotite-*",
+    "*-unevensoldier-phyllite-*", "*-unevensoldier-sandstone-*", "*-unevensoldier-shale-*", "*-unevensoldier-slate-*",
+    "*-unevensoldier-bauxite-*", "*-unevensoldier-clinker-*",
+    "*-unevenheader-oak-*", "*-unevenheader-acacia-*", "*-unevenheader-birch-*", "*-unevenheader-kapok-*", "*-unevenheader-maple-*",
+    "*-unevenheader-pine-*", "*-unevenheader-redwood-*", "*-unevenheader-walnut-*", "*-unevenheader-aged-*",
+    "*-unevenheader-andesite-*", "*-unevenheader-basalt-*", "*-unevenheader-chalk-*", "*-unevenheader-chert-*",
+    "*-unevenheader-conglomerate-*", "*-unevenheader-granite-*", "*-unevenheader-limestone-*", "*-unevenheader-peridotite-*",
+    "*-unevenheader-phyllite-*", "*-unevenheader-sandstone-*", "*-unevenheader-shale-*", "*-unevenheader-slate-*",
+    "*-unevenheader-bauxite-*", "*-unevenheader-clinker-*"
   ],
   "attributes": {
     "linkNodes": [
@@ -253,12 +298,44 @@
           }
         ]
       }
+    },
+    "@sleevewallcoupling-claybrick-(cream|fire|clinker)-.*": {
+      "mat": {
+        "base": "game:block/clay/brick/four/running/{material}1"
+      }
+    },
+    "@sleevewallcoupling-claybrick-(black|brown|gray|orange|red|tan)-.*": {
+      "mat": {
+        "base": "game:block/clay/brick/four/running/cream1",
+        "overlays": [
+          "game:block/clay/brick/four/running/{material}1"
+        ]
+      }
+    },
+    "sleevewallcoupling-unevenrunning-*": {
+      "mat": {
+        "base": "game:block/clay/brick/uneven/four/running/{material}1"
+      }
+    },
+    "sleevewallcoupling-unevensoldier-*": {
+      "mat": {
+        "base": "game:block/clay/brick/uneven/four/soldier/{material}1"
+      }
+    },
+    "sleevewallcoupling-unevenheader-*": {
+      "mat": {
+        "base": "game:block/clay/brick/uneven/four/header/{material}1"
+      }
     }
   },
   "blockmaterialByType": {
     "*-wood-*": "Wood",
     "*-rock-*": "Stone",
-    "*-cobble-*": "Stone"
+    "*-cobble-*": "Stone",
+    "*-claybrick-*": "Ceramic",
+    "*-unevenrunning-*": "Ceramic",
+    "*-unevensoldier-*": "Ceramic",
+    "*-unevenheader-*": "Ceramic"
   },
   "lightAbsorption": 0,
   "drawtype": "json",

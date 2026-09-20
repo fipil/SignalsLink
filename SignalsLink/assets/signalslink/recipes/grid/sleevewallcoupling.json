@@ -149,5 +149,117 @@
       "code": "signalslink:sleevecoupling-north-down",
       "quantity": 1
     }
+  },
+  {
+    "ingredientPattern": "SSS,MCM,SSS",
+    "ingredients": {
+      "C": {
+        "type": "block",
+        "code": "signalslink:sleevecoupling-*"
+      },
+      "S": {
+        "type": "item",
+        "code": "game:burnedbrick-{material}"
+      },
+      "M": {
+        "type": "item",
+        "code": "game:mortar"
+      }
+    },
+    "allowedVariants": {
+      "material": [
+        "fire",
+        "black",
+        "brown",
+        "cream",
+        "gray",
+        "orange",
+        "red",
+        "tan",
+        "clinker"
+      ]
+    },
+    "width": 3,
+    "height": 3,
+    "output": {
+      "type": "block",
+      "code": "signalslink:sleevewallcoupling-claybrick-{material}-north-down",
+      "quantity": 1
+    }
+  },
+  {
+    "ingredientPattern": "_M_,BCB",
+    "ingredients": {
+      "C": {
+        "type": "block",
+        "code": "signalslink:sleevecoupling-*"
+      },
+      "B": {
+        "type": "block",
+        "code": "game:claybricks-uneven-four-running-*",
+        "name": "material"
+      },
+      "M": {
+        "type": "item",
+        "code": "game:mortar"
+      }
+    },
+    "width": 3,
+    "height": 2,
+    "output": {
+      "type": "block",
+      "code": "signalslink:sleevewallcoupling-unevenrunning-{material}-north-down",
+      "quantity": 1
+    }
+  },
+  {
+    "ingredientPattern": "_M_,BCB",
+    "ingredients": {
+      "C": {
+        "type": "block",
+        "code": "signalslink:sleevecoupling-*"
+      },
+      "B": {
+        "type": "block",
+        "code": "game:claybricks-uneven-four-soldier-*",
+        "name": "material"
+      },
+      "M": {
+        "type": "item",
+        "code": "game:mortar"
+      }
+    },
+    "width": 3,
+    "height": 2,
+    "output": {
+      "type": "block",
+      "code": "signalslink:sleevewallcoupling-unevensoldier-{material}-north-down",
+      "quantity": 1
+    }
+  },
+  {
+    "ingredientPattern": "_M_,BCB",
+    "ingredients": {
+      "C": {
+        "type": "block",
+        "code": "signalslink:sleevecoupling-*"
+      },
+      "B": {
+        "type": "block",
+        "code": "game:claybricks-uneven-four-header-*",
+        "name": "material"
+      },
+      "M": {
+        "type": "item",
+        "code": "game:mortar"
+      }
+    },
+    "width": 3,
+    "height": 2,
+    "output": {
+      "type": "block",
+      "code": "signalslink:sleevewallcoupling-unevenheader-{material}-north-down",
+      "quantity": 1
+    }
   }
 ]

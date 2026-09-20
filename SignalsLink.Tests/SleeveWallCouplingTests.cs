@@ -156,6 +156,25 @@ public class SleeveWallCouplingTests
             foreach (string material in recipe["allowedVariants"]["material"].Values<string>())
                 outputs.Add(((string)recipe["output"]["code"]).Replace("{material}", material).Split(':')[1]);
         }
+        // Clay bricks: the wall chute has no such variant to compare with, so only the route is checked.
+        var bricks = recipes[4];
+        Assert.Equal("signalslink:sleevecoupling-*", (string)bricks["ingredients"]["C"]["code"]);
+        Assert.Equal("game:burnedbrick-{material}", (string)bricks["ingredients"]["S"]["code"]);
+        foreach (string material in bricks["allowedVariants"]["material"].Values<string>())
+            outputs.Add(((string)bricks["output"]["code"]).Replace("{material}", material).Split(':')[1]);
+        // Uneven bricks come in three bonds and are made from the vanilla block itself, whose colour
+        // the recipe carries over - so every colour the game has must be one the coupling has.
+        string[] unevenColours = { "black", "brown", "cream", "fire", "gray", "orange", "red", "tan" };
+        string[] bonds = { "running", "soldier", "header" };
+        for (int i = 0; i < bonds.Length; i++)
+        {
+            var recipe = recipes[5 + i];
+            Assert.Equal("signalslink:sleevecoupling-*", (string)recipe["ingredients"]["C"]["code"]);
+            Assert.Equal($"game:claybricks-uneven-four-{bonds[i]}-*", (string)recipe["ingredients"]["B"]["code"]);
+            Assert.Equal("material", (string)recipe["ingredients"]["B"]["name"]);
+            foreach (string colour in unevenColours)
+                outputs.Add(((string)recipe["output"]["code"]).Replace("{material}", colour).Split(':')[1]);
+        }
         int count = 0;
         foreach (string type in types)
         foreach (string material in materials)
@@ -166,8 +185,9 @@ public class SleeveWallCouplingTests
             Assert.Contains(((JObject)block["texturesByType"]).Properties(), p => WildcardUtil.Match(p.Name, code));
             count++;
         }
-        Assert.Equal(35, count);
-        Assert.Equal(35, outputs.Count);
+        // 9 woods, 13 rocks, 13 cobbles, 9 clay bricks, 3 bonds of uneven bricks in 8 colours.
+        Assert.Equal(68, count);
+        Assert.Equal(68, outputs.Count);
         Assert.Equal("signalslink:sleevecoupling-north-down", (string)recipes[3]["output"]["code"]);
         Assert.Equal("signalslink:sleevewallcoupling-*", (string)recipes[3]["ingredients"]["C"]["code"]);
         Assert.True((bool)recipes[3]["ingredients"]["H"]["isTool"]);
