@@ -396,12 +396,18 @@
     Klepnutím otevřete mapu okolí. Kotva je uprostřed, světlejší čtverce drží; klepnutím je zapínáte a vypínáte. Sloupec, na kterém kotva stojí, drží vždy. Mapu přiblížíte kolečkem myši a posunete tažením.<br>
     V témže okně kotvu <strong>pojmenujete</strong>, takže ji poznáte v logu serveru, a přepínačem <strong>Kotva zapnutá</strong> ji vypnete, aniž byste ji museli vykopat. Kolik sloupců smí jedna kotva držet, určuje správce serveru; obvykle je to 64.<br><br>
     <font size="20" color="6082B6">Co to stojí</font><br>
-    Kotva spotřebovává <strong>temporální kolečka</strong>. Cena neroste podle toho, kolik se v držených chuncích děje, ale podle toho, <strong>kolik toho drží při životě</strong> — kolik je tam aktivních bloků (truhly, pece, sudy, hromady zboží) a zvířat. Zvíře stojí jako deset bloků.<br>
+    Kotva spotřebovává <strong>temporální kolečka</strong>. Cena roste podle toho, <strong>kolik toho drží v chodu</strong>: kolik je v držených chuncích aktivních bloků a domácích zvířat.<br>
+    <strong>Aktivní blok</strong> je blok, který sám pracuje: pec, sud, úl, pole, mlýn, stroje a zařízení. Počítají se i truhly, bedny a další úložné bloky, protože hra v nich hlídá kažení zboží. Dveře, otesané bloky ani hromádky zboží na zemi se nepočítají, ať jich je sebevíc.<br>
+    <strong>Zvíře</strong> se počítá jen domácí, tedy narozené v zajetí, a ochočený los. Divoká zvěř a příšery se nepočítají. Jedno zvíře stojí jako dva aktivní bloky.<br>
     Něco stojí i každý držený sloupec sám o sobě, i kdyby v něm nebylo nic — načtený chunk zabírá paměť a ukládá se. Nabírat prázdné chunky do zásoby se tedy nevyplatí.<br>
     Cena roste prudčeji než přímo úměrně, takže <strong>malá odlehlá dílna vyjde levně a domácí základna nesmyslně draho</strong>. Kotva se hodí pro odlehlou dílnu, ne pro celý hrad.<br>
-    Pozor: <strong>divoké rostliny a tráva v zakotveném chunku nerostou</strong> — to se děje jen kolem hráčů. Pole ale ano, protože každé zorané políčko je aktivní blok, a taky se podle toho počítá.<br>
     Cenu vidíte v mapě i v popisu bloku dřív, než kolečko vložíte. Když u kotvy stojíte, nespotřebovává nic — ty chunky by byly načtené tak jako tak.<br>
     Kolečko dáte kotvě klepnutím s kolečkem v ruce. Jedno navíc se vejde do slotu jako záloha; doplní ho i <a href="handbook://block-signalslink:managedchute-up-north">řízený žlab</a>. Když dojde náboj i záloha, kotva všechno pustí a čeká, až jí kolečko někdo přinese.<br><br>
+    <font size="20" color="6082B6">Pole a zvířata</font><br>
+    <strong>Pole</strong> v držených chuncích rostou a dozrají, i když u nich nikdo není. Stejně tak keře a ovocné stromy. Každé zorané políčko je aktivní blok, takže se velké pole na ceně projeví.<br>
+    <strong>Divoké rostliny a tráva</strong> v držených chuncích nerostou, to se děje jen kolem hráčů.<br>
+    <strong>Domácí zvířata</strong> jsou společenští tvorové a bez člověka nablízku jen postávají. Dokud není žádný hráč zhruba do 128 bloků, nežerou z koryta a nepáří se. Mláďata ale dorostou a březí samice porodí. Hlady zvířata neuhynou.<br>
+    Chov u kotvy se tedy sám nerozmnoží: o stádo se musíte starat osobně. Kotva se hodí pro stroje a pole, ne pro automatickou farmu na zvířata.<br><br>
     <font size="20" color="6082B6">Usínání</font><br>
     Kotva nemusí držet pořád. V okně kotvy si nastavíte, <strong>jak často se probouzí</strong> a <strong>jak dlouho zůstane vzhůru</strong> — a mezi tím spí a nic nestojí.<br>
     • <strong>Probouzení</strong>: nikdy neusíná, každou hodinu, každé 4 hodiny, každých 24 hodin, nebo jen na podnět. Jde o herní hodiny.<br>

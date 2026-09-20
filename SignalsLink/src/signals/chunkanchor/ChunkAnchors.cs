@@ -119,10 +119,16 @@ namespace SignalsLink.src.signals.chunkanchor
             {
                 var chunk = sapi.WorldManager.GetChunk(x, y, z);
                 if (chunk == null) yield break;
-                blocks += chunk.BlockEntities?.Count ?? 0;
+
+                // In one go, not across ticks: the game may add to this while we are away.
+                if (chunk.BlockEntities != null)
+                {
+                    foreach (BlockEntity be in chunk.BlockEntities.Values) if (AnchorCensus.IsActive(be)) blocks++;
+                }
+
                 for (int i = 0, count = chunk.EntitiesCount; i < count; i++)
                 {
-                    if (i < chunk.EntitiesCount && chunk.Entities?[i] is EntityAgent entity && entity is not EntityPlayer && entity.Alive) creatures++;
+                    if (i < chunk.EntitiesCount && AnchorCensus.IsLivestock(chunk.Entities?[i])) creatures++;
                     yield return new AnchorCount(blocks, creatures);
                 }
                 yield return new AnchorCount(blocks, creatures);
@@ -252,6 +258,8 @@ namespace SignalsLink.src.signals.chunkanchor
         public override void StartServerSide(ICoreServerAPI api)
         {
             sapi = api;
+
+            AnchorCensusDump.Register(api, this);
 
             SignalsLinkConfig config = SignalsLinkConfigLoader.Current;
             DisabledReason = AnchorGate.Reason(config.AnchorsEnabled,

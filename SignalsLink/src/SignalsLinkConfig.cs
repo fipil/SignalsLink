@@ -42,13 +42,12 @@ namespace SignalsLink.src
 
         [JsonProperty("AnchorCreatureWeight-description")]
         public string AnchorCreatureWeightDescription =
-            "What one creature counts for against one active block. Creatures run AI, pathfinding "
-            + "and physics every tick where a block entity wakes a few times a second, so 10 is the "
-            + "low end of what they really cost. Note that in a built-up base the BUILDINGS dominate "
-            + "the bill, not the herd - a measured castle held 6141 active blocks against 81 "
-            + "animals. Turn AnchorReferenceLoad, not this, when bases come out too cheap or dear.";
+            "What one domestic animal counts for against one active block. Only animals born in "
+            + "captivity and tamed elk count. The game runs an animal's AI and physics only within "
+            + "128 blocks of a player, so an animal held by an anchor alone mostly sleeps and costs "
+            + "little. Turn AnchorReferenceLoad, not this, when bases come out too cheap or dear.";
 
-        public int AnchorCreatureWeight = 10;
+        public int AnchorCreatureWeight = 2;
 
         [JsonProperty("AnchorColumnWeight-description")]
         public string AnchorColumnWeightDescription =
@@ -101,7 +100,7 @@ namespace SignalsLink.src
             bool valid = true;
             if (!float.IsFinite(AnchorReferenceLoad) || AnchorReferenceLoad <= 0) { AnchorReferenceLoad = 250; valid = false; }
             if (!float.IsFinite(AnchorPriceExponent) || AnchorPriceExponent <= 1) { AnchorPriceExponent = 1.174f; valid = false; }
-            if (AnchorCreatureWeight < 0) { AnchorCreatureWeight = 10; valid = false; }
+            if (AnchorCreatureWeight < 0) { AnchorCreatureWeight = 2; valid = false; }
             if (AnchorColumnWeight < 0) { AnchorColumnWeight = 5; valid = false; }
             if (AnchorMaxColumns < 0) { AnchorMaxColumns = 64; valid = false; }
             if (AnchorApproachBlocks < 0) { AnchorApproachBlocks = 160; valid = false; }

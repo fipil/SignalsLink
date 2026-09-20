@@ -112,7 +112,7 @@ public class AnchorWorkTests
             AnchorCreatureWeight = -1, AnchorColumnWeight = -1, AnchorMaxColumns = -1 };
         Assert.False(config.Validate());
         Assert.Equal(250, config.AnchorReferenceLoad); Assert.True(config.AnchorPriceExponent > 1);
-        Assert.Equal(10, config.AnchorCreatureWeight); Assert.Equal(5, config.AnchorColumnWeight);
+        Assert.Equal(2, config.AnchorCreatureWeight); Assert.Equal(5, config.AnchorColumnWeight);
         Assert.Equal(64, config.AnchorMaxColumns);
         config.AnchorMaxColumns = 0; config.AnchorColumnWeight = 0;
         Assert.True(config.Validate());
@@ -125,6 +125,6 @@ public class AnchorWorkTests
         Assert.Equal(0, AnchorCensus.AnchorUnits(0, 0, 1));
         Assert.Equal(10, AnchorCensus.AnchorUnits(0, 0, 2));
         Assert.Equal(6, AnchorCensus.AnchorUnits(1, 0, 1));
-        Assert.Equal(15, AnchorCensus.AnchorUnits(0, 1, 1));
+        Assert.Equal(7, AnchorCensus.AnchorUnits(0, 1, 1));
     }
 }

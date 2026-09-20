@@ -1,4 +1,8 @@
 using System;
+using System.Reflection;
+using Vintagestory.API.Common;
+using Vintagestory.API.Common.Entities;
+using Vintagestory.GameContent;
 
 namespace SignalsLink.src.signals.chunkanchor
 {
@@ -16,8 +20,57 @@ namespace SignalsLink.src.signals.chunkanchor
     /// </summary>
     public static class AnchorCensus
     {
-        /// <summary>An active block - anything with state of its own. The unit everything else is measured against.</summary>
+        /// <summary>An active block - one the server works on. The unit everything else is measured against.</summary>
         public const int ActiveBlockWeight = 1;
+
+        /// <summary>
+        /// Is this block one the server works on? A block entity with a tick listener of its own.
+        ///
+        /// Having a block entity is not the test. Measured on a small station: 950 of them, of
+        /// which 730 were chiselled blocks and 112 piles on the ground - shapes and stacks that
+        /// never tick - and 28 were the machines the anchor was there for. Asked of the instance,
+        /// so it holds for every mod's blocks and for listeners registered in a base class.
+        /// </summary>
+        public static bool IsActive(BlockEntity entity)
+        {
+            if (entity == null) return false;
+
+            // Never, whatever they do: a burning pile ticks, and a wall of them must not start to cost.
+            if (entity is BlockEntityMicroBlock || entity is BlockEntityGroundStorage) return false;
+
+            return HasTickListener(entity);
+        }
+
+        private static readonly FieldInfo TickHandlers =
+            typeof(BlockEntity).GetField("TickHandlers", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+
+        private static bool HasTickListener(BlockEntity entity)
+        {
+            // Should the game ever rename it, everything counts again rather than nothing.
+            if (TickHandlers == null) return true;
+
+            return TickHandlers.GetValue(entity) is System.Collections.ICollection listeners && listeners.Count > 0;
+        }
+
+        /// <summary>
+        /// Is this creature somebody's animal? Born in captivity, or a tamed elk.
+        ///
+        /// The game itself tells a domestic animal by its generation: offspring get one more than
+        /// their parents, and what spawned in the wild has none. Monsters in the caves under a
+        /// station and deer crossing it were being charged at ten blocks each.
+        /// </summary>
+        public static bool IsLivestock(AssetLocation code, int generation)
+        {
+            if (generation >= 1) return true;
+
+            return code != null && code.Domain == "game" && code.Path.StartsWith("tameddeer", StringComparison.Ordinal);
+        }
+
+        public static bool IsLivestock(Entity entity)
+        {
+            return entity is EntityAgent agent && entity is not EntityPlayer && agent.Alive
+                && IsLivestock(entity.Code, entity.WatchedAttributes?.GetInt("generation", 0) ?? 0);
+        }
 
         /// <summary>
         /// What a held column costs before anything is standing in it.
@@ -45,7 +98,7 @@ namespace SignalsLink.src.signals.chunkanchor
         /// These were calibrated against a measurement, not guessed: one chunk column of a
         /// built-up castle came to about 1500 active blocks.
         /// </summary>
-        public const int CreatureWeight = 10;
+        public const int CreatureWeight = 2;
 
         public const float ReferenceLoad = 250f;
 

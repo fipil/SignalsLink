@@ -46,10 +46,10 @@ namespace SignalsLink.Tests
         }
 
         [Fact]
-        public void An_animal_counts_for_ten_active_blocks()
+        public void An_animal_counts_for_two_active_blocks()
         {
-            Assert.Equal(10f, AnchorCensus.Units(0, 1));
-            Assert.Equal(20f, AnchorCensus.Units(10, 1));
+            Assert.Equal(2f, AnchorCensus.Units(0, 1));
+            Assert.Equal(12f, AnchorCensus.Units(10, 1));
         }
 
         [Fact]
@@ -97,9 +97,8 @@ namespace SignalsLink.Tests
         public void In_a_real_base_it_is_the_buildings_that_cost_not_the_herd()
         {
             // Written down because it contradicts what the design assumed. Animals were expected to
-            // be the thing that marks a base out, and at ten times a block each they are the
-            // dearest single thing a player can own - but a built castle turned out to hold 6141
-            // active blocks against 81 animals, so the herd is barely a tenth of the bill.
+            // be the thing that marks a base out - but a built castle turned out to hold 6141
+            // active blocks against 81 animals, so the herd is a small part of the bill.
             //
             // Which means the creature weight is NOT the knob to turn when a base comes out too
             // cheap or too dear. The reference load is.

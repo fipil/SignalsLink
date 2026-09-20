@@ -897,7 +897,7 @@ namespace SignalsLink.src.signals.chunkanchor
             {
                 clientConfig.AnchorReferenceLoad = tree.GetFloat("anchorReference", 250);
                 clientConfig.AnchorPriceExponent = tree.GetFloat("anchorExponent", 1.174f);
-                clientConfig.AnchorCreatureWeight = tree.GetInt("anchorCreature", 10);
+                clientConfig.AnchorCreatureWeight = tree.GetInt("anchorCreature", 2);
                 clientConfig.AnchorColumnWeight = tree.GetInt("anchorColumn", 5);
                 clientConfig.AnchorMaxColumns = tree.GetInt("anchorMax", 64);
             }
