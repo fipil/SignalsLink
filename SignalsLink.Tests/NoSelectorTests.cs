@@ -42,6 +42,13 @@ namespace SignalsLink.Tests
         }
 
         [Fact]
+        public void An_action_block_needs_no_selector()
+        {
+            // The handbook's own sealing example: the seal is the work, nothing is carried.
+            Assert.Empty(ErrorsFor("in target\ngame:water-* 50+\ndo seal\n", new Host(true)));
+        }
+
+        [Fact]
         public void A_star_counts_as_saying_what_to_carry()
         {
             // "Anything" is a perfectly good answer, as long as it is written down.

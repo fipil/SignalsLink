@@ -19,6 +19,14 @@ namespace SignalsLink.src.signals.managedchute.transporting
         // it, `in target isBurning` and `do seal` work in this direction too.
         private readonly BlockPos targetPos;
         private int defaultQuantity = 1;
+        private bool? targetIsCrate;
+
+        /// <summary>Looked up once; settable so a test can stand in for the world.</summary>
+        public bool TargetIsCrate
+        {
+            get => targetIsCrate ??= CrateRule.IsCrate(api, targetPos);
+            set => targetIsCrate = value;
+        }
 
         public WorldToInventoryTransfer(ICoreAPI api, BlockPos sourcePos, IInventory targetInv, byte targetSlotSignal, PaperConditionsEvaluator conditionsEvaluator, BlockPos targetPos = null)
         {
@@ -412,6 +420,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
 
         private int RoomFor(ItemStack stack, int effectiveTargetSlotSignal)
         {
+            if (TargetIsCrate && !CrateRule.Accepts(targetInv, stack)) return 0;
             if (effectiveTargetSlotSignal > 0)
             {
                 int index = effectiveTargetSlotSignal - 1;
@@ -544,6 +553,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
         private int TryPutIntoInventory(ItemStack fromStack, int effectiveTargetSlotSignal, int maxCount)
         {
             if (fromStack == null || maxCount < 1) return 0;
+            if (TargetIsCrate && !CrateRule.Accepts(targetInv, fromStack)) return 0;
 
             if (effectiveTargetSlotSignal > 0)
             {

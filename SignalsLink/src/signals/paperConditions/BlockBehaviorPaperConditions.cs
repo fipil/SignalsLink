@@ -275,6 +275,7 @@ namespace SignalsLink.src.signals.paperConditions
             foreach (ConditionBlock block in compiled.Blocks)
             {
                 if (block.IsOutputBlock) continue;   // an output block carries nothing anyway
+                if (block.HasActions) continue;      // `do seal` is the work; nothing to carry
                 if (block.CanSelectSource) continue;
 
                 errors.Add(new PaperConditionError(block.FirstLine, "", "noselector"));

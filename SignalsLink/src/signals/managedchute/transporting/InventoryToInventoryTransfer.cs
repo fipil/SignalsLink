@@ -11,6 +11,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
         private readonly IInventory targetInv;
         private readonly BlockPos targetPos;
         private readonly byte outputSlotSignal;
+        private bool? targetIsCrate;
 
         public InventoryToInventoryTransfer(ICoreAPI api, IInventory sourceInv, IInventory targetInv, BlockPos targetPos, byte inputSlotSignal, byte outputSlotSignal, PaperConditionsEvaluator conditionsEvaluator)
             : base(api, sourceInv, inputSlotSignal, conditionsEvaluator)
@@ -18,6 +19,13 @@ namespace SignalsLink.src.signals.managedchute.transporting
             this.targetInv = targetInv;
             this.targetPos = targetPos;
             this.outputSlotSignal = outputSlotSignal;
+        }
+
+        /// <summary>Looked up once; settable so a test can stand in for the world.</summary>
+        public bool TargetIsCrate
+        {
+            get => targetIsCrate ??= CrateRule.IsCrate(api, targetPos);
+            set => targetIsCrate = value;
         }
 
         public override bool UsesAmountAsTriggerOnly => true;
@@ -132,6 +140,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
             }
 
             int effectiveTargetSlotSignal = EffectiveTargetSlot(selection.Directives);
+            if (TargetIsCrate && !CrateRule.Accepts(targetInv, src.Itemstack)) return TransferOperationResult.None;
             var targets = new List<ItemSlot>();
             for (int i = 0; i < targetInv.Count; i++)
             {
@@ -215,6 +224,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
         {
             ItemStack stack = sourceSlot?.Itemstack;
             if (stack == null) return null;
+            if (TargetIsCrate && !CrateRule.Accepts(targetInv, stack)) return null;
 
             if (targetSlotSignal > 0)
             {
