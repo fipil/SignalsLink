@@ -66,6 +66,28 @@ namespace SignalsLink.src.signals.paperConditions
         /// </summary>
         public bool TakesEverythingAvailable => HasAmountOverride && AmountMode == AmountMode.AtLeast;
 
+        /// <summary>
+        /// How far past the floor <c>amount N+</c> may reach in one go: one stack of the item. A
+        /// chest of stone emptied in a single pass made `amount 1+` a cheat, not a directive. A
+        /// floor above the stack still holds, because the floor is what the paper asked for.
+        /// </summary>
+        public const int DefaultStack = 64;
+
+        /// <summary>The batch for items: the floor, or with <c>amount N+</c> what is there, up to one stack.</summary>
+        public int Reach(int available, int floor, Vintagestory.API.Common.ItemStack stack)
+        {
+            int cap = stack?.Collectible?.MaxStackSize > 0 ? stack.Collectible.MaxStackSize : DefaultStack;
+            return TakesEverythingAvailable ? System.Math.Min(available, System.Math.Max(floor, cap)) : floor;
+        }
+
+        /// <summary>The same for liquids: a barrel is not to be emptied in one go either.</summary>
+        public const decimal AtLeastCapLitres = 10;
+
+        public decimal ReachLitres(decimal available, decimal floor)
+        {
+            return TakesEverythingAvailable ? System.Math.Min(available, System.Math.Max(floor, AtLeastCapLitres)) : floor;
+        }
+
         public bool RequireTargetEmpty { get; }
 
         /// <summary>

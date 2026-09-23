@@ -31,6 +31,8 @@ public class HangingLinksRenderer : IRenderer
     private readonly List<Batch> visible=new();
     private readonly int[] textures=new int[LinkKind.Count];
     private readonly Matrixf matrix=new();
+    // Multi-draw offsets are byte offsets into the index buffer, stored as 64-bit pointers: two ints each.
+    private readonly int[] starts=new int[2], sizes=new int[1];
     private bool visibilityDirty=true, disposed;
     private double visibilityTime;
     private Vec3d lastCamera=new(double.MaxValue,0,0);
@@ -46,6 +48,9 @@ public class HangingLinksRenderer : IRenderer
         public double Radius;
         public float Time=-1;
         public Batch Batch;
+        public Vec3d[] Samples;    // world points the light is read at, evenly along the line
+        public Vec4f Light=new(1,1,1,1);   // the shader's light for this line: the average of its samples
+        public int IndexStart,IndexCount;  // this line's slice of the batch mesh
     }
     private sealed class Batch
     {
@@ -56,6 +61,7 @@ public class HangingLinksRenderer : IRenderer
         public MeshRef Gpu;
         public MeshData Cpu, Positions;
         public float[] Rest;
+        public float LightTime;            // seconds since the last relight
         public bool Upload;
     }
     public HangingLinksRenderer(ICoreClientAPI capi,LinkNetworkMod mod)
@@ -150,6 +156,7 @@ public class HangingLinksRenderer : IRenderer
         if(sway.X==0 && sway.Z==0) sway.X=1; else sway.Normalize();
         var v=new Visual { Con=c,Block1=b1.Id,Block2=b2.Id,Origin=origin,Center=origin.AddCopy(end.X/2,end.Y/2,end.Z/2),
             Radius=Math.Sqrt(end.X*end.X+end.Y*end.Y+end.Z*end.Z)/2+1,Mesh=mesh,Weights=weights.ToArray(),Sway=sway };
+        PlaceSamples(v,end);
         var cell=LinkSpatialIndex.At(c.pos1.blockPos); var key=(cell,c.kind);
         if(!groups.TryGetValue(key,out var batches)) groups[key]=batches=new();
         var batch=batches.Find(b=>b.Items.Count<BatchSize);
@@ -164,14 +171,46 @@ public class HangingLinksRenderer : IRenderer
         mesh.SetMode(EnumDrawMode.Triangles);
         foreach(var v in b.Items)
         {
-            v.Offset=mesh.VerticesCount;
+            v.Offset=mesh.VerticesCount; v.IndexStart=mesh.IndicesCount; v.IndexCount=v.Mesh.IndicesCount;
             var copy=v.Mesh.Clone(); copy.Translate((float)(v.Origin.X-b.Origin.X),(float)(v.Origin.Y-b.Origin.Y),(float)(v.Origin.Z-b.Origin.Z));
             mesh.AddMeshData(copy);
         }
         b.Upload=false; b.Cpu=mesh; b.Rest=(float[])mesh.xyz.Clone();
         b.Positions=new MeshData(false) { xyz=mesh.xyz,VerticesCount=mesh.VerticesCount };
+        Relight(b);
         b.Gpu=capi.Render.UploadMesh(mesh);
         foreach(var v in b.Items) if(v.Time>=0) Sway(v);
+    }
+    // ------------------------------------------------------------------ light of a line
+    // The standard shader takes one light per draw and adds a held lamp on top of it in the
+    // shader, so each line is drawn on its own with the average light along it. Tinting the
+    // vertices instead would dim the lamp too, which looks wrong the moment you walk up with one.
+    private const int SampleCount=5;
+    private static void PlaceSamples(Visual v,Vec3f end)
+    {
+        float len2=Math.Max(end.X*end.X+end.Y*end.Y+end.Z*end.Z,1e-6f);
+        var xyz=v.Mesh.xyz; int n=v.Mesh.VerticesCount;
+        var t=new float[n];
+        for(int i=0;i<n;i++) t[i]=Math.Clamp((xyz[i*3]*end.X+xyz[i*3+1]*end.Y+xyz[i*3+2]*end.Z)/len2,0,1);
+        // Read light at real vertices, which hang in the air; the chord might cut through a wall.
+        v.Samples=new Vec3d[SampleCount];
+        for(int s=0;s<SampleCount;s++)
+        {
+            float want=s/(float)(SampleCount-1); int best=0;
+            for(int i=1;i<n;i++) if(Math.Abs(t[i]-want)<Math.Abs(t[best]-want)) best=i;
+            v.Samples[s]=new Vec3d(v.Origin.X+xyz[best*3],v.Origin.Y+xyz[best*3+1],v.Origin.Z+xyz[best*3+2]);
+        }
+    }
+    private void Relight(Batch b)
+    {
+        b.LightTime=0;
+        var accessor=capi.World.BlockAccessor;
+        foreach(var v in b.Items)
+        {
+            var sum=new Vec4f();
+            foreach(var p in v.Samples) sum+=accessor.GetLightRGBs((int)Math.Floor(p.X),(int)Math.Floor(p.Y),(int)Math.Floor(p.Z));
+            v.Light=new Vec4f(sum.X/SampleCount,sum.Y/SampleCount,sum.Z/SampleCount,sum.W/SampleCount);
+        }
     }
     private bool IsVisible(Visual v,Vec3d cam)
     {
@@ -240,6 +279,7 @@ public class HangingLinksRenderer : IRenderer
         var r=capi.Render; r.GLEnableDepthTest(); r.GlEnableCullFace();
         var shader=r.PreparedStandardShader(0,0,0); shader.Use();
         shader.ProjectionMatrix=r.CurrentProjectionMatrix; shader.ViewMatrix=r.CameraMatrixOriginf;
+        int relit=0;
         for(byte kind=0;kind<LinkKind.Count;kind++)
         {
             bool bound=false;
@@ -249,8 +289,16 @@ public class HangingLinksRenderer : IRenderer
                 if(!r.DefaultFrustumCuller.SphereInFrustum(b.Origin.X+16,b.Origin.Y+16,b.Origin.Z+16,40)) continue;
                 if(!bound) { if(textures[kind]<=0) textures[kind]=r.GetOrLoadTexture(LinkProfile.For(kind).Texture); r.BindTexture2d(textures[kind]); bound=true; }
                 if(b.Upload) { r.UpdateMesh(b.Gpu,b.Positions); b.Upload=false; }
+                // Lamps get lit and the sun moves; half a second is plenty. A few batches per
+                // frame keeps the work spread out instead of landing in one frame.
+                if((b.LightTime+=dt)>=.5f && relit<4) { Relight(b); relit++; }
                 shader.ModelMatrix=matrix.Identity().Translate(b.Origin.X-cam.X,b.Origin.Y-cam.Y,b.Origin.Z-cam.Z).Values;
-                r.RenderMesh(b.Gpu);
+                foreach(var v in b.Items)
+                {
+                    shader.RgbaLightIn=v.Light;
+                    starts[0]=v.IndexStart*4; sizes[0]=v.IndexCount;
+                    r.RenderMesh(b.Gpu,starts,sizes,1);
+                }
             }
         }
         shader.Stop();

@@ -52,7 +52,8 @@ namespace SignalsLink.src.signals.link
             if (textureId < 0) textureId = capi.Render.GetOrLoadTexture(profile.Texture);
             rpi.BindTexture2d(textureId);
 
-            IStandardShaderProgram prog = rpi.PreparedStandardShader(0, 0, 0);
+            // Light at the anchor the line starts from, not at the world origin.
+            IStandardShaderProgram prog = rpi.PreparedStandardShader(blockPos.X, blockPos.Y, blockPos.Z);
             prog.Use();
             prog.ProjectionMatrix = rpi.CurrentProjectionMatrix;
             prog.ViewMatrix = rpi.CameraMatrixOriginf;

@@ -110,7 +110,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
             if (dst == null) return TransferOperationResult.None;
 
             decimal floor = System.Math.Min(litres, selection.Room ?? decimal.MaxValue);
-            if (selection.Directives.TakesEverythingAvailable) litres = LiquidTransferService.AvailableLitres(src.Itemstack);
+            litres = selection.Directives.ReachLitres(LiquidTransferService.AvailableLitres(src.Itemstack), litres);
             litres = System.Math.Min(litres, selection.Room ?? decimal.MaxValue);
             TransferOperationResult result =
                 Liquid.TryMoveFromItemSlot(src, dst, litres, selection.Directives.IsAtomicAmount, floor);
@@ -164,12 +164,8 @@ namespace SignalsLink.src.signals.managedchute.transporting
                 return TransferOperationResult.None;
             }
 
-            // And past the floor, `amount N+` reaches for everything: that is what makes it "clear
-            // the lot in one go" rather than "ten at a time".
-            if (selection.Directives.TakesEverythingAvailable && available > requestedQuantity)
-            {
-                requestedQuantity = available;
-            }
+            // And past the floor, `amount N+` reaches for what is there, a stack at a time.
+            requestedQuantity = selection.Directives.Reach(available, requestedQuantity, src.Itemstack);
 
             // `keep N` has the last word, whatever the batch says: it is the level in the target,
             // and overshooting it is the one thing it exists to prevent.

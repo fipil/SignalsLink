@@ -185,7 +185,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
             int floor = CappedByKeep(Math.Max(1, (int)(directives.Amount ?? defaultQuantity)), directives, block);
             int room = RoomFor(stack, EffectiveTargetSlot(directives));
             if (directives.IsAtomicAmount && !directives.HasKeep && (available < floor || room < floor)) return 0;
-            int requested = CappedByKeep(directives.TakesEverythingAvailable ? available : floor, directives, block);
+            int requested = CappedByKeep(directives.Reach(available, floor, stack), directives, block);
             return Math.Max(0, Math.Min(requested, Math.Min(available, room)));
         }
 
@@ -221,7 +221,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
             int floor = CappedByKeep(Math.Max(1, (int)(directives.Amount ?? defaultQuantity)), directives, block);
             int targetSignal = EffectiveTargetSlot(directives);
             if (directives.IsAtomicAmount && !directives.HasKeep && (available < floor || RoomFor(stack, targetSignal) < floor)) return TransferOperationResult.None;
-            int batch = CappedByKeep(directives.TakesEverythingAvailable ? available : floor, directives, block);
+            int batch = CappedByKeep(directives.Reach(available, floor, stack), directives, block);
             if (batch <= 0) return TransferOperationResult.None;
 
             int movedTotal = 0;
@@ -293,7 +293,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
             int targetSignal = EffectiveTargetSlot(directives);
             // A layer cannot be split. Never round a ceiling or keep upwards.
             if (directives.IsAtomicAmount && !directives.HasKeep && (floor % perLayer != 0 || available < floor || RoomFor(layerStack, targetSignal) < floor)) return TransferOperationResult.None;
-            int requested = CappedByKeep(directives.TakesEverythingAvailable ? available : floor, directives, paperBlock);
+            int requested = CappedByKeep(directives.Reach(available, floor, layerStack), directives, paperBlock);
             requested -= requested % perLayer;
             if (requested <= 0) return TransferOperationResult.None;
 

@@ -31,6 +31,7 @@ namespace SignalsLink.src
 
             api.RegisterBlockBehaviorClass("BlockBehaviorTemporalCharge", typeof(BlockBehaviorTemporalCharge));
             api.RegisterBlockBehaviorClass("BlockBehaviorPaperConditions", typeof(BlockBehaviorPaperConditions));
+            api.RegisterBlockBehaviorClass("BlockBehaviorPlaceOnBusyBlock", typeof(BlockBehaviorPlaceOnBusyBlock));
             api.RegisterBlockBehaviorClass("BlockBehaviorLinkCover", typeof(SignalsLink.src.signals.link.BlockBehaviorLinkCover));
             api.RegisterCollectibleBehaviorClass("LinkCutterBehavior", typeof(SignalsLink.src.signals.link.LinkCutterBehavior));
             api.RegisterCollectibleBehaviorClass("WrenchActions", typeof(SignalsLink.src.signals.WrenchActionsBehavior));

@@ -173,8 +173,9 @@ public class WorldAmountTests
         var f = new WorldFixture(); var small = f.Drop(4); small.Itemstack = new ItemStack(new EqualItem { Code = new AssetLocation("game:stick"), MaxStackSize = 64 }, 4);
         f.Drop(50); f.Drop(50);
         var target = new QuietChest(2);
-        Assert.Equal(100, f.Pickup(target, "*\namount 80+").MovedAmount);
-        Assert.Equal(64, target[0].StackSize); Assert.Equal(36, target[1].StackSize); Assert.Equal(4, small.Itemstack.StackSize);
+        // A floor above the stack cap holds as written: 80, not the whole 100.
+        Assert.Equal(80, f.Pickup(target, "*\namount 80+").MovedAmount);
+        Assert.Equal(64, target[0].StackSize); Assert.Equal(16, target[1].StackSize); Assert.Equal(4, small.Itemstack.StackSize);
     }
 
     [Theory]

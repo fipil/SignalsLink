@@ -182,13 +182,13 @@ namespace SignalsLink.src.signals.managedchute.transporting
                 if (groundBatch < 1) groundBatch = 1;
             }
 
-            // `amount N+` reaches past its floor, so the batch is everything the source can muster;
-            // the floor itself is still checked, atomically, below.
+            // `amount N+` reaches past its floor, a stack at a time; the floor itself is still
+            // checked, atomically, below.
             if (selection.Directives.TakesEverythingAvailable)
             {
                 int available = (int)Math.Min(int.MaxValue, GetMatchingSourceSlots(src).Sum(s => (long)s.StackSize));
 
-                if (available > groundBatch) groundBatch = available;
+                groundBatch = selection.Directives.Reach(available, groundBatch, src.Itemstack);
             }
 
             // `keep N` has the last word: it is the level on the ground, not a batch size.

@@ -80,7 +80,7 @@ public class ServerTransferRegressionTests
 
     [Theory]
     [InlineData("keep 2", 20, 2)]
-    [InlineData("amount 10+", 20, 20)]
+    [InlineData("amount 10+", 20, 10)]   // past the floor, at most one batch of ten litres
     [InlineData("amount 10", 5, 0)]
     [InlineData("amount 10-", 5, 5)]
     [InlineData("amount 10\nkeep 2", 5, 2)]

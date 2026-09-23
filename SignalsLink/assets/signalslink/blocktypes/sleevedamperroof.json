@@ -11,6 +11,9 @@
   },
   {
    "name": "BlockBehaviorPaperConditions"
+  },
+  {
+   "name": "BlockBehaviorPlaceOnBusyBlock"
   }
  ],
  "entityBehaviors": [

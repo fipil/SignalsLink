@@ -161,6 +161,18 @@ public class LinkPerformanceTests
         f.Drain(); Assert.Equal(2,f.Meshes.Count(m=>!m.Disposed));
     }
     [Fact]
+    public void Each_line_is_drawn_with_the_average_light_along_it()
+    {
+        using var f=new RenderFixture();
+        f.Light=(x,y,z)=>x<4 ? new Vec4f(1,1,1,1) : new Vec4f(.2f,.2f,.2f,0);
+        f.Mod.data.connections.Add(Link(0,8));    // two of five samples in the light, three in the dark
+        f.Renderer.RequestFullRebuild(); f.Drain();
+        Assert.NotEmpty(f.Lights);
+        Assert.All(f.Lights,light=> { Assert.InRange(light.X,.5f,.55f); Assert.InRange(light.W,.35f,.45f); });
+        Assert.NotEmpty(f.Ranges); Assert.All(f.Ranges,range=>Assert.Equal(0,range.start));   // its own draw, from the start of the batch
+        Assert.All(f.Uploaded,m=>Assert.All(m.Rgba,b=>Assert.Equal(255,b)));   // no vertex tint
+    }
+    [Fact]
     public void Sway_updates_only_positions_and_preserves_the_eight_segment_cap()
     {
         using var f=new RenderFixture();
@@ -261,16 +273,25 @@ public class LinkPerformanceTests
         {
             var entity=Player; var anchor=Anchor;
             var chunk=Proxy.Make<IWorldChunk>((m,a)=>Proxy.Unhandled);
-            var shader=Proxy.Make<IStandardShaderProgram>((m,a)=>Proxy.Unhandled);
+            var shader=Proxy.Make<IStandardShaderProgram>((m,a)=> { if(m.Name=="set_RgbaLightIn") Lights.Add((Vec4f)a[0]); return Proxy.Unhandled; });
             var frustum=new FrustumCulling();
             var api=Proxy.Make<ICoreClientAPI>((m,a)=>m.Name switch {
                 "get_Entity"=>entity, "GetBlock"=>anchor, "GetChunkAtBlockPos"=>Loaded?chunk:null,
                 "get_DefaultFrustumCuller"=>frustum, "PreparedStandardShader"=>shader,
-                "GetOrLoadTexture"=>1, "UploadMesh"=>Upload(), "UpdateMesh"=>Update((MeshData)a[1]),
+                "GetOrLoadTexture"=>1, "UploadMesh"=>Upload((MeshData)a[0]), "UpdateMesh"=>Update((MeshData)a[1]),
+                "get_AmbientColor"=>new Vec3f(1,1,1), "GetLightRGBs"=>LightAt((int)a[0],(int)a[1],(int)a[2]),
+                "RenderMesh" when a.Length==4=>Range(((int[])a[1])[0],((int[])a[2])[0]),
                 _=>Proxy.Unhandled });
             Renderer=new ProbeRenderer(api,Mod,entity);
         }
-        private object Upload() { Uploads++; var mesh=new FakeMesh(); Meshes.Add(mesh); return mesh; }
+        /// <summary>Uniform light unless a test says otherwise: a lamp at one end, dark at the other.</summary>
+        public System.Func<int,int,int,Vec4f> Light=(x,y,z)=>new Vec4f(1,1,1,1);
+        private Vec4f LightAt(int x,int y,int z)=>Light(x,y,z);
+        public List<MeshData> Uploaded=new();
+        public List<Vec4f> Lights=new();
+        public List<(int start,int count)> Ranges=new();
+        private object Range(int start,int count) { Ranges.Add((start,count)); return null; }
+        private object Upload(MeshData data) { Uploads++; Uploaded.Add(data); var mesh=new FakeMesh(); Meshes.Add(mesh); return mesh; }
         private object Update(MeshData mesh) { Updates++; UpdateData.Add(mesh); return null; }
         public void Drain() { for(int i=0;i<50;i++) {Renderer.OnClientTick(.016f);Renderer.OnRenderFrame(.016f,EnumRenderStage.Opaque);} }
         public void Dispose()=>Renderer.Dispose();

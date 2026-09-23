@@ -207,8 +207,7 @@ namespace SignalsLink.src.signals.hose
             // Cap by the remaining buffer: `amount M` never moves more than what is left to move.
             decimal floor = CappedByKeep(directives.Amount ?? litresRequested, paperBlock, ctx);
             decimal available = worldWaterPos != null ? decimal.MaxValue : LiquidTransferService.AvailableLitres(sourceLiquid);
-            decimal litres = directives.TakesEverythingAvailable
-                ? System.Math.Min(available, liquid.RemainingLitres(dst, sourceLiquid)) : floor;
+            decimal litres = directives.ReachLitres(System.Math.Min(available, liquid.RemainingLitres(dst, sourceLiquid)), floor);
             litres = CappedByKeep(System.Math.Min(litres, maxTransfer), paperBlock, ctx);
             if (litres <= 0 || (directives.IsAtomicAmount && maxTransfer < floor)) return TransferOperationResult.None;
             TransferOperationResult res = srcSlot != null
@@ -241,7 +240,7 @@ namespace SignalsLink.src.signals.hose
             decimal floor = directives.Amount ?? litresRequested;
             decimal available = srcSlot == null ? int.MaxValue / (decimal)props.ItemsPerLitre : LiquidTransferService.AvailableLitres(sourceLiquid);
             if (directives.IsAtomicAmount && (available < floor || maxTransfer < floor)) return TransferOperationResult.None;
-            decimal litres = decimal.Round(System.Math.Min(directives.TakesEverythingAvailable ? available : floor, maxTransfer), 2, System.MidpointRounding.ToZero);
+            decimal litres = decimal.Round(System.Math.Min(directives.ReachLitres(available, floor), maxTransfer), 2, System.MidpointRounding.ToZero);
             if (litres <= 0) return TransferOperationResult.None;
 
             int wantItems = (int)(props.ItemsPerLitre * (float)litres);
