@@ -5,7 +5,7 @@
     "op": "add",
     "path": "/selling/list/-",
     "value": {
-      "code": "signalslink:blocksensor",
+      "code": "signalslink:blocksensor-off-fwd-north-down",
       "type": "block",
       "stacksize": 1,
       "stock": {
@@ -25,7 +25,7 @@
     "op": "add",
     "path": "/selling/list/-",
     "value": {
-      "code": "signalslink:blocksensor",
+      "code": "signalslink:blocksensor-off-fwd-north-down",
       "type": "block",
       "stacksize": 1,
       "stock": {
@@ -45,7 +45,7 @@
     "op": "add",
     "path": "/selling/list/-",
     "value": {
-      "code": "signalslink:entitysensor",
+      "code": "signalslink:entitysensor-off-north-down",
       "type": "block",
       "stacksize": 1,
       "stock": {
@@ -65,7 +65,7 @@
     "op": "add",
     "path": "/selling/list/-",
     "value": {
-      "code": "signalslink:entitysensor",
+      "code": "signalslink:entitysensor-off-north-down",
       "type": "block",
       "stacksize": 1,
       "stock": {
