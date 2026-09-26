@@ -114,9 +114,10 @@
 		"output": { "type": "block", "code": "signalslink:yardtilepath", "quantity": 8 }
 	},
 	{
-		"ingredientPattern": "PPP,PNP,PPP",
+		"ingredientPattern": "PSP,PNP,PPP",
 		"ingredients": {
 			"P": { "type": "item", "code": "game:plank-{material}" },
+			"S": { "type": "item", "tags": ["tool-saw"], "isTool": true },
 			"N": { "type": "item", "code": "game:metalnailsandstrips-*" }
 		},
 		"allowedVariants": {

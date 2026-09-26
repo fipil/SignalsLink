@@ -1,0 +1,4 @@
+1.0.3
+Fixed: The plank storage yard recipe was the same as the vanilla chest recipe and made chests uncraftable. It now needs a saw above the nails.
+Tweak: Chunk anchor: the gear estimate now says it applies to continuous holding ("Held continuously: one gear lasts N days").
+Tweak: Translations: the temporal gear is named consistently in all languages (no more "wheel" or "spool").

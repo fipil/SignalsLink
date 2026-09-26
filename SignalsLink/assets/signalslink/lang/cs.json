@@ -177,7 +177,7 @@
   "signalslink:chunkanchor-calculating": "Počítám spotřebu koleček...",
   "signalslink:chunkanchor-price": "Držené sloupce: {0} z {1}",
   "signalslink:chunkanchor-census": "Drží při životě: {0} aktivních bloků, {1} zvířat ({2} jednotek)",
-  "signalslink:chunkanchor-rate": "Jedno kolečko vydrží {0} dní",
+  "signalslink:chunkanchor-rate": "Při trvalém držení: jedno kolečko vydrží {0} dní",
   "signalslink:chunkanchor-free": "Nedrží nic — kolečko neubývá",
   "signalslink:chunkanchor-charge": "Kolečko: {0} %",
   "signalslink:chunkanchor-dead": "Bez kolečka — nedrží nic. Klepni na ni s kolečkem v ruce.",
