@@ -1,3 +1,6 @@
+1.0.4 - published 2026-09-27 10:15
+Fixed: Hoses and sleeves were drawn as stray triangles on clients with SSBOs enabled (the default on most GPUs since 1.0.1).
+
 1.0.3 - published 2026-09-26 22:20
 Fixed: The plank storage yard recipe was the same as the vanilla chest recipe and made chests uncraftable. It now needs a saw above the nails.
 Tweak: Chunk anchor: the gear estimate now says it applies to continuous holding ("Held continuously: one gear lasts N days").

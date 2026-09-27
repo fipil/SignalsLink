@@ -173,6 +173,17 @@ public class LinkPerformanceTests
         Assert.All(f.Uploaded,m=>Assert.All(m.Rgba,b=>Assert.Equal(255,b)));   // no vertex tint
     }
     [Fact]
+    public void With_SSBOs_on_and_no_switch_batches_are_drawn_whole_never_by_range()
+    {
+        // The range draw would take the engine's chunk-only SSBO path and scatter the lines.
+        using var f=new RenderFixture { Ssbo=true };
+        f.Mod.data.connections.Add(Link(0,8)); f.Mod.data.connections.Add(Link(8,16));
+        f.Renderer.RequestFullRebuild(); f.Drain();
+        Assert.Empty(f.Ranges);
+        Assert.True(f.WholeDraws>0);
+        Assert.NotEmpty(f.Lights);
+    }
+    [Fact]
     public void Sway_updates_only_positions_and_preserves_the_eight_segment_cap()
     {
         using var f=new RenderFixture();
@@ -281,6 +292,8 @@ public class LinkPerformanceTests
                 "GetOrLoadTexture"=>1, "UploadMesh"=>Upload((MeshData)a[0]), "UpdateMesh"=>Update((MeshData)a[1]),
                 "get_AmbientColor"=>new Vec3f(1,1,1), "GetLightRGBs"=>LightAt((int)a[0],(int)a[1],(int)a[2]),
                 "RenderMesh" when a.Length==4=>Range(((int[])a[1])[0],((int[])a[2])[0]),
+                "RenderMesh" when a.Length==1=>Whole(),
+                "get_UseSSBOs"=>Ssbo,
                 _=>Proxy.Unhandled });
             Renderer=new ProbeRenderer(api,Mod,entity);
         }
@@ -290,6 +303,8 @@ public class LinkPerformanceTests
         public List<MeshData> Uploaded=new();
         public List<Vec4f> Lights=new();
         public List<(int start,int count)> Ranges=new();
+        public int WholeDraws; public bool Ssbo;   // SSBOs on and no way to turn them off: the proxy has no such field
+        private object Whole() { WholeDraws++; return null; }
         private object Range(int start,int count) { Ranges.Add((start,count)); return null; }
         private object Upload(MeshData data) { Uploads++; Uploaded.Add(data); var mesh=new FakeMesh(); Meshes.Add(mesh); return mesh; }
         private object Update(MeshData mesh) { Updates++; UpdateData.Add(mesh); return null; }

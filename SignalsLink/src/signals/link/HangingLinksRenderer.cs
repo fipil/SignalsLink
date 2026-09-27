@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Reflection;
 using signals.src.signalNetwork;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
@@ -279,6 +280,13 @@ public class HangingLinksRenderer : IRenderer
         var r=capi.Render; r.GLEnableDepthTest(); r.GlEnableCullFace();
         var shader=r.PreparedStandardShader(0,0,0); shader.Use();
         shader.ProjectionMatrix=r.CurrentProjectionMatrix; shader.ViewMatrix=r.CameraMatrixOriginf;
+        bool split=SplitDraws(r,out bool restoreSsbo);
+        try { DrawBatches(r,shader,cam,dt,split); }
+        finally { if(restoreSsbo) ssboFlag.SetValue(r,true); }   // never leave the engine's flag off
+        shader.Stop();
+    }
+    private void DrawBatches(IRenderAPI r,IStandardShaderProgram shader,Vec3d cam,float dt,bool split)
+    {
         int relit=0;
         for(byte kind=0;kind<LinkKind.Count;kind++)
         {
@@ -293,15 +301,47 @@ public class HangingLinksRenderer : IRenderer
                 // frame keeps the work spread out instead of landing in one frame.
                 if((b.LightTime+=dt)>=.5f && relit<4) { Relight(b); relit++; }
                 shader.ModelMatrix=matrix.Identity().Translate(b.Origin.X-cam.X,b.Origin.Y-cam.Y,b.Origin.Z-cam.Z).Values;
-                foreach(var v in b.Items)
+                if(split)
                 {
-                    shader.RgbaLightIn=v.Light;
-                    starts[0]=v.IndexStart*4; sizes[0]=v.IndexCount;
-                    r.RenderMesh(b.Gpu,starts,sizes,1);
+                    foreach(var v in b.Items)
+                    {
+                        shader.RgbaLightIn=v.Light;
+                        starts[0]=v.IndexStart*4; sizes[0]=v.IndexCount;
+                        r.RenderMesh(b.Gpu,starts,sizes,1);
+                    }
+                }
+                else
+                {
+                    shader.RgbaLightIn=Nearest(b,cam).Light;
+                    r.RenderMesh(b.Gpu);
                 }
             }
         }
-        shader.Stop();
+    }
+    // The sub-range draw takes the engine's SSBO path when SSBOs are on, and that path is for
+    // chunk meshes only: our lines come out as stray triangles. The engine turns the flag off
+    // around its own water pass; we do the same. If the field is gone one day, whole batches
+    // are drawn with one light each instead - dimmer in places, never broken.
+    private FieldInfo ssboFlag; private bool ssboLooked;
+    private bool SplitDraws(IRenderAPI r,out bool restore)
+    {
+        restore=false;
+        if(!r.UseSSBOs) return true;
+        if(!ssboLooked)
+        {
+            ssboLooked=true;
+            ssboFlag=r.GetType().GetField("useSSBOs",BindingFlags.Instance|BindingFlags.NonPublic|BindingFlags.Public);
+            if(ssboFlag!=null && ssboFlag.FieldType!=typeof(bool)) ssboFlag=null;
+        }
+        if(ssboFlag==null) return false;
+        ssboFlag.SetValue(r,false); restore=true;
+        return true;
+    }
+    private static Visual Nearest(Batch b,Vec3d cam)
+    {
+        Visual best=null; double bestD=double.MaxValue;
+        foreach(var v in b.Items) { double d=v.Center.SquareDistanceTo(cam); if(d<bestD) { bestD=d; best=v; } }
+        return best;
     }
         private static Vec3f GetAnchorExitDirection(ILinkAnchor owner, NodePos anchor)
         {
