@@ -1,4 +1,4 @@
-1.0.6
+1.0.6 - published 2026-09-28 20:45
 Fixed: The entity sensor can be charged with a temporal gear again. Before, the right click started the gear's own "set spawn" action instead.
 
 1.0.5 - published 2026-09-28 12:57
