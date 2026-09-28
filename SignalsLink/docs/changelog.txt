@@ -1,4 +1,4 @@
-1.0.5
+1.0.5 - published 2026-09-28 12:57
 Fixed: While the chunk anchor is still counting its load, the info box says so instead of showing two unreadable squares.
 Fixed: Looking at a pin of the chunk anchor now shows only the pin name, like on the other blocks. Before, the pin name was glued to the end of the anchor's own text.
 Fixed: A firepit lit by the igniter now keeps igniting fuel by itself, like one lit by a torch. Before, it burned one log and then looked lit while giving no heat.
