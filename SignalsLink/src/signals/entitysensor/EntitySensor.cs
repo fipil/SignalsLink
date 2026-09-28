@@ -46,21 +46,24 @@ namespace SignalsLink.src.signals.entitysensor
 
         public override bool OnBlockInteractStart(IWorldAccessor world, IPlayer byPlayer, BlockSelection blockSel)
         {
-            world.Api.Logger.Debug($"OnBlockInteractStart called on {world.Side}");
-
-            if (world.Side == EnumAppSide.Server)
+            // Both sides must claim the click when a gear is in hand. Signals' BlockConnection
+            // no longer returns true by default, and a client that does not claim it lets the
+            // gear start its own "set spawn" action instead. Same pattern as the igniter.
+            var chargeBehavior = GetBehavior<BlockBehaviorTemporalCharge>();
+            if (chargeBehavior != null && IsHoldingChargeItem(byPlayer, chargeBehavior))
             {
-                var chargeBehavior = GetBehavior<BlockBehaviorTemporalCharge>();
-
-                if (chargeBehavior != null)
-                {
-                    var charged = chargeBehavior.TryCharge(world, byPlayer, blockSel);
-                    if (charged)
-                        return true;
-                }
+                if (world.Side == EnumAppSide.Server) chargeBehavior.TryCharge(world, byPlayer, blockSel);
+                return true;
             }
 
             return base.OnBlockInteractStart(world, byPlayer, blockSel);
+        }
+
+        private static bool IsHoldingChargeItem(IPlayer byPlayer, BlockBehaviorTemporalCharge charge)
+        {
+            ItemStack held = byPlayer?.InventoryManager?.ActiveHotbarSlot?.Itemstack;
+            if (held?.Collectible?.Code == null) return false;
+            return held.Collectible.Code.Path.Contains(charge.ChargeItemCode); // as TryCharge checks it
         }
 
         public override void OnBlockPlaced(IWorldAccessor world, BlockPos blockPos, ItemStack byItemStack)

@@ -1,3 +1,6 @@
+1.0.6
+Fixed: The entity sensor can be charged with a temporal gear again. Before, the right click started the gear's own "set spawn" action instead.
+
 1.0.5 - published 2026-09-28 12:57
 Fixed: While the chunk anchor is still counting its load, the info box says so instead of showing two unreadable squares.
 Fixed: Looking at a pin of the chunk anchor now shows only the pin name, like on the other blocks. Before, the pin name was glued to the end of the anchor's own text.
