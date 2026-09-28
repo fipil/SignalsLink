@@ -1,6 +1,7 @@
 using signals.src;
 using signals.src.signalNetwork;
 using SignalsLink.src.signals;
+using SignalsLink.src.signals.link;
 using SignalsLink.src.signals.managedchute.transporting;
 using SignalsLink.src.signals.paperConditions;
 using System;
@@ -14,7 +15,7 @@ using Vintagestory.GameContent;
 
 namespace SignalsLink.src.signals.managedchute
 {
-    public class BEManagedChute : BlockEntity, IBESignalReceptor, IPaperConditionsHost, ISignalBuffer, IConditionOutputSink
+    public class BEManagedChute : BlockEntity, IBESignalReceptor, IPaperConditionsHost, ISignalBuffer, IConditionOutputSink, IRetentionModeHost
     {
         private int checkRateMs;
 
@@ -91,11 +92,42 @@ namespace SignalsLink.src.signals.managedchute
 
             signalMod = api.ModLoader.GetModSystem<SignalNetworkMod>();
             signalMod.RegisterSignalTickListener(OnSignalNetworkTick);
+            PublishRetentionMode();
 
             if (!(api is ICoreServerAPI))
                 return;
             this.RegisterDelayedCallback(dt => this.RegisterGameTickListener(this.MoveItem, this.checkRateMs), 10 + api.World.Rand.Next(200));
         }
+
+        #region Room sealing (wall variant)
+
+        // The wall chute sits in a wall, so it is a room boundary; the same three modes as the
+        // ceiling damper. The registry is only the lookup table Block.GetRetention reads.
+        private int retentionMode = link.RetentionMode.Cooling;
+
+        public bool SupportsRetentionMode => Block is ManagedWallChute;
+
+        public int RetentionMode => retentionMode;
+
+        public void CycleRetentionMode()
+        {
+            retentionMode = link.RetentionMode.Next(retentionMode);
+            PublishRetentionMode();
+            MarkDirty();
+            Api?.World.BlockAccessor.TriggerNeighbourBlockUpdate(Pos);
+        }
+
+        private void PublishRetentionMode()
+        {
+            if (SupportsRetentionMode) Api?.ModLoader.GetModSystem<RetentionModeRegistry>()?.Publish(Pos, retentionMode);
+        }
+
+        private void WithdrawRetentionMode()
+        {
+            Api?.ModLoader.GetModSystem<RetentionModeRegistry>()?.Withdraw(Pos);
+        }
+
+        #endregion
 
         private void parseBlockProperties()
         {
@@ -351,6 +383,7 @@ namespace SignalsLink.src.signals.managedchute
         {
             base.OnBlockRemoved();
             signalMod?.DisposeSignalTickListener(OnSignalNetworkTick);
+            WithdrawRetentionMode();
             transfer = null;
         }
 
@@ -358,6 +391,7 @@ namespace SignalsLink.src.signals.managedchute
         {
             base.OnBlockUnloaded();
             signalMod?.DisposeSignalTickListener(OnSignalNetworkTick);
+            WithdrawRetentionMode();
             transfer = null;
         }
 
@@ -394,6 +428,10 @@ namespace SignalsLink.src.signals.managedchute
             // the pin looks like it went 0 -> N after every load, which credits a phantom batch.
             signalState = (byte)tree.GetInt("signalState", 0);
             outputState = (byte)tree.GetInt("outputState", 0);
+
+            int savedMode = tree.GetInt("retentionMode", link.RetentionMode.Cooling);
+            retentionMode = savedMode >= 0 && savedMode < link.RetentionMode.Count ? savedMode : link.RetentionMode.Cooling;
+            PublishRetentionMode(); // no-op before Initialize; republished from there
         }
 
         public override void ToTreeAttributes(ITreeAttribute tree)
@@ -407,6 +445,7 @@ namespace SignalsLink.src.signals.managedchute
             tree.SetInt("remaining", remaining);
             tree.SetInt("signalState", signalState);
             tree.SetInt("outputState", outputState);
+            tree.SetInt("retentionMode", retentionMode);
         }
 
         public override void GetBlockInfo(IPlayer forPlayer, StringBuilder dsc)
@@ -426,6 +465,11 @@ namespace SignalsLink.src.signals.managedchute
             else if (remaining > 0)
             {
                 dsc.AppendLine(Lang.Get("signalslink:managedchute-info-remaining", remaining));
+            }
+
+            if (SupportsRetentionMode)
+            {
+                dsc.AppendLine(Lang.Get("signalslink:retention-label", Lang.Get(link.RetentionMode.LangKey(retentionMode))));
             }
 
             base.GetBlockInfo(forPlayer, dsc);

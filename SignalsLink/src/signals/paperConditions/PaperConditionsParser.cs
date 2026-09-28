@@ -594,6 +594,11 @@ namespace SignalsLink.src.signals.paperConditions
                     return new BlockBurningCondition(false);
                 }
 
+                if (TryParseBlockTemperature(negated, true, sink, out ICondition negatedTemperature))
+                {
+                    return negatedTemperature;
+                }
+
                 var inner = ParseLine(negated, sink);
                 return new NotCondition(inner);
             }
@@ -611,6 +616,11 @@ namespace SignalsLink.src.signals.paperConditions
             if (string.Equals(line, "isBurning", StringComparison.OrdinalIgnoreCase))
             {
                 return new BlockBurningCondition(true);
+            }
+
+            if (TryParseBlockTemperature(line, false, sink, out ICondition blockTemperature))
+            {
+                return blockTemperature;
             }
 
             if (string.Equals(line, "inventoryEmpty", StringComparison.OrdinalIgnoreCase))
@@ -692,6 +702,27 @@ namespace SignalsLink.src.signals.paperConditions
             }
 
             return new AttributeExistsCondition(line);
+        }
+
+        private static readonly Regex blockTemperatureRegex = new Regex(@"^blockTemperature\s*(?<op>>=|<=|==|=|>|<)\s*(?<value>-?\d+(?:[\.,]\d+)?)$", RegexOptions.IgnoreCase);
+
+        /// <summary>`blockTemperature>300`: the block's own heat, not a stack's. The bare word without a comparison is a mistake worth naming.</summary>
+        private static bool TryParseBlockTemperature(string line, bool negate, PaperErrorSink sink, out ICondition condition)
+        {
+            condition = null;
+            if (!line.StartsWith("blockTemperature", StringComparison.OrdinalIgnoreCase)) return false;
+
+            Match match = blockTemperatureRegex.Match(line);
+            if (!match.Success
+                || !double.TryParse(match.Groups["value"].Value.Replace(',', '.'), NumberStyles.Float, CultureInfo.InvariantCulture, out double value))
+            {
+                sink?.Add(line, "condition");
+                condition = FalseCondition.Instance;
+                return true;
+            }
+
+            condition = new BlockTemperatureCondition(match.Groups["op"].Value, value, negate);
+            return true;
         }
 
         private static bool TryParseInventoryAmountCondition(string line, PaperErrorSink sink, out ICondition condition)

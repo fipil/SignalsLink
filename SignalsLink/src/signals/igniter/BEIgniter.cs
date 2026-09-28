@@ -336,6 +336,11 @@ namespace SignalsLink.src.signals.igniter
                 // an easy mistake to make. Let the firepit itself say so.
                 if (firepit.GetIgnitableState(5f) != EnumIgniteState.IgniteNow) return false;
 
+                // What a torch does (BlockFirepit.OnTryIgniteBlockOver): mark the pit as lit so its
+                // own tick keeps igniting fuel as it arrives. igniteFuel() alone burns one log and
+                // leaves a pit that looks lit but is dead - no heat, no re-ignition.
+                firepit.canIgniteFuel = true;
+                firepit.extinguishedTotalHours = Api.World.Calendar.TotalHours;
                 firepit.igniteFuel();
                 return firepit.IsBurning;
             }

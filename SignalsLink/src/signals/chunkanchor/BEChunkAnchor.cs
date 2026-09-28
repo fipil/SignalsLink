@@ -951,6 +951,10 @@ namespace SignalsLink.src.signals.chunkanchor
         {
             base.GetBlockInfo(forPlayer, sb);
 
+            // Looking at a pin: Signals names the pin, nothing else belongs there.
+            int pins = (Block as BlockChunkAnchor)?.PinBoxes ?? 0;
+            if (forPlayer?.CurrentBlockSelection?.SelectionBoxIndex < pins) return;
+
             if (!string.IsNullOrEmpty(AnchorName))
             {
                 sb.AppendLine(AnchorName.Replace("<", "&lt;").Replace(">", "&gt;"));
@@ -972,7 +976,9 @@ namespace SignalsLink.src.signals.chunkanchor
             // it is worth a gear.
             float units = AnchorCensus.AnchorUnits(ActiveBlocks, Creatures, HeldColumns, Config.AnchorCreatureWeight, Config.AnchorColumnWeight);
 
-            sb.AppendLine(CensusReady ? Lang.Get("signalslink:chunkanchor-census", ActiveBlocks, Creatures, (int)units) : "�");
+            sb.AppendLine(CensusReady
+                ? Lang.Get("signalslink:chunkanchor-census", ActiveBlocks, Creatures, (int)units)
+                : Lang.Get("signalslink:chunkanchor-census-pending"));
 
             if (chargeBehavior != null)
             {
@@ -980,7 +986,7 @@ namespace SignalsLink.src.signals.chunkanchor
                     chargeBehavior.ReferenceVolume, chargeBehavior.BaseConsumptionFactor,
                     Config.AnchorReferenceLoad, Config.AnchorPriceExponent);
 
-                sb.AppendLine(!CensusReady ? "�" : double.IsInfinity(days)
+                sb.AppendLine(!CensusReady ? Lang.Get("signalslink:chunkanchor-rate-pending") : double.IsInfinity(days)
                     ? Lang.Get("signalslink:chunkanchor-free")
                     : Lang.Get("signalslink:chunkanchor-rate", days.ToString("0.#")));
 

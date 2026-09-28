@@ -135,7 +135,13 @@
 <translation key="signalslink:block-handbooktext-managedwallchute">
     Řízená trubka zasazená ve stěně umožňuje automatizovanou přepravu položek mezi různými bloky. Umožňuje přepravovat položky skrz zdi, což může být velmi užitečné pro skryté přepravní systémy
     nebo pro přepravu položek ze sklepa nebo do sklepa, aniž by se tím porušilo chladné sklepní prostředí, důležité pro dlouhodobé uchování potravin.<br>
-    Funguje na stejném principu jako Řízená trubka. Popis použití tedy najdete na stránce <a href="handbook://block-signalslink:managedchute-north-down">popisu Řízené trubky</a>.<br>
+    Funguje na stejném principu jako Řízená trubka. Popis použití tedy najdete na stránce <a href="handbook://block-signalslink:managedchute-north-down">popisu Řízené trubky</a>.<br><br>
+    <font size="20" color="6082B6">Trubka ve zdi a klima místnosti</font><br>
+    Trubka ve zdi je pro hru stěnou místnosti. Protože ale někdy chcete trubkou propojit sklep se skladem a jindy naopak nechat teplo projít, dá se její chování přepnout: podržte <strong>Ctrl</strong> a klepněte na ni <strong>hasákem</strong>. Střídají se tři režimy:<br>
+    • <strong>chladicí stěna</strong> — výchozí, sklep za ní zůstane sklepem;<br>
+    • <strong>izolující stěna</strong> — drží teplo, hodí se ve zdi vytápěné místnosti;<br>
+    • <strong>otevřeno</strong> — místnost se v tom místě přerušuje.<br>
+    Aktuální režim uvidíte v informačním okně, když se na trubku podíváte.
 </translation>
 <translation key="signalslink:usageinfo-paperconditions-text">
     <strong>Podmínky na papíře</strong> jsou společný systém pravidel pro <a href="handbook://block-signalslink:managedchute-north-down">Řízené trubky</a>, <a href="handbook://block-signalslink:sleevedamper-north-down">Řízené klapky</a>, <a href="handbook://block-signalslink:hosevalve-north-down">Řízené ventily</a>, <a href="handbook://block-signalslink:manageddock-oak">Překladiště</a> a senzory. Pravidla napište na <a href="handbook://item-paper-parchment">pergamen</a> a vložte je do podporovaného zařízení.<br>
@@ -165,6 +171,7 @@
     Přesný kód: <strong>game:resin</strong>. Hvězdička <strong>*</strong> nahrazuje libovolný počet znaků, otazník <strong>?</strong> jeden znak: <strong>game:log-placed-*</strong>, <strong>game:ingot-?</strong>. Regulární výraz začíná <strong>@</strong>, například <strong>@^game:log-placed-(oak|maple)-.*$</strong>. Předpona <strong>!</strong> obrátí <strong>celý řádek</strong>, například <strong>!game:resin</strong> nebo <strong>!game:firewood 96+</strong>.<br>
     Platný název atributu ověří jeho pravdivost. Porovnání používají <strong>&gt;, &gt;=, &lt;, &lt;=, =, ==</strong>: <strong>temperature&gt;1100</strong>, <strong>stackSize&gt;=16</strong>, <strong>durabilityRatio&gt;=0.75</strong>. K dispozici jsou také <strong>temperature</strong>, <strong>durability</strong>, <strong>durabilityMax</strong>, <strong>freshHoursLeft</strong> a <strong>isSpoiling</strong>.<br>
     Podmínka <strong>isBurning</strong> se ptá na blok, ne na jeho obsah: platí, když daný konec hoří, tedy třeba zapálené ohniště nebo doutnající hromada polen. Funguje v obou rozsazích.<br>
+    Podmínka <strong>blockTemperature</strong> se ptá na teplotu bloku ve stupních, také na blok samotný: <strong>blockTemperature&gt;300</strong> platí, když je ohniště, pec, výheň, trouba nebo jiné zařízení s teplotou teplejší než 300 stupňů. Blok bez teploty ji nikdy nesplní, ani s vykřičníkem. Hodí se tam, kde <strong>isBurning</strong> na okamžik zhasne mezi dvěma poleny: ohniště je v tu chvíli pořád horké, takže <strong>!isBurning</strong> spolu s <strong>blockTemperature&lt;200</strong> znamená „opravdu vyhaslo“.<br>
     Vědro a jiné kapalné nádoby poskytují <strong>isLiquidContainer</strong>, <strong>liquidContainerEmpty</strong>, <strong>liquidContainerFilled</strong>, <strong>liquidCode</strong> a <strong>liquidLitres</strong>. Například plné desetilitrové vědro vody vybere <strong>liquidContainerFilled</strong>, <strong>liquidCode=game:waterportion</strong> a <strong>liquidLitres=10</strong>.<br>
     U kapalin fungují vzory světového bloku i interní části kapaliny, například <strong>game:water-*</strong>, <strong>game:water-still-7</strong>, <strong>*weaktannin*</strong> nebo <strong>game:waterportion</strong>.<br><br>
     <font size="20" color="6082B6">Inventář a množství</font><br>

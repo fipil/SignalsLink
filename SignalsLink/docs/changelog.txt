@@ -1,3 +1,10 @@
+1.0.5
+Fixed: While the chunk anchor is still counting its load, the info box says so instead of showing two unreadable squares.
+Fixed: Looking at a pin of the chunk anchor now shows only the pin name, like on the other blocks. Before, the pin name was glued to the end of the anchor's own text.
+Fixed: A firepit lit by the igniter now keeps igniting fuel by itself, like one lit by a torch. Before, it burned one log and then looked lit while giving no heat.
+Tweak: The managed chute embedded in a wall can now switch its room sealing with Ctrl + wrench (cooling wall, insulating wall, open), like the ceiling damper and the wall sleeve coupling.
+Tweak: New paper condition blockTemperature>N (also >=, <, <=, =): the temperature of the block at that end, for firepits, ovens, forges and other heated blocks.
+
 1.0.4 - published 2026-09-27 10:15
 Fixed: Hoses and sleeves were drawn as stray triangles on clients with SSBOs enabled (the default on most GPUs since 1.0.1).
 
