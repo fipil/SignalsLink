@@ -69,11 +69,11 @@ namespace SignalsLink.Tests
         public void Too_few_tiles_is_not_a_yard_yet()
         {
             YardArea area = Fill("""
-                XX..
                 X...
+                ....
                 """);
 
-            Assert.Equal(3, area.Tiles.Count);
+            Assert.Equal(1, area.Tiles.Count);
             Assert.False(area.IsValid);
         }
 

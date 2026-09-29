@@ -16,8 +16,8 @@ namespace SignalsLink.src.signals.yard
     /// </summary>
     public sealed class YardArea
     {
-        /// <summary>Below this it is a path, not a yard.</summary>
-        public const int MinTiles = 4;
+        /// <summary>Below this it is a path, not a yard. Two: a single tile can hold one kind of goods, such as firewood.</summary>
+        public const int MinTiles = 2;
 
         /// <summary>
         /// A hard ceiling, and one that is reported rather than silently truncated. A flood fill
