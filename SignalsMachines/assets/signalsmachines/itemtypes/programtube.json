@@ -1,0 +1,88 @@
+{
+  "code": "programtube",
+  "class": "ProgramTube",
+  "maxStackSize": 1,
+  "shape": {
+    "base": "signalsmachines:item/programtube"
+  },
+  "textures": {
+    "tube-metal": {
+      "base": "signalsmachines:block/axle-iron"
+    },
+    "tube-ceramic": {
+      "base": "signalsmachines:block/tube-board-light"
+    },
+    "tube-board": {
+      "base": "signalsmachines:block/tube-board-light"
+    },
+    "tube-glass": {
+      "base": "signalsmachines:block/glass-plain"
+    },
+    "tube-red": {
+      "base": "signalsmachines:block/copper"
+    },
+    "tube-blue": {
+      "base": "signalsmachines:block/col51"
+    },
+    "tube-yellow": {
+      "base": "signalsmachines:block/brass"
+    },
+    "tube-dark": {
+      "base": "signalsmachines:block/iron"
+    }
+  },
+  "creativeinventory": {
+    "general": [
+      "*"
+    ],
+    "signalsmachines": [
+      "*"
+    ]
+  },
+  "creativeinventoryStacks": [
+    {
+      "tabs": [
+        "signalsmachines"
+      ],
+      "stacks": [
+        {
+          "type": "item",
+          "code": "signalsmachines:programtube",
+          "attributes": {
+            "programId": "demo-sequencer",
+            "programName": "Sequencer",
+            "pinCount": 5
+          }
+        },
+        {
+          "type": "item",
+          "code": "signalsmachines:programtube",
+          "attributes": {
+            "programId": "demo-regulator",
+            "programName": "Regulator",
+            "pinCount": 8
+          }
+        }
+      ]
+    }
+  ],
+  "guiTransform": {
+    "origin": {
+      "x": 0.5,
+      "y": 0.5,
+      "z": 0.5
+    },
+    "rotation": {
+      "x": 157.4,
+      "y": -45.3,
+      "z": 0
+    },
+    "scale": 1.6
+  },
+  "groundTransform": {
+    "scale": 1
+  },
+  "attributes": {
+    "pinCount": 8
+  }
+}

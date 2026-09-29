@@ -1,0 +1,9 @@
+{
+  "game:tabname-signalsmachines": "Signals Machines",
+  "block-craftingmachine-*": "Crafting machine",
+  "item-programtube": "Program tube",
+  "programtube-named": "Program tube: {0}",
+  "programtube-pins": "Pins: {0}",
+  "socket-insert": "Insert tube",
+  "socket-remove": "Remove tube with an empty hand"
+}

@@ -1,0 +1,1854 @@
+{
+  "textureWidth": 16,
+  "textureHeight": 16,
+  "textures": {
+    "tube-metal": "block/axle-iron",
+    "tube-ceramic": "block/tube-board-light",
+    "tube-board": "block/tube-board-light",
+    "tube-glass": "block/glass-plain",
+    "tube-red": "block/copper",
+    "tube-blue": "block/col51",
+    "tube-yellow": "block/brass",
+    "tube-dark": "block/iron"
+  },
+  "textureSizes": {
+    "tube-metal": [
+      16,
+      16
+    ],
+    "tube-ceramic": [
+      16,
+      16
+    ],
+    "tube-board": [
+      16,
+      16
+    ],
+    "tube-glass": [
+      16,
+      16
+    ],
+    "tube-red": [
+      16,
+      16
+    ],
+    "tube-blue": [
+      16,
+      16
+    ],
+    "tube-yellow": [
+      16,
+      16
+    ],
+    "tube-dark": [
+      16,
+      16
+    ]
+  },
+  "elements": [
+    {
+      "name": "tube_foot",
+      "from": [
+        4,
+        2,
+        4
+      ],
+      "to": [
+        12,
+        3,
+        12
+      ],
+      "renderPass": 0,
+      "faces": {
+        "north": {
+          "texture": "#tube-ceramic",
+          "uv": [
+            0,
+            0,
+            8,
+            1
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#tube-ceramic",
+          "uv": [
+            0,
+            0,
+            8,
+            1
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#tube-ceramic",
+          "uv": [
+            0,
+            0,
+            8,
+            1
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#tube-ceramic",
+          "uv": [
+            0,
+            0,
+            8,
+            1
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#tube-ceramic",
+          "uv": [
+            0,
+            0,
+            8,
+            8
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "down": {
+          "texture": "#tube-ceramic",
+          "uv": [
+            0,
+            0,
+            8,
+            8
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      }
+    },
+    {
+      "name": "tube_board",
+      "from": [
+        5.5,
+        3,
+        7.5
+      ],
+      "to": [
+        10.5,
+        12,
+        8.5
+      ],
+      "renderPass": 0,
+      "faces": {
+        "north": {
+          "texture": "#tube-board",
+          "uv": [
+            0,
+            0,
+            5,
+            9
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#tube-board",
+          "uv": [
+            0,
+            0,
+            1,
+            9
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#tube-board",
+          "uv": [
+            0,
+            0,
+            5,
+            9
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#tube-board",
+          "uv": [
+            0,
+            0,
+            1,
+            9
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#tube-board",
+          "uv": [
+            0,
+            0,
+            5,
+            1
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "down": {
+          "texture": "#tube-board",
+          "uv": [
+            0,
+            0,
+            5,
+            1
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      }
+    },
+    {
+      "name": "tube_top",
+      "from": [
+        6,
+        12,
+        6
+      ],
+      "to": [
+        10,
+        12.5,
+        10
+      ],
+      "renderPass": 0,
+      "faces": {
+        "north": {
+          "texture": "#tube-metal",
+          "uv": [
+            0,
+            0,
+            4,
+            0.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#tube-metal",
+          "uv": [
+            0,
+            0,
+            4,
+            0.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#tube-metal",
+          "uv": [
+            0,
+            0,
+            4,
+            0.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#tube-metal",
+          "uv": [
+            0,
+            0,
+            4,
+            0.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#tube-metal",
+          "uv": [
+            0,
+            0,
+            4,
+            4
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "down": {
+          "texture": "#tube-metal",
+          "uv": [
+            0,
+            0,
+            4,
+            4
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      }
+    },
+    {
+      "name": "tube_pin_0",
+      "from": [
+        4.7,
+        0,
+        4.7
+      ],
+      "to": [
+        5.3,
+        2,
+        5.3
+      ],
+      "renderPass": 0,
+      "faces": {
+        "north": {
+          "texture": "#tube-metal",
+          "uv": [
+            0,
+            0,
+            0.5999999999999996,
+            2
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#tube-metal",
+          "uv": [
+            0,
+            0,
+            0.5999999999999996,
+            2
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#tube-metal",
+          "uv": [
+            0,
+            0,
+            0.5999999999999996,
+            2
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#tube-metal",
+          "uv": [
+            0,
+            0,
+            0.5999999999999996,
+            2
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#tube-metal",
+          "uv": [
+            0,
+            0,
+            0.5999999999999996,
+            0.5999999999999996
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "down": {
+          "texture": "#tube-metal",
+          "uv": [
+            0,
+            0,
+            0.5999999999999996,
+            0.5999999999999996
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      }
+    },
+    {
+      "name": "tube_pin_1",
+      "from": [
+        7.7,
+        0,
+        4.7
+      ],
+      "to": [
+        8.3,
+        2,
+        5.3
+      ],
+      "renderPass": 0,
+      "faces": {
+        "north": {
+          "texture": "#tube-metal",
+          "uv": [
+            0,
+            0,
+            0.6000000000000005,
+            2
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#tube-metal",
+          "uv": [
+            0,
+            0,
+            0.5999999999999996,
+            2
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#tube-metal",
+          "uv": [
+            0,
+            0,
+            0.6000000000000005,
+            2
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#tube-metal",
+          "uv": [
+            0,
+            0,
+            0.5999999999999996,
+            2
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#tube-metal",
+          "uv": [
+            0,
+            0,
+            0.6000000000000005,
+            0.5999999999999996
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "down": {
+          "texture": "#tube-metal",
+          "uv": [
+            0,
+            0,
+            0.6000000000000005,
+            0.5999999999999996
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      }
+    },
+    {
+      "name": "tube_pin_2",
+      "from": [
+        10.7,
+        0,
+        4.7
+      ],
+      "to": [
+        11.3,
+        2,
+        5.3
+      ],
+      "renderPass": 0,
+      "faces": {
+        "north": {
+          "texture": "#tube-metal",
+          "uv": [
+            0,
+            0,
+            0.6000000000000014,
+            2
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#tube-metal",
+          "uv": [
+            0,
+            0,
+            0.5999999999999996,
+            2
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#tube-metal",
+          "uv": [
+            0,
+            0,
+            0.6000000000000014,
+            2
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#tube-metal",
+          "uv": [
+            0,
+            0,
+            0.5999999999999996,
+            2
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#tube-metal",
+          "uv": [
+            0,
+            0,
+            0.6000000000000014,
+            0.5999999999999996
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "down": {
+          "texture": "#tube-metal",
+          "uv": [
+            0,
+            0,
+            0.6000000000000014,
+            0.5999999999999996
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      }
+    },
+    {
+      "name": "tube_pin_3",
+      "from": [
+        10.7,
+        0,
+        7.7
+      ],
+      "to": [
+        11.3,
+        2,
+        8.3
+      ],
+      "renderPass": 0,
+      "faces": {
+        "north": {
+          "texture": "#tube-metal",
+          "uv": [
+            0,
+            0,
+            0.6000000000000014,
+            2
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#tube-metal",
+          "uv": [
+            0,
+            0,
+            0.6000000000000005,
+            2
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#tube-metal",
+          "uv": [
+            0,
+            0,
+            0.6000000000000014,
+            2
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#tube-metal",
+          "uv": [
+            0,
+            0,
+            0.6000000000000005,
+            2
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#tube-metal",
+          "uv": [
+            0,
+            0,
+            0.6000000000000014,
+            0.6000000000000005
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "down": {
+          "texture": "#tube-metal",
+          "uv": [
+            0,
+            0,
+            0.6000000000000014,
+            0.6000000000000005
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      }
+    },
+    {
+      "name": "tube_pin_4",
+      "from": [
+        10.7,
+        0,
+        10.7
+      ],
+      "to": [
+        11.3,
+        2,
+        11.3
+      ],
+      "renderPass": 0,
+      "faces": {
+        "north": {
+          "texture": "#tube-metal",
+          "uv": [
+            0,
+            0,
+            0.6000000000000014,
+            2
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#tube-metal",
+          "uv": [
+            0,
+            0,
+            0.6000000000000014,
+            2
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#tube-metal",
+          "uv": [
+            0,
+            0,
+            0.6000000000000014,
+            2
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#tube-metal",
+          "uv": [
+            0,
+            0,
+            0.6000000000000014,
+            2
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#tube-metal",
+          "uv": [
+            0,
+            0,
+            0.6000000000000014,
+            0.6000000000000014
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "down": {
+          "texture": "#tube-metal",
+          "uv": [
+            0,
+            0,
+            0.6000000000000014,
+            0.6000000000000014
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      }
+    },
+    {
+      "name": "tube_pin_5",
+      "from": [
+        7.7,
+        0,
+        10.7
+      ],
+      "to": [
+        8.3,
+        2,
+        11.3
+      ],
+      "renderPass": 0,
+      "faces": {
+        "north": {
+          "texture": "#tube-metal",
+          "uv": [
+            0,
+            0,
+            0.6000000000000005,
+            2
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#tube-metal",
+          "uv": [
+            0,
+            0,
+            0.6000000000000014,
+            2
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#tube-metal",
+          "uv": [
+            0,
+            0,
+            0.6000000000000005,
+            2
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#tube-metal",
+          "uv": [
+            0,
+            0,
+            0.6000000000000014,
+            2
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#tube-metal",
+          "uv": [
+            0,
+            0,
+            0.6000000000000005,
+            0.6000000000000014
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "down": {
+          "texture": "#tube-metal",
+          "uv": [
+            0,
+            0,
+            0.6000000000000005,
+            0.6000000000000014
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      }
+    },
+    {
+      "name": "tube_pin_6",
+      "from": [
+        4.7,
+        0,
+        10.7
+      ],
+      "to": [
+        5.3,
+        2,
+        11.3
+      ],
+      "renderPass": 0,
+      "faces": {
+        "north": {
+          "texture": "#tube-metal",
+          "uv": [
+            0,
+            0,
+            0.5999999999999996,
+            2
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#tube-metal",
+          "uv": [
+            0,
+            0,
+            0.6000000000000014,
+            2
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#tube-metal",
+          "uv": [
+            0,
+            0,
+            0.5999999999999996,
+            2
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#tube-metal",
+          "uv": [
+            0,
+            0,
+            0.6000000000000014,
+            2
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#tube-metal",
+          "uv": [
+            0,
+            0,
+            0.5999999999999996,
+            0.6000000000000014
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "down": {
+          "texture": "#tube-metal",
+          "uv": [
+            0,
+            0,
+            0.5999999999999996,
+            0.6000000000000014
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      }
+    },
+    {
+      "name": "tube_pin_7",
+      "from": [
+        4.7,
+        0,
+        7.7
+      ],
+      "to": [
+        5.3,
+        2,
+        8.3
+      ],
+      "renderPass": 0,
+      "faces": {
+        "north": {
+          "texture": "#tube-metal",
+          "uv": [
+            0,
+            0,
+            0.5999999999999996,
+            2
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#tube-metal",
+          "uv": [
+            0,
+            0,
+            0.6000000000000005,
+            2
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#tube-metal",
+          "uv": [
+            0,
+            0,
+            0.5999999999999996,
+            2
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#tube-metal",
+          "uv": [
+            0,
+            0,
+            0.6000000000000005,
+            2
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#tube-metal",
+          "uv": [
+            0,
+            0,
+            0.5999999999999996,
+            0.6000000000000005
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "down": {
+          "texture": "#tube-metal",
+          "uv": [
+            0,
+            0,
+            0.5999999999999996,
+            0.6000000000000005
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      }
+    },
+    {
+      "name": "component_0",
+      "from": [
+        6,
+        4,
+        7
+      ],
+      "to": [
+        7.3,
+        5.5,
+        7.5
+      ],
+      "renderPass": 0,
+      "faces": {
+        "north": {
+          "texture": "#tube-red",
+          "uv": [
+            0,
+            0,
+            1.2999999999999998,
+            1.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#tube-red",
+          "uv": [
+            0,
+            0,
+            0.5,
+            1.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#tube-red",
+          "uv": [
+            0,
+            0,
+            1.2999999999999998,
+            1.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#tube-red",
+          "uv": [
+            0,
+            0,
+            0.5,
+            1.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#tube-red",
+          "uv": [
+            0,
+            0,
+            1.2999999999999998,
+            0.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "down": {
+          "texture": "#tube-red",
+          "uv": [
+            0,
+            0,
+            1.2999999999999998,
+            0.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      }
+    },
+    {
+      "name": "component_1",
+      "from": [
+        8,
+        4,
+        7
+      ],
+      "to": [
+        9.3,
+        5.5,
+        7.5
+      ],
+      "renderPass": 0,
+      "faces": {
+        "north": {
+          "texture": "#tube-blue",
+          "uv": [
+            0,
+            0,
+            1.3000000000000007,
+            1.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#tube-blue",
+          "uv": [
+            0,
+            0,
+            0.5,
+            1.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#tube-blue",
+          "uv": [
+            0,
+            0,
+            1.3000000000000007,
+            1.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#tube-blue",
+          "uv": [
+            0,
+            0,
+            0.5,
+            1.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#tube-blue",
+          "uv": [
+            0,
+            0,
+            1.3000000000000007,
+            0.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "down": {
+          "texture": "#tube-blue",
+          "uv": [
+            0,
+            0,
+            1.3000000000000007,
+            0.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      }
+    },
+    {
+      "name": "component_2",
+      "from": [
+        6,
+        6.5,
+        7
+      ],
+      "to": [
+        7.3,
+        8,
+        7.5
+      ],
+      "renderPass": 0,
+      "faces": {
+        "north": {
+          "texture": "#tube-yellow",
+          "uv": [
+            0,
+            0,
+            1.2999999999999998,
+            1.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#tube-yellow",
+          "uv": [
+            0,
+            0,
+            0.5,
+            1.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#tube-yellow",
+          "uv": [
+            0,
+            0,
+            1.2999999999999998,
+            1.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#tube-yellow",
+          "uv": [
+            0,
+            0,
+            0.5,
+            1.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#tube-yellow",
+          "uv": [
+            0,
+            0,
+            1.2999999999999998,
+            0.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "down": {
+          "texture": "#tube-yellow",
+          "uv": [
+            0,
+            0,
+            1.2999999999999998,
+            0.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      }
+    },
+    {
+      "name": "component_3",
+      "from": [
+        8,
+        6.5,
+        8.5
+      ],
+      "to": [
+        9.3,
+        8,
+        9
+      ],
+      "renderPass": 0,
+      "faces": {
+        "north": {
+          "texture": "#tube-red",
+          "uv": [
+            0,
+            0,
+            1.3000000000000007,
+            1.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#tube-red",
+          "uv": [
+            0,
+            0,
+            0.5,
+            1.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#tube-red",
+          "uv": [
+            0,
+            0,
+            1.3000000000000007,
+            1.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#tube-red",
+          "uv": [
+            0,
+            0,
+            0.5,
+            1.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#tube-red",
+          "uv": [
+            0,
+            0,
+            1.3000000000000007,
+            0.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "down": {
+          "texture": "#tube-red",
+          "uv": [
+            0,
+            0,
+            1.3000000000000007,
+            0.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      }
+    },
+    {
+      "name": "component_4",
+      "from": [
+        6,
+        9,
+        8.5
+      ],
+      "to": [
+        7.3,
+        10.5,
+        9
+      ],
+      "renderPass": 0,
+      "faces": {
+        "north": {
+          "texture": "#tube-blue",
+          "uv": [
+            0,
+            0,
+            1.2999999999999998,
+            1.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#tube-blue",
+          "uv": [
+            0,
+            0,
+            0.5,
+            1.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#tube-blue",
+          "uv": [
+            0,
+            0,
+            1.2999999999999998,
+            1.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#tube-blue",
+          "uv": [
+            0,
+            0,
+            0.5,
+            1.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#tube-blue",
+          "uv": [
+            0,
+            0,
+            1.2999999999999998,
+            0.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "down": {
+          "texture": "#tube-blue",
+          "uv": [
+            0,
+            0,
+            1.2999999999999998,
+            0.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      }
+    },
+    {
+      "name": "component_5",
+      "from": [
+        8,
+        9,
+        8.5
+      ],
+      "to": [
+        9.3,
+        10.5,
+        9
+      ],
+      "renderPass": 0,
+      "faces": {
+        "north": {
+          "texture": "#tube-yellow",
+          "uv": [
+            0,
+            0,
+            1.3000000000000007,
+            1.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#tube-yellow",
+          "uv": [
+            0,
+            0,
+            0.5,
+            1.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#tube-yellow",
+          "uv": [
+            0,
+            0,
+            1.3000000000000007,
+            1.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#tube-yellow",
+          "uv": [
+            0,
+            0,
+            0.5,
+            1.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#tube-yellow",
+          "uv": [
+            0,
+            0,
+            1.3000000000000007,
+            0.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "down": {
+          "texture": "#tube-yellow",
+          "uv": [
+            0,
+            0,
+            1.3000000000000007,
+            0.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      }
+    },
+    {
+      "name": "bulb_north",
+      "from": [
+        4.5,
+        3,
+        4.5
+      ],
+      "to": [
+        11.5,
+        12.5,
+        4.75
+      ],
+      "renderPass": 3,
+      "faces": {
+        "north": {
+          "texture": "#tube-glass",
+          "uv": [
+            0,
+            0,
+            7,
+            9.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#tube-glass",
+          "uv": [
+            0,
+            0,
+            0.25,
+            9.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#tube-glass",
+          "uv": [
+            0,
+            0,
+            7,
+            9.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#tube-glass",
+          "uv": [
+            0,
+            0,
+            0.25,
+            9.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#tube-glass",
+          "uv": [
+            0,
+            0,
+            7,
+            0.25
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "down": {
+          "texture": "#tube-glass",
+          "uv": [
+            0,
+            0,
+            7,
+            0.25
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      }
+    },
+    {
+      "name": "bulb_south",
+      "from": [
+        4.5,
+        3,
+        11.25
+      ],
+      "to": [
+        11.5,
+        12.5,
+        11.5
+      ],
+      "renderPass": 3,
+      "faces": {
+        "north": {
+          "texture": "#tube-glass",
+          "uv": [
+            0,
+            0,
+            7,
+            9.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#tube-glass",
+          "uv": [
+            0,
+            0,
+            0.25,
+            9.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#tube-glass",
+          "uv": [
+            0,
+            0,
+            7,
+            9.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#tube-glass",
+          "uv": [
+            0,
+            0,
+            0.25,
+            9.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#tube-glass",
+          "uv": [
+            0,
+            0,
+            7,
+            0.25
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "down": {
+          "texture": "#tube-glass",
+          "uv": [
+            0,
+            0,
+            7,
+            0.25
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      }
+    },
+    {
+      "name": "bulb_west",
+      "from": [
+        4.5,
+        3,
+        4.75
+      ],
+      "to": [
+        4.75,
+        12.5,
+        11.25
+      ],
+      "renderPass": 3,
+      "faces": {
+        "north": {
+          "texture": "#tube-glass",
+          "uv": [
+            0,
+            0,
+            0.25,
+            9.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#tube-glass",
+          "uv": [
+            0,
+            0,
+            6.5,
+            9.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#tube-glass",
+          "uv": [
+            0,
+            0,
+            0.25,
+            9.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#tube-glass",
+          "uv": [
+            0,
+            0,
+            6.5,
+            9.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#tube-glass",
+          "uv": [
+            0,
+            0,
+            0.25,
+            6.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "down": {
+          "texture": "#tube-glass",
+          "uv": [
+            0,
+            0,
+            0.25,
+            6.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      }
+    },
+    {
+      "name": "bulb_east",
+      "from": [
+        11.25,
+        3,
+        4.75
+      ],
+      "to": [
+        11.5,
+        12.5,
+        11.25
+      ],
+      "renderPass": 3,
+      "faces": {
+        "north": {
+          "texture": "#tube-glass",
+          "uv": [
+            0,
+            0,
+            0.25,
+            9.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#tube-glass",
+          "uv": [
+            0,
+            0,
+            6.5,
+            9.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#tube-glass",
+          "uv": [
+            0,
+            0,
+            0.25,
+            9.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#tube-glass",
+          "uv": [
+            0,
+            0,
+            6.5,
+            9.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#tube-glass",
+          "uv": [
+            0,
+            0,
+            0.25,
+            6.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "down": {
+          "texture": "#tube-glass",
+          "uv": [
+            0,
+            0,
+            0.25,
+            6.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      }
+    },
+    {
+      "name": "bulb_cap",
+      "from": [
+        4.75,
+        12.5,
+        4.75
+      ],
+      "to": [
+        11.25,
+        14,
+        11.25
+      ],
+      "renderPass": 3,
+      "faces": {
+        "north": {
+          "texture": "#tube-glass",
+          "uv": [
+            0,
+            0,
+            6.5,
+            1.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#tube-glass",
+          "uv": [
+            0,
+            0,
+            6.5,
+            1.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#tube-glass",
+          "uv": [
+            0,
+            0,
+            6.5,
+            1.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#tube-glass",
+          "uv": [
+            0,
+            0,
+            6.5,
+            1.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#tube-glass",
+          "uv": [
+            0,
+            0,
+            6.5,
+            6.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "down": {
+          "texture": "#tube-glass",
+          "uv": [
+            0,
+            0,
+            6.5,
+            6.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      }
+    }
+  ]
+}

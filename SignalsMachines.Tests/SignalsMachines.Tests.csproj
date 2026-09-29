@@ -1,16 +1,27 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
-
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+    <IsPackable>false</IsPackable>
+    <RootNamespace>SignalsMachines.Tests</RootNamespace>
   </PropertyGroup>
-
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4" />
+  </ItemGroup>
+  <!-- Reference items are not transitive, so the game assemblies have to be named here too.
+       Same relative paths SignalsLink.csproj uses. -->
   <ItemGroup>
     <Reference Include="Newtonsoft.Json">
       <HintPath>..\..\..\..\..\VintageStory\1.22\Lib\Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="protobuf-net">
       <HintPath>..\..\..\..\..\VintageStory\1.22\Lib\protobuf-net.dll</HintPath>
+    </Reference>
+    <Reference Include="0Harmony">
+      <HintPath>..\..\..\..\..\VintageStory\1.22\Lib\0Harmony.dll</HintPath>
     </Reference>
     <Reference Include="signals">
       <HintPath>..\dependencies\signals.dll</HintPath>
@@ -27,26 +38,13 @@
     <Reference Include="VSSurvivalMod">
       <HintPath>..\..\..\..\..\VintageStory\1.22\Mods\VSSurvivalMod.dll</HintPath>
     </Reference>
-    <Reference Include="0Harmony">
-      <HintPath>..\..\..\..\..\VintageStory\1.22\Lib\0Harmony.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
   </ItemGroup>
-
   <ItemGroup>
-    <Folder Include="assets\signalsmachines\blocktypes\" />
-    <Folder Include="assets\signalsmachines\lang\" />
-    <Folder Include="assets\signalsmachines\itemtypes\" />
-    <Folder Include="assets\signalsmachines\recipes\" />
-    <Folder Include="assets\signalsmachines\sounds\" />
-    <Folder Include="assets\signalsmachines\textures\" />
-    <Folder Include="assets\signalsmachines\shapes\block\" />
-    <Folder Include="docs\" />
   </ItemGroup>
-
-  <Target Name="PostBuild" BeforeTargets="PostBuildEvent" Condition="'$(SkipModPublish)' != 'true'">
-    <Exec Command="copy &quot;$(TargetPath)&quot; &quot;c:\Develope\VintageStory\Projects\SignalsLink\Publish\&quot;" />
-    <Exec Command="copy &quot;$(TargetDir)\$(TargetName).pdb&quot; &quot;c:\Develope\VintageStory\Projects\SignalsLink\Publish\&quot;" />
-  </Target>
-
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../SignalsMachines/SignalsMachines.csproj" AdditionalProperties="SkipModPublish=true" />
+  </ItemGroup>
 </Project>
