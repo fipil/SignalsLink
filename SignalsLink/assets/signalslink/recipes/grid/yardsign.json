@@ -1,0 +1,10 @@
+{
+	"ingredientPattern": "PPP,_T_",
+	"ingredients": {
+		"P": { "type": "item", "code": "game:plank-*" },
+		"T": { "type": "item", "code": "game:stick" }
+	},
+	"width": 3,
+	"height": 2,
+	"output": { "type": "block", "code": "signalslink:yardsign-north", "quantity": 1 }
+}

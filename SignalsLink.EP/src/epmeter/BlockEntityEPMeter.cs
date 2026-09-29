@@ -48,6 +48,7 @@ namespace SignalsLink.EP.src.epmeter
                 serverApi = api;
             }
 
+            detached = false;
             signalMod = api.ModLoader.GetModSystem<SignalNetworkMod>();
             signalMod.RegisterSignalTickListener(OnSignalNetworkTick);
 
@@ -146,8 +147,33 @@ namespace SignalsLink.EP.src.epmeter
 
         private byte? lastOutputState;
 
+        // Signals keeps calling a listener for ever, and a node that left its network still
+        // names it: pushing a value from an unloaded meter threw on every signal tick, which
+        // also cut the tick short for every other device on the server.
+        private bool detached;
+
+        public override void OnBlockUnloaded()
+        {
+            base.OnBlockUnloaded();
+            Detach();
+        }
+
+        public override void OnBlockRemoved()
+        {
+            base.OnBlockRemoved();
+            Detach();
+        }
+
+        private void Detach()
+        {
+            detached = true;
+            signalMod?.DisposeSignalTickListener(OnSignalNetworkTick);
+        }
+
         public void OnSignalNetworkTick()
         {
+            if (detached) return;
+
             BEBehaviorSignalConnector beb = GetBehavior<BEBehaviorSignalConnector>();
             if (beb == null) return;
 

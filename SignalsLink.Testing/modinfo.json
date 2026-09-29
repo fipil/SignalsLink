@@ -1,0 +1,11 @@
+{
+  "type": "code",
+  "modid": "signalslinktesting",
+  "name": "Signals Link Testing",
+  "authors": ["Fipil"],
+  "description": "Optional server-side integration test rigs for Signals Link. Use in a disposable creative test world.",
+  "version": "0.1.0",
+  "side": "Server",
+  "requiredOnClient": false,
+  "dependencies": { "game": "1.22.0", "signals": "0.3.1", "signalslink": "1.0.0" }
+}

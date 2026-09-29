@@ -1,0 +1,114 @@
+{
+ "code": "yardtilestone",
+ "class": "YardTile",
+ "variantgroups": [
+  {
+   "code": "finish",
+   "states": [
+    "brick",
+    "agedbrick",
+    "crackedbrick",
+    "cobblestone",
+    "fan",
+    "drystone",
+    "polished",
+    "raw"
+   ]
+  },
+  {
+   "code": "rock",
+   "loadFromProperties": "block/rock"
+  }
+ ],
+ "creativeinventory": {
+  "general": [
+   "*"
+  ],
+  "signalslink": [
+   "*"
+  ]
+ },
+ "attributes": {
+  "yardTile": true,
+  "handbook": {
+   "extraSections": [
+    {
+     "title": "signalslink:block-handbooktitle-signalslink",
+     "text": "signalslink:block-handbooktext-yardtile"
+    }
+   ]
+  }
+ },
+ "shape": {
+  "base": "block/yard/yardtile"
+ },
+ "texturesbytype": {
+  "*-brick-*": {
+   "tile": {
+    "base": "game:block/stone/brick/{rock}1"
+   }
+  },
+  "*-agedbrick-*": {
+   "tile": {
+    "base": "game:block/stone/agedbrick/{rock}1"
+   }
+  },
+  "*-crackedbrick-*": {
+   "tile": {
+    "base": "game:block/stone/crackedbrick/{rock}1"
+   }
+  },
+  "*-cobblestone-*": {
+   "tile": {
+    "base": "game:block/stone/cobblestone/{rock}1"
+   }
+  },
+  "*-fan-*": {
+   "tile": {
+    "base": "game:block/stone/cobblestone/fanned/{rock}1"
+   }
+  },
+  "*-drystone-*": {
+   "tile": {
+    "base": "game:block/stone/drystone/{rock}1"
+   }
+  },
+  "*-polished-*": {
+   "tile": {
+    "base": "game:block/stone/polishedrock/{rock}"
+   }
+  },
+  "*-raw-*": {
+   "tile": {
+    "base": "game:block/stone/rock/{rock}1"
+   }
+  }
+ },
+ "blockmaterial": "Stone",
+ "drawtype": "json",
+ "replaceable": 0,
+ "resistance": 5.5,
+ "lightAbsorption": 0,
+ "sidesolid": {
+  "all": true
+ },
+ "sideopaque": {
+  "all": true
+ },
+ "collisionSelectionBoxes": [
+  {
+   "x1": 0,
+   "y1": 0,
+   "z1": 0,
+   "x2": 1,
+   "y2": 1,
+   "z2": 1
+  }
+ ],
+ "sounds": {
+  "place": "game:block/loosestone",
+  "break": "game:block/loosestone",
+  "hit": "game:block/rock-hit-pickaxe",
+  "walk": "game:walk/stone"
+ }
+}

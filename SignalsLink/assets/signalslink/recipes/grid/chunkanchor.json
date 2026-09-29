@@ -1,0 +1,16 @@
+{
+	"ingredientPattern": "WOL,PGP,BQR",
+	"ingredients": {
+		"W": { "type": "item", "code": "game:wrench-*", "isTool": true, "toolDurabilityCost": 3 },
+		"O": { "type": "item", "code": "game:ingot-gold" },
+		"L": { "type": "item", "code": "game:solderingiron", "isTool": true, "toolDurabilityCost": 4 },
+		"P": { "type": "item", "code": "game:metalplate-iron", "quantity": 2 },
+		"G": { "type": "item", "code": "game:gear-temporal" },
+		"B": { "type": "item", "code": "game:ingot-bismuth", "quantity": 2 },
+		"Q": { "type": "block", "code": "game:glass-quartz" },
+		"R": { "type": "item", "code": "signals:el_wire", "quantity": 5 }
+	},
+	"width": 3,
+	"height": 3,
+	"output": { "type": "block", "code": "signalslink:chunkanchor-off-north", "quantity": 1 }
+}

@@ -8,42 +8,83 @@ namespace SignalsLink.src.signals.paperConditions
 {
     public class CodeGlobCondition : ICondition
     {
-        private readonly Regex regex;
-
-        public CodeGlobCondition(string glob)
-        {
-            var pattern = "^" + Regex.Escape(glob).Replace("\\*", ".*").Replace("\\?", ".") + "$";
-            regex = new Regex(pattern, RegexOptions.Compiled);
-        }
+        private readonly string glob;
+        public CodeGlobCondition(string glob) { this.glob = glob; }
 
         public bool Evaluate(ItemStack stack, IDictionary<string, object> ctx)
         {
             foreach (string code in ConditionCodeHelper.GetCodes(stack))
-            {
-                if (regex.IsMatch(code)) return true;
-            }
-
+                if (Matches(code)) return true;
             return false;
+        }
+
+        // One remembered star, never a recursive/exponential regex search. At worst each
+        // position in the short item code retries the remaining literal part of the glob.
+        private bool Matches(string code)
+        {
+            int pattern = 0, input = 0, star = -1, retry = 0;
+            while (input < code.Length)
+            {
+                if (pattern < glob.Length && (glob[pattern] == '?' || glob[pattern] == code[input]))
+                { pattern++; input++; }
+                else if (pattern < glob.Length && glob[pattern] == '*')
+                { star = pattern++; retry = input; }
+                else if (star >= 0)
+                { pattern = star + 1; input = ++retry; }
+                else return false;
+            }
+            while (pattern < glob.Length && glob[pattern] == '*') pattern++;
+            return pattern == glob.Length;
         }
     }
 
     public class CodeRegexCondition : ICondition
     {
         private readonly Regex regex;
+        private long? lastWarning;
 
         public CodeRegexCondition(Regex regex)
         {
-            this.regex = regex;
+            this.regex = new Regex(regex.ToString(), regex.Options & ~RegexOptions.Compiled, TimeSpan.FromSeconds(1));
         }
 
         public bool Evaluate(ItemStack stack, IDictionary<string, object> ctx)
         {
             foreach (string code in ConditionCodeHelper.GetCodes(stack))
             {
-                if (regex.IsMatch(code)) return true;
+                long failureVersion = RegexEvaluationBudget.FailureVersion;
+                try
+                {
+                    if (RegexEvaluationBudget.IsMatch(regex, code,
+                        () => Warn(ctx, code, "shared regex budget of 5000 ms exhausted"))) return true;
+                    if (RegexEvaluationBudget.FailureVersion != failureVersion) return false;
+                }
+                catch (RegexMatchTimeoutException)
+                {
+                    Warn(ctx, code, "regex timeout of 1000 ms exceeded");
+                    return RegexEvaluationBudget.Reject();
+                }
             }
 
             return false;
+        }
+        private void Warn(IDictionary<string, object> ctx, string code, string reason)
+        {
+            var world = ctx != null && ctx.TryGetValue("world", out var w) ? w as IWorldAccessor : null;
+            if (world != null && world.Side != EnumAppSide.Server) return;
+            var logger = RegexDiagnostics.Logger ?? world?.Logger;
+            if (logger == null) return;
+            long now = Environment.TickCount64;
+            if (lastWarning.HasValue && now - lastWarning.Value < 60000) return;
+            lastWarning = now;
+            string location = RegexDiagnostics.Location;
+            if (location == null)
+                location = ctx != null && ctx.TryGetValue("targetBlockPos", out var p) ? "target " + p : "unknown device";
+            logger.Warning("[SignalsLink] Paper Conditions: " + reason + " at " + location
+                + "; condition @" + regex.ToString().Replace("\r", "\\r").Replace("\n", "\\n")
+                + "; input " + code.Replace("\r", "\\r").Replace("\n", "\\n")
+                + ". This evaluation was rejected; the condition will be retried on a later pass."
+                + " Repeated warnings for this condition are limited to once per 60 seconds.");
         }
     }
 

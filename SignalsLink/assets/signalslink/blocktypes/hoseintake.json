@@ -10,7 +10,7 @@
 				}
 			]
 		},
-		"hoseNodes": [
+		"linkNodes": [
 			{
 				"index": 0,
 				"name": "con-hose",

@@ -6,12 +6,31 @@ using Vintagestory.API.MathTools;
 
 public class PaperConditionsEvaluator
 {
+    public static PaperConditionsEvaluator ForBlock(ConditionBlock block)
+        => new PaperConditionsEvaluator { conditionsText = "<compiled>", lastParsedText = "<compiled>",
+            compiled = new CompiledConditions(new List<ConditionBlock> { block }) };
+
     private string conditionsText;
     private string lastParsedText;
     private CompiledConditions compiled;
-    private readonly List<string> errors = new List<string>();
+    private readonly List<PaperConditionError> errors = new List<PaperConditionError>();
 
-    public IReadOnlyList<string> Errors => errors;
+    /// <summary>Mistakes found in the current paper, with line numbers. Empty when it is clean.</summary>
+    public IReadOnlyList<PaperConditionError> Errors
+    {
+        get
+        {
+            // Errors are filled while parsing, so a paper that has not been looked at yet would
+            // report none at all - which is exactly when the player is asking.
+            if (!string.IsNullOrWhiteSpace(conditionsText)
+                && (compiled == null || !string.Equals(lastParsedText, conditionsText, StringComparison.Ordinal)))
+            {
+                ParseInternal(conditionsText);
+            }
+
+            return errors;
+        }
+    }
 
     /// <summary>
     /// Nastaví nový conditions text. Při změně invaliduje cache.
@@ -44,6 +63,83 @@ public class PaperConditionsEvaluator
                 ParseInternal(conditionsText);
             }
             return compiled?.HasAnyOutput ?? false;
+        }
+    }
+
+    /// <summary>
+    /// The compiled blocks for the unified driver, or null when there is no paper at all.
+    /// Compiles on demand, the same way every other entry point here does.
+    /// </summary>
+    public IReadOnlyList<ConditionBlock> GetBlocks()
+    {
+        if (string.IsNullOrWhiteSpace(conditionsText))
+        {
+            errors.Clear();
+            compiled = null;
+            lastParsedText = null;
+            return null;
+        }
+
+        if (compiled == null || !string.Equals(lastParsedText, conditionsText, StringComparison.Ordinal))
+        {
+            ParseInternal(conditionsText);
+        }
+
+        return compiled?.Blocks;
+    }
+
+    /// <summary>
+    /// One evaluation pass for a sensor: its whole purpose is the output signal, so every block
+    /// counts as an output block even without an explicit <c>output</c> directive, and there is no
+    /// action rail at all. Returns false when no block held, which means a pin of 0.
+    ///
+    /// The value can be the <c>output .</c> sentinel (255) - "the value this block computed" -
+    /// which the caller resolves into whatever it measures.
+    /// </summary>
+    public bool RunSensorPass(ItemStack stack, IDictionary<string, object> ctx, out byte output)
+    {
+        output = 0;
+
+        IReadOnlyList<ConditionBlock> blocks = GetBlocks();
+        if (blocks == null || blocks.Count == 0) return false;
+
+        DriverResult result = ConditionDriver.Run(
+            blocks,
+            true,                                       // a sensor has no action rail
+            block => block.ConditionsHold(stack, ctx),
+            null,
+            everyBlockIsOutput: true);
+
+        output = result.GetOutput();
+        return result.HasOutput();
+    }
+
+    /// <summary>The paper's sections, or null when there is no paper at all.</summary>
+    public IReadOnlyList<ConditionSection> GetSections()
+    {
+        if (string.IsNullOrWhiteSpace(conditionsText)) return null;
+
+        if (compiled == null || !string.Equals(lastParsedText, conditionsText, StringComparison.Ordinal))
+        {
+            ParseInternal(conditionsText);
+        }
+
+        return compiled?.Sections;
+    }
+
+    /// <summary>True if the player wrote a section header.</summary>
+    public bool HasExplicitSections
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(conditionsText)) return false;
+
+            if (compiled == null || !string.Equals(lastParsedText, conditionsText, StringComparison.Ordinal))
+            {
+                ParseInternal(conditionsText);
+            }
+
+            return compiled?.HasExplicitSections ?? false;
         }
     }
 
@@ -123,31 +219,6 @@ public class PaperConditionsEvaluator
         return compiled.TryMatch(stack, ctx, out matchResult);
     }
 
-    /// <summary>
-    /// Unified evaluation driver — walks blocks top-down and runs the first block whose
-    /// conditions hold and whose action actually does work. See
-    /// <see cref="CompiledConditions.RunFirst"/> and docs/paper-conditions.md.
-    /// </summary>
-    public bool RunFirst(ItemStack stack, IDictionary<string, object> ctx, System.Func<PaperConditionMatchResult, bool> execute)
-    {
-        if (string.IsNullOrWhiteSpace(conditionsText))
-        {
-            errors.Clear();
-            compiled = null;
-            lastParsedText = null;
-            return false;
-        }
-
-        if (compiled == null || !string.Equals(lastParsedText, conditionsText, StringComparison.Ordinal))
-        {
-            ParseInternal(conditionsText);
-        }
-
-        if (compiled == null) return false;
-
-        return compiled.RunFirst(stack, ctx, execute);
-    }
-
     public IReadOnlyList<IConditionAction> GetMatchingActions(ItemStack stack, IDictionary<string, object> ctx)
     {
         if (string.IsNullOrWhiteSpace(conditionsText))
@@ -206,7 +277,13 @@ public class PaperConditionsEvaluator
             ctx = new Dictionary<string, object>();
         }
 
-        return Evaluate(dummyStack, ctx, out matchedBlockIndex);
+        // For a sensor the watched block IS the target, so block-state conditions (isBurning)
+        // resolve in either scope.
+        ctx["world"] = api.World;
+        ctx["blockPos"] = pos;
+        ctx["targetBlockPos"] = pos;
+
+        return RunSensorPass(dummyStack, ctx, out matchedBlockIndex);
     }
 
     private void ParseInternal(string text)

@@ -1,0 +1,308 @@
+{
+ "code": "manageddock",
+ "class": "ManagedDock",
+ "entityclass": "BlockEntityManagedDock",
+ "behaviors": [
+  {
+   "name": "Lockable"
+  },
+  {
+   "name": "BlockBehaviorPaperConditions"
+  }
+ ],
+ "entityBehaviors": [
+  {
+   "name": "BEBehaviorSignalConnector",
+   "properties": {
+    "signalNodes": [
+     {
+      "index": 0,
+      "isSource": false
+     },
+     {
+      "index": 1,
+      "isSource": true,
+      "output": 0
+     }
+    ]
+   }
+  }
+ ],
+ "attributes": {
+  "inventoryClassName": "manageddock",
+  "reinforcable": true,
+  "handbook": {
+   "extraSections": [
+    {
+     "title": "signalslink:block-handbooktitle-signalslink",
+     "text": "signalslink:block-handbooktext-manageddock"
+    }
+   ]
+  },
+  "signalNodes": [
+   {
+    "index": 0,
+    "name": "con-input",
+    "x1": 0.3125,
+    "y1": 0.84375,
+    "z1": 0.0625,
+    "x2": 0.4375,
+    "y2": 0.96875,
+    "z2": 0.1875
+   },
+   {
+    "index": 1,
+    "name": "con-output",
+    "x1": 0.5625,
+    "y1": 0.84375,
+    "z1": 0.0625,
+    "x2": 0.6875,
+    "y2": 0.96875,
+    "z2": 0.1875
+   }
+  ]
+ },
+ "variantgroups": [
+  {
+   "code": "wood",
+   "states": [
+    "aged",
+    "birch",
+    "oak",
+    "maple",
+    "pine",
+    "acacia",
+    "kapok",
+    "baldcypress",
+    "larch",
+    "redwood",
+    "ebony",
+    "walnut",
+    "purpleheart"
+   ]
+  }
+ ],
+ "creativeinventory": {
+  "general": [
+   "*"
+  ],
+  "signalslink": [
+   "*"
+  ]
+ },
+ "texturesbytype": {
+  "*-aged": {
+   "sides": {
+    "base": "game:block/wood/crate/aged-sides"
+   },
+   "frame-generic": {
+    "base": "game:block/wood/crate/frame-generic"
+   },
+   "plate": {
+    "base": "block/aged-ceramic2"
+   },
+   "terminal": {
+    "base": "block/normal3"
+   }
+  },
+  "*-birch": {
+   "sides": {
+    "base": "game:block/wood/crate/birch-sides"
+   },
+   "frame-generic": {
+    "base": "game:block/wood/crate/frame-generic"
+   },
+   "plate": {
+    "base": "block/aged-ceramic2"
+   },
+   "terminal": {
+    "base": "block/normal3"
+   }
+  },
+  "*-oak": {
+   "sides": {
+    "base": "game:block/wood/crate/oak-sides"
+   },
+   "frame-generic": {
+    "base": "game:block/wood/crate/frame-generic"
+   },
+   "plate": {
+    "base": "block/aged-ceramic2"
+   },
+   "terminal": {
+    "base": "block/normal3"
+   }
+  },
+  "*-maple": {
+   "sides": {
+    "base": "game:block/wood/crate/maple-sides"
+   },
+   "frame-generic": {
+    "base": "game:block/wood/crate/frame-generic"
+   },
+   "plate": {
+    "base": "block/aged-ceramic2"
+   },
+   "terminal": {
+    "base": "block/normal3"
+   }
+  },
+  "*-pine": {
+   "sides": {
+    "base": "game:block/wood/crate/pine-sides"
+   },
+   "frame-generic": {
+    "base": "game:block/wood/crate/frame-generic"
+   },
+   "plate": {
+    "base": "block/aged-ceramic2"
+   },
+   "terminal": {
+    "base": "block/normal3"
+   }
+  },
+  "*-acacia": {
+   "sides": {
+    "base": "game:block/wood/crate/acacia-sides"
+   },
+   "frame-generic": {
+    "base": "game:block/wood/crate/frame-generic"
+   },
+   "plate": {
+    "base": "block/aged-ceramic2"
+   },
+   "terminal": {
+    "base": "block/normal3"
+   }
+  },
+  "*-kapok": {
+   "sides": {
+    "base": "game:block/wood/crate/kapok-sides"
+   },
+   "frame-generic": {
+    "base": "game:block/wood/crate/frame-generic"
+   },
+   "plate": {
+    "base": "block/aged-ceramic2"
+   },
+   "terminal": {
+    "base": "block/normal3"
+   }
+  },
+  "*-baldcypress": {
+   "sides": {
+    "base": "game:block/wood/crate/baldcypress-sides"
+   },
+   "frame-generic": {
+    "base": "game:block/wood/crate/frame-generic"
+   },
+   "plate": {
+    "base": "block/aged-ceramic2"
+   },
+   "terminal": {
+    "base": "block/normal3"
+   }
+  },
+  "*-larch": {
+   "sides": {
+    "base": "game:block/wood/crate/larch-sides"
+   },
+   "frame-generic": {
+    "base": "game:block/wood/crate/frame-generic"
+   },
+   "plate": {
+    "base": "block/aged-ceramic2"
+   },
+   "terminal": {
+    "base": "block/normal3"
+   }
+  },
+  "*-redwood": {
+   "sides": {
+    "base": "game:block/wood/crate/redwood-sides"
+   },
+   "frame-generic": {
+    "base": "game:block/wood/crate/frame-generic"
+   },
+   "plate": {
+    "base": "block/aged-ceramic2"
+   },
+   "terminal": {
+    "base": "block/normal3"
+   }
+  },
+  "*-ebony": {
+   "sides": {
+    "base": "game:block/wood/crate/ebony-sides"
+   },
+   "frame-generic": {
+    "base": "game:block/wood/crate/frame-generic"
+   },
+   "plate": {
+    "base": "block/aged-ceramic2"
+   },
+   "terminal": {
+    "base": "block/normal3"
+   }
+  },
+  "*-walnut": {
+   "sides": {
+    "base": "game:block/wood/crate/walnut-sides"
+   },
+   "frame-generic": {
+    "base": "game:block/wood/crate/frame-generic"
+   },
+   "plate": {
+    "base": "block/aged-ceramic2"
+   },
+   "terminal": {
+    "base": "block/normal3"
+   }
+  },
+  "*-purpleheart": {
+   "sides": {
+    "base": "game:block/wood/crate/purpleheart-sides"
+   },
+   "frame-generic": {
+    "base": "game:block/wood/crate/frame-generic"
+   },
+   "plate": {
+    "base": "block/aged-ceramic2"
+   },
+   "terminal": {
+    "base": "block/normal3"
+   }
+  }
+ },
+ "blockmaterial": "Wood",
+ "drawtype": "json",
+ "replaceable": 0,
+ "resistance": 3.5,
+ "lightAbsorption": 0,
+ "sidesolid": {
+  "all": false
+ },
+ "sideopaque": {
+  "all": false
+ },
+ "collisionSelectionBoxes": [
+  {
+   "x1": 0.0,
+   "y1": 0.0,
+   "z1": 0.0,
+   "x2": 1.0,
+   "y2": 0.8125,
+   "z2": 1.0
+  }
+ ],
+ "sounds": {
+  "place": "game:block/planks",
+  "break": "game:block/planks",
+  "hit": "game:block/planks",
+  "walk": "game:walk/wood"
+ },
+ "materialDensity": 600,
+ "shape": {
+  "base": "block/dock/manageddock"
+ }
+}

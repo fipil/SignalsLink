@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "Debug SignalsLink Testing": {
+      "commandName": "Executable",
+      "executablePath": "c:\\VintageStory\\1.22\\Vintagestory.exe",
+      "commandLineArgs": "--openWorld=\"signalsLink testing\" -pcreativebuilding --addModPath \"c:\\Develope\\VintageStory\\Projects\\SignalsLink\\Publish\" \"$(ProjectDir)bin\\$(Configuration)\" --addOrigin=\"c:\\Develope\\VintageStory\\Projects\\SignalsLink\\SignalsLink\\assets\" --dataPath C:\\VintageStory\\1.22Data --tracelog",
+      "workingDirectory": "c:\\VintageStory\\1.22\\"
+    }
+  }
+}

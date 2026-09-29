@@ -1,5 +1,7 @@
-﻿using signals.src.signalNetwork;
+using signals.src;
+using signals.src.signalNetwork;
 using SignalsLink.src.signals;
+using SignalsLink.src.signals.link;
 using SignalsLink.src.signals.managedchute.transporting;
 using SignalsLink.src.signals.paperConditions;
 using System;
@@ -13,7 +15,7 @@ using Vintagestory.GameContent;
 
 namespace SignalsLink.src.signals.managedchute
 {
-    public class BEManagedChute : BlockEntity, IBESignalReceptor, IPaperConditionsHost, ISignalBuffer
+    public class BEManagedChute : BlockEntity, IBESignalReceptor, IPaperConditionsHost, ISignalBuffer, IConditionOutputSink, IRetentionModeHost
     {
         private int checkRateMs;
 
@@ -26,7 +28,15 @@ namespace SignalsLink.src.signals.managedchute
 
         private const byte SOURCE_SLOT = 2;
         private const byte TARGET_SLOT = 1;
+        private const byte OUTPUT = 3;
         private const byte UNLIMITED_TRANSFER = 15;
+
+        // Output anchor (index 3), driven by `output` blocks on paper and pushed on the signal
+        // tick, the same way the valve and the damper do it. It is what lets a chute report on its
+        // own two ends instead of only carrying things between them.
+        public byte outputState;
+        private byte? lastPushedOutput;
+        private SignalNetworkMod signalMod;
 
         private float itemFlowRate = 1f;
         private float itemFlowAccum;
@@ -48,7 +58,7 @@ namespace SignalsLink.src.signals.managedchute
         private string conditionsText = null;
         private PaperConditionsEvaluator conditionsEvaluator;
 
-        public int SignalInputsCount => 3;
+        public int SignalInputsCount => 4; // Input, Target, Source, Output (selection boxes 0..3)
 
         public string ConditionsText
         {
@@ -80,10 +90,44 @@ namespace SignalsLink.src.signals.managedchute
 
             base.Initialize(api);
 
+            signalMod = api.ModLoader.GetModSystem<SignalNetworkMod>();
+            signalMod.RegisterSignalTickListener(OnSignalNetworkTick);
+            PublishRetentionMode();
+
             if (!(api is ICoreServerAPI))
                 return;
             this.RegisterDelayedCallback(dt => this.RegisterGameTickListener(this.MoveItem, this.checkRateMs), 10 + api.World.Rand.Next(200));
         }
+
+        #region Room sealing (wall variant)
+
+        // The wall chute sits in a wall, so it is a room boundary; the same three modes as the
+        // ceiling damper. The registry is only the lookup table Block.GetRetention reads.
+        private int retentionMode = link.RetentionMode.Cooling;
+
+        public bool SupportsRetentionMode => Block is ManagedWallChute;
+
+        public int RetentionMode => retentionMode;
+
+        public void CycleRetentionMode()
+        {
+            retentionMode = link.RetentionMode.Next(retentionMode);
+            PublishRetentionMode();
+            MarkDirty();
+            Api?.World.BlockAccessor.TriggerNeighbourBlockUpdate(Pos);
+        }
+
+        private void PublishRetentionMode()
+        {
+            if (SupportsRetentionMode) Api?.ModLoader.GetModSystem<RetentionModeRegistry>()?.Publish(Pos, retentionMode);
+        }
+
+        private void WithdrawRetentionMode()
+        {
+            Api?.ModLoader.GetModSystem<RetentionModeRegistry>()?.Withdraw(Pos);
+        }
+
+        #endregion
 
         private void parseBlockProperties()
         {
@@ -94,11 +138,29 @@ namespace SignalsLink.src.signals.managedchute
 
         public void MoveItem(float dt)
         {
-            if (!unlimited && remaining <= 0) return;
+            using var regexDiagnostics = RegexDiagnostics.Begin(Api, Pos, "ManagedChute");
             if (Api?.World == null || !(Api is ICoreServerAPI)) return;
 
+            bool hasCredit = unlimited || remaining > 0;
+
+            // Blocks with an `output` action are evaluated on EVERY tick, whatever the Input pin
+            // says - that is what makes the pin a reading of the current state rather than a
+            // memory of the last thing that moved it. With nothing to carry the pass still runs,
+            // only with its action rail closed.
+            //
+            // The one exception is the cheap one: with no credit AND no output block there is
+            // nothing to compute and nothing to do, so an idle chute costs a tick of nothing.
+            if (!hasCredit && !ConditionsEvaluator.HasAnyOutput) { SetOutput(0); return; }
+
             EnsureTransfer();
-            if (transfer == null) return;
+
+            if (transfer == null) { SetOutput(0); return; }
+
+            if (!hasCredit)
+            {
+                transfer.EvaluateOutputs();
+                return;
+            }
 
             itemFlowAccum = Math.Min(itemFlowAccum + itemFlowRate, Math.Max(1f, itemFlowRate * 2f));
             if (itemFlowAccum < 1f) return;
@@ -112,7 +174,7 @@ namespace SignalsLink.src.signals.managedchute
 
             bool remainingChanged = false;
             decimal movedTotal = 0;
-            while (movedTotal < allowedNow)
+            do
             {
                 TransferOperationResult moveResult = transfer.TryMove(opTemplate);
                 if (!moveResult.Success) break;
@@ -127,7 +189,11 @@ namespace SignalsLink.src.signals.managedchute
                 catch (Exception) { }
 
                 movedTotal += moveResult.MovedAmount;
-                itemFlowAccum -= (float)moveResult.MovedAmount;
+                // A batched transfer (the 'amount N' directive) is ONE action, not N ticks worth of
+                // flow. Charging the rate limiter the full batch would drive the accumulator deep
+                // negative and stall the chute for ~N ticks; cap it at this tick's whole allowance
+                // so a batch costs at most one tick. Unbatched moves (1 piece) are unaffected.
+                itemFlowAccum -= System.Math.Min((float)moveResult.MovedAmount, System.Math.Max(1f, (float)canByRate));
 
                 if (!unlimited)
                 {
@@ -136,7 +202,7 @@ namespace SignalsLink.src.signals.managedchute
                     remainingChanged = true;
                     if (remaining <= 0) break;
                 }
-            }
+            } while (false);
 
             if (remainingChanged)
             {
@@ -261,7 +327,7 @@ namespace SignalsLink.src.signals.managedchute
             if (transfer != null) return;
 
             // Zatím InputSlot/OutputSlot signál = 0 (default sloty)
-            transfer = ItemTransferFactory.CreateTransfer(Api, inputPos, outputPos, sourceSlot, targetSlot, ConditionsEvaluator);
+            transfer = ItemTransferFactory.CreateTransfer(Api, inputPos, outputPos, sourceSlot, targetSlot, ConditionsEvaluator, this);
 
             lastInputPos = inputPos;
             lastOutputPos = outputPos;
@@ -277,14 +343,55 @@ namespace SignalsLink.src.signals.managedchute
                 {
                     conditionsEvaluator = new PaperConditionsEvaluator();
                     conditionsEvaluator.SetConditionsText(ConditionsText);
-                }   
+                }
                 return conditionsEvaluator;
             }
+        }
+
+        /// <summary>Sets the chute's Output anchor.</summary>
+        public void SetOutput(byte value)
+        {
+            if (outputState == value) return;
+            outputState = value;
+            MarkDirty();
+        }
+
+        /// <summary>
+        /// What one evaluation pass computed for the pin, the 0 of a pass in which no `output`
+        /// block held included. See <see cref="IConditionOutputSink"/>.
+        /// </summary>
+        public void ApplyOutput(int pin, byte value)
+        {
+            SetOutput(value);
+        }
+
+        private void OnSignalNetworkTick()
+        {
+            BEBehaviorSignalConnector beb = GetBehavior<BEBehaviorSignalConnector>();
+            if (beb == null) return;
+            if (lastPushedOutput == outputState) return;
+
+            ISignalNode node = beb.GetNodeAt(new NodePos(this.Pos, OUTPUT));
+            if (node == null) return;
+
+            signalMod.netManager.UpdateSource(node, outputState);
+            lastPushedOutput = outputState;
+            MarkDirty();
         }
 
         public override void OnBlockRemoved()
         {
             base.OnBlockRemoved();
+            signalMod?.DisposeSignalTickListener(OnSignalNetworkTick);
+            WithdrawRetentionMode();
+            transfer = null;
+        }
+
+        public override void OnBlockUnloaded()
+        {
+            base.OnBlockUnloaded();
+            signalMod?.DisposeSignalTickListener(OnSignalNetworkTick);
+            WithdrawRetentionMode();
             transfer = null;
         }
 
@@ -320,6 +427,11 @@ namespace SignalsLink.src.signals.managedchute
             // Edge detector of the Input pin. Persisted together with the buffer above: without it
             // the pin looks like it went 0 -> N after every load, which credits a phantom batch.
             signalState = (byte)tree.GetInt("signalState", 0);
+            outputState = (byte)tree.GetInt("outputState", 0);
+
+            int savedMode = tree.GetInt("retentionMode", link.RetentionMode.Cooling);
+            retentionMode = savedMode >= 0 && savedMode < link.RetentionMode.Count ? savedMode : link.RetentionMode.Cooling;
+            PublishRetentionMode(); // no-op before Initialize; republished from there
         }
 
         public override void ToTreeAttributes(ITreeAttribute tree)
@@ -332,13 +444,15 @@ namespace SignalsLink.src.signals.managedchute
             tree.SetBool("unlimited", unlimited);
             tree.SetInt("remaining", remaining);
             tree.SetInt("signalState", signalState);
+            tree.SetInt("outputState", outputState);
+            tree.SetInt("retentionMode", retentionMode);
         }
 
         public override void GetBlockInfo(IPlayer forPlayer, StringBuilder dsc)
         {
             var sel = forPlayer?.CurrentBlockSelection;
 
-            if(sel?.SelectionBoxIndex<3)
+            if (sel?.SelectionBoxIndex < SignalInputsCount)
             {
                 base.GetBlockInfo(forPlayer, dsc);
                 return;
@@ -351,6 +465,11 @@ namespace SignalsLink.src.signals.managedchute
             else if (remaining > 0)
             {
                 dsc.AppendLine(Lang.Get("signalslink:managedchute-info-remaining", remaining));
+            }
+
+            if (SupportsRetentionMode)
+            {
+                dsc.AppendLine(Lang.Get("signalslink:retention-label", Lang.Get(link.RetentionMode.LangKey(retentionMode))));
             }
 
             base.GetBlockInfo(forPlayer, dsc);

@@ -1,0 +1,15 @@
+{
+	"ingredientPattern": "WHL,INE,_P_",
+	"ingredients": {
+		"W": { "type": "item", "code": "game:wrench-*",	"isTool": true, "toolDurabilityCost": 2	},
+		"H": { "type": "item", "code": "game:hammer-*",	"isTool": true, "toolDurabilityCost": 2	},
+		"L": { "type": "item", "code": "game:solderingiron",	"isTool": true, "toolDurabilityCost": 3	},
+		"E": { "type": "item", "code": "signals:el_wire" },
+		"I": { "type": "item", "code": "game:ingot-steel" },
+		"N": { "type": "item", "code": "signals:solenoid" },
+		"P": { "type": "item", "code": "game:metalplate-iron" }
+	},
+	"width": 3,
+	"height": 3,
+	"output": { "type": "block", "code": "signalslink:igniter-fwd-north-down", "quantity": 1 }
+}

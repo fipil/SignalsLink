@@ -1,0 +1,16 @@
+{
+  "type": "code",
+  "modid": "signalslinkytt",
+  "name": "Signals Link YTT",
+  "authors": ["Fipil"],
+  "description": "Lets the Signals Link freight dock load and unload the trains of Yang's Transport Tycoon.",
+  "version": "1.0.0",
+  "side": "Universal",
+  "requiredOnServer": true,
+  "dependencies": {
+    "game": "1.22.0",
+    "signals": "0.3.3",
+    "signalslink": "1.0.0",
+    "yangtransport": "1.0.2"
+  }
+}

@@ -1,0 +1,216 @@
+{
+ "code": "sleevecoupling",
+ "class": "SleeveCoupling",
+ "behaviors": [
+  {
+   "name": "BlockBehaviorCoverWithDirection"
+  }
+ ],
+ "variantgroups": [
+  {
+   "code": "orientation",
+   "states": [
+    "north",
+    "east",
+    "south",
+    "west",
+    "up",
+    "down"
+   ]
+  },
+  {
+   "code": "side",
+   "states": [
+    "north",
+    "east",
+    "south",
+    "west",
+    "up",
+    "down"
+   ]
+  }
+ ],
+ "attributes": {
+  "handbook": {
+   "extraSections": [
+    {
+     "title": "signalslink:block-handbooktitle-signalslink",
+     "text": "signalslink:block-handbooktext-sleevecoupling"
+    }
+   ]
+  },
+  "linkNodes": [
+   {
+    "index": 0,
+    "name": "con-sleeve",
+    "x1": 0.15625,
+    "y1": 0.3125,
+    "z1": 0.3125,
+    "x2": 0.25,
+    "y2": 0.6875,
+    "z2": 0.6875,
+    "rotateXbytype": {
+     "*-*-north": 90,
+     "*-*-south": 270,
+     "@*-up-(east|west)": 90,
+     "@*-down-(east|west)": 270,
+     "@*-south-(east|west)": 180
+    },
+    "rotateYbytype": {
+     "@*-east-(up|down|north|south)": 270,
+     "@*-south-(up|down)": 180,
+     "@*-west-(up|down|north|south)": 90,
+     "@*-(down-north|up-south)": 180
+    },
+    "rotateZbyType": {
+     "*-*-up": 180,
+     "*-*-east": 90,
+     "*-*-west": 270
+    }
+   },
+   {
+    "index": 1,
+    "name": "con-sleeve",
+    "x1": 0.75,
+    "y1": 0.3125,
+    "z1": 0.3125,
+    "x2": 0.84375,
+    "y2": 0.6875,
+    "z2": 0.6875,
+    "rotateXbytype": {
+     "*-*-north": 90,
+     "*-*-south": 270,
+     "@*-up-(east|west)": 90,
+     "@*-down-(east|west)": 270,
+     "@*-south-(east|west)": 180
+    },
+    "rotateYbytype": {
+     "@*-east-(up|down|north|south)": 270,
+     "@*-south-(up|down)": 180,
+     "@*-west-(up|down|north|south)": 90,
+     "@*-(down-north|up-south)": 180
+    },
+    "rotateZbyType": {
+     "*-*-up": 180,
+     "*-*-east": 90,
+     "*-*-west": 270
+    }
+   }
+  ]
+ },
+ "shape": {
+  "base": "block/sleeve/sleevecoupling",
+  "rotateXbytype": {
+   "*-*-north": 90,
+   "*-*-south": 270,
+   "@*-up-(east|west)": 90,
+   "@*-down-(east|west)": 270,
+   "@*-south-(east|west)": 180
+  },
+  "rotateYbytype": {
+   "@*-east-(up|down|north|south)": 270,
+   "@*-south-(up|down)": 180,
+   "@*-west-(up|down|north|south)": 90,
+   "@*-(down-north|up-south)": 180
+  },
+  "rotateZbyType": {
+   "*-*-up": 180,
+   "*-*-east": 90,
+   "*-*-west": 270
+  }
+ },
+ "guiTransform": {
+  "origin": {
+   "x": 0.5,
+   "y": 0.5,
+   "z": 0.5
+  },
+  "translation": {
+   "x": 0,
+   "y": -2,
+   "z": 0
+  },
+  "scale": 1.2
+ },
+ "blockmaterial": "Metal",
+ "lightAbsorption": 0,
+ "drawtype": "json",
+ "replaceable": 500,
+ "resistance": 1.5,
+ "sidesolid": {
+  "all": false
+ },
+ "sideopaque": {
+  "all": false
+ },
+ "creativeinventory": {
+  "general": [
+   "*-north-down"
+  ],
+  "signalslink": [
+   "*-north-down"
+  ]
+ },
+ "drops": [
+  {
+   "type": "block",
+   "code": "sleevecoupling-north-down"
+  }
+ ],
+ "selectionBoxes": [
+  {
+    "x1": 0.25,
+    "y1": 0.25,
+    "z1": 0.25,
+    "x2": 0.75,
+    "y2": 0.75,
+    "z2": 0.75,
+    "rotateXbytype": {
+    "*-*-north": 90,
+    "*-*-south": 270,
+    "@*-up-(east|west)": 90,
+    "@*-down-(east|west)": 270,
+    "@*-south-(east|west)": 180
+   },
+   "rotateYbytype": {
+    "@*-east-(up|down|north|south)": 270,
+    "@*-south-(up|down)": 180,
+    "@*-west-(up|down|north|south)": 90,
+    "@*-(down-north|up-south)": 180
+   },
+   "rotateZbyType": {
+    "*-*-up": 180,
+    "*-*-east": 90,
+    "*-*-west": 270
+   }
+  }
+ ],
+ "collisionBoxes": [
+  {
+    "x1": 0.25,
+    "y1": 0.25,
+    "z1": 0.25,
+    "x2": 0.75,
+    "y2": 0.75,
+    "z2": 0.75,
+    "rotateXbytype": {
+    "*-*-north": 90,
+    "*-*-south": 270,
+    "@*-up-(east|west)": 90,
+    "@*-down-(east|west)": 270,
+    "@*-south-(east|west)": 180
+   },
+   "rotateYbytype": {
+    "@*-east-(up|down|north|south)": 270,
+    "@*-south-(up|down)": 180,
+    "@*-west-(up|down|north|south)": 90,
+    "@*-(down-north|up-south)": 180
+   },
+   "rotateZbyType": {
+    "*-*-up": 180,
+    "*-*-east": 90,
+    "*-*-west": 270
+   }
+  }
+ ]
+}

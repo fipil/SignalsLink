@@ -1,0 +1,471 @@
+﻿{
+ "code": "igniter",
+ "class": "Igniter",
+ "entityclass": "BlockEntityIgniter",
+ "behaviors": [
+  {
+   "name": "BlockBehaviorCoverWithDirection"
+  },
+  {
+   "name": "BlockBehaviorTemporalCharge",
+   "properties": {
+    "baseConsumptionFactor": 1.0,
+    "referenceVolume": 100,
+    "referenceDays": 100,
+    "maxChargeMultiplier": 5,
+    "chargeItemCode": "gear-temporal"
+   }
+  }
+ ],
+ "entityBehaviors": [
+  {
+   "name": "BEBehaviorSignalConnector",
+   "properties": {
+    "signalNodes": [
+     {
+      "index": 0,
+      "isSource": false
+     },
+     {
+      "index": 1,
+      "isSource": true,
+      "output": 0
+     }
+    ]
+   }
+  }
+ ],
+ "variantgroups": [
+  {
+   "code": "aim",
+   "states": [
+    "fwd",
+    "fwdright"
+   ]
+  },
+  {
+   "code": "orientation",
+   "states": [
+    "north",
+    "east",
+    "south",
+    "west",
+    "up",
+    "down"
+   ]
+  },
+  {
+   "code": "side",
+   "states": [
+    "north",
+    "east",
+    "south",
+    "west",
+    "up",
+    "down"
+   ]
+  }
+ ],
+ "attributes": {
+  "chargePerIgnition": 4800,
+  "sparkFallDistance": 3,
+  "handbook": {
+   "extraSections": [
+    {
+     "title": "signalslink:block-handbooktitle-signalslink",
+     "text": "signalslink:block-handbooktext-igniter"
+    }
+   ]
+  },
+  "signalNodes": [
+   {
+    "index": 0,
+    "name": "con-input",
+    "x1": 0.3125,
+    "y1": 0.0625,
+    "z1": 0.78125,
+    "x2": 0.4375,
+    "y2": 0.25,
+    "z2": 0.90625,
+    "rotateXbytype": {
+     "*-*-north": 90,
+     "*-*-south": 270,
+     "@*-up-(east|west)": 90,
+     "@*-down-(east|west)": 270,
+     "@*-south-(east|west)": 180
+    },
+    "rotateYbytype": {
+     "@*-east-(up|down|north|south)": 270,
+     "@*-south-(up|down)": 180,
+     "@*-west-(up|down|north|south)": 90,
+     "@*-(down-north|up-south)": 180
+    },
+    "rotateZbyType": {
+     "*-*-up": 180,
+     "*-*-east": 90,
+     "*-*-west": 270
+    }
+   },
+   {
+    "index": 1,
+    "name": "con-output",
+    "x1": 0.5625,
+    "y1": 0.0625,
+    "z1": 0.78125,
+    "x2": 0.6875,
+    "y2": 0.25,
+    "z2": 0.90625,
+    "rotateXbytype": {
+     "*-*-north": 90,
+     "*-*-south": 270,
+     "@*-up-(east|west)": 90,
+     "@*-down-(east|west)": 270,
+     "@*-south-(east|west)": 180
+    },
+    "rotateYbytype": {
+     "@*-east-(up|down|north|south)": 270,
+     "@*-south-(up|down)": 180,
+     "@*-west-(up|down|north|south)": 90,
+     "@*-(down-north|up-south)": 180
+    },
+    "rotateZbyType": {
+     "*-*-up": 180,
+     "*-*-east": 90,
+     "*-*-west": 270
+    }
+   }
+  ],
+  "muzzlebytype": {
+   "@igniter-fwdright-.*": {
+    "x": 11.185,
+    "y": 5.5,
+    "z": 4.915
+   },
+   "@igniter-fwd-.*": {
+    "x": 8.07,
+    "y": 5.5,
+    "z": 3.57
+   }
+  },
+  "sparkArcbytype": {
+   "@igniter-fwdright-.*": {
+    "direct": {
+     "speed": 3.5,
+     "gravity": 0.7,
+     "life": 0.8,
+     "delayMs": 300
+    },
+    "falling": {
+     "speed": 3.0,
+     "gravity": 1.1,
+     "life": 1.0,
+     "delayMs": 500
+    }
+   },
+   "@igniter-fwd-.*": {
+    "direct": {
+     "speed": 2.0,
+     "gravity": 1.2,
+     "life": 0.8,
+     "delayMs": 250
+    },
+    "falling": {
+     "speed": 1.5,
+     "gravity": 1.0,
+     "life": 1.2,
+     "delayMs": 450
+    }
+   }
+  }
+ },
+ "shapebytype": {
+  "@igniter-fwdright-.*": {
+   "base": "block/igniter/igniter_diag",
+   "rotateXbytype": {
+    "*-*-north": 90,
+    "*-*-south": 270,
+    "@*-up-(east|west)": 90,
+    "@*-down-(east|west)": 270,
+    "@*-south-(east|west)": 180
+   },
+   "rotateYbytype": {
+    "@*-east-(up|down|north|south)": 270,
+    "@*-south-(up|down)": 180,
+    "@*-west-(up|down|north|south)": 90,
+    "@*-(down-north|up-south)": 180
+   },
+   "rotateZbyType": {
+    "*-*-up": 180,
+    "*-*-east": 90,
+    "*-*-west": 270
+   }
+  },
+  "@igniter-fwd-.*": {
+   "base": "block/igniter/igniter_fwd",
+   "rotateXbytype": {
+    "*-*-north": 90,
+    "*-*-south": 270,
+    "@*-up-(east|west)": 90,
+    "@*-down-(east|west)": 270,
+    "@*-south-(east|west)": 180
+   },
+   "rotateYbytype": {
+    "@*-east-(up|down|north|south)": 270,
+    "@*-south-(up|down)": 180,
+    "@*-west-(up|down|north|south)": 90,
+    "@*-(down-north|up-south)": 180
+   },
+   "rotateZbyType": {
+    "*-*-up": 180,
+    "*-*-east": 90,
+    "*-*-west": 270
+   }
+  }
+ },
+ "blockmaterial": "Metal",
+ "lightAbsorption": 0,
+ "drawtype": "json",
+ "renderpass": "OpaqueNoCull",
+ "replaceable": 500,
+ "resistance": 1.75,
+ "sidesolid": {
+  "all": false
+ },
+ "sideopaque": {
+  "all": false
+ },
+ "creativeinventory": {
+  "general": [
+   "*-fwd-north-down"
+  ],
+  "signalslink": [
+   "*-fwd-north-down"
+  ]
+ },
+ "drops": [
+  {
+   "type": "block",
+   "code": "igniter-fwd-north-down"
+  }
+ ],
+ "selectionBoxesbytype": {
+  "@igniter-fwdright-.*": [
+   {
+    "x1": 0.0625,
+    "y1": 0.0,
+    "z1": 0.0625,
+    "x2": 0.9375,
+    "y2": 0.0625,
+    "z2": 0.9375,
+    "rotateXbytype": {
+     "*-*-north": 90,
+     "*-*-south": 270,
+     "@*-up-(east|west)": 90,
+     "@*-down-(east|west)": 270,
+     "@*-south-(east|west)": 180
+    },
+    "rotateYbytype": {
+     "@*-east-(up|down|north|south)": 270,
+     "@*-south-(up|down)": 180,
+     "@*-west-(up|down|north|south)": 90,
+     "@*-(down-north|up-south)": 180
+    },
+    "rotateZbyType": {
+     "*-*-up": 180,
+     "*-*-east": 90,
+     "*-*-west": 270
+    }
+   },
+   {
+    "x1": 0.23483,
+    "y1": 0.0625,
+    "z1": 0.23483,
+    "x2": 0.76517,
+    "y2": 0.5,
+    "z2": 0.76517,
+    "rotateXbytype": {
+     "*-*-north": 90,
+     "*-*-south": 270,
+     "@*-up-(east|west)": 90,
+     "@*-down-(east|west)": 270,
+     "@*-south-(east|west)": 180
+    },
+    "rotateYbytype": {
+     "@*-east-(up|down|north|south)": 270,
+     "@*-south-(up|down)": 180,
+     "@*-west-(up|down|north|south)": 90,
+     "@*-(down-north|up-south)": 180
+    },
+    "rotateZbyType": {
+     "*-*-up": 180,
+     "*-*-east": 90,
+     "*-*-west": 270
+    }
+   }
+  ],
+  "@igniter-fwd-.*": [
+   {
+    "x1": 0.0625,
+    "y1": 0.0,
+    "z1": 0.0625,
+    "x2": 0.9375,
+    "y2": 0.0625,
+    "z2": 0.9375,
+    "rotateXbytype": {
+     "*-*-north": 90,
+     "*-*-south": 270,
+     "@*-up-(east|west)": 90,
+     "@*-down-(east|west)": 270,
+     "@*-south-(east|west)": 180
+    },
+    "rotateYbytype": {
+     "@*-east-(up|down|north|south)": 270,
+     "@*-south-(up|down)": 180,
+     "@*-west-(up|down|north|south)": 90,
+     "@*-(down-north|up-south)": 180
+    },
+    "rotateZbyType": {
+     "*-*-up": 180,
+     "*-*-east": 90,
+     "*-*-west": 270
+    }
+   },
+   {
+    "x1": 0.3125,
+    "y1": 0.0625,
+    "z1": 0.3125,
+    "x2": 0.6875,
+    "y2": 0.5,
+    "z2": 0.6875,
+    "rotateXbytype": {
+     "*-*-north": 90,
+     "*-*-south": 270,
+     "@*-up-(east|west)": 90,
+     "@*-down-(east|west)": 270,
+     "@*-south-(east|west)": 180
+    },
+    "rotateYbytype": {
+     "@*-east-(up|down|north|south)": 270,
+     "@*-south-(up|down)": 180,
+     "@*-west-(up|down|north|south)": 90,
+     "@*-(down-north|up-south)": 180
+    },
+    "rotateZbyType": {
+     "*-*-up": 180,
+     "*-*-east": 90,
+     "*-*-west": 270
+    }
+   }
+  ]
+ },
+ "collisionBoxesbytype": {
+  "@igniter-fwdright-.*": [
+   {
+    "x1": 0.0625,
+    "y1": 0.0,
+    "z1": 0.0625,
+    "x2": 0.9375,
+    "y2": 0.0625,
+    "z2": 0.9375,
+    "rotateXbytype": {
+     "*-*-north": 90,
+     "*-*-south": 270,
+     "@*-up-(east|west)": 90,
+     "@*-down-(east|west)": 270,
+     "@*-south-(east|west)": 180
+    },
+    "rotateYbytype": {
+     "@*-east-(up|down|north|south)": 270,
+     "@*-south-(up|down)": 180,
+     "@*-west-(up|down|north|south)": 90,
+     "@*-(down-north|up-south)": 180
+    },
+    "rotateZbyType": {
+     "*-*-up": 180,
+     "*-*-east": 90,
+     "*-*-west": 270
+    }
+   },
+   {
+    "x1": 0.23483,
+    "y1": 0.0625,
+    "z1": 0.23483,
+    "x2": 0.76517,
+    "y2": 0.5,
+    "z2": 0.76517,
+    "rotateXbytype": {
+     "*-*-north": 90,
+     "*-*-south": 270,
+     "@*-up-(east|west)": 90,
+     "@*-down-(east|west)": 270,
+     "@*-south-(east|west)": 180
+    },
+    "rotateYbytype": {
+     "@*-east-(up|down|north|south)": 270,
+     "@*-south-(up|down)": 180,
+     "@*-west-(up|down|north|south)": 90,
+     "@*-(down-north|up-south)": 180
+    },
+    "rotateZbyType": {
+     "*-*-up": 180,
+     "*-*-east": 90,
+     "*-*-west": 270
+    }
+   }
+  ],
+  "@igniter-fwd-.*": [
+   {
+    "x1": 0.0625,
+    "y1": 0.0,
+    "z1": 0.0625,
+    "x2": 0.9375,
+    "y2": 0.0625,
+    "z2": 0.9375,
+    "rotateXbytype": {
+     "*-*-north": 90,
+     "*-*-south": 270,
+     "@*-up-(east|west)": 90,
+     "@*-down-(east|west)": 270,
+     "@*-south-(east|west)": 180
+    },
+    "rotateYbytype": {
+     "@*-east-(up|down|north|south)": 270,
+     "@*-south-(up|down)": 180,
+     "@*-west-(up|down|north|south)": 90,
+     "@*-(down-north|up-south)": 180
+    },
+    "rotateZbyType": {
+     "*-*-up": 180,
+     "*-*-east": 90,
+     "*-*-west": 270
+    }
+   },
+   {
+    "x1": 0.3125,
+    "y1": 0.0625,
+    "z1": 0.3125,
+    "x2": 0.6875,
+    "y2": 0.5,
+    "z2": 0.6875,
+    "rotateXbytype": {
+     "*-*-north": 90,
+     "*-*-south": 270,
+     "@*-up-(east|west)": 90,
+     "@*-down-(east|west)": 270,
+     "@*-south-(east|west)": 180
+    },
+    "rotateYbytype": {
+     "@*-east-(up|down|north|south)": 270,
+     "@*-south-(up|down)": 180,
+     "@*-west-(up|down|north|south)": 90,
+     "@*-(down-north|up-south)": 180
+    },
+    "rotateZbyType": {
+     "*-*-up": 180,
+     "*-*-east": 90,
+     "*-*-west": 270
+    }
+   }
+  ]
+ }
+}

@@ -23,6 +23,11 @@
 
   ],
   "attributes": {
+    "handbook": {
+      "extraSections": [
+        { "title": "signalslinkep:block-handbooktitle-signalslinkep", "text": "signalslinkep:block-handbooktext-epswitch" }
+      ]
+    },
     "signalNodes": [
       {
         "index": 0,

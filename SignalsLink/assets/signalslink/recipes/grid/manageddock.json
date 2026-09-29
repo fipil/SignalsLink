@@ -1,0 +1,18 @@
+{
+	"ingredientPattern": "SHN,IEB,PPP",
+	"ingredients": {
+		"S": { "type": "item", "code": "game:saw-*", "isTool": true, "toolDurabilityCost": 3 },
+		"H": { "type": "item", "code": "game:hammer-*", "isTool": true, "toolDurabilityCost": 3 },
+		"N": { "type": "item", "code": "game:metalnailsandstrips-*" },
+		"I": { "type": "item", "code": "game:metalplate-iron" },
+		"E": { "type": "item", "code": "signals:el_wire" },
+		"B": { "type": "item", "code": "signals:solenoid" },
+		"P": { "type": "item", "code": "game:plank-{material}" }
+	},
+	"allowedVariants": {
+		"material": ["birch", "oak", "maple", "pine", "acacia", "kapok", "baldcypress", "larch", "redwood", "ebony", "walnut", "purpleheart", "aged"]
+	},
+	"width": 3,
+	"height": 3,
+	"output": { "type": "block", "code": "signalslink:manageddock-{material}", "quantity": 1 }
+}
