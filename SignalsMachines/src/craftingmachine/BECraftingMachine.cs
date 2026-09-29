@@ -1,4 +1,4 @@
-using SignalsMachines.src.programtube;
+using SignalsTubes.src.programtube;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Datastructures;

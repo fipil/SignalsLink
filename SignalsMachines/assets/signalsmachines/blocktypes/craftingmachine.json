@@ -43,19 +43,19 @@
   ],
   "shapeByType": {
     "*-north": {
-      "base": "signalsmachines:block/craftingmachine2",
+      "base": "signalsmachines:block/craftingmachine",
       "rotateY": 0
     },
     "*-east": {
-      "base": "signalsmachines:block/craftingmachine2",
+      "base": "signalsmachines:block/craftingmachine",
       "rotateY": 270
     },
     "*-south": {
-      "base": "signalsmachines:block/craftingmachine2",
+      "base": "signalsmachines:block/craftingmachine",
       "rotateY": 180
     },
     "*-west": {
-      "base": "signalsmachines:block/craftingmachine2",
+      "base": "signalsmachines:block/craftingmachine",
       "rotateY": 90
     }
   },
@@ -103,28 +103,28 @@
       "base": "signalsmachines:block/socket-floor"
     },
     "tube-metal": {
-      "base": "signalsmachines:block/axle-iron"
+      "base": "signalstubes:block/axle-iron"
     },
     "tube-ceramic": {
-      "base": "signalsmachines:block/tube-board-light"
+      "base": "signalstubes:block/tube-board-light"
     },
     "tube-board": {
-      "base": "signalsmachines:block/tube-board-light"
+      "base": "signalstubes:block/tube-board-light"
     },
     "tube-glass": {
-      "base": "signalsmachines:block/glass-plain"
+      "base": "signalstubes:block/glass-plain"
     },
     "tube-red": {
-      "base": "signalsmachines:block/copper"
+      "base": "signalstubes:block/copper"
     },
     "tube-blue": {
-      "base": "signalsmachines:block/col51"
+      "base": "signalstubes:block/col51"
     },
     "tube-yellow": {
-      "base": "signalsmachines:block/brass"
+      "base": "signalstubes:block/brass"
     },
     "tube-dark": {
-      "base": "signalsmachines:block/iron"
+      "base": "signalstubes:block/iron"
     }
   },
   "attributes": {

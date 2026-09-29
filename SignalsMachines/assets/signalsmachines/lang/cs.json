@@ -1,9 +1,6 @@
 {
   "game:tabname-signalsmachines": "Signals Machines",
   "block-craftingmachine-*": "Craftovací stroj",
-  "item-programtube": "Programová elektronka",
-  "programtube-named": "Programová elektronka: {0}",
-  "programtube-pins": "Počet kolíků: {0}",
   "socket-insert": "Zasadit elektronku",
   "socket-remove": "Vyjmout elektronku prázdnou rukou"
 }

@@ -1,7 +1,6 @@
 ﻿using signals.src;
 using signals.src.signalNetwork;
 using SignalsMachines.src.craftingmachine;
-using SignalsMachines.src.programtube;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Server;
@@ -25,7 +24,6 @@ namespace SignalsMachines.src
             base.Start(api);
             api.RegisterBlockClass("CraftingMachine", typeof(BlockCraftingMachine));
             api.RegisterBlockEntityClass("CraftingMachine", typeof(BECraftingMachine));
-            api.RegisterItemClass("ProgramTube", typeof(ItemProgramTube));
         }
 
         public override void StartClientSide(ICoreClientAPI api)

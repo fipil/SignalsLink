@@ -1,7 +1,7 @@
 using System.Reflection;
 using Newtonsoft.Json;
-using SignalsMachines.src.programtube;
 using SignalsMachines.src.craftingmachine;
+using SignalsTubes.src.programtube;
 using Vintagestory.API.Common;
 using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
@@ -10,7 +10,7 @@ namespace SignalsMachines.Tests;
 
 public class ProgramTubeTests
 {
-    private static readonly ItemProgramTube Tube = new() { Code = new AssetLocation("signalsmachines:programtube"), MaxStackSize = 1 };
+    private static readonly ItemProgramTube Tube = new() { Code = new AssetLocation("signalstubes:programtube"), MaxStackSize = 1 };
     private static ItemStack Program(string id = "sequence")
     {
         var stack = new ItemStack(Tube);
@@ -43,8 +43,8 @@ public class ProgramTubeTests
     [InlineData(9, 8)]
     public void ShapeHasRequestedPerimeterPinsAndGlassAfterComponents(int requested, int expected)
     {
-        var root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "../../../../SignalsMachines"));
-        var template = JsonConvert.DeserializeObject<Shape>(File.ReadAllText(Path.Combine(root, "assets/signalsmachines/shapes/item/programtube.json")));
+        var root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "../../../../SignalsTubes"));
+        var template = JsonConvert.DeserializeObject<Shape>(File.ReadAllText(Path.Combine(root, "assets/signalstubes/shapes/item/programtube.json")));
         var stack = Program();
         stack.Attributes.SetInt("pinCount", requested);
         var shape = TubeVisuals.Build(template, stack);

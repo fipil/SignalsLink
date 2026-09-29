@@ -1,3 +1,4 @@
+using SignalsTubes.src.programtube;
 using Vintagestory.API.Common;
 using Vintagestory.API.MathTools;
 using Vintagestory.GameContent;
@@ -67,7 +68,7 @@ namespace SignalsMachines.src.craftingmachine
             // Let the client initiate use; only the server creates the missing controller.
             if (be == null)
             {
-                if (player.InventoryManager.ActiveHotbarSlot.Itemstack?.Collectible is not programtube.ItemProgramTube) return false;
+                if (player.InventoryManager.ActiveHotbarSlot.Itemstack?.Collectible is not ItemProgramTube) return false;
                 if (world.Side == EnumAppSide.Client) return true;
                 world.BlockAccessor.SpawnBlockEntity(EntityClass, selection.Position);
                 be = world.BlockAccessor.GetBlockEntity(selection.Position) as BECraftingMachine;
@@ -82,7 +83,7 @@ namespace SignalsMachines.src.craftingmachine
                 return base.GetPlacedBlockInteractionHelp(world, selection, player);
             var be = world.BlockAccessor.GetBlockEntity(selection.Position) as BECraftingMachine;
             bool hasTube = be?.HasTube == true;
-            var tube = world.GetItem(new AssetLocation("signalsmachines:programtube"));
+            var tube = world.GetItem(new AssetLocation("signalstubes:programtube"));
             return new[] { new WorldInteraction {
                 ActionLangCode = hasTube ? "signalsmachines:socket-remove" : "signalsmachines:socket-insert",
                 MouseButton = EnumMouseButton.Right,

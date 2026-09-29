@@ -7,6 +7,7 @@
   "version": "0.1.0",
   "dependencies": {
     "game": "1.22.0", 
-    "signals": "0.3.3"
+    "signals": "0.3.3",
+    "signalstubes": "0.1.0"
   }
 }

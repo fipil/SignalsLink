@@ -33,6 +33,13 @@
     </Reference>
   </ItemGroup>
 
+  <!-- Signals Tubes is a mod of its own; its DLL must not be copied next to this one. -->
+  <ItemGroup>
+    <ProjectReference Include="..\SignalsTubes\SignalsTubes.csproj">
+      <Private>False</Private>
+    </ProjectReference>
+  </ItemGroup>
+
   <ItemGroup>
     <Folder Include="assets\signalsmachines\blocktypes\" />
     <Folder Include="assets\signalsmachines\lang\" />

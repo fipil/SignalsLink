@@ -3,7 +3,7 @@ using System.Text;
 using Newtonsoft.Json.Linq;
 using Vintagestory.API.Common;
 
-namespace SignalsMachines.src.programtube;
+namespace SignalsTubes.src.programtube;
 
 /// <summary>Visual identity is derived from portable program data, never world position or process hash codes.</summary>
 public static class TubeVisuals

@@ -1,0 +1,12 @@
+{
+  "type": "code",
+  "modid": "signalstubes",
+  "name": "Signals Tubes",
+  "authors": ["Fipil"],
+  "description": "Vacuum-tube logic for Signals.",
+  "version": "0.1.0",
+  "dependencies": {
+    "game": "1.22.0",
+    "signals": "0.3.3"
+  }
+}

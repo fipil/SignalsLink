@@ -3,7 +3,7 @@ using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Config;
 
-namespace SignalsMachines.src.programtube;
+namespace SignalsTubes.src.programtube;
 
 public class ItemProgramTube : Item
 {
@@ -14,13 +14,13 @@ public class ItemProgramTube : Item
     {
         base.OnLoaded(api);
         if (api is ICoreClientAPI)
-            template = api.Assets.Get(new AssetLocation("signalsmachines", "shapes/item/programtube.json")).ToObject<Shape>();
+            template = api.Assets.Get(new AssetLocation("signalstubes", "shapes/item/programtube.json")).ToObject<Shape>();
     }
 
     // The installed mesh uses the block atlas; handheld and inventory meshes use the item atlas.
     public MeshData BuildMesh(ICoreClientAPI capi, ItemStack stack, ITexPositionSource textures)
     {
-        capi.Tesselator.TesselateShape("signalsmachines program tube", TubeVisuals.Build(template, stack), out MeshData mesh, textures);
+        capi.Tesselator.TesselateShape("signalstubes program tube", TubeVisuals.Build(template, stack), out MeshData mesh, textures);
         return mesh;
     }
 
@@ -40,13 +40,13 @@ public class ItemProgramTube : Item
     public override string GetHeldItemName(ItemStack stack)
     {
         string name = stack.Attributes.GetString("programName", "");
-        return name.Length == 0 ? base.GetHeldItemName(stack) : Lang.Get("signalsmachines:programtube-named", name);
+        return name.Length == 0 ? base.GetHeldItemName(stack) : Lang.Get("signalstubes:programtube-named", name);
     }
 
     public override void GetHeldItemInfo(ItemSlot slot, StringBuilder dsc, IWorldAccessor world, bool withDebugInfo)
     {
         base.GetHeldItemInfo(slot, dsc, world, withDebugInfo);
-        dsc.AppendLine(Lang.Get("signalsmachines:programtube-pins", TubeVisuals.PinCount(slot.Itemstack)));
+        dsc.AppendLine(Lang.Get("signalstubes:programtube-pins", TubeVisuals.PinCount(slot.Itemstack)));
     }
 
     public override void OnUnloaded(ICoreAPI api)

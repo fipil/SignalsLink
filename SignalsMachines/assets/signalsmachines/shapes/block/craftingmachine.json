@@ -1721,91 +1721,496 @@
       "renderPass": 0
     },
     {
-      "name": "head_bearing",
+      "name": "crystal_housing",
       "from": [
-        6.5,
-        26.268,
-        6.5
+        0,
+        0,
+        0
       ],
       "to": [
-        9.5,
-        27.116,
-        9.5
+        0,
+        0,
+        0
       ],
       "rotationOrigin": [
-        8,
+        8.0,
         0,
-        8
+        8.0
       ],
-      "faces": {
-        "north": {
-          "texture": "#castiron",
-          "uv": [
-            0,
-            0,
-            3,
-            0.847999999999999
+      "rotationY": -90,
+      "faces": {},
+      "children": [
+        {
+          "name": "crystal_housing_wall_0a",
+          "from": [
+            6.8742,
+            26.268,
+            9.45
           ],
-          "autoUv": false,
-          "enabled": true
+          "to": [
+            9.1258,
+            28.0,
+            9.95
+          ],
+          "rotationOrigin": [
+            8.0,
+            0,
+            8.0
+          ],
+          "faces": {
+            "north": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                2.2516,
+                1.732
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "south": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                2.2516,
+                1.732
+              ],
+              "autoUv": false,
+              "enabled": true
+            }
+          },
+          "renderPass": 0
         },
-        "east": {
-          "texture": "#castiron",
-          "uv": [
-            0,
-            0,
-            3,
-            0.847999999999999
+        {
+          "name": "crystal_housing_wall_0b",
+          "from": [
+            6.8742,
+            26.268,
+            6.05
           ],
-          "autoUv": false,
-          "enabled": true
+          "to": [
+            9.1258,
+            28.0,
+            6.55
+          ],
+          "rotationOrigin": [
+            8.0,
+            0,
+            8.0
+          ],
+          "faces": {
+            "north": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                2.2516,
+                1.732
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "south": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                2.2516,
+                1.732
+              ],
+              "autoUv": false,
+              "enabled": true
+            }
+          },
+          "renderPass": 0
         },
-        "south": {
-          "texture": "#castiron",
-          "uv": [
-            0,
-            0,
-            3,
-            0.847999999999999
+        {
+          "name": "crystal_housing_wall_1a",
+          "from": [
+            6.8742,
+            26.268,
+            9.45
           ],
-          "autoUv": false,
-          "enabled": true
+          "to": [
+            9.1258,
+            28.0,
+            9.95
+          ],
+          "rotationOrigin": [
+            8.0,
+            0,
+            8.0
+          ],
+          "rotationY": 60,
+          "faces": {
+            "north": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                2.2516,
+                1.732
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "south": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                2.2516,
+                1.732
+              ],
+              "autoUv": false,
+              "enabled": true
+            }
+          },
+          "renderPass": 0
         },
-        "west": {
-          "texture": "#castiron",
-          "uv": [
-            0,
-            0,
-            3,
-            0.847999999999999
+        {
+          "name": "crystal_housing_wall_1b",
+          "from": [
+            6.8742,
+            26.268,
+            6.05
           ],
-          "autoUv": false,
-          "enabled": true
+          "to": [
+            9.1258,
+            28.0,
+            6.55
+          ],
+          "rotationOrigin": [
+            8.0,
+            0,
+            8.0
+          ],
+          "rotationY": 60,
+          "faces": {
+            "north": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                2.2516,
+                1.732
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "south": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                2.2516,
+                1.732
+              ],
+              "autoUv": false,
+              "enabled": true
+            }
+          },
+          "renderPass": 0
         },
-        "up": {
-          "texture": "#castiron",
-          "uv": [
-            0,
-            0,
-            3,
-            3
+        {
+          "name": "crystal_housing_wall_2a",
+          "from": [
+            6.8742,
+            26.268,
+            9.45
           ],
-          "autoUv": false,
-          "enabled": true
+          "to": [
+            9.1258,
+            28.0,
+            9.95
+          ],
+          "rotationOrigin": [
+            8.0,
+            0,
+            8.0
+          ],
+          "rotationY": 120,
+          "faces": {
+            "north": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                2.2516,
+                1.732
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "south": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                2.2516,
+                1.732
+              ],
+              "autoUv": false,
+              "enabled": true
+            }
+          },
+          "renderPass": 0
+        },
+        {
+          "name": "crystal_housing_wall_2b",
+          "from": [
+            6.8742,
+            26.268,
+            6.05
+          ],
+          "to": [
+            9.1258,
+            28.0,
+            6.55
+          ],
+          "rotationOrigin": [
+            8.0,
+            0,
+            8.0
+          ],
+          "rotationY": 120,
+          "faces": {
+            "north": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                2.2516,
+                1.732
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "south": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                2.2516,
+                1.732
+              ],
+              "autoUv": false,
+              "enabled": true
+            }
+          },
+          "renderPass": 0
+        },
+        {
+          "name": "crystal_housing_cap_0",
+          "from": [
+            6.8742,
+            28.0,
+            6.05
+          ],
+          "to": [
+            9.1258,
+            28.5,
+            9.95
+          ],
+          "rotationOrigin": [
+            8.0,
+            0,
+            8.0
+          ],
+          "faces": {
+            "north": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                2.2516,
+                0.5
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "south": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                2.2516,
+                0.5
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "up": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                2.2516,
+                3.9
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "down": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                2.2516,
+                3.9
+              ],
+              "autoUv": false,
+              "enabled": true
+            }
+          },
+          "renderPass": 0
+        },
+        {
+          "name": "crystal_housing_cap_1",
+          "from": [
+            6.8742,
+            27.999,
+            6.05
+          ],
+          "to": [
+            9.1258,
+            28.501,
+            9.95
+          ],
+          "rotationOrigin": [
+            8.0,
+            0,
+            8.0
+          ],
+          "rotationY": 60,
+          "faces": {
+            "north": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                2.2516,
+                0.502
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "south": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                2.2516,
+                0.502
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "up": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                2.2516,
+                3.9
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "down": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                2.2516,
+                3.9
+              ],
+              "autoUv": false,
+              "enabled": true
+            }
+          },
+          "renderPass": 0
+        },
+        {
+          "name": "crystal_housing_cap_2",
+          "from": [
+            6.8742,
+            27.998,
+            6.05
+          ],
+          "to": [
+            9.1258,
+            28.502,
+            9.95
+          ],
+          "rotationOrigin": [
+            8.0,
+            0,
+            8.0
+          ],
+          "rotationY": 120,
+          "faces": {
+            "north": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                2.2516,
+                0.504
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "south": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                2.2516,
+                0.504
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "up": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                2.2516,
+                3.9
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "down": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                2.2516,
+                3.9
+              ],
+              "autoUv": false,
+              "enabled": true
+            }
+          },
+          "renderPass": 0
         }
-      },
-      "renderPass": 0
+      ]
     },
     {
       "name": "head_guide",
       "from": [
         7,
-        27.116,
+        28.5,
         7
       ],
       "to": [
         9,
-        29.616,
+        30.2,
         9
       ],
       "rotationOrigin": [
@@ -1820,7 +2225,7 @@
             0,
             0,
             2,
-            2.5
+            1.7
           ],
           "autoUv": false,
           "enabled": true
@@ -1831,7 +2236,7 @@
             0,
             0,
             2,
-            2.5
+            1.7
           ],
           "autoUv": false,
           "enabled": true
@@ -1842,7 +2247,7 @@
             0,
             0,
             2,
-            2.5
+            1.7
           ],
           "autoUv": false,
           "enabled": true
@@ -1853,7 +2258,7 @@
             0,
             0,
             2,
-            2.5
+            1.7
           ],
           "autoUv": false,
           "enabled": true
@@ -1885,9 +2290,9 @@
         0
       ],
       "rotationOrigin": [
-        8,
-        21.616,
-        8
+        8.0,
+        22.1,
+        8.0
       ],
       "faces": {},
       "children": [
@@ -1895,18 +2300,18 @@
           "name": "crystal_rod",
           "from": [
             7.7,
-            21.7,
+            22.5,
             7.7
           ],
           "to": [
             8.3,
-            29.116,
+            26.3,
             8.3
           ],
           "rotationOrigin": [
-            8,
+            8.0,
             0,
-            8
+            8.0
           ],
           "faces": {
             "north": {
@@ -1914,8 +2319,8 @@
               "uv": [
                 0,
                 0,
-                0.6000000000000005,
-                7.416
+                0.6,
+                3.8
               ],
               "autoUv": false,
               "enabled": true
@@ -1925,8 +2330,8 @@
               "uv": [
                 0,
                 0,
-                0.6000000000000005,
-                7.416
+                0.6,
+                3.8
               ],
               "autoUv": false,
               "enabled": true
@@ -1936,8 +2341,8 @@
               "uv": [
                 0,
                 0,
-                0.6000000000000005,
-                7.416
+                0.6,
+                3.8
               ],
               "autoUv": false,
               "enabled": true
@@ -1947,8 +2352,8 @@
               "uv": [
                 0,
                 0,
-                0.6000000000000005,
-                7.416
+                0.6,
+                3.8
               ],
               "autoUv": false,
               "enabled": true
@@ -1958,8 +2363,8 @@
               "uv": [
                 0,
                 0,
-                0.6000000000000005,
-                0.6000000000000005
+                0.6,
+                0.6
               ],
               "autoUv": false,
               "enabled": true
@@ -1968,21 +2373,21 @@
           "renderPass": 0
         },
         {
-          "name": "crystal_holder",
+          "name": "crystal_holder_0",
           "from": [
-            6.65,
-            21,
-            6.65
+            7.625,
+            22.1,
+            7.3505
           ],
           "to": [
-            9.35,
-            21.7,
-            9.35
+            8.375,
+            22.5,
+            8.6495
           ],
           "rotationOrigin": [
-            8,
+            8.0,
             0,
-            8
+            8.0
           ],
           "faces": {
             "north": {
@@ -1990,19 +2395,8 @@
               "uv": [
                 0,
                 0,
-                2.6999999999999993,
-                0.6999999999999993
-              ],
-              "autoUv": false,
-              "enabled": true
-            },
-            "east": {
-              "texture": "#castiron",
-              "uv": [
-                0,
-                0,
-                2.6999999999999993,
-                0.6999999999999993
+                0.75,
+                0.4
               ],
               "autoUv": false,
               "enabled": true
@@ -2012,19 +2406,8 @@
               "uv": [
                 0,
                 0,
-                2.6999999999999993,
-                0.6999999999999993
-              ],
-              "autoUv": false,
-              "enabled": true
-            },
-            "west": {
-              "texture": "#castiron",
-              "uv": [
-                0,
-                0,
-                2.6999999999999993,
-                0.6999999999999993
+                0.75,
+                0.4
               ],
               "autoUv": false,
               "enabled": true
@@ -2034,8 +2417,8 @@
               "uv": [
                 0,
                 0,
-                2.6999999999999993,
-                2.6999999999999993
+                0.75,
+                1.299
               ],
               "autoUv": false,
               "enabled": true
@@ -2045,8 +2428,140 @@
               "uv": [
                 0,
                 0,
-                2.6999999999999993,
-                2.6999999999999993
+                0.75,
+                1.299
+              ],
+              "autoUv": false,
+              "enabled": true
+            }
+          },
+          "renderPass": 0
+        },
+        {
+          "name": "crystal_holder_1",
+          "from": [
+            7.625,
+            22.099,
+            7.3505
+          ],
+          "to": [
+            8.375,
+            22.501,
+            8.6495
+          ],
+          "rotationOrigin": [
+            8.0,
+            0,
+            8.0
+          ],
+          "rotationY": 60,
+          "faces": {
+            "north": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                0.75,
+                0.402
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "south": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                0.75,
+                0.402
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "up": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                0.75,
+                1.299
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "down": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                0.75,
+                1.299
+              ],
+              "autoUv": false,
+              "enabled": true
+            }
+          },
+          "renderPass": 0
+        },
+        {
+          "name": "crystal_holder_2",
+          "from": [
+            7.625,
+            22.098,
+            7.3505
+          ],
+          "to": [
+            8.375,
+            22.502,
+            8.6495
+          ],
+          "rotationOrigin": [
+            8.0,
+            0,
+            8.0
+          ],
+          "rotationY": 120,
+          "faces": {
+            "north": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                0.75,
+                0.404
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "south": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                0.75,
+                0.404
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "up": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                0.75,
+                1.299
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "down": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                0.75,
+                1.299
               ],
               "autoUv": false,
               "enabled": true
@@ -2057,79 +2572,496 @@
         {
           "name": "crystal",
           "from": [
-            7.1,
-            18.5,
-            7.1
+            0,
+            0,
+            0
           ],
           "to": [
-            8.9,
-            21,
-            8.9
+            0,
+            0,
+            0
           ],
           "rotationOrigin": [
-            8,
-            19.75,
-            8
+            8.0,
+            22.1,
+            8.0
           ],
-          "faces": {
-            "north": {
-              "texture": "#details",
-              "uv": [
-                24,
-                0,
-                25.8,
-                2.5
+          "faces": {},
+          "children": [
+            {
+              "name": "crystal_main",
+              "from": [
+                7.55,
+                19.9,
+                7.55
               ],
-              "autoUv": false,
-              "enabled": true
+              "to": [
+                8.45,
+                22.3,
+                8.45
+              ],
+              "rotationOrigin": [
+                8.0,
+                22.1,
+                8.0
+              ],
+              "rotationY": 45,
+              "faces": {
+                "north": {
+                  "texture": "#details",
+                  "uv": [
+                    24,
+                    0,
+                    24.9,
+                    2.4
+                  ],
+                  "autoUv": false,
+                  "enabled": true
+                },
+                "east": {
+                  "texture": "#details",
+                  "uv": [
+                    25.2,
+                    0,
+                    26.099999999999998,
+                    2.4
+                  ],
+                  "autoUv": false,
+                  "enabled": true
+                },
+                "south": {
+                  "texture": "#details",
+                  "uv": [
+                    26.4,
+                    0,
+                    27.299999999999997,
+                    2.4
+                  ],
+                  "autoUv": false,
+                  "enabled": true
+                },
+                "west": {
+                  "texture": "#details",
+                  "uv": [
+                    27.6,
+                    0,
+                    28.5,
+                    2.4
+                  ],
+                  "autoUv": false,
+                  "enabled": true
+                },
+                "down": {
+                  "texture": "#details",
+                  "uv": [
+                    29,
+                    0,
+                    29.9,
+                    0.9
+                  ],
+                  "autoUv": false,
+                  "enabled": true
+                }
+              },
+              "renderPass": 0
             },
-            "east": {
-              "texture": "#details",
-              "uv": [
-                24,
+            {
+              "name": "crystal_side_0_dir",
+              "from": [
                 0,
-                25.8,
-                2.5
+                0,
+                0
               ],
-              "autoUv": false,
-              "enabled": true
+              "to": [
+                0,
+                0,
+                0
+              ],
+              "rotationOrigin": [
+                8.0,
+                22.1,
+                8.0
+              ],
+              "rotationY": 15,
+              "faces": {},
+              "children": [
+                {
+                  "name": "crystal_side_0",
+                  "from": [
+                    8.05,
+                    20.6,
+                    7.7
+                  ],
+                  "to": [
+                    8.65,
+                    22.3,
+                    8.3
+                  ],
+                  "rotationOrigin": [
+                    8.35,
+                    22.1,
+                    8.0
+                  ],
+                  "rotationZ": 24,
+                  "faces": {
+                    "north": {
+                      "texture": "#details",
+                      "uv": [
+                        24,
+                        0,
+                        24.6,
+                        1.7
+                      ],
+                      "autoUv": false,
+                      "enabled": true
+                    },
+                    "east": {
+                      "texture": "#details",
+                      "uv": [
+                        25.2,
+                        0,
+                        25.8,
+                        1.7
+                      ],
+                      "autoUv": false,
+                      "enabled": true
+                    },
+                    "south": {
+                      "texture": "#details",
+                      "uv": [
+                        26.4,
+                        0,
+                        27.0,
+                        1.7
+                      ],
+                      "autoUv": false,
+                      "enabled": true
+                    },
+                    "west": {
+                      "texture": "#details",
+                      "uv": [
+                        27.6,
+                        0,
+                        28.200000000000003,
+                        1.7
+                      ],
+                      "autoUv": false,
+                      "enabled": true
+                    },
+                    "down": {
+                      "texture": "#details",
+                      "uv": [
+                        29,
+                        0,
+                        29.6,
+                        0.6
+                      ],
+                      "autoUv": false,
+                      "enabled": true
+                    }
+                  },
+                  "renderPass": 0
+                }
+              ]
             },
-            "south": {
-              "texture": "#details",
-              "uv": [
-                24,
+            {
+              "name": "crystal_side_1_dir",
+              "from": [
                 0,
-                25.8,
-                2.5
+                0,
+                0
               ],
-              "autoUv": false,
-              "enabled": true
+              "to": [
+                0,
+                0,
+                0
+              ],
+              "rotationOrigin": [
+                8.0,
+                22.1,
+                8.0
+              ],
+              "rotationY": 100,
+              "faces": {},
+              "children": [
+                {
+                  "name": "crystal_side_1",
+                  "from": [
+                    8.1,
+                    20.9,
+                    7.75
+                  ],
+                  "to": [
+                    8.6,
+                    22.3,
+                    8.25
+                  ],
+                  "rotationOrigin": [
+                    8.35,
+                    22.1,
+                    8.0
+                  ],
+                  "rotationZ": 30,
+                  "faces": {
+                    "north": {
+                      "texture": "#details",
+                      "uv": [
+                        24,
+                        0,
+                        24.5,
+                        1.4
+                      ],
+                      "autoUv": false,
+                      "enabled": true
+                    },
+                    "east": {
+                      "texture": "#details",
+                      "uv": [
+                        25.2,
+                        0,
+                        25.7,
+                        1.4
+                      ],
+                      "autoUv": false,
+                      "enabled": true
+                    },
+                    "south": {
+                      "texture": "#details",
+                      "uv": [
+                        26.4,
+                        0,
+                        26.9,
+                        1.4
+                      ],
+                      "autoUv": false,
+                      "enabled": true
+                    },
+                    "west": {
+                      "texture": "#details",
+                      "uv": [
+                        27.6,
+                        0,
+                        28.1,
+                        1.4
+                      ],
+                      "autoUv": false,
+                      "enabled": true
+                    },
+                    "down": {
+                      "texture": "#details",
+                      "uv": [
+                        29,
+                        0,
+                        29.5,
+                        0.5
+                      ],
+                      "autoUv": false,
+                      "enabled": true
+                    }
+                  },
+                  "renderPass": 0
+                }
+              ]
             },
-            "west": {
-              "texture": "#details",
-              "uv": [
-                24,
+            {
+              "name": "crystal_side_2_dir",
+              "from": [
                 0,
-                25.8,
-                2.5
+                0,
+                0
               ],
-              "autoUv": false,
-              "enabled": true
+              "to": [
+                0,
+                0,
+                0
+              ],
+              "rotationOrigin": [
+                8.0,
+                22.1,
+                8.0
+              ],
+              "rotationY": 190,
+              "faces": {},
+              "children": [
+                {
+                  "name": "crystal_side_2",
+                  "from": [
+                    8.0,
+                    20.7,
+                    7.7
+                  ],
+                  "to": [
+                    8.6,
+                    22.3,
+                    8.3
+                  ],
+                  "rotationOrigin": [
+                    8.3,
+                    22.1,
+                    8.0
+                  ],
+                  "rotationZ": 22,
+                  "faces": {
+                    "north": {
+                      "texture": "#details",
+                      "uv": [
+                        24,
+                        0,
+                        24.6,
+                        1.6
+                      ],
+                      "autoUv": false,
+                      "enabled": true
+                    },
+                    "east": {
+                      "texture": "#details",
+                      "uv": [
+                        25.2,
+                        0,
+                        25.8,
+                        1.6
+                      ],
+                      "autoUv": false,
+                      "enabled": true
+                    },
+                    "south": {
+                      "texture": "#details",
+                      "uv": [
+                        26.4,
+                        0,
+                        27.0,
+                        1.6
+                      ],
+                      "autoUv": false,
+                      "enabled": true
+                    },
+                    "west": {
+                      "texture": "#details",
+                      "uv": [
+                        27.6,
+                        0,
+                        28.200000000000003,
+                        1.6
+                      ],
+                      "autoUv": false,
+                      "enabled": true
+                    },
+                    "down": {
+                      "texture": "#details",
+                      "uv": [
+                        29,
+                        0,
+                        29.6,
+                        0.6
+                      ],
+                      "autoUv": false,
+                      "enabled": true
+                    }
+                  },
+                  "renderPass": 0
+                }
+              ]
             },
-            "down": {
-              "texture": "#details",
-              "uv": [
-                24,
+            {
+              "name": "crystal_side_3_dir",
+              "from": [
                 0,
-                25.8,
-                1.8000000000000007
+                0,
+                0
               ],
-              "autoUv": false,
-              "enabled": true
+              "to": [
+                0,
+                0,
+                0
+              ],
+              "rotationOrigin": [
+                8.0,
+                22.1,
+                8.0
+              ],
+              "rotationY": 280,
+              "faces": {},
+              "children": [
+                {
+                  "name": "crystal_side_3",
+                  "from": [
+                    8.075,
+                    21.1,
+                    7.775
+                  ],
+                  "to": [
+                    8.525,
+                    22.3,
+                    8.225
+                  ],
+                  "rotationOrigin": [
+                    8.3,
+                    22.1,
+                    8.0
+                  ],
+                  "rotationZ": 34,
+                  "faces": {
+                    "north": {
+                      "texture": "#details",
+                      "uv": [
+                        24,
+                        0,
+                        24.45,
+                        1.2
+                      ],
+                      "autoUv": false,
+                      "enabled": true
+                    },
+                    "east": {
+                      "texture": "#details",
+                      "uv": [
+                        25.2,
+                        0,
+                        25.65,
+                        1.2
+                      ],
+                      "autoUv": false,
+                      "enabled": true
+                    },
+                    "south": {
+                      "texture": "#details",
+                      "uv": [
+                        26.4,
+                        0,
+                        26.849999999999998,
+                        1.2
+                      ],
+                      "autoUv": false,
+                      "enabled": true
+                    },
+                    "west": {
+                      "texture": "#details",
+                      "uv": [
+                        27.6,
+                        0,
+                        28.05,
+                        1.2
+                      ],
+                      "autoUv": false,
+                      "enabled": true
+                    },
+                    "down": {
+                      "texture": "#details",
+                      "uv": [
+                        29,
+                        0,
+                        29.45,
+                        0.45
+                      ],
+                      "autoUv": false,
+                      "enabled": true
+                    }
+                  },
+                  "renderPass": 0
+                }
+              ]
             }
-          },
-          "rotationY": 45,
-          "renderPass": 0
+          ]
         }
       ]
     },
@@ -4403,16 +5335,16 @@
           "renderPass": 0
         },
         {
-          "name": "chamber_roof_0",
+          "name": "chamber_roof_0n",
           "from": [
             4.075,
             25.266,
-            1.2017005802921572
+            1.2017
           ],
           "to": [
             11.925,
             26.016,
-            14.798299419707842
+            6.55
           ],
           "rotationOrigin": [
             8,
@@ -4448,7 +5380,7 @@
                 0,
                 0,
                 7.8500000000000005,
-                13.596598839415684
+                5.3483
               ],
               "autoUv": false,
               "enabled": true
@@ -4459,7 +5391,7 @@
                 0,
                 0,
                 7.8500000000000005,
-                13.596598839415684
+                5.3483
               ],
               "autoUv": false,
               "enabled": true
@@ -4468,16 +5400,81 @@
           "renderPass": 0
         },
         {
-          "name": "chamber_roof_1",
+          "name": "chamber_roof_0s",
+          "from": [
+            4.075,
+            25.266,
+            9.45
+          ],
+          "to": [
+            11.925,
+            26.016,
+            14.7983
+          ],
+          "rotationOrigin": [
+            8,
+            0,
+            8
+          ],
+          "faces": {
+            "north": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                7.8500000000000005,
+                0.75
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "south": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                7.8500000000000005,
+                0.75
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "up": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                8.2483,
+                7.8500000000000005,
+                13.5966
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "down": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                8.2483,
+                7.8500000000000005,
+                13.5966
+              ],
+              "autoUv": false,
+              "enabled": true
+            }
+          },
+          "renderPass": 0
+        },
+        {
+          "name": "chamber_roof_1n",
           "from": [
             4.075,
             25.267,
-            1.2017005802921572
+            1.2017
           ],
           "to": [
             11.925,
             26.017,
-            14.798299419707842
+            6.55
           ],
           "rotationOrigin": [
             8,
@@ -4513,7 +5510,7 @@
                 0,
                 0,
                 7.8500000000000005,
-                13.596598839415684
+                5.3483
               ],
               "autoUv": false,
               "enabled": true
@@ -4524,7 +5521,7 @@
                 0,
                 0,
                 7.8500000000000005,
-                13.596598839415684
+                5.3483
               ],
               "autoUv": false,
               "enabled": true
@@ -4534,16 +5531,82 @@
           "renderPass": 0
         },
         {
-          "name": "chamber_roof_2",
+          "name": "chamber_roof_1s",
+          "from": [
+            4.075,
+            25.267,
+            9.45
+          ],
+          "to": [
+            11.925,
+            26.017,
+            14.7983
+          ],
+          "rotationOrigin": [
+            8,
+            0,
+            8
+          ],
+          "faces": {
+            "north": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                7.8500000000000005,
+                0.75
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "south": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                7.8500000000000005,
+                0.75
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "up": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                8.2483,
+                7.8500000000000005,
+                13.5966
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "down": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                8.2483,
+                7.8500000000000005,
+                13.5966
+              ],
+              "autoUv": false,
+              "enabled": true
+            }
+          },
+          "rotationY": 60,
+          "renderPass": 0
+        },
+        {
+          "name": "chamber_roof_2n",
           "from": [
             4.075,
             25.267999999999997,
-            1.2017005802921572
+            1.2017
           ],
           "to": [
             11.925,
             26.017999999999997,
-            14.798299419707842
+            6.55
           ],
           "rotationOrigin": [
             8,
@@ -4579,7 +5642,7 @@
                 0,
                 0,
                 7.8500000000000005,
-                13.596598839415684
+                5.3483
               ],
               "autoUv": false,
               "enabled": true
@@ -4590,7 +5653,7 @@
                 0,
                 0,
                 7.8500000000000005,
-                13.596598839415684
+                5.3483
               ],
               "autoUv": false,
               "enabled": true
@@ -4600,16 +5663,82 @@
           "renderPass": 0
         },
         {
-          "name": "chamber_roof_bead_0",
+          "name": "chamber_roof_2s",
+          "from": [
+            4.075,
+            25.267999999999997,
+            9.45
+          ],
+          "to": [
+            11.925,
+            26.017999999999997,
+            14.7983
+          ],
+          "rotationOrigin": [
+            8,
+            0,
+            8
+          ],
+          "faces": {
+            "north": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                7.8500000000000005,
+                0.75
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "south": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                7.8500000000000005,
+                0.75
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "up": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                8.2483,
+                7.8500000000000005,
+                13.5966
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "down": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                8.2483,
+                7.8500000000000005,
+                13.5966
+              ],
+              "autoUv": false,
+              "enabled": true
+            }
+          },
+          "rotationY": 120,
+          "renderPass": 0
+        },
+        {
+          "name": "chamber_roof_bead_0n",
           "from": [
             4.2,
             26.016,
-            1.4182069312382666
+            1.4182
           ],
           "to": [
             11.8,
             26.266,
-            14.581793068761733
+            6.55
           ],
           "faces": {
             "north": {
@@ -4640,7 +5769,7 @@
                 0,
                 0,
                 7.6000000000000005,
-                13.163586137523467
+                5.1318
               ],
               "autoUv": false,
               "enabled": true
@@ -4655,16 +5784,71 @@
           "renderPass": 0
         },
         {
-          "name": "chamber_roof_bead_1",
+          "name": "chamber_roof_bead_0s",
+          "from": [
+            4.2,
+            26.016,
+            9.45
+          ],
+          "to": [
+            11.8,
+            26.266,
+            14.5818
+          ],
+          "faces": {
+            "north": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                7.6000000000000005,
+                0.25
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "south": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                7.6000000000000005,
+                0.25
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "up": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                8.0318,
+                7.6000000000000005,
+                13.1636
+              ],
+              "autoUv": false,
+              "enabled": true
+            }
+          },
+          "rotationOrigin": [
+            8,
+            0,
+            8
+          ],
+          "rotationY": 0,
+          "renderPass": 0
+        },
+        {
+          "name": "chamber_roof_bead_1n",
           "from": [
             4.2,
             26.017,
-            1.4182069312382666
+            1.4182
           ],
           "to": [
             11.8,
             26.267,
-            14.581793068761733
+            6.55
           ],
           "faces": {
             "north": {
@@ -4695,7 +5879,7 @@
                 0,
                 0,
                 7.6000000000000005,
-                13.163586137523467
+                5.1318
               ],
               "autoUv": false,
               "enabled": true
@@ -4710,16 +5894,71 @@
           "renderPass": 0
         },
         {
-          "name": "chamber_roof_bead_2",
+          "name": "chamber_roof_bead_1s",
+          "from": [
+            4.2,
+            26.017,
+            9.45
+          ],
+          "to": [
+            11.8,
+            26.267,
+            14.5818
+          ],
+          "faces": {
+            "north": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                7.6000000000000005,
+                0.25
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "south": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                7.6000000000000005,
+                0.25
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "up": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                8.0318,
+                7.6000000000000005,
+                13.1636
+              ],
+              "autoUv": false,
+              "enabled": true
+            }
+          },
+          "rotationOrigin": [
+            8,
+            0,
+            8
+          ],
+          "rotationY": 60,
+          "renderPass": 0
+        },
+        {
+          "name": "chamber_roof_bead_2n",
           "from": [
             4.2,
             26.017999999999997,
-            1.4182069312382666
+            1.4182
           ],
           "to": [
             11.8,
             26.267999999999997,
-            14.581793068761733
+            6.55
           ],
           "faces": {
             "north": {
@@ -4750,7 +5989,62 @@
                 0,
                 0,
                 7.6000000000000005,
-                13.163586137523467
+                5.1318
+              ],
+              "autoUv": false,
+              "enabled": true
+            }
+          },
+          "rotationOrigin": [
+            8,
+            0,
+            8
+          ],
+          "rotationY": 120,
+          "renderPass": 0
+        },
+        {
+          "name": "chamber_roof_bead_2s",
+          "from": [
+            4.2,
+            26.017999999999997,
+            9.45
+          ],
+          "to": [
+            11.8,
+            26.267999999999997,
+            14.5818
+          ],
+          "faces": {
+            "north": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                7.6000000000000005,
+                0.25
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "south": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                7.6000000000000005,
+                0.25
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "up": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                8.0318,
+                7.6000000000000005,
+                13.1636
               ],
               "autoUv": false,
               "enabled": true

@@ -3,51 +3,51 @@
   "class": "ProgramTube",
   "maxStackSize": 1,
   "shape": {
-    "base": "signalsmachines:item/programtube"
+    "base": "signalstubes:item/programtube"
   },
   "textures": {
     "tube-metal": {
-      "base": "signalsmachines:block/axle-iron"
+      "base": "signalstubes:block/axle-iron"
     },
     "tube-ceramic": {
-      "base": "signalsmachines:block/tube-board-light"
+      "base": "signalstubes:block/tube-board-light"
     },
     "tube-board": {
-      "base": "signalsmachines:block/tube-board-light"
+      "base": "signalstubes:block/tube-board-light"
     },
     "tube-glass": {
-      "base": "signalsmachines:block/glass-plain"
+      "base": "signalstubes:block/glass-plain"
     },
     "tube-red": {
-      "base": "signalsmachines:block/copper"
+      "base": "signalstubes:block/copper"
     },
     "tube-blue": {
-      "base": "signalsmachines:block/col51"
+      "base": "signalstubes:block/col51"
     },
     "tube-yellow": {
-      "base": "signalsmachines:block/brass"
+      "base": "signalstubes:block/brass"
     },
     "tube-dark": {
-      "base": "signalsmachines:block/iron"
+      "base": "signalstubes:block/iron"
     }
   },
   "creativeinventory": {
     "general": [
       "*"
     ],
-    "signalsmachines": [
+    "signalstubes": [
       "*"
     ]
   },
   "creativeinventoryStacks": [
     {
       "tabs": [
-        "signalsmachines"
+        "signalstubes"
       ],
       "stacks": [
         {
           "type": "item",
-          "code": "signalsmachines:programtube",
+          "code": "signalstubes:programtube",
           "attributes": {
             "programId": "demo-sequencer",
             "programName": "Sequencer",
@@ -56,7 +56,7 @@
         },
         {
           "type": "item",
-          "code": "signalsmachines:programtube",
+          "code": "signalstubes:programtube",
           "attributes": {
             "programId": "demo-regulator",
             "programName": "Regulator",
