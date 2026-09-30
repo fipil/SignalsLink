@@ -1,0 +1,58 @@
+[
+  {
+    "code": "tubebase-dyed",
+    "sealHours": 8,
+    "ingredients": [
+      {
+        "type": "item",
+        "code": "game:dye-*",
+        "name": "dye",
+        "litres": 1,
+        "consumelitres": 1,
+        "allowedVariants": [
+          "blue",
+          "red",
+          "yellow",
+          "purple",
+          "green",
+          "orange",
+          "black",
+          "gray",
+          "pink"
+        ]
+      },
+      {
+        "type": "item",
+        "code": "signalstubes:tubebase-cream",
+        "quantity": 1
+      }
+    ],
+    "output": {
+      "type": "item",
+      "code": "signalstubes:tubebase-dyed{dye}",
+      "stackSize": 1
+    }
+  },
+  {
+    "code": "tubebase-dyed",
+    "sealHours": 8,
+    "ingredients": [
+      {
+        "type": "item",
+        "code": "game:dye-woad",
+        "litres": 1,
+        "consumelitres": 1
+      },
+      {
+        "type": "item",
+        "code": "signalstubes:tubebase-cream",
+        "quantity": 1
+      }
+    ],
+    "output": {
+      "type": "item",
+      "code": "signalstubes:tubebase-dyedblue",
+      "stackSize": 1
+    }
+  }
+]

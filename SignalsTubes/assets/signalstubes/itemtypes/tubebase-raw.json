@@ -1,0 +1,156 @@
+{
+  "code": "tubebase-raw",
+  "maxStackSize": 16,
+  "variantgroups": [
+    {
+      "code": "clay",
+      "states": [
+        "blue",
+        "fire",
+        "red"
+      ]
+    }
+  ],
+  "behaviors": [
+    {
+      "name": "GroundStorable",
+      "properties": {
+        "layout": "Quadrants",
+        "collisionBox": {
+          "x1": 0,
+          "y1": 0,
+          "z1": 0,
+          "x2": 1,
+          "y2": 0.15,
+          "z2": 1
+        }
+      }
+    }
+  ],
+  "shape": {
+    "base": "signalstubes:item/tubebase"
+  },
+  "textures": {
+    "tube-base": {
+      "base": "signalstubes:block/tube-base-raw-{clay}"
+    }
+  },
+  "creativeinventory": {
+    "general": [
+      "*"
+    ],
+    "signalstubes": [
+      "*"
+    ]
+  },
+  "combustiblePropsByType": {
+    "*-blue": {
+      "meltingPoint": 600,
+      "meltingDuration": 30,
+      "smeltedRatio": 1,
+      "smeltingType": "fire",
+      "requiresContainer": false,
+      "smeltedStack": {
+        "type": "item",
+        "code": "tubebase-blue"
+      }
+    },
+    "*-fire": {
+      "meltingPoint": 600,
+      "meltingDuration": 30,
+      "smeltedRatio": 1,
+      "smeltingType": "fire",
+      "requiresContainer": false,
+      "smeltedStack": {
+        "type": "item",
+        "code": "tubebase-fire"
+      }
+    },
+    "*-red": {
+      "meltingPoint": 600,
+      "meltingDuration": 30,
+      "smeltedRatio": 1,
+      "smeltingType": "fire",
+      "requiresContainer": false,
+      "smeltedStack": {
+        "type": "item",
+        "code": "tubebase-earthyorange"
+      }
+    }
+  },
+  "attributesByType": {
+    "*-red": {
+      "beehivekiln": {
+        "0": {
+          "type": "item",
+          "code": "tubebase-tan"
+        },
+        "1": {
+          "type": "item",
+          "code": "tubebase-orange"
+        },
+        "2": {
+          "type": "item",
+          "code": "tubebase-red"
+        },
+        "3": {
+          "type": "item",
+          "code": "tubebase-brown"
+        }
+      }
+    },
+    "*-blue": {
+      "beehivekiln": {
+        "0": {
+          "type": "item",
+          "code": "tubebase-cream"
+        },
+        "1": {
+          "type": "item",
+          "code": "tubebase-gray"
+        },
+        "2": {
+          "type": "item",
+          "code": "tubebase-black"
+        },
+        "3": {
+          "type": "item",
+          "code": "tubebase-black"
+        }
+      }
+    },
+    "*-fire": {
+      "beehivekiln": {
+        "0": {
+          "type": "item",
+          "code": "tubebase-fire"
+        },
+        "1": {
+          "type": "item",
+          "code": "tubebase-fire"
+        },
+        "2": {
+          "type": "item",
+          "code": "tubebase-fire"
+        },
+        "3": {
+          "type": "item",
+          "code": "tubebase-fire"
+        }
+      }
+    }
+  },
+  "guiTransform": {
+    "origin": {
+      "x": 0.5,
+      "y": 0.1,
+      "z": 0.5
+    },
+    "rotation": {
+      "x": 157.4,
+      "y": -45.3,
+      "z": 0
+    },
+    "scale": 2.2
+  }
+}

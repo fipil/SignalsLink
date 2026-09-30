@@ -1,0 +1,26 @@
+{
+  "ingredientPattern": "BCG",
+  "width": 3,
+  "height": 1,
+  "shapeless": true,
+  "ingredients": {
+    "B": {
+      "type": "item",
+      "code": "signalstubes:tubebase-*",
+      "name": "color"
+    },
+    "C": {
+      "type": "item",
+      "code": "signalstubes:tubecore"
+    },
+    "G": {
+      "type": "item",
+      "code": "signals:glass_bulb"
+    }
+  },
+  "output": {
+    "type": "item",
+    "code": "signalstubes:programtube-{color}",
+    "quantity": 1
+  }
+}

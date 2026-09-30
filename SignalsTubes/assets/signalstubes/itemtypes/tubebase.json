@@ -1,0 +1,75 @@
+{
+  "code": "tubebase",
+  "maxStackSize": 16,
+  "variantgroups": [
+    {
+      "code": "color",
+      "states": [
+        "blue",
+        "fire",
+        "black",
+        "brown",
+        "cream",
+        "earthyorange",
+        "gray",
+        "orange",
+        "red",
+        "tan",
+        "dyedblue",
+        "dyedred",
+        "dyedyellow",
+        "dyedpurple",
+        "dyedgreen",
+        "dyedorange",
+        "dyedblack",
+        "dyedgray",
+        "dyedpink"
+      ]
+    }
+  ],
+  "behaviors": [
+    {
+      "name": "GroundStorable",
+      "properties": {
+        "layout": "Quadrants",
+        "collisionBox": {
+          "x1": 0,
+          "y1": 0,
+          "z1": 0,
+          "x2": 1,
+          "y2": 0.15,
+          "z2": 1
+        }
+      }
+    }
+  ],
+  "shape": {
+    "base": "signalstubes:item/tubebase"
+  },
+  "textures": {
+    "tube-base": {
+      "base": "signalstubes:block/tube-base-{color}"
+    }
+  },
+  "creativeinventory": {
+    "general": [
+      "*"
+    ],
+    "signalstubes": [
+      "*"
+    ]
+  },
+  "guiTransform": {
+    "origin": {
+      "x": 0.5,
+      "y": 0.1,
+      "z": 0.5
+    },
+    "rotation": {
+      "x": 157.4,
+      "y": -45.3,
+      "z": 0
+    },
+    "scale": 2.2
+  }
+}

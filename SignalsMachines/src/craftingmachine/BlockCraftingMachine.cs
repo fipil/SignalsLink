@@ -83,7 +83,7 @@ namespace SignalsMachines.src.craftingmachine
                 return base.GetPlacedBlockInteractionHelp(world, selection, player);
             var be = world.BlockAccessor.GetBlockEntity(selection.Position) as BECraftingMachine;
             bool hasTube = be?.HasTube == true;
-            var tube = world.GetItem(new AssetLocation("signalstubes:programtube"));
+            var tube = world.GetItem(new AssetLocation("signalstubes:programtube-fire"));
             return new[] { new WorldInteraction {
                 ActionLangCode = hasTube ? "signalsmachines:socket-remove" : "signalsmachines:socket-insert",
                 MouseButton = EnumMouseButton.Right,

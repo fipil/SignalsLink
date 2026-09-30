@@ -1,0 +1,36 @@
+{
+  "code": "tubecore",
+  "maxStackSize": 16,
+  "shape": {
+    "base": "signalstubes:item/tubecore"
+  },
+  "textures": {
+    "tube-dark": {
+      "base": "signalstubes:block/iron"
+    },
+    "tube-metal": {
+      "base": "signalstubes:block/axle-iron"
+    }
+  },
+  "creativeinventory": {
+    "general": [
+      "*"
+    ],
+    "signalstubes": [
+      "*"
+    ]
+  },
+  "guiTransform": {
+    "origin": {
+      "x": 0.5,
+      "y": 0.3,
+      "z": 0.5
+    },
+    "rotation": {
+      "x": 157.4,
+      "y": -45.3,
+      "z": 0
+    },
+    "scale": 1.6
+  }
+}

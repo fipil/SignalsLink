@@ -1,0 +1,148 @@
+using ProtoBuf;
+using Vintagestory.API.Client;
+using Vintagestory.API.Common;
+using Vintagestory.API.Config;
+using Vintagestory.API.MathTools;
+using Vintagestory.API.Server;
+
+namespace SignalsTubes.src.imprint;
+
+[ProtoContract]
+public class ProbeMarkPacket
+{
+    [ProtoMember(1)] public int ImprinterX;
+    [ProtoMember(2)] public int ImprinterY;
+    [ProtoMember(3)] public int ImprinterZ;
+    [ProtoMember(4)] public int TargetX;
+    [ProtoMember(5)] public int TargetY;
+    [ProtoMember(6)] public int TargetZ;
+    [ProtoMember(7)] public bool FromDialog;   // no probe in hand then; the open dialog is the authority
+}
+
+/// <summary>Client asks for the dialog state of the imprinter at X/Y/Z.</summary>
+[ProtoContract]
+public class ImprinterOpenPacket
+{
+    [ProtoMember(1)] public int X;
+    [ProtoMember(2)] public int Y;
+    [ProtoMember(3)] public int Z;
+}
+
+/// <summary>Server answers with the dialog state as JSON (see BEImprinter.StateJson).</summary>
+[ProtoContract]
+public class ImprinterStatePacket
+{
+    [ProtoMember(1)] public int X;
+    [ProtoMember(2)] public int Y;
+    [ProtoMember(3)] public int Z;
+    [ProtoMember(4)] public string Json;
+}
+
+/// <summary>Client sends the edits and asks to imprint.</summary>
+[ProtoContract]
+public class ImprintPacket
+{
+    [ProtoMember(1)] public int X;
+    [ProtoMember(2)] public int Y;
+    [ProtoMember(3)] public int Z;
+    [ProtoMember(4)] public string Json;
+}
+
+/// <summary>
+/// Network side of the imprinter: the probe's marking click (caught before the block sees it, so a
+/// switch is not flipped), the dialog state, and the imprint request.
+/// </summary>
+public static class ImprinterNetwork
+{
+    public const string Channel = "signalstubes";
+    private static long lastClick;
+    private static readonly Dictionary<BlockPos, GuiDialogImprinter> dialogs = new();
+
+    public static void StartClient(ICoreClientAPI capi)
+    {
+        capi.Network.RegisterChannel(Channel)
+            .RegisterMessageType<ProbeMarkPacket>()
+            .RegisterMessageType<ImprinterOpenPacket>()
+            .RegisterMessageType<ImprinterStatePacket>()
+            .RegisterMessageType<ImprintPacket>()
+            .SetMessageHandler<ImprinterStatePacket>(packet =>
+            {
+                var pos = new BlockPos(packet.X, packet.Y, packet.Z);
+                if (!dialogs.TryGetValue(pos, out var dialog))
+                {
+                    dialog = new GuiDialogImprinter(pos, capi);
+                    dialog.OnClosed += () => dialogs.Remove(pos);
+                    dialogs[pos] = dialog;
+                }
+                dialog.SetState(packet.Json);
+            });
+
+        capi.Input.InWorldAction += (EnumEntityAction action, bool on, ref EnumHandling handled) =>
+        {
+            if (action != EnumEntityAction.InWorldRightMouseDown || !on) return;
+            var player = capi.World.Player;
+            var stack = player.InventoryManager.ActiveHotbarSlot?.Itemstack;
+            var sel = player.CurrentBlockSelection;
+            if (!ItemImprinterTool.IsProbe(stack) || sel == null) return;
+            if (!ItemImprinterTool.IsMarkable(capi.World.BlockAccessor.GetBlock(sel.Position))) return;
+            handled = EnumHandling.PreventDefault;
+            long now = capi.World.ElapsedMilliseconds;   // the action repeats while the button is held
+            if (now - lastClick < 400) return;
+            lastClick = now;
+            var imprinter = ItemImprinterTool.ImprinterOf(stack);
+            capi.Network.GetChannel(Channel).SendPacket(new ProbeMarkPacket {
+                ImprinterX = imprinter.X, ImprinterY = imprinter.Y, ImprinterZ = imprinter.Z,
+                TargetX = sel.Position.X, TargetY = sel.Position.Y, TargetZ = sel.Position.Z });
+        };
+    }
+
+    public static void ToggleMark(ICoreClientAPI capi, BlockPos imprinter, BlockPos target) =>
+        capi.Network.GetChannel(Channel).SendPacket(new ProbeMarkPacket {
+            ImprinterX = imprinter.X, ImprinterY = imprinter.Y, ImprinterZ = imprinter.Z,
+            TargetX = target.X, TargetY = target.Y, TargetZ = target.Z, FromDialog = true });
+
+    public static void OpenDialog(ICoreClientAPI capi, BlockPos pos) =>
+        capi.Network.GetChannel(Channel).SendPacket(new ImprinterOpenPacket { X = pos.X, Y = pos.Y, Z = pos.Z });
+
+    public static void StartServer(ICoreServerAPI sapi)
+    {
+        sapi.Network.RegisterChannel(Channel)
+            .RegisterMessageType<ProbeMarkPacket>()
+            .RegisterMessageType<ImprinterOpenPacket>()
+            .RegisterMessageType<ImprinterStatePacket>()
+            .RegisterMessageType<ImprintPacket>()
+            .SetMessageHandler<ProbeMarkPacket>((player, packet) =>
+            {
+                var imprinterPos = new BlockPos(packet.ImprinterX, packet.ImprinterY, packet.ImprinterZ);
+                var target = new BlockPos(packet.TargetX, packet.TargetY, packet.TargetZ);
+                if (packet.FromDialog ? !Reachable(player, imprinterPos)
+                    : !ItemImprinterTool.BelongsTo(player.InventoryManager.ActiveHotbarSlot?.Itemstack, BEImprinter.ProbeCode, imprinterPos)
+                      || player.Entity.ServerPos.DistanceTo(target.ToVec3d().Add(.5, .5, .5)) > 8) return;
+                if (!ItemImprinterTool.IsMarkable(sapi.World.BlockAccessor.GetBlock(target))) return;
+                if (sapi.World.BlockAccessor.GetBlockEntity(imprinterPos) is not BEImprinter imprinter) return;
+                bool marked = imprinter.ToggleExposed(target);
+                if (packet.FromDialog) return;
+                player.SendMessage(GlobalConstants.InfoLogChatGroup, Lang.Get(marked ? "signalstubes:imprint-marked" : "signalstubes:imprint-unmarked"), EnumChatType.Notification);
+            })
+            .SetMessageHandler<ImprinterOpenPacket>((player, packet) =>
+            {
+                var pos = new BlockPos(packet.X, packet.Y, packet.Z);
+                if (Reachable(player, pos) && sapi.World.BlockAccessor.GetBlockEntity(pos) is BEImprinter imprinter)
+                    SendState(sapi, player, imprinter, false);
+            })
+            .SetMessageHandler<ImprintPacket>((player, packet) =>
+            {
+                var pos = new BlockPos(packet.X, packet.Y, packet.Z);
+                if (!Reachable(player, pos) || sapi.World.BlockAccessor.GetBlockEntity(pos) is not BEImprinter imprinter) return;
+                bool done = imprinter.ApplyAndImprint(player, packet.Json);
+                SendState(sapi, player, imprinter, done);
+            });
+    }
+
+    private static bool Reachable(IServerPlayer player, BlockPos pos) =>
+        player.Entity.ServerPos.DistanceTo(pos.ToVec3d().Add(.5, .5, .5)) < 8;
+
+    public static void SendState(ICoreServerAPI sapi, IServerPlayer player, BEImprinter imprinter, bool done) =>
+        sapi.Network.GetChannel(Channel).SendPacket(new ImprinterStatePacket {
+            X = imprinter.Pos.X, Y = imprinter.Pos.Y, Z = imprinter.Pos.Z, Json = imprinter.StateJson(player, done) }, player);
+}

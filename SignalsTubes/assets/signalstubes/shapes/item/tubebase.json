@@ -1,0 +1,330 @@
+{
+  "editor": {
+    "allAngles": true,
+    "entityTextureMode": false
+  },
+  "textureWidth": 16,
+  "textureHeight": 16,
+  "textureSizes": {
+    "tube-base": [
+      16,
+      16
+    ]
+  },
+  "textures": {
+    "tube-base": "block/tube-base-fire"
+  },
+  "elements": [
+    {
+      "name": "base",
+      "from": [
+        4,
+        0,
+        4
+      ],
+      "to": [
+        12,
+        1.2,
+        12
+      ],
+      "faces": {
+        "north": {
+          "texture": "#tube-base",
+          "uv": [
+            0,
+            14,
+            8,
+            15.2
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#tube-base",
+          "uv": [
+            0,
+            14,
+            8,
+            15.2
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#tube-base",
+          "uv": [
+            0,
+            14,
+            8,
+            15.2
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#tube-base",
+          "uv": [
+            0,
+            14,
+            8,
+            15.2
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#tube-base",
+          "uv": [
+            0,
+            0,
+            8,
+            8
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      },
+      "renderPass": 0
+    },
+    {
+      "name": "rim_north",
+      "from": [
+        5,
+        1.2,
+        5
+      ],
+      "to": [
+        11,
+        2.3,
+        5.5
+      ],
+      "faces": {
+        "north": {
+          "texture": "#tube-base",
+          "uv": [
+            0,
+            14,
+            6,
+            15.1
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#tube-base",
+          "uv": [
+            0,
+            14,
+            6,
+            15.1
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#tube-base",
+          "uv": [
+            0,
+            14,
+            0.5,
+            15.1
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#tube-base",
+          "uv": [
+            0,
+            14,
+            0.5,
+            15.1
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#tube-base",
+          "uv": [
+            0,
+            14,
+            6,
+            14.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      },
+      "renderPass": 0
+    },
+    {
+      "name": "rim_south",
+      "from": [
+        5,
+        1.2,
+        10.5
+      ],
+      "to": [
+        11,
+        2.3,
+        11
+      ],
+      "faces": {
+        "north": {
+          "texture": "#tube-base",
+          "uv": [
+            0,
+            14,
+            6,
+            15.1
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#tube-base",
+          "uv": [
+            0,
+            14,
+            6,
+            15.1
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#tube-base",
+          "uv": [
+            0,
+            14,
+            0.5,
+            15.1
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#tube-base",
+          "uv": [
+            0,
+            14,
+            0.5,
+            15.1
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#tube-base",
+          "uv": [
+            0,
+            14,
+            6,
+            14.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      },
+      "renderPass": 0
+    },
+    {
+      "name": "rim_west",
+      "from": [
+        5,
+        1.2,
+        5.5
+      ],
+      "to": [
+        5.5,
+        2.3,
+        10.5
+      ],
+      "faces": {
+        "east": {
+          "texture": "#tube-base",
+          "uv": [
+            0,
+            14,
+            5.0,
+            15.1
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#tube-base",
+          "uv": [
+            0,
+            14,
+            5.0,
+            15.1
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#tube-base",
+          "uv": [
+            14,
+            0,
+            14.5,
+            5.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      },
+      "renderPass": 0
+    },
+    {
+      "name": "rim_east",
+      "from": [
+        10.5,
+        1.2,
+        5.5
+      ],
+      "to": [
+        11,
+        2.3,
+        10.5
+      ],
+      "faces": {
+        "east": {
+          "texture": "#tube-base",
+          "uv": [
+            0,
+            14,
+            5.0,
+            15.1
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#tube-base",
+          "uv": [
+            0,
+            14,
+            5.0,
+            15.1
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#tube-base",
+          "uv": [
+            14,
+            0,
+            14.5,
+            5.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      },
+      "renderPass": 0
+    }
+  ]
+}

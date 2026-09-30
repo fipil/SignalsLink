@@ -1,5 +1,4 @@
 using System.Reflection;
-using Newtonsoft.Json;
 using SignalsMachines.src.craftingmachine;
 using SignalsTubes.src.programtube;
 using Vintagestory.API.Common;
@@ -20,44 +19,6 @@ public class ProgramTubeTests
         program.SetString("name", "Test");
         stack.Attributes["program"] = program;
         return stack;
-    }
-
-    [Fact]
-    public void ProgramFingerprintIgnoresPropertyOrderButDistinguishesPrograms()
-    {
-        var first = Program();
-        var second = Program();
-        var reordered = new TreeAttribute();
-        reordered.SetString("name", "Test");
-        reordered.SetInt("delay", 12);
-        second.Attributes["program"] = reordered;
-        Assert.Equal(TubeVisuals.Fingerprint(first), TubeVisuals.Fingerprint(second));
-        reordered.SetInt("delay", 13);
-        Assert.NotEqual(TubeVisuals.Fingerprint(first), TubeVisuals.Fingerprint(second));
-        Assert.NotEqual(TubeVisuals.Fingerprint(first), TubeVisuals.Fingerprint(Program("regulator")));
-    }
-
-    [Theory]
-    [InlineData(-1, 1)]
-    [InlineData(5, 5)]
-    [InlineData(9, 8)]
-    public void ShapeHasRequestedPerimeterPinsAndGlassAfterComponents(int requested, int expected)
-    {
-        var root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "../../../../SignalsTubes"));
-        var template = JsonConvert.DeserializeObject<Shape>(File.ReadAllText(Path.Combine(root, "assets/signalstubes/shapes/item/programtube.json")));
-        var stack = Program();
-        stack.Attributes.SetInt("pinCount", requested);
-        var shape = TubeVisuals.Build(template, stack);
-        var pins = shape.Elements.Where(e => e.Name.StartsWith("tube_pin_")).ToArray();
-        Assert.Equal(expected, pins.Length);
-        Assert.DoesNotContain(pins, e => Math.Abs((e.From[0]+e.To[0])/2-8) < .01 && Math.Abs((e.From[2]+e.To[2])/2-8) < .01);
-        Assert.Equal(8, template.Elements.Count(e => e.Name.StartsWith("tube_pin_")));
-        int glass = Array.FindIndex(shape.Elements, e => e.Name.StartsWith("bulb_"));
-        Assert.All(shape.Elements.Skip(glass), e => Assert.StartsWith("bulb_", e.Name));
-        var components = shape.Elements.Where(e => e.Name.StartsWith("component_")).ToArray();
-        Assert.Contains(components, e => e.To[2] == 7.5);
-        Assert.Contains(components, e => e.From[2] == 8.5);
-        Assert.All(components, e => Assert.All(e.FacesResolved, face => Assert.NotNull(face)));
     }
 
     [Fact]

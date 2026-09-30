@@ -1,0 +1,47 @@
+{
+  "ingredientPattern": "BWE,WQW,SIF",
+  "width": 3,
+  "height": 3,
+  "shapeless": false,
+  "ingredients": {
+    "B": {
+      "type": "item",
+      "code": "game:metalbit-bismuthbronze"
+    },
+    "E": {
+      "type": "item",
+      "code": "game:metalbit-electrum"
+    },
+    "W": {
+      "type": "item",
+      "code": "signals:el_wire"
+    },
+    "Q": {
+      "type": "item",
+      "code": "game:clearquartz"
+    },
+    "S": {
+      "type": "item",
+      "code": "game:solderbar-*",
+      "allowedVariants": [
+        "tin",
+        "silver"
+      ]
+    },
+    "I": {
+      "type": "item",
+      "code": "game:solderingiron",
+      "isTool": true,
+      "toolDurabilityCost": 10
+    },
+    "F": {
+      "type": "item",
+      "code": "game:ore-olivine"
+    }
+  },
+  "output": {
+    "type": "item",
+    "code": "signalstubes:tubecore",
+    "quantity": 1
+  }
+}

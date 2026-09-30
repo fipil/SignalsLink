@@ -2,6 +2,32 @@
   "code": "programtube",
   "class": "ProgramTube",
   "maxStackSize": 1,
+  "variantgroups": [
+    {
+      "code": "color",
+      "states": [
+        "blue",
+        "fire",
+        "black",
+        "brown",
+        "cream",
+        "earthyorange",
+        "gray",
+        "orange",
+        "red",
+        "tan",
+        "dyedblue",
+        "dyedred",
+        "dyedyellow",
+        "dyedpurple",
+        "dyedgreen",
+        "dyedorange",
+        "dyedblack",
+        "dyedgray",
+        "dyedpink"
+      ]
+    }
+  ],
   "shape": {
     "base": "signalstubes:item/programtube"
   },
@@ -9,26 +35,71 @@
     "tube-metal": {
       "base": "signalstubes:block/axle-iron"
     },
-    "tube-ceramic": {
-      "base": "signalstubes:block/tube-board-light"
-    },
-    "tube-board": {
-      "base": "signalstubes:block/tube-board-light"
+    "tube-dark": {
+      "base": "signalstubes:block/iron"
     },
     "tube-glass": {
       "base": "signalstubes:block/glass-plain"
     },
-    "tube-red": {
-      "base": "signalstubes:block/copper"
+    "tube-glyph": {
+      "base": "signalstubes:block/details"
     },
-    "tube-blue": {
-      "base": "signalstubes:block/col51"
+    "tube-base-blue": {
+      "base": "signalstubes:block/tube-base-blue"
     },
-    "tube-yellow": {
-      "base": "signalstubes:block/brass"
+    "tube-base-fire": {
+      "base": "signalstubes:block/tube-base-fire"
     },
-    "tube-dark": {
-      "base": "signalstubes:block/iron"
+    "tube-base-black": {
+      "base": "signalstubes:block/tube-base-black"
+    },
+    "tube-base-brown": {
+      "base": "signalstubes:block/tube-base-brown"
+    },
+    "tube-base-cream": {
+      "base": "signalstubes:block/tube-base-cream"
+    },
+    "tube-base-earthyorange": {
+      "base": "signalstubes:block/tube-base-earthyorange"
+    },
+    "tube-base-gray": {
+      "base": "signalstubes:block/tube-base-gray"
+    },
+    "tube-base-orange": {
+      "base": "signalstubes:block/tube-base-orange"
+    },
+    "tube-base-red": {
+      "base": "signalstubes:block/tube-base-red"
+    },
+    "tube-base-tan": {
+      "base": "signalstubes:block/tube-base-tan"
+    },
+    "tube-base-dyedblue": {
+      "base": "signalstubes:block/tube-base-dyedblue"
+    },
+    "tube-base-dyedred": {
+      "base": "signalstubes:block/tube-base-dyedred"
+    },
+    "tube-base-dyedyellow": {
+      "base": "signalstubes:block/tube-base-dyedyellow"
+    },
+    "tube-base-dyedpurple": {
+      "base": "signalstubes:block/tube-base-dyedpurple"
+    },
+    "tube-base-dyedgreen": {
+      "base": "signalstubes:block/tube-base-dyedgreen"
+    },
+    "tube-base-dyedorange": {
+      "base": "signalstubes:block/tube-base-dyedorange"
+    },
+    "tube-base-dyedblack": {
+      "base": "signalstubes:block/tube-base-dyedblack"
+    },
+    "tube-base-dyedgray": {
+      "base": "signalstubes:block/tube-base-dyedgray"
+    },
+    "tube-base-dyedpink": {
+      "base": "signalstubes:block/tube-base-dyedpink"
     }
   },
   "creativeinventory": {
@@ -39,33 +110,57 @@
       "*"
     ]
   },
-  "creativeinventoryStacks": [
-    {
-      "tabs": [
-        "signalstubes"
-      ],
-      "stacks": [
-        {
-          "type": "item",
-          "code": "signalstubes:programtube",
-          "attributes": {
-            "programId": "demo-sequencer",
-            "programName": "Sequencer",
-            "pinCount": 5
+  "creativeinventoryStacksByType": {
+    "*-fire": [
+      {
+        "tabs": [
+          "signalstubes"
+        ],
+        "stacks": [
+          {
+            "type": "item",
+            "code": "signalstubes:programtube-fire"
+          },
+          {
+            "type": "item",
+            "code": "signalstubes:programtube-fire",
+            "attributes": {
+              "programName": "Inverter",
+              "circuit": "{\"v\":1,\"n\":3,\"links\":[],\"parts\":[{\"k\":\"source\",\"n\":[1],\"p\":15},{\"k\":\"valve\",\"n\":[0,1,2]}],\"pins\":[{\"i\":0,\"r\":\"in\",\"n\":0},{\"i\":1,\"r\":\"out\",\"n\":2}]}",
+              "programDescription": "Output is on while the input is off."
+            }
+          },
+          {
+            "type": "item",
+            "code": "signalstubes:programtube-fire",
+            "attributes": {
+              "programName": "Clock",
+              "circuit": "{\"v\":1,\"n\":2,\"links\":[],\"parts\":[{\"k\":\"source\",\"n\":[0],\"p\":15},{\"k\":\"valve\",\"n\":[1,0,1]}],\"pins\":[{\"i\":0,\"r\":\"out\",\"n\":1}]}",
+              "programDescription": "Output flickers every step."
+            }
+          },
+          {
+            "type": "item",
+            "code": "signalstubes:programtube-fire",
+            "attributes": {
+              "programName": "Delay line",
+              "circuit": "{\"v\":1,\"n\":2,\"links\":[],\"parts\":[{\"k\":\"delay\",\"n\":[0,1],\"p\":2}],\"pins\":[{\"i\":0,\"r\":\"in\",\"n\":0},{\"i\":1,\"r\":\"out\",\"n\":1},{\"i\":2,\"r\":\"delay\",\"c\":0}]}",
+              "programDescription": "Passes the input on after a delay. Pin 3 sets the delay."
+            }
+          },
+          {
+            "type": "item",
+            "code": "signalstubes:programtube-fire",
+            "attributes": {
+              "programName": "Memory",
+              "circuit": "{\"v\":1,\"n\":3,\"links\":[],\"parts\":[{\"k\":\"source\",\"n\":[1],\"p\":15},{\"k\":\"toggle\",\"n\":[0,1,2]}],\"pins\":[{\"i\":0,\"r\":\"in\",\"n\":0},{\"i\":1,\"r\":\"out\",\"n\":2}]}",
+              "programDescription": "Every pulse on the input flips the output."
+            }
           }
-        },
-        {
-          "type": "item",
-          "code": "signalstubes:programtube",
-          "attributes": {
-            "programId": "demo-regulator",
-            "programName": "Regulator",
-            "pinCount": 8
-          }
-        }
-      ]
-    }
-  ],
+        ]
+      }
+    ]
+  },
   "guiTransform": {
     "origin": {
       "x": 0.5,
@@ -81,8 +176,5 @@
   },
   "groundTransform": {
     "scale": 1
-  },
-  "attributes": {
-    "pinCount": 8
   }
 }

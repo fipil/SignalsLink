@@ -6,678 +6,120 @@
   "textureWidth": 16,
   "textureHeight": 16,
   "textureSizes": {
-    "tube-metal": [
+    "oak": [
       16,
       16
     ],
-    "tube-base": [
+    "castiron": [
       16,
       16
     ],
-    "tube-dark": [
+    "socket-floor": [
       16,
       16
     ],
-    "tube-glass": [
+    "terminal": [
       16,
       16
     ],
-    "tube-glyph": [
-      32,
-      32
+    "cable": [
+      16,
+      16
+    ],
+    "metal": [
+      16,
+      16
+    ],
+    "cable-red": [
+      16,
+      16
     ]
   },
   "textures": {
-    "tube-metal": "block/axle-iron",
-    "tube-base": "block/tube-base-fire",
-    "tube-dark": "block/iron",
-    "tube-glass": "block/glass-plain",
-    "tube-glyph": "block/details"
+    "oak": "block/base-oak",
+    "castiron": "block/castironbrown",
+    "socket-floor": "block/socket-floor",
+    "terminal": "block/normal3",
+    "cable": "block/iron",
+    "metal": "block/axle-iron",
+    "cable-red": "block/cable-red"
   },
   "elements": [
     {
-      "name": "tube_pin_0",
+      "name": "plinth",
       "from": [
-        5.7,
+        1,
         0,
-        5.7
+        1
       ],
       "to": [
-        6.3,
-        2,
-        6.3
+        15,
+        1,
+        15
       ],
       "faces": {
         "north": {
-          "texture": "#tube-metal",
+          "texture": "#oak",
           "uv": [
             0,
-            0,
-            0.6,
-            2
-          ],
-          "autoUv": false,
-          "enabled": true
-        },
-        "south": {
-          "texture": "#tube-metal",
-          "uv": [
-            0,
-            0,
-            0.6,
-            2
-          ],
-          "autoUv": false,
-          "enabled": true
-        },
-        "east": {
-          "texture": "#tube-metal",
-          "uv": [
-            0,
-            0,
-            0.6,
-            2
-          ],
-          "autoUv": false,
-          "enabled": true
-        },
-        "west": {
-          "texture": "#tube-metal",
-          "uv": [
-            0,
-            0,
-            0.6,
-            2
-          ],
-          "autoUv": false,
-          "enabled": true
-        },
-        "down": {
-          "texture": "#tube-metal",
-          "uv": [
-            0,
-            0,
-            0.6,
-            0.6
-          ],
-          "autoUv": false,
-          "enabled": true
-        }
-      },
-      "renderPass": 0
-    },
-    {
-      "name": "tube_pin_1",
-      "from": [
-        7.7,
-        0,
-        5.7
-      ],
-      "to": [
-        8.3,
-        2,
-        6.3
-      ],
-      "faces": {
-        "north": {
-          "texture": "#tube-metal",
-          "uv": [
-            0,
-            0,
-            0.6,
-            2
-          ],
-          "autoUv": false,
-          "enabled": true
-        },
-        "south": {
-          "texture": "#tube-metal",
-          "uv": [
-            0,
-            0,
-            0.6,
-            2
-          ],
-          "autoUv": false,
-          "enabled": true
-        },
-        "east": {
-          "texture": "#tube-metal",
-          "uv": [
-            0,
-            0,
-            0.6,
-            2
-          ],
-          "autoUv": false,
-          "enabled": true
-        },
-        "west": {
-          "texture": "#tube-metal",
-          "uv": [
-            0,
-            0,
-            0.6,
-            2
-          ],
-          "autoUv": false,
-          "enabled": true
-        },
-        "down": {
-          "texture": "#tube-metal",
-          "uv": [
-            0,
-            0,
-            0.6,
-            0.6
-          ],
-          "autoUv": false,
-          "enabled": true
-        }
-      },
-      "renderPass": 0
-    },
-    {
-      "name": "tube_pin_2",
-      "from": [
-        9.7,
-        0,
-        5.7
-      ],
-      "to": [
-        10.3,
-        2,
-        6.3
-      ],
-      "faces": {
-        "north": {
-          "texture": "#tube-metal",
-          "uv": [
-            0,
-            0,
-            0.6,
-            2
-          ],
-          "autoUv": false,
-          "enabled": true
-        },
-        "south": {
-          "texture": "#tube-metal",
-          "uv": [
-            0,
-            0,
-            0.6,
-            2
-          ],
-          "autoUv": false,
-          "enabled": true
-        },
-        "east": {
-          "texture": "#tube-metal",
-          "uv": [
-            0,
-            0,
-            0.6,
-            2
-          ],
-          "autoUv": false,
-          "enabled": true
-        },
-        "west": {
-          "texture": "#tube-metal",
-          "uv": [
-            0,
-            0,
-            0.6,
-            2
-          ],
-          "autoUv": false,
-          "enabled": true
-        },
-        "down": {
-          "texture": "#tube-metal",
-          "uv": [
-            0,
-            0,
-            0.6,
-            0.6
-          ],
-          "autoUv": false,
-          "enabled": true
-        }
-      },
-      "renderPass": 0
-    },
-    {
-      "name": "tube_pin_3",
-      "from": [
-        9.7,
-        0,
-        7.7
-      ],
-      "to": [
-        10.3,
-        2,
-        8.3
-      ],
-      "faces": {
-        "north": {
-          "texture": "#tube-metal",
-          "uv": [
-            0,
-            0,
-            0.6,
-            2
-          ],
-          "autoUv": false,
-          "enabled": true
-        },
-        "south": {
-          "texture": "#tube-metal",
-          "uv": [
-            0,
-            0,
-            0.6,
-            2
-          ],
-          "autoUv": false,
-          "enabled": true
-        },
-        "east": {
-          "texture": "#tube-metal",
-          "uv": [
-            0,
-            0,
-            0.6,
-            2
-          ],
-          "autoUv": false,
-          "enabled": true
-        },
-        "west": {
-          "texture": "#tube-metal",
-          "uv": [
-            0,
-            0,
-            0.6,
-            2
-          ],
-          "autoUv": false,
-          "enabled": true
-        },
-        "down": {
-          "texture": "#tube-metal",
-          "uv": [
-            0,
-            0,
-            0.6,
-            0.6
-          ],
-          "autoUv": false,
-          "enabled": true
-        }
-      },
-      "renderPass": 0
-    },
-    {
-      "name": "tube_pin_4",
-      "from": [
-        9.7,
-        0,
-        9.7
-      ],
-      "to": [
-        10.3,
-        2,
-        10.3
-      ],
-      "faces": {
-        "north": {
-          "texture": "#tube-metal",
-          "uv": [
-            0,
-            0,
-            0.6,
-            2
-          ],
-          "autoUv": false,
-          "enabled": true
-        },
-        "south": {
-          "texture": "#tube-metal",
-          "uv": [
-            0,
-            0,
-            0.6,
-            2
-          ],
-          "autoUv": false,
-          "enabled": true
-        },
-        "east": {
-          "texture": "#tube-metal",
-          "uv": [
-            0,
-            0,
-            0.6,
-            2
-          ],
-          "autoUv": false,
-          "enabled": true
-        },
-        "west": {
-          "texture": "#tube-metal",
-          "uv": [
-            0,
-            0,
-            0.6,
-            2
-          ],
-          "autoUv": false,
-          "enabled": true
-        },
-        "down": {
-          "texture": "#tube-metal",
-          "uv": [
-            0,
-            0,
-            0.6,
-            0.6
-          ],
-          "autoUv": false,
-          "enabled": true
-        }
-      },
-      "renderPass": 0
-    },
-    {
-      "name": "tube_pin_5",
-      "from": [
-        7.7,
-        0,
-        9.7
-      ],
-      "to": [
-        8.3,
-        2,
-        10.3
-      ],
-      "faces": {
-        "north": {
-          "texture": "#tube-metal",
-          "uv": [
-            0,
-            0,
-            0.6,
-            2
-          ],
-          "autoUv": false,
-          "enabled": true
-        },
-        "south": {
-          "texture": "#tube-metal",
-          "uv": [
-            0,
-            0,
-            0.6,
-            2
-          ],
-          "autoUv": false,
-          "enabled": true
-        },
-        "east": {
-          "texture": "#tube-metal",
-          "uv": [
-            0,
-            0,
-            0.6,
-            2
-          ],
-          "autoUv": false,
-          "enabled": true
-        },
-        "west": {
-          "texture": "#tube-metal",
-          "uv": [
-            0,
-            0,
-            0.6,
-            2
-          ],
-          "autoUv": false,
-          "enabled": true
-        },
-        "down": {
-          "texture": "#tube-metal",
-          "uv": [
-            0,
-            0,
-            0.6,
-            0.6
-          ],
-          "autoUv": false,
-          "enabled": true
-        }
-      },
-      "renderPass": 0
-    },
-    {
-      "name": "tube_pin_6",
-      "from": [
-        5.7,
-        0,
-        9.7
-      ],
-      "to": [
-        6.3,
-        2,
-        10.3
-      ],
-      "faces": {
-        "north": {
-          "texture": "#tube-metal",
-          "uv": [
-            0,
-            0,
-            0.6,
-            2
-          ],
-          "autoUv": false,
-          "enabled": true
-        },
-        "south": {
-          "texture": "#tube-metal",
-          "uv": [
-            0,
-            0,
-            0.6,
-            2
-          ],
-          "autoUv": false,
-          "enabled": true
-        },
-        "east": {
-          "texture": "#tube-metal",
-          "uv": [
-            0,
-            0,
-            0.6,
-            2
-          ],
-          "autoUv": false,
-          "enabled": true
-        },
-        "west": {
-          "texture": "#tube-metal",
-          "uv": [
-            0,
-            0,
-            0.6,
-            2
-          ],
-          "autoUv": false,
-          "enabled": true
-        },
-        "down": {
-          "texture": "#tube-metal",
-          "uv": [
-            0,
-            0,
-            0.6,
-            0.6
-          ],
-          "autoUv": false,
-          "enabled": true
-        }
-      },
-      "renderPass": 0
-    },
-    {
-      "name": "tube_pin_7",
-      "from": [
-        5.7,
-        0,
-        7.7
-      ],
-      "to": [
-        6.3,
-        2,
-        8.3
-      ],
-      "faces": {
-        "north": {
-          "texture": "#tube-metal",
-          "uv": [
-            0,
-            0,
-            0.6,
-            2
-          ],
-          "autoUv": false,
-          "enabled": true
-        },
-        "south": {
-          "texture": "#tube-metal",
-          "uv": [
-            0,
-            0,
-            0.6,
-            2
-          ],
-          "autoUv": false,
-          "enabled": true
-        },
-        "east": {
-          "texture": "#tube-metal",
-          "uv": [
-            0,
-            0,
-            0.6,
-            2
-          ],
-          "autoUv": false,
-          "enabled": true
-        },
-        "west": {
-          "texture": "#tube-metal",
-          "uv": [
-            0,
-            0,
-            0.6,
-            2
-          ],
-          "autoUv": false,
-          "enabled": true
-        },
-        "down": {
-          "texture": "#tube-metal",
-          "uv": [
-            0,
-            0,
-            0.6,
-            0.6
-          ],
-          "autoUv": false,
-          "enabled": true
-        }
-      },
-      "renderPass": 0
-    },
-    {
-      "name": "tube_base",
-      "from": [
-        4,
-        2,
-        4
-      ],
-      "to": [
-        12,
-        3.2,
-        12
-      ],
-      "faces": {
-        "north": {
-          "texture": "#tube-base",
-          "uv": [
             0,
             14,
-            8,
-            15.2
+            1
           ],
           "autoUv": false,
           "enabled": true
         },
         "south": {
-          "texture": "#tube-base",
+          "texture": "#oak",
           "uv": [
             0,
+            0,
             14,
-            8,
-            15.2
+            1
           ],
           "autoUv": false,
           "enabled": true
         },
         "east": {
-          "texture": "#tube-base",
+          "texture": "#oak",
           "uv": [
             0,
+            0,
             14,
-            8,
-            15.2
+            1
           ],
           "autoUv": false,
           "enabled": true
         },
         "west": {
-          "texture": "#tube-base",
+          "texture": "#oak",
           "uv": [
             0,
+            0,
             14,
-            8,
-            15.2
+            1
           ],
           "autoUv": false,
           "enabled": true
         },
         "up": {
-          "texture": "#tube-base",
+          "texture": "#oak",
           "uv": [
             0,
             0,
-            8,
-            8
+            14,
+            14
           ],
           "autoUv": false,
           "enabled": true
         },
         "down": {
-          "texture": "#tube-base",
+          "texture": "#oak",
           "uv": [
             0,
             0,
-            8,
-            8
+            14,
+            14
           ],
           "autoUv": false,
           "enabled": true
@@ -686,140 +128,233 @@
       "renderPass": 0
     },
     {
-      "name": "tube_rim_north",
+      "name": "cabinet",
+      "from": [
+        2,
+        1,
+        2
+      ],
+      "to": [
+        14,
+        10,
+        14
+      ],
+      "faces": {
+        "north": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            12,
+            9
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            12,
+            9
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            12,
+            9
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            12,
+            9
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            12,
+            12
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "down": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            12,
+            12
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      },
+      "renderPass": 0
+    },
+    {
+      "name": "lid",
+      "from": [
+        1.5,
+        10,
+        1.5
+      ],
+      "to": [
+        14.5,
+        10.6,
+        14.5
+      ],
+      "faces": {
+        "north": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            13.0,
+            0.6
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            13.0,
+            0.6
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            13.0,
+            0.6
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            13.0,
+            0.6
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            13.0,
+            13.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "down": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            13.0,
+            13.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      },
+      "renderPass": 0
+    },
+    {
+      "name": "socket_base",
       "from": [
         5,
-        3.2,
+        10.6,
         5
       ],
       "to": [
         11,
-        4.3,
-        5.5
-      ],
-      "faces": {
-        "north": {
-          "texture": "#tube-base",
-          "uv": [
-            0,
-            14,
-            6,
-            15.1
-          ],
-          "autoUv": false,
-          "enabled": true
-        },
-        "south": {
-          "texture": "#tube-base",
-          "uv": [
-            0,
-            14,
-            6,
-            15.1
-          ],
-          "autoUv": false,
-          "enabled": true
-        },
-        "east": {
-          "texture": "#tube-base",
-          "uv": [
-            0,
-            14,
-            0.5,
-            15.1
-          ],
-          "autoUv": false,
-          "enabled": true
-        },
-        "west": {
-          "texture": "#tube-base",
-          "uv": [
-            0,
-            14,
-            0.5,
-            15.1
-          ],
-          "autoUv": false,
-          "enabled": true
-        },
-        "up": {
-          "texture": "#tube-base",
-          "uv": [
-            0,
-            14,
-            6,
-            14.5
-          ],
-          "autoUv": false,
-          "enabled": true
-        }
-      },
-      "renderPass": 0
-    },
-    {
-      "name": "tube_rim_south",
-      "from": [
-        5,
-        3.2,
-        10.5
-      ],
-      "to": [
         11,
-        4.3,
         11
       ],
       "faces": {
         "north": {
-          "texture": "#tube-base",
+          "texture": "#castiron",
           "uv": [
             0,
-            14,
+            0,
             6,
-            15.1
+            0.4
           ],
           "autoUv": false,
           "enabled": true
         },
         "south": {
-          "texture": "#tube-base",
+          "texture": "#castiron",
           "uv": [
             0,
-            14,
+            0,
             6,
-            15.1
+            0.4
           ],
           "autoUv": false,
           "enabled": true
         },
         "east": {
-          "texture": "#tube-base",
+          "texture": "#castiron",
           "uv": [
             0,
-            14,
-            0.5,
-            15.1
+            0,
+            6,
+            0.4
           ],
           "autoUv": false,
           "enabled": true
         },
         "west": {
-          "texture": "#tube-base",
+          "texture": "#castiron",
           "uv": [
             0,
-            14,
-            0.5,
-            15.1
+            0,
+            6,
+            0.4
           ],
           "autoUv": false,
           "enabled": true
         },
         "up": {
-          "texture": "#tube-base",
+          "texture": "#castiron",
           "uv": [
             0,
-            14,
+            0,
             6,
-            14.5
+            6
           ],
           "autoUv": false,
           "enabled": true
@@ -828,47 +363,25 @@
       "renderPass": 0
     },
     {
-      "name": "tube_rim_west",
+      "name": "socket_floor",
       "from": [
-        5,
-        3.2,
-        5.5
+        5.75,
+        11,
+        5.75
       ],
       "to": [
-        5.5,
-        4.3,
-        10.5
+        10.25,
+        11.05,
+        10.25
       ],
       "faces": {
-        "east": {
-          "texture": "#tube-base",
-          "uv": [
-            0,
-            14,
-            5.0,
-            15.1
-          ],
-          "autoUv": false,
-          "enabled": true
-        },
-        "west": {
-          "texture": "#tube-base",
-          "uv": [
-            0,
-            14,
-            5.0,
-            15.1
-          ],
-          "autoUv": false,
-          "enabled": true
-        },
         "up": {
-          "texture": "#tube-base",
+          "texture": "#socket-floor",
           "uv": [
-            14,
             0,
-            14.5,
-            5.0
+            0,
+            4.5,
+            4.5
           ],
           "autoUv": false,
           "enabled": true
@@ -877,47 +390,140 @@
       "renderPass": 0
     },
     {
-      "name": "tube_rim_east",
+      "name": "rim_west",
       "from": [
-        10.5,
-        3.2,
-        5.5
+        5,
+        11,
+        5
+      ],
+      "to": [
+        5.75,
+        11.6,
+        11
+      ],
+      "faces": {
+        "north": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            0.75,
+            0.6
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            0.75,
+            0.6
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            6,
+            0.6
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            6,
+            0.6
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            0.75,
+            6
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      },
+      "renderPass": 0
+    },
+    {
+      "name": "rim_east",
+      "from": [
+        10.25,
+        11,
+        5
       ],
       "to": [
         11,
-        4.3,
-        10.5
+        11.6,
+        11
       ],
       "faces": {
-        "east": {
-          "texture": "#tube-base",
+        "north": {
+          "texture": "#castiron",
           "uv": [
             0,
-            14,
-            5.0,
-            15.1
+            0,
+            0.75,
+            0.6
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            0.75,
+            0.6
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            6,
+            0.6
           ],
           "autoUv": false,
           "enabled": true
         },
         "west": {
-          "texture": "#tube-base",
+          "texture": "#castiron",
           "uv": [
             0,
-            14,
-            5.0,
-            15.1
+            0,
+            6,
+            0.6
           ],
           "autoUv": false,
           "enabled": true
         },
         "up": {
-          "texture": "#tube-base",
+          "texture": "#castiron",
           "uv": [
-            14,
             0,
-            14.5,
-            5.0
+            0,
+            0.75,
+            6
           ],
           "autoUv": false,
           "enabled": true
@@ -926,293 +532,386 @@
       "renderPass": 0
     },
     {
-      "name": "tube_core",
+      "name": "rim_north",
       "from": [
+        5.75,
+        11,
+        5
+      ],
+      "to": [
+        10.25,
+        11.6,
+        5.75
+      ],
+      "faces": {
+        "north": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            4.5,
+            0.6
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            4.5,
+            0.6
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            0.75,
+            0.6
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            0.75,
+            0.6
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            4.5,
+            0.75
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      },
+      "renderPass": 0
+    },
+    {
+      "name": "rim_south",
+      "from": [
+        5.75,
+        11,
+        10.25
+      ],
+      "to": [
+        10.25,
+        11.6,
+        11
+      ],
+      "faces": {
+        "north": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            4.5,
+            0.6
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            4.5,
+            0.6
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            0.75,
+            0.6
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            0.75,
+            0.6
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            4.5,
+            0.75
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      },
+      "renderPass": 0
+    },
+    {
+      "name": "cradle_floor",
+      "from": [
+        5,
+        2.5,
+        14
+      ],
+      "to": [
+        11,
+        3,
+        16
+      ],
+      "faces": {
+        "north": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            6,
+            0.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            6,
+            0.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            2,
+            0.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            2,
+            0.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            6,
+            2
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "down": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            6,
+            2
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      },
+      "renderPass": 0
+    },
+    {
+      "name": "cradle_west",
+      "from": [
+        5,
+        3,
+        14
+      ],
+      "to": [
         5.5,
-        3.2,
-        5.5
+        7,
+        16
       ],
-      "to": [
+      "faces": {
+        "north": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            0.5,
+            4
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            0.5,
+            4
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            2,
+            4
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            2,
+            4
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            0.5,
+            2
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "down": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            0.5,
+            2
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      },
+      "renderPass": 0
+    },
+    {
+      "name": "cradle_east",
+      "from": [
         10.5,
-        4.9,
-        10.5
-      ],
-      "faces": {
-        "north": {
-          "texture": "#tube-dark",
-          "uv": [
-            0,
-            0,
-            5.0,
-            1.7
-          ],
-          "autoUv": false,
-          "enabled": true
-        },
-        "south": {
-          "texture": "#tube-dark",
-          "uv": [
-            0,
-            0,
-            5.0,
-            1.7
-          ],
-          "autoUv": false,
-          "enabled": true
-        },
-        "east": {
-          "texture": "#tube-dark",
-          "uv": [
-            0,
-            0,
-            5.0,
-            1.7
-          ],
-          "autoUv": false,
-          "enabled": true
-        },
-        "west": {
-          "texture": "#tube-dark",
-          "uv": [
-            0,
-            0,
-            5.0,
-            1.7
-          ],
-          "autoUv": false,
-          "enabled": true
-        },
-        "up": {
-          "texture": "#tube-dark",
-          "uv": [
-            0,
-            0,
-            5.0,
-            5.0
-          ],
-          "autoUv": false,
-          "enabled": true
-        }
-      },
-      "renderPass": 0
-    },
-    {
-      "name": "tube_rod_west",
-      "from": [
-        5.7,
-        4.9,
-        7.7
+        3,
+        14
       ],
       "to": [
-        6.3,
-        12,
-        8.3
+        11,
+        7,
+        16
       ],
       "faces": {
         "north": {
-          "texture": "#tube-metal",
+          "texture": "#castiron",
           "uv": [
             0,
             0,
-            0.6,
-            7.1
+            0.5,
+            4
           ],
           "autoUv": false,
           "enabled": true
         },
         "south": {
-          "texture": "#tube-metal",
+          "texture": "#castiron",
           "uv": [
             0,
             0,
-            0.6,
-            7.1
+            0.5,
+            4
           ],
           "autoUv": false,
           "enabled": true
         },
         "east": {
-          "texture": "#tube-metal",
+          "texture": "#castiron",
           "uv": [
             0,
             0,
-            0.6,
-            7.1
+            2,
+            4
           ],
           "autoUv": false,
           "enabled": true
         },
         "west": {
-          "texture": "#tube-metal",
+          "texture": "#castiron",
           "uv": [
             0,
             0,
-            0.6,
-            7.1
+            2,
+            4
           ],
           "autoUv": false,
           "enabled": true
         },
         "up": {
-          "texture": "#tube-metal",
+          "texture": "#castiron",
           "uv": [
             0,
             0,
-            0.6,
-            0.6
-          ],
-          "autoUv": false,
-          "enabled": true
-        }
-      },
-      "renderPass": 0
-    },
-    {
-      "name": "tube_rod_east",
-      "from": [
-        9.7,
-        4.9,
-        7.7
-      ],
-      "to": [
-        10.3,
-        12,
-        8.3
-      ],
-      "faces": {
-        "north": {
-          "texture": "#tube-metal",
-          "uv": [
-            0,
-            0,
-            0.6,
-            7.1
-          ],
-          "autoUv": false,
-          "enabled": true
-        },
-        "south": {
-          "texture": "#tube-metal",
-          "uv": [
-            0,
-            0,
-            0.6,
-            7.1
-          ],
-          "autoUv": false,
-          "enabled": true
-        },
-        "east": {
-          "texture": "#tube-metal",
-          "uv": [
-            0,
-            0,
-            0.6,
-            7.1
-          ],
-          "autoUv": false,
-          "enabled": true
-        },
-        "west": {
-          "texture": "#tube-metal",
-          "uv": [
-            0,
-            0,
-            0.6,
-            7.1
-          ],
-          "autoUv": false,
-          "enabled": true
-        },
-        "up": {
-          "texture": "#tube-metal",
-          "uv": [
-            0,
-            0,
-            0.6,
-            0.6
-          ],
-          "autoUv": false,
-          "enabled": true
-        }
-      },
-      "renderPass": 0
-    },
-    {
-      "name": "tube_top",
-      "from": [
-        5.4,
-        12,
-        7.4
-      ],
-      "to": [
-        10.6,
-        12.6,
-        8.6
-      ],
-      "faces": {
-        "north": {
-          "texture": "#tube-metal",
-          "uv": [
-            0,
-            0,
-            5.2,
-            0.6
-          ],
-          "autoUv": false,
-          "enabled": true
-        },
-        "south": {
-          "texture": "#tube-metal",
-          "uv": [
-            0,
-            0,
-            5.2,
-            0.6
-          ],
-          "autoUv": false,
-          "enabled": true
-        },
-        "east": {
-          "texture": "#tube-metal",
-          "uv": [
-            0,
-            0,
-            1.2,
-            0.6
-          ],
-          "autoUv": false,
-          "enabled": true
-        },
-        "west": {
-          "texture": "#tube-metal",
-          "uv": [
-            0,
-            0,
-            1.2,
-            0.6
-          ],
-          "autoUv": false,
-          "enabled": true
-        },
-        "up": {
-          "texture": "#tube-metal",
-          "uv": [
-            0,
-            0,
-            5.2,
-            1.2
+            0.5,
+            2
           ],
           "autoUv": false,
           "enabled": true
         },
         "down": {
-          "texture": "#tube-metal",
+          "texture": "#castiron",
           "uv": [
             0,
             0,
-            5.2,
-            1.2
+            0.5,
+            2
           ],
           "autoUv": false,
           "enabled": true
@@ -1221,282 +920,649 @@
       "renderPass": 0
     },
     {
-      "name": "bulb_north",
+      "name": "cradle_roof",
       "from": [
-        3.8,
-        3.2,
-        3.8
+        5,
+        7,
+        14
       ],
       "to": [
-        12.2,
-        13,
-        4.95
+        11,
+        7.5,
+        16
       ],
       "faces": {
         "north": {
-          "texture": "#tube-glass",
+          "texture": "#castiron",
           "uv": [
             0,
             0,
-            8.4,
-            9.8
+            6,
+            0.5
           ],
           "autoUv": false,
           "enabled": true
         },
         "south": {
-          "texture": "#tube-glass",
+          "texture": "#castiron",
           "uv": [
             0,
             0,
-            8.4,
-            9.8
+            6,
+            0.5
           ],
           "autoUv": false,
           "enabled": true
         },
         "east": {
-          "texture": "#tube-glass",
+          "texture": "#castiron",
           "uv": [
             0,
             0,
-            1.15,
-            9.8
+            2,
+            0.5
           ],
           "autoUv": false,
           "enabled": true
         },
         "west": {
-          "texture": "#tube-glass",
+          "texture": "#castiron",
           "uv": [
             0,
             0,
-            1.15,
-            9.8
+            2,
+            0.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            6,
+            2
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "down": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            6,
+            2
           ],
           "autoUv": false,
           "enabled": true
         }
       },
-      "renderPass": 3
+      "renderPass": 0
     },
     {
-      "name": "bulb_south",
+      "name": "plug_head",
       "from": [
-        3.8,
-        3.2,
-        11.05
+        5.6,
+        3,
+        14.2
       ],
       "to": [
-        12.2,
-        13,
-        12.2
+        10.4,
+        6.9,
+        15.8
       ],
       "faces": {
-        "north": {
-          "texture": "#tube-glass",
+        "south": {
+          "texture": "#terminal",
           "uv": [
             0,
             0,
-            8.4,
-            9.8
+            4.8,
+            3.9
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            1.6,
+            3.9
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            1.6,
+            3.9
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            4.8,
+            1.6
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "down": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            4.8,
+            1.6
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      },
+      "renderPass": 0
+    },
+    {
+      "name": "plug_cable",
+      "from": [
+        7.5,
+        4.5,
+        15.8
+      ],
+      "to": [
+        8.5,
+        5.5,
+        16.6
+      ],
+      "faces": {
+        "north": {
+          "texture": "#cable",
+          "uv": [
+            0,
+            0,
+            1.0,
+            1.0
           ],
           "autoUv": false,
           "enabled": true
         },
         "south": {
-          "texture": "#tube-glass",
+          "texture": "#cable",
           "uv": [
             0,
             0,
-            8.4,
-            9.8
+            1.0,
+            1.0
           ],
           "autoUv": false,
           "enabled": true
         },
         "east": {
-          "texture": "#tube-glass",
+          "texture": "#cable",
           "uv": [
             0,
             0,
-            1.15,
-            9.8
+            0.8,
+            1.0
           ],
           "autoUv": false,
           "enabled": true
         },
         "west": {
-          "texture": "#tube-glass",
+          "texture": "#cable",
           "uv": [
             0,
             0,
-            1.15,
-            9.8
-          ],
-          "autoUv": false,
-          "enabled": true
-        }
-      },
-      "renderPass": 3
-    },
-    {
-      "name": "bulb_west",
-      "from": [
-        3.8,
-        3.2,
-        4.95
-      ],
-      "to": [
-        4.95,
-        13,
-        11.05
-      ],
-      "faces": {
-        "east": {
-          "texture": "#tube-glass",
-          "uv": [
-            0,
-            0,
-            6.1,
-            9.8
+            0.8,
+            1.0
           ],
           "autoUv": false,
           "enabled": true
         },
-        "west": {
-          "texture": "#tube-glass",
+        "up": {
+          "texture": "#cable",
           "uv": [
             0,
             0,
-            6.1,
-            9.8
-          ],
-          "autoUv": false,
-          "enabled": true
-        }
-      },
-      "renderPass": 3
-    },
-    {
-      "name": "bulb_east",
-      "from": [
-        11.05,
-        3.2,
-        4.95
-      ],
-      "to": [
-        12.2,
-        13,
-        11.05
-      ],
-      "faces": {
-        "east": {
-          "texture": "#tube-glass",
-          "uv": [
-            0,
-            0,
-            6.1,
-            9.8
+            1.0,
+            0.8
           ],
           "autoUv": false,
           "enabled": true
         },
-        "west": {
-          "texture": "#tube-glass",
+        "down": {
+          "texture": "#cable",
           "uv": [
             0,
             0,
-            6.1,
-            9.8
+            1.0,
+            0.8
           ],
           "autoUv": false,
           "enabled": true
         }
       },
-      "renderPass": 3
+      "renderPass": 0
     },
     {
-      "name": "bulb_cap",
+      "name": "stand",
       "from": [
-        3.8,
-        13,
-        3.8
+        14,
+        5,
+        6.5
       ],
       "to": [
-        12.2,
-        13.8,
-        12.2
+        15.5,
+        5.5,
+        9.5
       ],
       "faces": {
         "north": {
-          "texture": "#tube-glass",
+          "texture": "#castiron",
           "uv": [
             0,
             0,
-            8.4,
+            1.5,
+            0.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            1.5,
+            0.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            3.0,
+            0.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            3.0,
+            0.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            1.5,
+            3.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "down": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            1.5,
+            3.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      },
+      "renderPass": 0
+    },
+    {
+      "name": "stand_clip",
+      "from": [
+        14.4,
+        5.5,
+        7.6
+      ],
+      "to": [
+        15.1,
+        7,
+        8.4
+      ],
+      "faces": {
+        "north": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            0.7,
+            1.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            0.7,
+            1.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            0.8,
+            1.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            0.8,
+            1.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            0.7,
+            0.8
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "down": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            0.7,
+            0.8
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      },
+      "renderPass": 0
+    },
+    {
+      "name": "probe_rod",
+      "from": [
+        14.5,
+        3.5,
+        7.75
+      ],
+      "to": [
+        15,
+        11,
+        8.25
+      ],
+      "faces": {
+        "north": {
+          "texture": "#metal",
+          "uv": [
+            0,
+            0,
+            0.5,
+            7.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#metal",
+          "uv": [
+            0,
+            0,
+            0.5,
+            7.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#metal",
+          "uv": [
+            0,
+            0,
+            0.5,
+            7.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#metal",
+          "uv": [
+            0,
+            0,
+            0.5,
+            7.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#metal",
+          "uv": [
+            0,
+            0,
+            0.5,
+            0.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "down": {
+          "texture": "#metal",
+          "uv": [
+            0,
+            0,
+            0.5,
+            0.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      },
+      "renderPass": 0
+    },
+    {
+      "name": "probe_grip",
+      "from": [
+        14.3,
+        7,
+        7.5
+      ],
+      "to": [
+        15.2,
+        10.5,
+        8.5
+      ],
+      "faces": {
+        "north": {
+          "texture": "#cable-red",
+          "uv": [
+            0,
+            0,
+            0.9,
+            3.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#cable-red",
+          "uv": [
+            0,
+            0,
+            0.9,
+            3.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#cable-red",
+          "uv": [
+            0,
+            0,
+            1.0,
+            3.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#cable-red",
+          "uv": [
+            0,
+            0,
+            1.0,
+            3.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#cable-red",
+          "uv": [
+            0,
+            0,
+            0.9,
+            1.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "down": {
+          "texture": "#cable-red",
+          "uv": [
+            0,
+            0,
+            0.9,
+            1.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      },
+      "renderPass": 0
+    },
+    {
+      "name": "probe_lead",
+      "from": [
+        14.5,
+        11,
+        7.75
+      ],
+      "to": [
+        15,
+        11.8,
+        8.25
+      ],
+      "faces": {
+        "north": {
+          "texture": "#cable-red",
+          "uv": [
+            0,
+            0,
+            0.5,
             0.8
           ],
           "autoUv": false,
           "enabled": true
         },
         "south": {
-          "texture": "#tube-glass",
+          "texture": "#cable-red",
           "uv": [
             0,
             0,
-            8.4,
+            0.5,
             0.8
           ],
           "autoUv": false,
           "enabled": true
         },
         "east": {
-          "texture": "#tube-glass",
+          "texture": "#cable-red",
           "uv": [
             0,
             0,
-            8.4,
+            0.5,
             0.8
           ],
           "autoUv": false,
           "enabled": true
         },
         "west": {
-          "texture": "#tube-glass",
+          "texture": "#cable-red",
           "uv": [
             0,
             0,
-            8.4,
+            0.5,
             0.8
           ],
           "autoUv": false,
           "enabled": true
         },
         "up": {
-          "texture": "#tube-glass",
+          "texture": "#cable-red",
           "uv": [
             0,
             0,
-            8.4,
-            8.4
+            0.5,
+            0.5
           ],
           "autoUv": false,
           "enabled": true
         },
         "down": {
-          "texture": "#tube-glass",
+          "texture": "#cable-red",
           "uv": [
             0,
             0,
-            8.4,
-            8.4
+            0.5,
+            0.5
           ],
           "autoUv": false,
           "enabled": true
         }
       },
-      "renderPass": 3
+      "renderPass": 0
     }
   ]
 }

@@ -1,0 +1,319 @@
+{
+  "editor": {
+    "allAngles": true,
+    "entityTextureMode": false
+  },
+  "textureWidth": 16,
+  "textureHeight": 16,
+  "textureSizes": {
+    "tube-dark": [
+      16,
+      16
+    ],
+    "tube-metal": [
+      16,
+      16
+    ]
+  },
+  "textures": {
+    "tube-dark": "block/iron",
+    "tube-metal": "block/axle-iron"
+  },
+  "elements": [
+    {
+      "name": "core",
+      "from": [
+        5.5,
+        0.0,
+        5.5
+      ],
+      "to": [
+        10.5,
+        1.7,
+        10.5
+      ],
+      "faces": {
+        "north": {
+          "texture": "#tube-dark",
+          "uv": [
+            0,
+            0,
+            5.0,
+            1.7
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#tube-dark",
+          "uv": [
+            0,
+            0,
+            5.0,
+            1.7
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#tube-dark",
+          "uv": [
+            0,
+            0,
+            5.0,
+            1.7
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#tube-dark",
+          "uv": [
+            0,
+            0,
+            5.0,
+            1.7
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#tube-dark",
+          "uv": [
+            0,
+            0,
+            5.0,
+            5.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      },
+      "renderPass": 0
+    },
+    {
+      "name": "rod_west",
+      "from": [
+        5.7,
+        1.7,
+        7.7
+      ],
+      "to": [
+        6.3,
+        8.8,
+        8.3
+      ],
+      "faces": {
+        "north": {
+          "texture": "#tube-metal",
+          "uv": [
+            0,
+            0,
+            0.6,
+            7.1
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#tube-metal",
+          "uv": [
+            0,
+            0,
+            0.6,
+            7.1
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#tube-metal",
+          "uv": [
+            0,
+            0,
+            0.6,
+            7.1
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#tube-metal",
+          "uv": [
+            0,
+            0,
+            0.6,
+            7.1
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#tube-metal",
+          "uv": [
+            0,
+            0,
+            0.6,
+            0.6
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      },
+      "renderPass": 0
+    },
+    {
+      "name": "rod_east",
+      "from": [
+        9.7,
+        1.7,
+        7.7
+      ],
+      "to": [
+        10.3,
+        8.8,
+        8.3
+      ],
+      "faces": {
+        "north": {
+          "texture": "#tube-metal",
+          "uv": [
+            0,
+            0,
+            0.6,
+            7.1
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#tube-metal",
+          "uv": [
+            0,
+            0,
+            0.6,
+            7.1
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#tube-metal",
+          "uv": [
+            0,
+            0,
+            0.6,
+            7.1
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#tube-metal",
+          "uv": [
+            0,
+            0,
+            0.6,
+            7.1
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#tube-metal",
+          "uv": [
+            0,
+            0,
+            0.6,
+            0.6
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      },
+      "renderPass": 0
+    },
+    {
+      "name": "top",
+      "from": [
+        5.4,
+        8.8,
+        7.4
+      ],
+      "to": [
+        10.6,
+        9.4,
+        8.6
+      ],
+      "faces": {
+        "north": {
+          "texture": "#tube-metal",
+          "uv": [
+            0,
+            0,
+            5.2,
+            0.6
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#tube-metal",
+          "uv": [
+            0,
+            0,
+            5.2,
+            0.6
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#tube-metal",
+          "uv": [
+            0,
+            0,
+            1.2,
+            0.6
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#tube-metal",
+          "uv": [
+            0,
+            0,
+            1.2,
+            0.6
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#tube-metal",
+          "uv": [
+            0,
+            0,
+            5.2,
+            1.2
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "down": {
+          "texture": "#tube-metal",
+          "uv": [
+            0,
+            0,
+            5.2,
+            1.2
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      },
+      "renderPass": 0
+    }
+  ]
+}

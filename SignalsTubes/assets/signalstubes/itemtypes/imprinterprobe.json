@@ -1,0 +1,43 @@
+{
+  "code": "imprinterprobe",
+  "class": "ImprinterProbe",
+  "maxStackSize": 1,
+  "shape": {
+    "base": "signalstubes:item/imprinterprobe"
+  },
+  "textures": {
+    "metal": {
+      "base": "signalstubes:block/axle-iron"
+    },
+    "cable-red": {
+      "base": "signalstubes:block/cable-red"
+    }
+  },
+  "creativeinventory": {},
+  "guiTransform": {
+    "origin": {
+      "x": 0.5,
+      "y": 0.5,
+      "z": 0.5
+    },
+    "rotation": {
+      "x": 157.4,
+      "y": -45.3,
+      "z": 0
+    },
+    "scale": 1.6
+  },
+  "fpHandTransform": {
+    "translation": {
+      "x": 0.1,
+      "y": 0.05,
+      "z": 0
+    },
+    "rotation": {
+      "x": -60,
+      "y": 0,
+      "z": 0
+    },
+    "scale": 1.2
+  }
+}

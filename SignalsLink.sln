@@ -17,6 +17,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SignalsLink.Testing", "Sign
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SignalsTubes", "SignalsTubes\SignalsTubes.csproj", "{B4936E77-247F-4BD5-845B-FC5451643A29}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SignalsTubes.Tests", "SignalsTubes.Tests\SignalsTubes.Tests.csproj", "{B0F86FCF-AE1F-4CB9-AFD1-1AA7EF71B73F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -111,6 +113,18 @@ Global
 		{B4936E77-247F-4BD5-845B-FC5451643A29}.Release|x64.Build.0 = Release|Any CPU
 		{B4936E77-247F-4BD5-845B-FC5451643A29}.Release|x86.ActiveCfg = Release|Any CPU
 		{B4936E77-247F-4BD5-845B-FC5451643A29}.Release|x86.Build.0 = Release|Any CPU
+		{B0F86FCF-AE1F-4CB9-AFD1-1AA7EF71B73F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B0F86FCF-AE1F-4CB9-AFD1-1AA7EF71B73F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B0F86FCF-AE1F-4CB9-AFD1-1AA7EF71B73F}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{B0F86FCF-AE1F-4CB9-AFD1-1AA7EF71B73F}.Debug|x64.Build.0 = Debug|Any CPU
+		{B0F86FCF-AE1F-4CB9-AFD1-1AA7EF71B73F}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{B0F86FCF-AE1F-4CB9-AFD1-1AA7EF71B73F}.Debug|x86.Build.0 = Debug|Any CPU
+		{B0F86FCF-AE1F-4CB9-AFD1-1AA7EF71B73F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B0F86FCF-AE1F-4CB9-AFD1-1AA7EF71B73F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B0F86FCF-AE1F-4CB9-AFD1-1AA7EF71B73F}.Release|x64.ActiveCfg = Release|Any CPU
+		{B0F86FCF-AE1F-4CB9-AFD1-1AA7EF71B73F}.Release|x64.Build.0 = Release|Any CPU
+		{B0F86FCF-AE1F-4CB9-AFD1-1AA7EF71B73F}.Release|x86.ActiveCfg = Release|Any CPU
+		{B0F86FCF-AE1F-4CB9-AFD1-1AA7EF71B73F}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

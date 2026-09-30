@@ -1,0 +1,761 @@
+{
+  "editor": {
+    "allAngles": true,
+    "entityTextureMode": false
+  },
+  "textureWidth": 16,
+  "textureHeight": 16,
+  "textureSizes": {
+    "terminal": [
+      16,
+      16
+    ],
+    "cable": [
+      16,
+      16
+    ],
+    "metal": [
+      16,
+      16
+    ]
+  },
+  "textures": {
+    "terminal": "block/normal3",
+    "cable": "block/iron",
+    "metal": "block/axle-iron"
+  },
+  "elements": [
+    {
+      "name": "head",
+      "from": [
+        4,
+        4,
+        6
+      ],
+      "to": [
+        12,
+        12,
+        10
+      ],
+      "faces": {
+        "north": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            8,
+            8
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            8,
+            8
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            4,
+            8
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            4,
+            8
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            8,
+            4
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "down": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            8,
+            4
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      },
+      "renderPass": 0
+    },
+    {
+      "name": "cable",
+      "from": [
+        7,
+        7,
+        10
+      ],
+      "to": [
+        9,
+        9,
+        14
+      ],
+      "faces": {
+        "north": {
+          "texture": "#cable",
+          "uv": [
+            0,
+            0,
+            2,
+            2
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#cable",
+          "uv": [
+            0,
+            0,
+            2,
+            2
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#cable",
+          "uv": [
+            0,
+            0,
+            4,
+            2
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#cable",
+          "uv": [
+            0,
+            0,
+            4,
+            2
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#cable",
+          "uv": [
+            0,
+            0,
+            2,
+            4
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "down": {
+          "texture": "#cable",
+          "uv": [
+            0,
+            0,
+            2,
+            4
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      },
+      "renderPass": 0
+    },
+    {
+      "name": "pin_0",
+      "from": [
+        5.7,
+        9.7,
+        5
+      ],
+      "to": [
+        6.3,
+        10.3,
+        6
+      ],
+      "faces": {
+        "north": {
+          "texture": "#metal",
+          "uv": [
+            0,
+            0,
+            0.6,
+            0.6
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#metal",
+          "uv": [
+            0,
+            0,
+            1,
+            0.6
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#metal",
+          "uv": [
+            0,
+            0,
+            1,
+            0.6
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#metal",
+          "uv": [
+            0,
+            0,
+            0.6,
+            1
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "down": {
+          "texture": "#metal",
+          "uv": [
+            0,
+            0,
+            0.6,
+            1
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      },
+      "renderPass": 0
+    },
+    {
+      "name": "pin_1",
+      "from": [
+        7.7,
+        9.7,
+        5
+      ],
+      "to": [
+        8.3,
+        10.3,
+        6
+      ],
+      "faces": {
+        "north": {
+          "texture": "#metal",
+          "uv": [
+            0,
+            0,
+            0.6,
+            0.6
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#metal",
+          "uv": [
+            0,
+            0,
+            1,
+            0.6
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#metal",
+          "uv": [
+            0,
+            0,
+            1,
+            0.6
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#metal",
+          "uv": [
+            0,
+            0,
+            0.6,
+            1
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "down": {
+          "texture": "#metal",
+          "uv": [
+            0,
+            0,
+            0.6,
+            1
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      },
+      "renderPass": 0
+    },
+    {
+      "name": "pin_2",
+      "from": [
+        9.7,
+        9.7,
+        5
+      ],
+      "to": [
+        10.3,
+        10.3,
+        6
+      ],
+      "faces": {
+        "north": {
+          "texture": "#metal",
+          "uv": [
+            0,
+            0,
+            0.6,
+            0.6
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#metal",
+          "uv": [
+            0,
+            0,
+            1,
+            0.6
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#metal",
+          "uv": [
+            0,
+            0,
+            1,
+            0.6
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#metal",
+          "uv": [
+            0,
+            0,
+            0.6,
+            1
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "down": {
+          "texture": "#metal",
+          "uv": [
+            0,
+            0,
+            0.6,
+            1
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      },
+      "renderPass": 0
+    },
+    {
+      "name": "pin_3",
+      "from": [
+        9.7,
+        7.7,
+        5
+      ],
+      "to": [
+        10.3,
+        8.3,
+        6
+      ],
+      "faces": {
+        "north": {
+          "texture": "#metal",
+          "uv": [
+            0,
+            0,
+            0.6,
+            0.6
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#metal",
+          "uv": [
+            0,
+            0,
+            1,
+            0.6
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#metal",
+          "uv": [
+            0,
+            0,
+            1,
+            0.6
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#metal",
+          "uv": [
+            0,
+            0,
+            0.6,
+            1
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "down": {
+          "texture": "#metal",
+          "uv": [
+            0,
+            0,
+            0.6,
+            1
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      },
+      "renderPass": 0
+    },
+    {
+      "name": "pin_4",
+      "from": [
+        9.7,
+        5.7,
+        5
+      ],
+      "to": [
+        10.3,
+        6.3,
+        6
+      ],
+      "faces": {
+        "north": {
+          "texture": "#metal",
+          "uv": [
+            0,
+            0,
+            0.6,
+            0.6
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#metal",
+          "uv": [
+            0,
+            0,
+            1,
+            0.6
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#metal",
+          "uv": [
+            0,
+            0,
+            1,
+            0.6
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#metal",
+          "uv": [
+            0,
+            0,
+            0.6,
+            1
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "down": {
+          "texture": "#metal",
+          "uv": [
+            0,
+            0,
+            0.6,
+            1
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      },
+      "renderPass": 0
+    },
+    {
+      "name": "pin_5",
+      "from": [
+        7.7,
+        5.7,
+        5
+      ],
+      "to": [
+        8.3,
+        6.3,
+        6
+      ],
+      "faces": {
+        "north": {
+          "texture": "#metal",
+          "uv": [
+            0,
+            0,
+            0.6,
+            0.6
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#metal",
+          "uv": [
+            0,
+            0,
+            1,
+            0.6
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#metal",
+          "uv": [
+            0,
+            0,
+            1,
+            0.6
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#metal",
+          "uv": [
+            0,
+            0,
+            0.6,
+            1
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "down": {
+          "texture": "#metal",
+          "uv": [
+            0,
+            0,
+            0.6,
+            1
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      },
+      "renderPass": 0
+    },
+    {
+      "name": "pin_6",
+      "from": [
+        5.7,
+        5.7,
+        5
+      ],
+      "to": [
+        6.3,
+        6.3,
+        6
+      ],
+      "faces": {
+        "north": {
+          "texture": "#metal",
+          "uv": [
+            0,
+            0,
+            0.6,
+            0.6
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#metal",
+          "uv": [
+            0,
+            0,
+            1,
+            0.6
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#metal",
+          "uv": [
+            0,
+            0,
+            1,
+            0.6
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#metal",
+          "uv": [
+            0,
+            0,
+            0.6,
+            1
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "down": {
+          "texture": "#metal",
+          "uv": [
+            0,
+            0,
+            0.6,
+            1
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      },
+      "renderPass": 0
+    },
+    {
+      "name": "pin_7",
+      "from": [
+        5.7,
+        7.7,
+        5
+      ],
+      "to": [
+        6.3,
+        8.3,
+        6
+      ],
+      "faces": {
+        "north": {
+          "texture": "#metal",
+          "uv": [
+            0,
+            0,
+            0.6,
+            0.6
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#metal",
+          "uv": [
+            0,
+            0,
+            1,
+            0.6
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#metal",
+          "uv": [
+            0,
+            0,
+            1,
+            0.6
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#metal",
+          "uv": [
+            0,
+            0,
+            0.6,
+            1
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "down": {
+          "texture": "#metal",
+          "uv": [
+            0,
+            0,
+            0.6,
+            1
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      },
+      "renderPass": 0
+    }
+  ]
+}

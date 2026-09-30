@@ -1,0 +1,506 @@
+{
+  "code": "tubesocket",
+  "class": "TubeSocket",
+  "entityClass": "TubeSocket",
+  "variantgroups": [
+    {
+      "code": "orientation",
+      "states": [
+        "north",
+        "east",
+        "south",
+        "west",
+        "up",
+        "down"
+      ]
+    },
+    {
+      "code": "side",
+      "states": [
+        "north",
+        "east",
+        "south",
+        "west",
+        "up",
+        "down"
+      ]
+    }
+  ],
+  "skipVariants": [
+    "*-north-north",
+    "*-south-north",
+    "*-north-south",
+    "*-south-south",
+    "*-east-east",
+    "*-east-west",
+    "*-west-east",
+    "*-west-west"
+  ],
+  "creativeinventory": {
+    "general": [
+      "*-north-down"
+    ],
+    "signalstubes": [
+      "*-north-down"
+    ]
+  },
+  "drops": [
+    {
+      "type": "block",
+      "code": "tubesocket-north-down"
+    }
+  ],
+  "behaviors": [
+    {
+      "name": "BlockBehaviorCoverWithDirection",
+      "properties": {
+        "handleDrop": false
+      }
+    }
+  ],
+  "entityBehaviors": [
+    {
+      "name": "BEBehaviorSignalConnector",
+      "properties": {
+        "signalNodes": [
+          {
+            "index": 0,
+            "isSource": true,
+            "output": 0
+          },
+          {
+            "index": 1,
+            "isSource": true,
+            "output": 0
+          },
+          {
+            "index": 2,
+            "isSource": true,
+            "output": 0
+          },
+          {
+            "index": 3,
+            "isSource": true,
+            "output": 0
+          },
+          {
+            "index": 4,
+            "isSource": true,
+            "output": 0
+          },
+          {
+            "index": 5,
+            "isSource": true,
+            "output": 0
+          },
+          {
+            "index": 6,
+            "isSource": true,
+            "output": 0
+          },
+          {
+            "index": 7,
+            "isSource": true,
+            "output": 0
+          }
+        ]
+      }
+    }
+  ],
+  "attributes": {
+    "signalNodes": [
+      {
+        "index": 0,
+        "name": "pin-0",
+        "x1": 0.125,
+        "y1": 0.0625,
+        "z1": 0.125,
+        "x2": 0.25,
+        "y2": 0.25,
+        "z2": 0.25,
+        "rotateXbytype": {
+          "*-*-north": 90,
+          "*-*-south": 270,
+          "@.*-up-(east|west)": 90,
+          "@.*-down-(east|west)": 270,
+          "@.*-south-(east|west)": 180
+        },
+        "rotateYbytype": {
+          "@.*-east-(up|down|north|south)": 270,
+          "@.*-south-(up|down)": 180,
+          "@.*-west-(up|down|north|south)": 90,
+          "@.*-(down-north|up-south)": 180
+        },
+        "rotateZbyType": {
+          "*-*-up": 180,
+          "*-*-east": 90,
+          "*-*-west": 270
+        }
+      },
+      {
+        "index": 1,
+        "name": "pin-1",
+        "x1": 0.4375,
+        "y1": 0.0625,
+        "z1": 0.125,
+        "x2": 0.5625,
+        "y2": 0.25,
+        "z2": 0.25,
+        "rotateXbytype": {
+          "*-*-north": 90,
+          "*-*-south": 270,
+          "@.*-up-(east|west)": 90,
+          "@.*-down-(east|west)": 270,
+          "@.*-south-(east|west)": 180
+        },
+        "rotateYbytype": {
+          "@.*-east-(up|down|north|south)": 270,
+          "@.*-south-(up|down)": 180,
+          "@.*-west-(up|down|north|south)": 90,
+          "@.*-(down-north|up-south)": 180
+        },
+        "rotateZbyType": {
+          "*-*-up": 180,
+          "*-*-east": 90,
+          "*-*-west": 270
+        }
+      },
+      {
+        "index": 2,
+        "name": "pin-2",
+        "x1": 0.75,
+        "y1": 0.0625,
+        "z1": 0.125,
+        "x2": 0.875,
+        "y2": 0.25,
+        "z2": 0.25,
+        "rotateXbytype": {
+          "*-*-north": 90,
+          "*-*-south": 270,
+          "@.*-up-(east|west)": 90,
+          "@.*-down-(east|west)": 270,
+          "@.*-south-(east|west)": 180
+        },
+        "rotateYbytype": {
+          "@.*-east-(up|down|north|south)": 270,
+          "@.*-south-(up|down)": 180,
+          "@.*-west-(up|down|north|south)": 90,
+          "@.*-(down-north|up-south)": 180
+        },
+        "rotateZbyType": {
+          "*-*-up": 180,
+          "*-*-east": 90,
+          "*-*-west": 270
+        }
+      },
+      {
+        "index": 3,
+        "name": "pin-3",
+        "x1": 0.75,
+        "y1": 0.0625,
+        "z1": 0.4375,
+        "x2": 0.875,
+        "y2": 0.25,
+        "z2": 0.5625,
+        "rotateXbytype": {
+          "*-*-north": 90,
+          "*-*-south": 270,
+          "@.*-up-(east|west)": 90,
+          "@.*-down-(east|west)": 270,
+          "@.*-south-(east|west)": 180
+        },
+        "rotateYbytype": {
+          "@.*-east-(up|down|north|south)": 270,
+          "@.*-south-(up|down)": 180,
+          "@.*-west-(up|down|north|south)": 90,
+          "@.*-(down-north|up-south)": 180
+        },
+        "rotateZbyType": {
+          "*-*-up": 180,
+          "*-*-east": 90,
+          "*-*-west": 270
+        }
+      },
+      {
+        "index": 4,
+        "name": "pin-4",
+        "x1": 0.75,
+        "y1": 0.0625,
+        "z1": 0.75,
+        "x2": 0.875,
+        "y2": 0.25,
+        "z2": 0.875,
+        "rotateXbytype": {
+          "*-*-north": 90,
+          "*-*-south": 270,
+          "@.*-up-(east|west)": 90,
+          "@.*-down-(east|west)": 270,
+          "@.*-south-(east|west)": 180
+        },
+        "rotateYbytype": {
+          "@.*-east-(up|down|north|south)": 270,
+          "@.*-south-(up|down)": 180,
+          "@.*-west-(up|down|north|south)": 90,
+          "@.*-(down-north|up-south)": 180
+        },
+        "rotateZbyType": {
+          "*-*-up": 180,
+          "*-*-east": 90,
+          "*-*-west": 270
+        }
+      },
+      {
+        "index": 5,
+        "name": "pin-5",
+        "x1": 0.4375,
+        "y1": 0.0625,
+        "z1": 0.75,
+        "x2": 0.5625,
+        "y2": 0.25,
+        "z2": 0.875,
+        "rotateXbytype": {
+          "*-*-north": 90,
+          "*-*-south": 270,
+          "@.*-up-(east|west)": 90,
+          "@.*-down-(east|west)": 270,
+          "@.*-south-(east|west)": 180
+        },
+        "rotateYbytype": {
+          "@.*-east-(up|down|north|south)": 270,
+          "@.*-south-(up|down)": 180,
+          "@.*-west-(up|down|north|south)": 90,
+          "@.*-(down-north|up-south)": 180
+        },
+        "rotateZbyType": {
+          "*-*-up": 180,
+          "*-*-east": 90,
+          "*-*-west": 270
+        }
+      },
+      {
+        "index": 6,
+        "name": "pin-6",
+        "x1": 0.125,
+        "y1": 0.0625,
+        "z1": 0.75,
+        "x2": 0.25,
+        "y2": 0.25,
+        "z2": 0.875,
+        "rotateXbytype": {
+          "*-*-north": 90,
+          "*-*-south": 270,
+          "@.*-up-(east|west)": 90,
+          "@.*-down-(east|west)": 270,
+          "@.*-south-(east|west)": 180
+        },
+        "rotateYbytype": {
+          "@.*-east-(up|down|north|south)": 270,
+          "@.*-south-(up|down)": 180,
+          "@.*-west-(up|down|north|south)": 90,
+          "@.*-(down-north|up-south)": 180
+        },
+        "rotateZbyType": {
+          "*-*-up": 180,
+          "*-*-east": 90,
+          "*-*-west": 270
+        }
+      },
+      {
+        "index": 7,
+        "name": "pin-7",
+        "x1": 0.125,
+        "y1": 0.0625,
+        "z1": 0.4375,
+        "x2": 0.25,
+        "y2": 0.25,
+        "z2": 0.5625,
+        "rotateXbytype": {
+          "*-*-north": 90,
+          "*-*-south": 270,
+          "@.*-up-(east|west)": 90,
+          "@.*-down-(east|west)": 270,
+          "@.*-south-(east|west)": 180
+        },
+        "rotateYbytype": {
+          "@.*-east-(up|down|north|south)": 270,
+          "@.*-south-(up|down)": 180,
+          "@.*-west-(up|down|north|south)": 90,
+          "@.*-(down-north|up-south)": 180
+        },
+        "rotateZbyType": {
+          "*-*-up": 180,
+          "*-*-east": 90,
+          "*-*-west": 270
+        }
+      }
+    ]
+  },
+  "shape": {
+    "base": "signalstubes:block/tubesocket",
+    "rotateXbytype": {
+      "*-*-north": 90,
+      "*-*-south": 270,
+      "@.*-up-(east|west)": 90,
+      "@.*-down-(east|west)": 270,
+      "@.*-south-(east|west)": 180
+    },
+    "rotateYbytype": {
+      "@.*-east-(up|down|north|south)": 270,
+      "@.*-south-(up|down)": 180,
+      "@.*-west-(up|down|north|south)": 90,
+      "@.*-(down-north|up-south)": 180
+    },
+    "rotateZbyType": {
+      "*-*-up": 180,
+      "*-*-east": 90,
+      "*-*-west": 270
+    }
+  },
+  "textures": {
+    "castiron": {
+      "base": "signalstubes:block/castironbrown"
+    },
+    "socket-floor": {
+      "base": "signalstubes:block/socket-floor"
+    },
+    "terminal": {
+      "base": "signalstubes:block/normal3"
+    },
+    "pintop": {
+      "base": "signalstubes:block/rustycolored"
+    },
+    "oak": {
+      "base": "signalstubes:block/base-oak"
+    },
+    "tube-metal": {
+      "base": "signalstubes:block/axle-iron"
+    },
+    "tube-dark": {
+      "base": "signalstubes:block/iron"
+    },
+    "tube-glass": {
+      "base": "signalstubes:block/glass-plain"
+    },
+    "tube-glyph": {
+      "base": "signalstubes:block/details"
+    },
+    "tube-base-blue": {
+      "base": "signalstubes:block/tube-base-blue"
+    },
+    "tube-base-fire": {
+      "base": "signalstubes:block/tube-base-fire"
+    },
+    "tube-base-black": {
+      "base": "signalstubes:block/tube-base-black"
+    },
+    "tube-base-brown": {
+      "base": "signalstubes:block/tube-base-brown"
+    },
+    "tube-base-cream": {
+      "base": "signalstubes:block/tube-base-cream"
+    },
+    "tube-base-earthyorange": {
+      "base": "signalstubes:block/tube-base-earthyorange"
+    },
+    "tube-base-gray": {
+      "base": "signalstubes:block/tube-base-gray"
+    },
+    "tube-base-orange": {
+      "base": "signalstubes:block/tube-base-orange"
+    },
+    "tube-base-red": {
+      "base": "signalstubes:block/tube-base-red"
+    },
+    "tube-base-tan": {
+      "base": "signalstubes:block/tube-base-tan"
+    },
+    "tube-base-dyedblue": {
+      "base": "signalstubes:block/tube-base-dyedblue"
+    },
+    "tube-base-dyedred": {
+      "base": "signalstubes:block/tube-base-dyedred"
+    },
+    "tube-base-dyedyellow": {
+      "base": "signalstubes:block/tube-base-dyedyellow"
+    },
+    "tube-base-dyedpurple": {
+      "base": "signalstubes:block/tube-base-dyedpurple"
+    },
+    "tube-base-dyedgreen": {
+      "base": "signalstubes:block/tube-base-dyedgreen"
+    },
+    "tube-base-dyedorange": {
+      "base": "signalstubes:block/tube-base-dyedorange"
+    },
+    "tube-base-dyedblack": {
+      "base": "signalstubes:block/tube-base-dyedblack"
+    },
+    "tube-base-dyedgray": {
+      "base": "signalstubes:block/tube-base-dyedgray"
+    },
+    "tube-base-dyedpink": {
+      "base": "signalstubes:block/tube-base-dyedpink"
+    },
+    "cable": {
+      "base": "signalstubes:block/iron"
+    }
+  },
+  "drawtype": "json",
+  "blockmaterial": "Metal",
+  "renderPass": "Opaque",
+  "replaceable": 0,
+  "resistance": 1,
+  "lightAbsorption": 0,
+  "maxStackSize": 16,
+  "sidesolid": {
+    "all": false
+  },
+  "sideopaque": {
+    "all": false
+  },
+  "collisionSelectionBox": {
+    "x1": 0.0625,
+    "y1": 0,
+    "z1": 0.0625,
+    "x2": 0.9375,
+    "y2": 0.125,
+    "z2": 0.9375,
+    "rotateXbytype": {
+      "*-*-north": 90,
+      "*-*-south": 270,
+      "@.*-up-(east|west)": 90,
+      "@.*-down-(east|west)": 270,
+      "@.*-south-(east|west)": 180
+    },
+    "rotateYbytype": {
+      "@.*-east-(up|down|north|south)": 270,
+      "@.*-south-(up|down)": 180,
+      "@.*-west-(up|down|north|south)": 90,
+      "@.*-(down-north|up-south)": 180
+    },
+    "rotateZbyType": {
+      "*-*-up": 180,
+      "*-*-east": 90,
+      "*-*-west": 270
+    }
+  },
+  "sounds": {
+    "place": "game:block/chute",
+    "break": "game:block/chute",
+    "hit": "game:block/chute",
+    "walk": "game:walk/stone*"
+  },
+  "guiTransform": {
+    "origin": {
+      "x": 0.5,
+      "y": 0.1,
+      "z": 0.5
+    },
+    "rotation": {
+      "x": -22.5,
+      "y": -45,
+      "z": 0
+    },
+    "scale": 1.3
+  }
+}
