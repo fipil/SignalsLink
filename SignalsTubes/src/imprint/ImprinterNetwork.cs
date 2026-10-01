@@ -26,6 +26,7 @@ public class ImprinterOpenPacket
     [ProtoMember(1)] public int X;
     [ProtoMember(2)] public int Y;
     [ProtoMember(3)] public int Z;
+    [ProtoMember(4)] public string Path;   // schematic level, steps joined by ';'
 }
 
 /// <summary>Server answers with the dialog state as JSON (see BEImprinter.StateJson).</summary>
@@ -101,8 +102,8 @@ public static class ImprinterNetwork
             ImprinterX = imprinter.X, ImprinterY = imprinter.Y, ImprinterZ = imprinter.Z,
             TargetX = target.X, TargetY = target.Y, TargetZ = target.Z, FromDialog = true });
 
-    public static void OpenDialog(ICoreClientAPI capi, BlockPos pos) =>
-        capi.Network.GetChannel(Channel).SendPacket(new ImprinterOpenPacket { X = pos.X, Y = pos.Y, Z = pos.Z });
+    public static void OpenDialog(ICoreClientAPI capi, BlockPos pos, string path = "") =>
+        capi.Network.GetChannel(Channel).SendPacket(new ImprinterOpenPacket { X = pos.X, Y = pos.Y, Z = pos.Z, Path = path });
 
     public static void StartServer(ICoreServerAPI sapi)
     {
@@ -139,7 +140,7 @@ public static class ImprinterNetwork
             {
                 var pos = new BlockPos(packet.X, packet.Y, packet.Z);
                 if (Reachable(player, pos) && sapi.World.BlockAccessor.GetBlockEntity(pos) is BEImprinter imprinter)
-                    SendState(sapi, player, imprinter, false);
+                    SendState(sapi, player, imprinter, false, packet.Path);
             })
             .SetMessageHandler<ImprintPacket>((player, packet) =>
             {
@@ -153,7 +154,7 @@ public static class ImprinterNetwork
     private static bool Reachable(IServerPlayer player, BlockPos pos) =>
         player.Entity.ServerPos.DistanceTo(pos.ToVec3d().Add(.5, .5, .5)) < 8;
 
-    public static void SendState(ICoreServerAPI sapi, IServerPlayer player, BEImprinter imprinter, bool done) =>
+    public static void SendState(ICoreServerAPI sapi, IServerPlayer player, BEImprinter imprinter, bool done, string path = "") =>
         sapi.Network.GetChannel(Channel).SendPacket(new ImprinterStatePacket {
-            X = imprinter.Pos.X, Y = imprinter.Pos.Y, Z = imprinter.Pos.Z, Json = imprinter.StateJson(player, done) }, player);
+            X = imprinter.Pos.X, Y = imprinter.Pos.Y, Z = imprinter.Pos.Z, Json = imprinter.StateJson(player, done, path) }, player);
 }

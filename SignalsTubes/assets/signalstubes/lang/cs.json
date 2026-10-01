@@ -74,5 +74,19 @@
   "dialog-back": "Zpět",
   "warn-on": "Před zapájením budeš upozorněn.",
   "warn-off": "Upozornění před zapájením je vypnuté.",
-  "programtube-soldered": "Zapájené elektronky: {0}"
+  "programtube-soldered": "Zapájené elektronky: {0}",
+  "schematic-network": "Síť",
+  "schematic-locked": "{0}: obvod zamkl jeho autor.",
+  "schematic-open-hint": "Pravý klik: nahlédnout dovnitř",
+  "schematic-locked-hint": "Zamkl autor",
+  "schematic-part-source": "Zdroj, úroveň {0}",
+  "schematic-part-resistor": "Rezistor, útlum {0}",
+  "schematic-part-switch": "Vypínač,",
+  "schematic-part-toggle": "Vypínač přepínaný aktivátorem (paměť),",
+  "schematic-part-valve": "Trioda: mřížka, katoda, anoda",
+  "schematic-part-tetrode": "Tetroda: mřížka, stínicí mřížka, katoda, anoda",
+  "schematic-part-delay": "Delay, nastavení {0}",
+  "schematic-part-buffer": "Vstup elektronky: zpoždění o jeden krok",
+  "schematic-on": "zapnutý",
+  "schematic-off": "vypnutý"
 }

@@ -1,4 +1,5 @@
 using Newtonsoft.Json.Linq;
+using SignalsTubes.src.schematic;
 using Vintagestory.API.Client;
 using Vintagestory.API.Config;
 using Vintagestory.API.MathTools;
@@ -15,6 +16,8 @@ public class GuiDialogImprinter : GuiDialogBlockEntity
     public const int NameMax = 32, DescriptionMax = 120, PinNameMax = 16;
     private JObject state;
     private bool confirming;
+    private readonly List<string> path = new();
+    private GuiElementSchematic canvas;
 
     public GuiDialogImprinter(BlockPos pos, ICoreClientAPI capi) : base(Lang.Get("signalstubes:dialog-title"), pos, capi) { }
 
@@ -43,8 +46,9 @@ public class GuiDialogImprinter : GuiDialogBlockEntity
         var font = CairoFont.WhiteSmallText();
         var label = CairoFont.WhiteSmallText().WithColor(new[] { .8, .8, .8, 1 });
         var red = CairoFont.WhiteSmallText().WithColor(new[] { 1, .45, .45, 1 });
-        const double w = 460, row = 30, pad = 10;
+        const double w = 460, row = 30, pad = 10, canvasW = 600, canvasH = 440, gap = 20;
         double y = 40;
+        var schematic = state["schematic"] as JObject;
         var bg = ElementBounds.Fill.WithFixedPadding(GuiStyle.ElementToDialogPadding);
         bg.BothSizing = ElementSizing.FitToChildren;
         var dialog = ElementStdBounds.AutosizedMainDialog.WithAlignment(EnumDialogArea.CenterMiddle);
@@ -138,13 +142,33 @@ public class GuiDialogImprinter : GuiDialogBlockEntity
             y += row + pad;
         }
         string author = (string)state["author"];
-        composer.AddStaticText(Lang.Get("signalstubes:dialog-parts", (int)state["parts"]) + (author.Length > 0 ? "   " + Lang.Get("signalstubes:programtube-author", author) : ""), label, ElementBounds.Fixed(0, y + 4, w - 270, row));
+        bool linked = (bool)state["linked"];
+        string info = (linked ? Lang.Get("signalstubes:dialog-parts", (int)state["parts"]) : "") + (author.Length > 0 ? "   " + Lang.Get("signalstubes:programtube-author", author) : "");
+        if (info.Trim().Length > 0) { composer.AddStaticText(info.Trim(), label, ElementBounds.Fixed(0, y + 4, w, row)); y += row; }
         if ((bool)state["hasTube"] && !(bool)state["blank"] && !(bool)state["foreignLocked"])
-            composer.AddSmallButton(Lang.Get("signalstubes:dialog-erase"), OnErase, ElementBounds.Fixed(w - 370, y, 100, row), EnumButtonStyle.Small);
-        composer.AddSmallButton(Lang.Get("signalstubes:dialog-imprint"), OnImprint, ElementBounds.Fixed(w - 260, y, 150, row), (bool)state["ok"] ? EnumButtonStyle.Normal : EnumButtonStyle.Small, "imprint");
+            composer.AddSmallButton(Lang.Get("signalstubes:dialog-erase"), OnErase, ElementBounds.Fixed(0, y, 100, row), EnumButtonStyle.Small);
+        if (linked)
+            composer.AddSmallButton(Lang.Get("signalstubes:dialog-imprint"), OnImprint, ElementBounds.Fixed(w - 260, y, 150, row), (bool)state["ok"] ? EnumButtonStyle.Normal : EnumButtonStyle.Small, "imprint");
         composer.AddSmallButton(Lang.Get("signalstubes:dialog-close"), () => TryClose(), ElementBounds.Fixed(w - 100, y, 100, row));
+
+        if (schematic != null)
+        {
+            // Breadcrumbs with a back button above the drawing, to the right of the form.
+            double cx = w + gap;
+            var crumbs = schematic["crumbs"] as JArray ?? new JArray();
+            string trail = string.Join("  \u203A  ", crumbs.Select(c => (string)c));
+            if (path.Count > 0)
+                composer.AddSmallButton(Lang.Get("signalstubes:dialog-back"), () => { path.RemoveAt(path.Count - 1); Request(); return true; }, ElementBounds.Fixed(cx, 40, 80, row), EnumButtonStyle.Small);
+            composer.AddStaticText(trail, label, ElementBounds.Fixed(cx + (path.Count > 0 ? 90 : 0), 44, canvasW - 90, row));
+            canvas = new GuiElementSchematic(capi, ElementBounds.Fixed(cx, 40 + row + 6, canvasW, canvasH),
+                step => { path.Add(step); Request(); },
+                () => { if (path.Count > 0) { path.RemoveAt(path.Count - 1); Request(); } });
+            composer.AddInteractiveElement(canvas, "schematic");
+        }
+        else canvas = null;
         composer.EndChildElements();
         SingleComposer = composer.Compose();
+        canvas?.SetLevel(schematic);
 
         Text("name", (string)state["name"], NameMax, Lang.Get("signalstubes:dialog-name-hint"));
         var description = SingleComposer.GetTextArea("description");
@@ -186,6 +210,8 @@ public class GuiDialogImprinter : GuiDialogBlockEntity
     }
 
     private JObject edits;   // kept across the confirmation step
+
+    private void Request() => ImprinterNetwork.OpenDialog(capi, BlockEntityPosition, string.Join(";", path));
 
     private bool OnImprint()
     {

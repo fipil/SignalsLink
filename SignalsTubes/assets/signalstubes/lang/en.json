@@ -74,5 +74,19 @@
   "dialog-back": "Back",
   "warn-on": "You will be warned before soldering.",
   "warn-off": "Soldering warnings are off.",
-  "programtube-soldered": "Soldered-in tubes: {0}"
+  "programtube-soldered": "Soldered-in tubes: {0}",
+  "schematic-network": "Network",
+  "schematic-locked": "{0}: the circuit is locked by its author.",
+  "schematic-open-hint": "Right click: look inside",
+  "schematic-locked-hint": "Locked by its author",
+  "schematic-part-source": "Source, level {0}",
+  "schematic-part-resistor": "Resistor, attenuation {0}",
+  "schematic-part-switch": "Switch,",
+  "schematic-part-toggle": "Switch flipped by an actuator (memory),",
+  "schematic-part-valve": "Triode: grid, cathode, anode",
+  "schematic-part-tetrode": "Tetrode: grid, screen grid, cathode, anode",
+  "schematic-part-delay": "Delay, setting {0}",
+  "schematic-part-buffer": "Tube input: one step of delay",
+  "schematic-on": "on",
+  "schematic-off": "off"
 }

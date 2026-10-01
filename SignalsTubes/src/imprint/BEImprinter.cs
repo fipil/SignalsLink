@@ -1,5 +1,6 @@
 using SignalsTubes.src.circuit;
 using SignalsTubes.src.programtube;
+using SignalsTubes.src.schematic;
 using SignalsTubes.src.socket;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
@@ -239,7 +240,7 @@ public class BEImprinter : BlockEntity
     }
 
     /// <summary>Everything the dialog shows, as JSON. Pin and tube names come from the tube already inserted.</summary>
-    public string StateJson(IServerPlayer player, bool done)
+    public string StateJson(IServerPlayer player, bool done, string path = "")
     {
         operatorUid = player.PlayerUID;
         var result = socket == null ? null : Read(player.PlayerUID);
@@ -267,9 +268,59 @@ public class BEImprinter : BlockEntity
             ["adj"] = new Newtonsoft.Json.Linq.JArray((result?.Adjustables ?? new List<CircuitReader.Adjustable>()).Select(a =>
                 new Newtonsoft.Json.Linq.JObject { ["x"] = a.Pos.X, ["y"] = a.Pos.Y, ["z"] = a.Pos.Z, ["kind"] = a.Kind.ToString().ToLowerInvariant(), ["marked"] = exposed.Contains(a.Pos) })),
             ["refused"] = new Newtonsoft.Json.Linq.JArray((result?.Refusals ?? new List<CircuitReader.Refusal>()).Select(r =>
-                new Newtonsoft.Json.Linq.JObject { ["x"] = r.Pos.X, ["y"] = r.Pos.Y, ["z"] = r.Pos.Z, ["reason"] = r.Reason }))
+                new Newtonsoft.Json.Linq.JObject { ["x"] = r.Pos.X, ["y"] = r.Pos.Y, ["z"] = r.Pos.Z, ["reason"] = r.Reason })),
+            ["path"] = path ?? "",
+            ["schematic"] = Schematic(player, result, path)
         };
         return Newtonsoft.Json.JsonConvert.SerializeObject(state, Newtonsoft.Json.Formatting.None);
+    }
+
+    // The schematic shows the network being imprinted when a socket is plugged in, otherwise what the
+    // inserted tube holds. The viewer sees inside soldered tubes only when their author or unlocked.
+    private Newtonsoft.Json.Linq.JObject Schematic(IServerPlayer player, CircuitReader.Result result, string path)
+    {
+        var refs = new Dictionary<string, SchematicLevel.ReferenceInfo>();
+        void Gather(ItemStack stack)
+        {
+            foreach (var item in TubeProgram.Soldered(stack, Api.World))
+            {
+                string id = item.Attributes.GetString(TubeProgram.IdKey);
+                if (id != null && !refs.ContainsKey(id))
+                    refs[id] = new SchematicLevel.ReferenceInfo(TubeProgram.Author(item), TubeProgram.LockView(item), item.Attributes.GetString(TubeProgram.NameKey, item.GetName()));
+                Gather(item);
+            }
+        }
+        CircuitProgram root; string rootName;
+        if (result != null)
+        {
+            root = CircuitSimplifier.Simplify(result.Program);
+            rootName = Lang.Get("signalstubes:schematic-network");
+            foreach (var s in result.Soldered)
+                if (Api.World.BlockAccessor.GetBlockEntity(s.Pos) is BETubeSocket { HasTube: true } be)
+                {
+                    string id = be.Tube.Attributes.GetString(TubeProgram.IdKey);
+                    if (id != null) refs[id] = new SchematicLevel.ReferenceInfo(TubeProgram.Author(be.Tube), TubeProgram.LockView(be.Tube), s.Name);
+                    Gather(be.Tube);
+                }
+        }
+        else if (tube != null && !TubeProgram.IsBlank(tube))
+        {
+            if (TubeProgram.LockView(tube) && !TubeProgram.IsAuthor(tube, player.PlayerUID))
+                return new Newtonsoft.Json.Linq.JObject { ["locked"] = true, ["name"] = tube.GetName() };
+            root = TubeProgram.Get(tube, Api);
+            rootName = tube.GetName();
+            Gather(tube);
+            if (root == null) return null;
+        }
+        else return null;
+        var steps = string.IsNullOrEmpty(path) ? Array.Empty<string>() : path.Split(';');
+        var store = ProgramStore.Of(Api);
+        return SchematicLevel.Build(root, rootName, steps, new SchematicLevel.Context
+        {
+            Resolve = id => store?.Get(id),
+            References = id => refs.TryGetValue(id, out var info) ? info : null,
+            ViewerUid = player.PlayerUID
+        });
     }
 
     /// <summary>Takes the dialog's edits (names, exposure) and imprints. True when the tube was written.</summary>
