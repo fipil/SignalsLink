@@ -20,10 +20,15 @@ public sealed class CircuitSimulator
     private readonly int[] paramPinOf;      // component index -> pin index, -1 if none
     private readonly byte[][] state;        // own copy: the program may be shared between tubes
     private readonly bool[] toggleOn;
+    private readonly CircuitSimulator[] nested;   // Tube parts: one simulator each, null when the program is missing
+    private readonly CircuitProgram[] nestedProgram;
 
-    public CircuitSimulator(CircuitProgram program)
+    /// <param name="resolve">Finds the program of a soldered tube by id; null when nothing is nested.</param>
+    public CircuitSimulator(CircuitProgram program, Func<string, CircuitProgram> resolve = null)
     {
         this.program = program;
+        nested = new CircuitSimulator[program.Components.Count];
+        nestedProgram = new CircuitProgram[program.Components.Count];
         values = new byte[program.NodeCount];
         source = new byte[program.NodeCount];
         int dynamicCount = program.Components.Count(c => HasDynamicLink(c.Kind));
@@ -47,6 +52,11 @@ public sealed class CircuitSimulator
             state[i] = NewState(c.Kind);
             if (c.State != null) Array.Copy(c.State, state[i], Math.Min(c.State.Length, state[i].Length));
             toggleOn[i] = c.Param != 0;
+            if (c.Kind == ComponentKind.Tube && resolve?.Invoke(c.Ref) is CircuitProgram sub && sub.Pins.Count == c.Nodes.Length)
+            {
+                nestedProgram[i] = sub;
+                nested[i] = new CircuitSimulator(sub, resolve);
+            }
         }
         foreach (var pin in program.Pins)
         {
@@ -106,7 +116,7 @@ public sealed class CircuitSimulator
                 break;
             case ComponentKind.Switch:
             {
-                bool on = pin >= 0 ? pinLevels[pin] > 0 : c.Param != 0;
+                bool on = pin >= 0 ? pinLevels[pin] > 0 : c.ParamNode >= 0 ? values[c.ParamNode] > 0 : c.Param != 0;
                 byte att = on ? (byte)0 : CircuitProgram.MaxLevel;
                 SetLink(i, n[0], n[1], att, att);
                 break;
@@ -136,13 +146,27 @@ public sealed class CircuitSimulator
                 for (int k = s.Length - 1; k > 0; k--) s[k] = s[k - 1];
                 s[0] = values[n[0]];
                 int setting = c.Param;
-                if (pin >= 0 && pinLevels[pin] > 0) setting = Math.Min((int)pinLevels[pin], CircuitProgram.DelaySlots - 1);
+                int level = pin >= 0 ? pinLevels[pin] : c.ParamNode >= 0 ? values[c.ParamNode] : 0;
+                if (level > 0) setting = Math.Min(level, CircuitProgram.DelaySlots - 1);
                 Drive(n[1], s[setting]);
                 break;
             }
             case ComponentKind.Buffer:
                 Drive(n[1], values[n[0]]);
                 break;
+            case ComponentKind.Tube:
+            {
+                // Like a tube in a socket: it reads the outer levels of the previous step, runs one step, drives its outputs.
+                var sub = nested[i];
+                if (sub == null) break;
+                var pins = nestedProgram[i].Pins;
+                for (int k = 0; k < pins.Count; k++)
+                    if (pins[k].Role != PinRole.Output) sub.SetInput(pins[k].Index, values[n[k]]);
+                sub.Step();
+                for (int k = 0; k < pins.Count; k++)
+                    if (pins[k].Role == PinRole.Output) Drive(n[k], sub.GetOutput(pins[k].Index));
+                break;
+            }
         }
     }
 

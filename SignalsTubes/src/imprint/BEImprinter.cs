@@ -36,6 +36,9 @@ public class BEImprinter : BlockEntity
     private string operatorUid;   // who sees the highlights: the last player to handle a tool
     private readonly HashSet<BlockPos> exposed = new();
     private readonly List<BlockPos> refused = new();
+    // What the dialog had typed when it was closed without imprinting; kept until the cable is pulled or the network changes.
+    private Newtonsoft.Json.Linq.JObject draft;
+    private string draftFingerprint;
     private CableRenderer plugCable, probeCable;
     private static readonly Dictionary<string, MeshData> meshCache = new();
 
@@ -182,6 +185,7 @@ public class BEImprinter : BlockEntity
     {
         if (socket != null && Api.World.BlockAccessor.GetBlockEntity(socket) is BETubeSocket target) target.SetImprinter(null);
         socket = null;
+        draft = null;
         exposed.Clear();
         refused.Clear();
         ShowHighlights();
@@ -198,13 +202,25 @@ public class BEImprinter : BlockEntity
 
     // ---- server: reading and imprinting
 
-    private CircuitReader.Result Read() => CircuitReader.Read(new SignalsCircuitWorld(Api), socket, exposed);
+    private CircuitReader.Result Read(string uid = null) => CircuitReader.Read(new SignalsCircuitWorld(Api), socket, exposed, uid ?? operatorUid);
+
+    private const string NoWarnKey = "signalstubes-nosolderwarn";
+    public static bool WarnsAboutSoldering(IServerPlayer player) => player.GetModdata(NoWarnKey) == null;
+    public static void SetSolderWarning(IServerPlayer player, bool on) => player.SetModdata(NoWarnKey, on ? null : new byte[] { 1 });
+
+    public void SetDraft(string json)
+    {
+        try { draft = Newtonsoft.Json.Linq.JObject.Parse(json); } catch { return; }
+        draftFingerprint = socket == null ? null : CircuitFingerprint.Compute(Read().Program);
+    }
 
     /// <summary>Re-reads the network; true when the refused set changed.</summary>
     private bool Refresh()
     {
         if (socket == null) return false;
-        var now = Read().Refusals.Select(r => r.Pos).ToList();
+        var result = Read();
+        if (draft != null && CircuitFingerprint.Compute(result.Program) != draftFingerprint) draft = null;
+        var now = result.Refusals.Select(r => r.Pos).ToList();
         bool changed = now.Count != refused.Count || now.Zip(refused).Any(p => !p.First.Equals(p.Second));
         refused.Clear();
         refused.AddRange(now);
@@ -226,17 +242,25 @@ public class BEImprinter : BlockEntity
     public string StateJson(IServerPlayer player, bool done)
     {
         operatorUid = player.PlayerUID;
-        var result = socket == null ? null : Read();
-        var existing = tube == null ? null : TubeProgram.Get(tube);
-        string PinName(int index) => existing?.Pins.FirstOrDefault(p => p.Index == index)?.Name ?? "";
+        var result = socket == null ? null : Read(player.PlayerUID);
+        var existingPins = tube == null ? new List<PublicPin>() : TubeProgram.Pins(tube);
+        string PinName(int index) => (string)draft?["pinNames"]?[index.ToString()] ?? existingPins.FirstOrDefault(p => p.Index == index)?.Name ?? "";
+        bool foreignLocked = tube != null && !TubeProgram.IsAuthor(tube, player.PlayerUID) && (TubeProgram.LockCopy(tube) || TubeProgram.LockView(tube));
         var state = new Newtonsoft.Json.Linq.JObject
         {
             ["done"] = done,
-            ["ok"] = result != null && result.Ok && tube != null,
+            ["ok"] = result != null && result.Ok && tube != null && !foreignLocked,
             ["hasTube"] = tube != null,
+            ["blank"] = tube != null && TubeProgram.IsBlank(tube),
+            ["foreignLocked"] = foreignLocked,
+            ["author"] = tube == null ? "" : TubeProgram.AuthorName(tube) ?? "",
+            ["lockCopy"] = (bool?)draft?["lockCopy"] ?? (tube != null && TubeProgram.LockCopy(tube)),
+            ["lockView"] = (bool?)draft?["lockView"] ?? (tube != null && TubeProgram.LockView(tube)),
             ["linked"] = socket != null,
-            ["name"] = tube?.Attributes.GetString("programName", "") ?? "",
-            ["description"] = tube?.Attributes.GetString("programDescription", "") ?? "",
+            ["solder"] = new Newtonsoft.Json.Linq.JArray((result?.Soldered ?? new List<CircuitReader.Soldered>()).Select(s => s.Name)),
+            ["warn"] = WarnsAboutSoldering(player),
+            ["name"] = (string)draft?["name"] ?? tube?.Attributes.GetString(TubeProgram.NameKey, "") ?? "",
+            ["description"] = (string)draft?["description"] ?? tube?.Attributes.GetString(TubeProgram.DescriptionKey, "") ?? "",
             ["parts"] = result == null ? 0 : CircuitSimplifier.Simplify(result.Program).Components.Count,
             ["pins"] = new Newtonsoft.Json.Linq.JArray((result?.Program.Pins ?? new List<Pin>()).OrderBy(p => p.Index).Select(p =>
                 new Newtonsoft.Json.Linq.JObject { ["i"] = p.Index, ["r"] = p.Role.ToString().ToLowerInvariant(), ["name"] = PinName(p.Index) })),
@@ -257,9 +281,30 @@ public class BEImprinter : BlockEntity
         foreach (var e in edits["exposed"] as Newtonsoft.Json.Linq.JArray ?? new Newtonsoft.Json.Linq.JArray())
             exposed.Add(new BlockPos((int)e["x"], (int)e["y"], (int)e["z"]));
         var names = edits["pinNames"] as Newtonsoft.Json.Linq.JObject;
+        if ((bool?)edits["draft"] == true) { SetDraft(json); return false; }
+        if ((bool?)edits["erase"] == true) return Erase(player);
+        if ((bool?)edits["noWarn"] == true) SetSolderWarning(player, false);
         if (Clip((string)edits["name"], GuiDialogImprinter.NameMax).Length == 0) { Say(player, "imprint-no-name"); return false; }
         return Imprint(player, Clip((string)edits["name"], GuiDialogImprinter.NameMax), Clip((string)edits["description"], GuiDialogImprinter.DescriptionMax),
-            index => Clip((string)names?[index.ToString()], GuiDialogImprinter.PinNameMax));
+            index => Clip((string)names?[index.ToString()], GuiDialogImprinter.PinNameMax),
+            (bool?)edits["lockCopy"] == true, (bool?)edits["lockView"] == true, (bool?)edits["confirmSolder"] == true);
+    }
+
+    private bool ForeignLocked(IServerPlayer player) =>
+        tube != null && !TubeProgram.IsAuthor(tube, player.PlayerUID) && (TubeProgram.LockCopy(tube) || TubeProgram.LockView(tube));
+
+    /// <summary>Back to a blank tube; a locked tube of someone else stays as it is.</summary>
+    public bool Erase(IServerPlayer player)
+    {
+        if (tube == null) { Say(player, "imprint-no-tube"); return false; }
+        if (ForeignLocked(player)) { Say(player, "imprint-locked"); return false; }
+        // Desoldering: the tubes that were consumed come back.
+        foreach (var item in TubeProgram.Soldered(tube, Api.World))
+            if (!player.InventoryManager.TryGiveItemstack(item, true)) Api.World.SpawnItemEntity(item, Pos.ToVec3d().Add(.5, 1, .5));
+        TubeProgram.Clear(tube);
+        MarkDirty(true);
+        Say(player, "imprint-erased");
+        return true;
     }
 
     private static string Clip(string s, int max)
@@ -268,12 +313,13 @@ public class BEImprinter : BlockEntity
         return s.Length <= max ? s : s[..max];
     }
 
-    public bool Imprint(IServerPlayer player, string name = null, string description = null, System.Func<int, string> pinName = null)
+    public bool Imprint(IServerPlayer player, string name = null, string description = null, System.Func<int, string> pinName = null, bool lockCopy = false, bool lockView = false, bool confirmSolder = false)
     {
         if (socket == null) { Say(player, "imprint-no-socket"); return false; }
         if (tube == null) { Say(player, "imprint-no-tube"); return false; }
+        if (ForeignLocked(player)) { Say(player, "imprint-locked"); return false; }
         operatorUid = player.PlayerUID;
-        var result = Read();
+        var result = Read(player.PlayerUID);
         refused.Clear();
         refused.AddRange(result.Refusals.Select(r => r.Pos));
         ShowHighlights();
@@ -283,12 +329,20 @@ public class BEImprinter : BlockEntity
             Say(player, "imprint-refused", reasons);
             return false;
         }
+        if (result.Soldered.Count > 0 && !confirmSolder && WarnsAboutSoldering(player)) return false;   // the dialog asks first
+        draft = null;
         var program = CircuitSimplifier.Simplify(result.Program);
         if (pinName != null)
             foreach (var pin in program.Pins) pin.Name = string.IsNullOrEmpty(pinName(pin.Index)) ? null : pinName(pin.Index);
-        TubeProgram.Set(tube, program);
-        SetOrRemove("programName", name);
-        SetOrRemove("programDescription", description);
+        // Soldering: the referenced tubes leave their sockets and travel inside the new tube.
+        var consumed = new List<ItemStack>();
+        foreach (var s in result.Soldered)
+            if (Api.World.BlockAccessor.GetBlockEntity(s.Pos) is BETubeSocket be && be.TakeTube() is ItemStack taken) consumed.Add(taken);
+        var previous = TubeProgram.Soldered(tube, Api.World);   // re-imprinting a composite keeps what it already held
+        TubeProgram.Set(tube, program, ProgramStore.Of(Api), player.PlayerUID, player.PlayerName, lockCopy || program.HasReferences, lockView);
+        TubeProgram.SetSoldered(tube, previous.Concat(consumed));
+        SetOrRemove(TubeProgram.NameKey, name);
+        SetOrRemove(TubeProgram.DescriptionKey, description);
         MarkDirty(true);
         Say(player, "imprint-done", program.Components.Count, program.Pins.Count);
         return true;

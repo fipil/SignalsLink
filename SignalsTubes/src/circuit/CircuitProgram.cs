@@ -15,6 +15,29 @@ public sealed class CircuitProgram
     public List<Link> Links = new();
     public List<Component> Components = new();
     public List<Pin> Pins = new();
+    /// <summary>Nested tubes, for the schematic only; the simulator sees a flat program.</summary>
+    public List<Group> Groups = new();
+
+    public bool HasReferences => Components.Any(c => c.Kind == ComponentKind.Tube);
+}
+
+/// <summary>A tube that was nested: its parts carry the group's index. A soldered one has a Ref and a single Tube part.</summary>
+public sealed class Group
+{
+    public string Name;
+    public string Description;
+    public int Parent = -1;
+    public string Ref;           // program id of a soldered tube, null when inlined
+    public List<GroupPin> Pins = new();
+}
+
+/// <summary>Where a nested tube's pin sits in the outer program.</summary>
+public sealed class GroupPin
+{
+    public int Index;
+    public PinRole Role;
+    public string Name;
+    public int Node;
 }
 
 /// <summary>Static link. Att applies A→B, RevAtt applies B→A. A wire is 0/0.</summary>
@@ -36,6 +59,7 @@ public enum ComponentKind : byte
     Tetrode,  // [grid, cathode, anode, screen] att = grid*(screen+1)
     Delay,    // [in, out]                     Param = 0..5, State = shift register
     Buffer,   // [in, out]                     out = in of the previous step; the input-pin latency of an inlined tube
+    Tube,     // [one node per pin of Ref]     a soldered tube, run from its own program on the server
 }
 
 public sealed class Component
@@ -44,6 +68,9 @@ public sealed class Component
     public int[] Nodes;
     public byte Param;
     public byte[] State;
+    public int ParamNode = -1;   // Switch / Delay: setting read from this node (an inlined tube's parameter pin)
+    public string Ref;           // Tube: program id
+    public int Group = -1;
 
     public Component() { }
     public Component(ComponentKind kind, byte param, params int[] nodes) { Kind = kind; Param = param; Nodes = nodes; }
@@ -57,6 +84,7 @@ public sealed class Component
         ComponentKind.Tetrode => 4,
         ComponentKind.Delay => 2,
         ComponentKind.Buffer => 2,
+        ComponentKind.Tube => -1,   // one per pin of the referenced program
         _ => throw new ArgumentOutOfRangeException(nameof(kind))
     };
 }

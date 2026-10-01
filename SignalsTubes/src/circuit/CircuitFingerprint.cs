@@ -42,6 +42,7 @@ public static class CircuitFingerprint
                 string ports = string.Join(",", comp.Nodes.Select(x => labels[x]));
                 for (int port = 0; port < comp.Nodes.Length; port++)
                     parts[comp.Nodes[port]].Add($"C{head}@{port}[{ports}]");
+                if (comp.ParamNode >= 0) parts[comp.ParamNode].Add($"C{head}@param[{ports}]");
             }
             bool changed = false;
             for (int i = 0; i < n; i++)
@@ -64,7 +65,7 @@ public static class CircuitFingerprint
         for (int c = 0; c < p.Components.Count; c++)
         {
             var comp = p.Components[c];
-            lines.Add($"C {ComponentHead(comp, c, pinOfComponent)} {string.Join(" ", comp.Nodes.Select(x => labels[x]))}");
+            lines.Add($"C {ComponentHead(comp, c, pinOfComponent)} {string.Join(" ", comp.Nodes.Select(x => labels[x]))}{(comp.ParamNode >= 0 ? " <" + labels[comp.ParamNode] : "")}");
         }
         foreach (var pin in p.Pins)
             if (pin.Node >= 0) lines.Add($"P {pin.Index} {pin.Role} {labels[pin.Node]}");
@@ -76,8 +77,8 @@ public static class CircuitFingerprint
     {
         // A switch or delay pulled out to a pin is defined by the pin, not by its imprinted setting.
         bool exposed = pinOfComponent.TryGetValue(index, out string pin);
-        string param = exposed ? pin : c.Kind == ComponentKind.Toggle ? "-" : c.Param.ToString();
-        return $"{c.Kind}:{param}";
+        string param = exposed ? pin : c.ParamNode >= 0 ? "node" : c.Kind == ComponentKind.Toggle ? "-" : c.Param.ToString();
+        return c.Kind == ComponentKind.Tube ? $"Tube:{c.Ref}" : $"{c.Kind}:{param}";
     }
 
     private static string Hash(string s) => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(s)))[..16];

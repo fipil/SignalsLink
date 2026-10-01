@@ -54,8 +54,8 @@ public class TubeProgramTests
         var (_, circuit) = CreativeSamples().First(s => s.name == "Memory");
         var stack = new ItemStack(Tube);
         stack.Attributes.SetString(ProgramCodec.AttributeKey, circuit);
-        var program = TubeProgram.Get(stack);
-        Assert.Same(program, TubeProgram.Get(stack.Clone()));
+        var program = TubeProgram.Get(stack, null);
+        Assert.Same(program, TubeProgram.Get(stack.Clone(), null));
         Assert.Equal(0b11, TubeVisuals.PinMask(stack));
         Assert.Equal(2, TubeVisuals.PinCount(stack));
 
@@ -79,7 +79,7 @@ public class TubeProgramTests
 
         var broken = new ItemStack(Tube);
         broken.Attributes.SetString(ProgramCodec.AttributeKey, "{\"v\":1,\"n\":0,\"links\":[[0,0,0,0]],\"parts\":[],\"pins\":[]}");
-        Assert.Null(TubeProgram.Get(broken));
+        Assert.Null(TubeProgram.Get(broken, null));
         Assert.Equal(0xFF, TubeVisuals.PinMask(broken));
     }
 
@@ -135,5 +135,35 @@ public class TubeProgramTests
         var litShape = TubeVisuals.Build(template, stack, lit: true);
         Assert.All(litShape.Elements.Where(e => e.Name.StartsWith("glyph_")), e => Assert.All(e.FacesResolved, f => Assert.Equal(TubeVisuals.GlyphGlow, f.Glow)));
         Assert.NotEqual(TubeVisuals.MeshKey(stack, false), TubeVisuals.MeshKey(stack, true));
+    }
+
+    [Fact]
+    public void ImprintedTubeCarriesOnlyThePublicPartAndTheStoreKeepsTheProgram()
+    {
+        var (_, circuit) = CreativeSamples().First(s => s.name == "Delay line");
+        var program = ProgramCodec.FromJson(circuit);
+        program.Pins[0].Name = "Trigger";
+        var store = new ProgramStore();
+        var stack = new ItemStack(Tube);
+        TubeProgram.Set(stack, program, store, "uid-1", "Fipil", lockCopy: true, lockView: false);
+
+        Assert.False(stack.Attributes.HasAttribute(ProgramCodec.AttributeKey));
+        Assert.Null(TubeProgram.Get(stack, null));                       // no server api, no program
+        Assert.Same(program, store.Get(stack.Attributes.GetString(TubeProgram.IdKey)));
+        Assert.Equal(CircuitFingerprint.Compute(program), TubeProgram.Fingerprint(stack));
+        var pins = TubeProgram.Pins(stack);
+        Assert.Equal(new[] { 0, 1, 2 }, pins.Select(p => p.Index));
+        Assert.Equal("Trigger", pins[0].Name);
+        Assert.Equal(PinRole.Delay, pins[2].Role);
+        Assert.Equal(0b111, TubeVisuals.PinMask(stack));
+        Assert.True(TubeProgram.LockCopy(stack));
+        Assert.False(TubeProgram.LockView(stack));
+        Assert.True(TubeProgram.IsAuthor(stack, "uid-1"));
+        Assert.False(TubeProgram.IsAuthor(stack, "uid-2"));
+
+        TubeProgram.Clear(stack);
+        Assert.True(TubeProgram.IsBlank(stack));
+        Assert.Equal(0xFF, TubeVisuals.PinMask(stack));
+        Assert.Null(TubeProgram.Author(stack));
     }
 }

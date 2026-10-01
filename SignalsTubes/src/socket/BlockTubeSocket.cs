@@ -86,7 +86,18 @@ public class BlockTubeSocket : BlockConnection
             string name = be?.NameOf(sel.SelectionBoxIndex);
             info += (name == null ? role : $"{sel.SelectionBoxIndex + 1}: {name} ({role.Split(':').Last().Trim()})") + "\n";
         }
-        if (be is { HasTube: true } && ItemProgramTube.Description(be.Tube) is string description) info += description + "\n";
+        if (be is { HasTube: true })
+        {
+            // Same public part as the item tooltip; the pin list only when not aiming at one pin.
+            if (ItemProgramTube.Description(be.Tube) is string description) info += description + "\n";
+            if (anchor == null)
+                foreach (var pin in TubeProgram.Pins(be.Tube))
+                    info += "  " + (pin.Name ?? Vintagestory.API.Config.Lang.Get("signalstubes:pin-" + pin.Role.ToString().ToLowerInvariant(), pin.Index + 1))
+                        + (pin.Name == null ? "" : $" ({Vintagestory.API.Config.Lang.Get("signalstubes:role-" + pin.Role.ToString().ToLowerInvariant())})") + "\n";
+            if (TubeProgram.AuthorName(be.Tube) is string author) info += Vintagestory.API.Config.Lang.Get("signalstubes:programtube-author", author) + "\n";
+            if (TubeProgram.LockCopy(be.Tube)) info += Vintagestory.API.Config.Lang.Get("signalstubes:programtube-lockcopy") + "\n";
+            if (TubeProgram.LockView(be.Tube)) info += Vintagestory.API.Config.Lang.Get("signalstubes:programtube-lockview") + "\n";
+        }
         return info;
     }
 

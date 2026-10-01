@@ -1,5 +1,6 @@
 using SignalsTubes.src.circuit;
 using SignalsTubes.src.imprint;
+using SignalsTubes.src.programtube;
 using Vintagestory.API.Common;
 using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
@@ -15,6 +16,7 @@ public class CircuitReaderTests
         private readonly List<(NodeRef a, NodeRef b)> wires = new();
         private readonly Dictionary<BlockPos, ITreeAttribute> attributes = new();
         private readonly Dictionary<NodeRef, byte> outputs = new();
+        private readonly Dictionary<BlockPos, NestedTube> tubes = new();
 
         public BlockPos Put(string code, int x, int nodeCount, params (string, string)[] variants)
         {
@@ -27,6 +29,7 @@ public class CircuitReaderTests
         public World Wire(BlockPos a, int ia, BlockPos b, int ib) { wires.Add((new NodeRef(a, ia), new NodeRef(b, ib))); return this; }
         public World Output(BlockPos pos, byte level) { outputs[new NodeRef(pos, 0)] = level; return this; }
         public World State(BlockPos pos, ITreeAttribute tree) { attributes[pos] = tree; return this; }
+        public World Tube(BlockPos pos, NestedTube tube) { tubes[pos] = tube; return this; }
 
         public Block BlockAt(BlockPos pos) => blocks.TryGetValue(pos, out var b) ? b.block : null;
         public IReadOnlyList<int> NodesAt(BlockPos pos) => blocks.TryGetValue(pos, out var b) ? b.nodes : Array.Empty<int>();
@@ -34,6 +37,14 @@ public class CircuitReaderTests
         public IEnumerable<NodeRef> WiresFrom(NodeRef node) =>
             wires.Where(w => w.a == node).Select(w => w.b).Concat(wires.Where(w => w.b == node).Select(w => w.a));
         public ITreeAttribute EntityAttributes(BlockPos pos) => attributes.TryGetValue(pos, out var t) ? t : null;
+        public NestedTube TubeAt(BlockPos pos, string readerUid) => tubes.TryGetValue(pos, out var t) ? t : null;
+    }
+
+    private static NestedTube Inverter(bool solder)
+    {
+        var p = ProgramCodec.FromJson("{\"v\":1,\"n\":3,\"links\":[],\"parts\":[{\"k\":\"source\",\"n\":[1],\"p\":15},{\"k\":\"valve\",\"n\":[0,1,2]}],\"pins\":[{\"i\":0,\"r\":\"in\",\"n\":0,\"name\":\"A\"},{\"i\":1,\"r\":\"out\",\"n\":2}]}");
+        return new NestedTube { Name = "Inverter", Description = "NOT", ProgramId = "prog-inv", Solder = solder, Program = solder ? null : p,
+            Pins = new() { new PublicPin(0, PinRole.Input, "A"), new PublicPin(1, PinRole.Output, null) } };
     }
 
     private static (World world, BlockPos socket) Socket()
@@ -146,20 +157,18 @@ public class CircuitReaderTests
     }
 
     [Fact]
-    public void WorldDrivenPartsUnknownBlocksAndNestedTubesAreRefusedWithPositions()
+    public void WorldDrivenPartsAndUnknownBlocksAreRefusedWithPositions()
     {
         var (w, socket) = Socket();
         var button = w.Put("signals:buttonswitch-north-down-off", 1, 2);
         var strange = w.Put("othermod:gizmo", 2, 1);
-        var other = w.Put("signalstubes:tubesocket-north-down", 3, 8);
-        var tree = new TreeAttribute(); tree.SetString("programTube", "x"); w.State(other, tree);
         var lamp = w.Put("signals:blocklightbulb-off-north-down", 4, 1);
-        w.Wire(socket, 0, button, 0).Wire(socket, 1, strange, 0).Wire(socket, 2, other, 5).Wire(socket, 3, lamp, 0);
+        w.Wire(socket, 0, button, 0).Wire(socket, 1, strange, 0).Wire(socket, 3, lamp, 0);
 
         var r = CircuitReader.Read(w, socket);
-        Assert.Equal(new[] { ("world-driven", 1), ("unknown", 2), ("nested-tube", 3) },
+        Assert.Equal(new[] { ("world-driven", 1), ("unknown", 2) },
             r.Refusals.Select(x => (x.Reason, x.Pos.X)).OrderBy(x => x.Item2));
-        Assert.Equal(4, r.Program.Pins.Count);   // the lamp pin is a harmless input
+        Assert.Equal(3, r.Program.Pins.Count);   // the lamp pin is a harmless input
     }
 
     [Fact]
@@ -175,5 +184,109 @@ public class CircuitReaderTests
         Assert.Equal(7, Assert.Single(r.Program.Pins).Index);
         Assert.Equal(3, r.Program.Links.Count);
         Assert.Equal(1, CircuitSimplifier.Simplify(r.Program).NodeCount);
+    }
+
+    [Fact]
+    public void OwnNestedTubeIsInlinedAsAGroupWithInputBuffers()
+    {
+        var (w, socket) = Socket();
+        var inner = w.Put("signalstubes:tubesocket-north-down", 1, 8);
+        w.Tube(inner, Inverter(solder: false));
+        w.Wire(socket, 0, inner, 0).Wire(inner, 1, socket, 1);
+
+        var r = CircuitReader.Read(w, socket, null, "me");
+        Assert.True(r.Ok);
+        Assert.Empty(r.Soldered);
+        var p = r.Program;
+        var group = Assert.Single(p.Groups);
+        Assert.Equal("Inverter", group.Name);
+        Assert.Null(group.Ref);
+        Assert.Equal(new[] { "A", null }, group.Pins.Select(gp => gp.Name));
+        Assert.All(p.Components, c => Assert.Equal(0, c.Group));
+        Assert.Contains(p.Components, c => c.Kind == ComponentKind.Buffer);
+        Assert.Equal(PinRole.Input, p.Pins.Single(x => x.Index == 0).Role);
+        Assert.Equal(PinRole.Output, p.Pins.Single(x => x.Index == 1).Role);
+
+        // Behaves like the placed tube did: inverter plus one step on the input.
+        var sim = new CircuitSimulator(CircuitSimplifier.Simplify(p));
+        sim.SetInput(0, 15);
+        var trace = new List<byte>();
+        for (int i = 0; i < 4; i++) { sim.Step(); trace.Add(sim.GetOutput(1)); }
+        Assert.Equal(new byte[] { 15, 15, 0, 0 }, trace);
+    }
+
+    [Fact]
+    public void ForeignLockedTubeIsSolderedByReferenceAndListedForConsumption()
+    {
+        var (w, socket) = Socket();
+        var inner = w.Put("signalstubes:tubesocket-north-down", 1, 8);
+        w.Tube(inner, Inverter(solder: true));
+        w.Wire(socket, 0, inner, 0).Wire(inner, 1, socket, 1);
+
+        var r = CircuitReader.Read(w, socket, null, "someone-else");
+        Assert.True(r.Ok);
+        var soldered = Assert.Single(r.Soldered);
+        Assert.Equal("Inverter", soldered.Name);
+        var tube = Assert.Single(r.Program.Components);
+        Assert.Equal(ComponentKind.Tube, tube.Kind);
+        Assert.Equal("prog-inv", tube.Ref);
+        Assert.Equal(2, tube.Nodes.Length);
+        Assert.Equal("prog-inv", Assert.Single(r.Program.Groups).Ref);
+        Assert.Equal(PinRole.Output, r.Program.Pins.Single(x => x.Index == 1).Role);
+
+        var program = CircuitSimplifier.Simplify(r.Program);
+        Assert.True(program.HasReferences);
+        var sim = new CircuitSimulator(program, id => id == "prog-inv" ? Inverter(false).Program : null);
+        sim.SetInput(0, 15);
+        var trace = new List<byte>();
+        for (int i = 0; i < 4; i++) { sim.Step(); trace.Add(sim.GetOutput(1)); }
+        Assert.Equal(new byte[] { 15, 15, 0, 0 }, trace);   // same timing as the inlined one
+
+        var back = ProgramCodec.FromJson(ProgramCodec.ToJson(program));
+        Assert.Equal("prog-inv", back.Components[0].Ref);
+        Assert.Equal("Inverter", back.Groups[0].Name);
+    }
+
+    [Fact]
+    public void InlinedParameterPinReadsTheOuterNode()
+    {
+        var delay = ProgramCodec.FromJson("{\"v\":1,\"n\":2,\"links\":[],\"parts\":[{\"k\":\"delay\",\"n\":[0,1],\"p\":1}],\"pins\":[{\"i\":0,\"r\":\"in\",\"n\":0},{\"i\":1,\"r\":\"out\",\"n\":1},{\"i\":2,\"r\":\"delay\",\"c\":0}]}");
+        var (w, socket) = Socket();
+        var inner = w.Put("signalstubes:tubesocket-north-down", 1, 8);
+        w.Tube(inner, new NestedTube { Name = "D", Program = delay, Pins = new() { new(0, PinRole.Input, null), new(1, PinRole.Output, null), new(2, PinRole.Delay, null) } });
+        w.Wire(socket, 0, inner, 0).Wire(inner, 1, socket, 1).Wire(socket, 2, inner, 2);
+
+        var r = CircuitReader.Read(w, socket, null, "me");
+        Assert.True(r.Ok);
+        var d = Assert.Single(r.Program.Components, c => c.Kind == ComponentKind.Delay);
+        Assert.True(d.ParamNode >= 0);
+        var p = CircuitSimplifier.Simplify(r.Program);
+        Assert.Contains("\"pn\"", ProgramCodec.ToJson(p));
+
+        byte[] Run(byte setting)
+        {
+            var sim = new CircuitSimulator(p);
+            sim.SetInput(2, setting);
+            var trace = new byte[10];
+            for (int i = 0; i < trace.Length; i++) { sim.SetInput(0, (byte)(i == 0 ? 9 : 0)); sim.Step(); trace[i] = sim.GetOutput(1); }
+            return trace;
+        }
+        // Setting 0 keeps the imprinted delay (1); 4 makes it 4. Each is one step later than the bare delay: the input buffer.
+        Assert.Equal(3, Array.IndexOf(Run(0), (byte)9));
+        Assert.Equal(6, Array.IndexOf(Run(4), (byte)9));
+    }
+
+    [Fact]
+    public void ThresholdNotWithResistorAfterTheAnodeHasAnOutputPin()
+    {
+        var (w, socket) = Socket();
+        var valve = w.Put("signals:blockvalve-off-north-down", 1, 3);
+        var source = w.Put("signals:blocksource", 2, 1);
+        var resistor = w.Put("signals:blockresistor-14-north-down", 3, 2, ("value", "14"));
+        w.Wire(socket, 0, valve, 0).Wire(source, 0, valve, 1).Wire(valve, 2, resistor, 0).Wire(resistor, 1, socket, 1);
+        var r = CircuitReader.Read(w, socket);
+        Assert.True(r.Ok);
+        Assert.Equal(PinRole.Input, r.Program.Pins.Single(x => x.Index == 0).Role);
+        Assert.Equal(PinRole.Output, r.Program.Pins.Single(x => x.Index == 1).Role);
     }
 }

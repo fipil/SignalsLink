@@ -10,7 +10,7 @@ public static class ProgramCodec
 {
     public const string AttributeKey = "circuit";
 
-    private static readonly string[] KindNames = { "source", "switch", "toggle", "valve", "tetrode", "delay", "buffer" };
+    private static readonly string[] KindNames = { "source", "switch", "toggle", "valve", "tetrode", "delay", "buffer", "tube" };
     private static readonly string[] RoleNames = { "in", "out", "switch", "delay" };
 
     public static string ToJson(CircuitProgram p)
@@ -25,6 +25,22 @@ public static class ProgramCodec
                 var o = new JObject { ["k"] = KindNames[(int)c.Kind], ["n"] = new JArray(c.Nodes) };
                 if (c.Param != 0) o["p"] = c.Param;
                 if (c.State is { Length: > 0 } && c.State.Any(b => b != 0)) o["s"] = new JArray(c.State.Select(b => (int)b));  // byte[] alone would become one base64 token
+                if (c.ParamNode >= 0) o["pn"] = c.ParamNode;
+                if (c.Ref != null) o["ref"] = c.Ref;
+                if (c.Group >= 0) o["g"] = c.Group;
+                return o;
+            })),
+            ["groups"] = new JArray(p.Groups.Select(g =>
+            {
+                var o = new JObject { ["name"] = g.Name ?? "", ["pins"] = new JArray(g.Pins.Select(gp =>
+                {
+                    var po = new JObject { ["i"] = gp.Index, ["r"] = RoleNames[(int)gp.Role], ["n"] = gp.Node };
+                    if (!string.IsNullOrEmpty(gp.Name)) po["name"] = gp.Name;
+                    return po;
+                })) };
+                if (!string.IsNullOrEmpty(g.Description)) o["desc"] = g.Description;
+                if (g.Parent >= 0) o["parent"] = g.Parent;
+                if (g.Ref != null) o["ref"] = g.Ref;
                 return o;
             })),
             ["pins"] = new JArray(p.Pins.Select(pin =>
@@ -62,12 +78,41 @@ public static class ProgramCodec
             if (kindIndex < 0) throw new FormatException($"Unknown part kind '{o["k"]}'.");
             var kind = (ComponentKind)kindIndex;
             var nodes = (o["n"] as JArray ?? throw new FormatException("Part nodes missing.")).Select(n => Node(p, n)).ToArray();
-            if (nodes.Length != Component.Arity(kind)) throw new FormatException($"Part '{KindNames[kindIndex]}' needs {Component.Arity(kind)} nodes.");
+            if (Component.Arity(kind) >= 0 && nodes.Length != Component.Arity(kind)) throw new FormatException($"Part '{KindNames[kindIndex]}' needs {Component.Arity(kind)} nodes.");
             var c = new Component(kind, o["p"] == null ? (byte)0 : Level(o["p"]), nodes);
             if (kind == ComponentKind.Delay && c.Param >= CircuitProgram.DelaySlots) throw new FormatException("Delay setting out of range.");
             if (o["s"] is JArray s) c.State = s.Select(Level).ToArray();
+            if (o["pn"] != null)
+            {
+                if (kind is not (ComponentKind.Switch or ComponentKind.Delay)) throw new FormatException("Only a switch or delay takes its setting from a node.");
+                c.ParamNode = Node(p, o["pn"]);
+            }
+            if (kind == ComponentKind.Tube)
+            {
+                c.Ref = (string)o["ref"] ?? throw new FormatException("Tube part without a program reference.");
+                if (nodes.Length == 0 || nodes.Length > CircuitProgram.MaxPins) throw new FormatException("Tube part with an impossible pin count.");
+            }
+            if (o["g"] != null) c.Group = Int(o, "g");
             p.Components.Add(c);
         }
+        if (root["groups"] is JArray groups)
+            foreach (var t in groups)
+            {
+                var o = t as JObject ?? throw new FormatException("Group must be an object.");
+                var g = new Group { Name = (string)o["name"] ?? "", Description = (string)o["desc"], Parent = o["parent"] == null ? -1 : Int(o, "parent"), Ref = (string)o["ref"] };
+                foreach (var pt in o["pins"] as JArray ?? new JArray())
+                {
+                    var po = pt as JObject ?? throw new FormatException("Group pin must be an object.");
+                    int roleIndex = Array.IndexOf(RoleNames, (string)po["r"]);
+                    if (roleIndex < 0) throw new FormatException($"Unknown pin role '{po["r"]}'.");
+                    g.Pins.Add(new GroupPin { Index = Int(po, "i"), Role = (PinRole)roleIndex, Name = (string)po["name"], Node = Node(p, po["n"] ?? throw new FormatException("Group pin node missing.")) });
+                }
+                p.Groups.Add(g);
+            }
+        foreach (var c in p.Components)
+            if (c.Group >= p.Groups.Count) throw new FormatException("Part group out of range.");
+        foreach (var g in p.Groups)
+            if (g.Parent >= p.Groups.Count) throw new FormatException("Group parent out of range.");
         var seen = new bool[CircuitProgram.MaxPins];
         foreach (var t in Arr(root, "pins"))
         {

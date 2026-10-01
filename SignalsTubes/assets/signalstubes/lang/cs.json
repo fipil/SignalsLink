@@ -1,6 +1,5 @@
 {
   "game:tabname-signalstubes": "Signals Tubes",
-  "programtube-named": "Programová elektronka: {0}",
   "programtube-pins": "Počet kolíků: {0}",
   "block-tubesocket-*": "Patice elektronky",
   "socket-insert": "Zasadit elektronku",
@@ -30,7 +29,6 @@
   "imprint-unmarked": "Označení zrušeno.",
   "refuse-world-driven": "čte svět nebo hráče",
   "refuse-unknown": "neznámá součástka",
-  "refuse-nested-tube": "elektronka v elektronce zatím není podporována",
   "refuse-actuator-target": "aktivátor neovládá vypínač",
   "refuse-switch-many-actuators": "vypínač ovládá víc aktivátorů",
   "refuse-no-free-pin": "došly volné kolíky",
@@ -61,5 +59,20 @@
   "pin-output": "Výstup {0}",
   "pin-switch": "Vypínač {0}",
   "pin-delay": "Delay {0}",
-  "imprint-no-name": "Nejdřív dej elektronce název."
+  "imprint-no-name": "Nejdřív dej elektronce název.",
+  "programtube-author": "Autor: {0}",
+  "programtube-lockcopy": "Zámek kopírování: kopírovat smí jen autor",
+  "programtube-lockview": "Zámek schématu: obvod vidí jen autor",
+  "dialog-lock-copy": "Zamknout kopírování",
+  "dialog-lock-view": "Zamknout schéma",
+  "dialog-erase": "Vymazat",
+  "dialog-foreign-locked": "Zamkl {0}: nejde přepsat ani vymazat.",
+  "imprint-locked": "Tuhle elektronku zamkl její autor.",
+  "imprint-erased": "Elektronka je zase prázdná.",
+  "dialog-solder-warning": "Tyhle elektronky se zapájí a zmizí z patic:",
+  "dialog-no-warn": "Znovu neupozorňovat (/tubes warn on to zase zapne)",
+  "dialog-back": "Zpět",
+  "warn-on": "Před zapájením budeš upozorněn.",
+  "warn-off": "Upozornění před zapájením je vypnuté.",
+  "programtube-soldered": "Zapájené elektronky: {0}"
 }

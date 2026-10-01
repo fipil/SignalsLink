@@ -40,14 +40,15 @@ public class BETubeSocket : BlockEntity
     // A blank tube still has all eight contacts.
     public int PinMask => tube == null ? 0 : TubeVisuals.PinMask(tube);
 
+    // Roles and names come from the public part of the stack, so the client can show them too.
     public string RoleOf(int pin)
     {
-        var p = program?.Pins.FirstOrDefault(x => x.Index == pin);
+        var p = tube == null ? null : TubeProgram.Pins(tube).FirstOrDefault(x => x.Index == pin);
         return p == null ? "free" : p.Role switch { PinRole.Input => "in", PinRole.Output => "out", _ => "param" };
     }
 
     /// <summary>Author-given pin name, null when none.</summary>
-    public string NameOf(int pin) => program?.Pins.FirstOrDefault(x => x.Index == pin)?.Name;
+    public string NameOf(int pin) => tube == null ? null : TubeProgram.Pins(tube).FirstOrDefault(x => x.Index == pin)?.Name;
 
     public override void Initialize(ICoreAPI api)
     {
@@ -85,8 +86,8 @@ public class BETubeSocket : BlockEntity
 
     private void LoadProgram()
     {
-        program = tube == null ? null : TubeProgram.Get(tube);
-        sim = program == null ? null : new CircuitSimulator(program);
+        program = tube == null || Api.Side != EnumAppSide.Server ? null : TubeProgram.Get(tube, Api);
+        sim = program == null ? null : new CircuitSimulator(program, id => ProgramStore.Of(Api)?.Get(id));
     }
 
     private void OnSignalTick()
@@ -111,6 +112,19 @@ public class BETubeSocket : BlockEntity
         if (beh == null || program == null) return;
         foreach (var pin in program.Pins)
             if (pin.Role == PinRole.Output) beh.UpdateSource(new NodePos(Pos, pin.Index), 0);
+    }
+
+    /// <summary>Server: removes the tube without dropping it (the imprinter solders it into a new one).</summary>
+    public ItemStack TakeTube()
+    {
+        if (tube == null) return null;
+        ReleaseOutputs();
+        var taken = tube;
+        tube = null;
+        lit = false;
+        LoadProgram();
+        MarkDirty(true);
+        return taken;
     }
 
     public bool Interact(IPlayer player)

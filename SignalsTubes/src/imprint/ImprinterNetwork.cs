@@ -106,6 +106,17 @@ public static class ImprinterNetwork
 
     public static void StartServer(ICoreServerAPI sapi)
     {
+        var parsers = sapi.ChatCommands.Parsers;
+        sapi.ChatCommands.Create("tubes").WithDescription("Signals Tubes").RequiresPrivilege(Privilege.chat)
+            .BeginSubCommand("warn").WithDescription("Warn before soldering tubes into a new one: on / off")
+            .WithArgs(parsers.WordRange("state", "on", "off")).RequiresPlayer()
+            .HandleWith(args =>
+            {
+                BEImprinter.SetSolderWarning((IServerPlayer)args.Caller.Player, (string)args[0] == "on");
+                return TextCommandResult.Success(Lang.Get("signalstubes:warn-" + (string)args[0]));
+            })
+            .EndSubCommand();
+
         sapi.Network.RegisterChannel(Channel)
             .RegisterMessageType<ProbeMarkPacket>()
             .RegisterMessageType<ImprinterOpenPacket>()
@@ -135,7 +146,7 @@ public static class ImprinterNetwork
                 var pos = new BlockPos(packet.X, packet.Y, packet.Z);
                 if (!Reachable(player, pos) || sapi.World.BlockAccessor.GetBlockEntity(pos) is not BEImprinter imprinter) return;
                 bool done = imprinter.ApplyAndImprint(player, packet.Json);
-                SendState(sapi, player, imprinter, done);
+                if (!packet.Json.Contains("\"draft\":true")) SendState(sapi, player, imprinter, done);
             });
     }
 

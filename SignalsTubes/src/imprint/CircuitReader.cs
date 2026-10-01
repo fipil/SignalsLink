@@ -14,12 +14,15 @@ public sealed class CircuitReader
     public sealed record Refusal(BlockPos Pos, string Reason);
     /// <summary>A switch or delay the author may pull out to a pin.</summary>
     public sealed record Adjustable(BlockPos Pos, ComponentKind Kind, int Component);
+    /// <summary>A tube that will be soldered in: referenced, and taken out of its socket on imprint.</summary>
+    public sealed record Soldered(BlockPos Pos, string Name);
 
     public sealed class Result
     {
         public CircuitProgram Program = new();
         public List<Refusal> Refusals = new();
         public List<Adjustable> Adjustables = new();
+        public List<Soldered> Soldered = new();
         public bool Ok => Refusals.Count == 0;
     }
 
@@ -29,6 +32,9 @@ public sealed class CircuitReader
     private readonly ICircuitWorld world;
     private readonly BlockPos socket;
     private readonly ISet<BlockPos> exposed;
+    private readonly string readerUid;
+    private readonly Dictionary<int, int[]> tubeOutputs = new();   // Tube part index -> nodes it drives
+    private const int InnerNodeBase = 1000;   // synthetic node indices for an inlined tube's internal nodes
     private readonly Result result = new();
     private readonly Dictionary<NodeRef, int> ids = new();
     private readonly HashSet<BlockPos> processed = new();
@@ -36,14 +42,15 @@ public sealed class CircuitReader
     private readonly HashSet<(int, int)> wires = new();
     private readonly Queue<NodeRef> queue = new();
 
-    private CircuitReader(ICircuitWorld world, BlockPos socket, ISet<BlockPos> exposed)
+    private CircuitReader(ICircuitWorld world, BlockPos socket, ISet<BlockPos> exposed, string readerUid)
     {
-        this.world = world; this.socket = socket; this.exposed = exposed;
+        this.world = world; this.socket = socket; this.exposed = exposed; this.readerUid = readerUid;
     }
 
     /// <param name="exposed">Positions of switches and delays the author wants on pins.</param>
-    public static Result Read(ICircuitWorld world, BlockPos socket, ISet<BlockPos> exposed = null) =>
-        new CircuitReader(world, socket, exposed ?? new HashSet<BlockPos>()).Run();
+    /// <param name="readerUid">Who imprints; decides whether nested tubes are inlined or soldered.</param>
+    public static Result Read(ICircuitWorld world, BlockPos socket, ISet<BlockPos> exposed = null, string readerUid = null) =>
+        new CircuitReader(world, socket, exposed ?? new HashSet<BlockPos>(), readerUid).Run();
 
     private Result Run()
     {
@@ -167,12 +174,80 @@ public sealed class CircuitReader
                 Refuse(pos, "world-driven");
                 break;
             case "signalstubes:" + SocketPath:
-                if (world.EntityAttributes(pos)?.HasAttribute("programTube") == true) Refuse(pos, "nested-tube");
+            {
+                var nested = world.TubeAt(pos, readerUid);
+                if (nested == null) break;   // empty socket or blank tube: just eight nodes
+                if (nested.Solder) Solder(pos, nested); else Inline(pos, nested);
                 break;
+            }
             default:
                 Refuse(pos, "unknown");
                 break;
         }
+    }
+
+    // The tube stays a black box: one Tube part on the socket's pin nodes, run from its own program.
+    private void Solder(BlockPos pos, NestedTube nested)
+    {
+        var p = result.Program;
+        int group = AddGroup(nested, pos, nested.ProgramId);
+        int[] nodes = nested.Pins.Select(pin => Port(pos, pin.Index)).ToArray();
+        p.Components.Add(new Component(ComponentKind.Tube, 0, nodes) { Ref = nested.ProgramId, Group = group });
+        tubeOutputs[p.Components.Count - 1] = nested.Pins.Where(pin => pin.Role == PinRole.Output).Select(pin => Port(pos, pin.Index)).ToArray();
+        result.Soldered.Add(new Soldered(pos.Copy(), nested.Name));
+    }
+
+    // The tube's program is copied in. Its input pins get a one-step buffer, which is exactly the
+    // latency the socket had; outputs join the outer node directly; parameter pins read the outer node.
+    private void Inline(BlockPos pos, NestedTube nested)
+    {
+        var p = result.Program;
+        var inner = nested.Program;
+        int group = AddGroup(nested, pos, null);
+        int groupOffset = p.Groups.Count;
+        int Map(int node) => Port(pos, InnerNodeBase + node);
+        int first = p.Components.Count;
+        foreach (var c in inner.Components)
+            p.Components.Add(new Component(c.Kind, c.Param, c.Nodes.Select(Map).ToArray())
+            {
+                State = c.State?.ToArray(), Ref = c.Ref,
+                ParamNode = c.ParamNode >= 0 ? Map(c.ParamNode) : -1,
+                Group = c.Group >= 0 ? groupOffset + c.Group : group
+            });
+        for (int i = 0; i < inner.Components.Count; i++)
+            if (inner.Components[i].Kind == ComponentKind.Tube)
+                tubeOutputs[first + i] = Array.Empty<int>();   // outputs unknown without its program; its sockets decide roles anyway
+        foreach (var l in inner.Links) p.Links.Add(new Link(Map(l.A), Map(l.B), l.Att, l.RevAtt));
+        foreach (var g in inner.Groups)
+            p.Groups.Add(new Group { Name = g.Name, Description = g.Description, Ref = g.Ref, Parent = g.Parent >= 0 ? groupOffset + g.Parent : group,
+                Pins = g.Pins.Select(gp => new GroupPin { Index = gp.Index, Role = gp.Role, Name = gp.Name, Node = Map(gp.Node) }).ToList() });
+        foreach (var pin in inner.Pins)
+        {
+            int outer = Port(pos, pin.Index);
+            switch (pin.Role)
+            {
+                case PinRole.Input:
+                    p.Components.Add(new Component(ComponentKind.Buffer, 0, outer, Map(pin.Node)) { Group = group });
+                    break;
+                case PinRole.Output:
+                    p.Links.Add(new Link(Map(pin.Node), outer));
+                    break;
+                default:
+                    p.Components[first + pin.Component].ParamNode = outer;
+                    break;
+            }
+        }
+    }
+
+    private int AddGroup(NestedTube nested, BlockPos pos, string reference)
+    {
+        var p = result.Program;
+        p.Groups.Add(new Group
+        {
+            Name = nested.Name, Description = nested.Description, Ref = reference,
+            Pins = nested.Pins.Select(pin => new GroupPin { Index = pin.Index, Role = pin.Role, Name = pin.Name, Node = Port(pos, pin.Index) }).ToList()
+        });
+        return p.Groups.Count - 1;
     }
 
     private string Kind(BlockPos pos)
@@ -203,10 +278,12 @@ public sealed class CircuitReader
         var driven = new HashSet<int>();
         var stack = new Stack<int>();
         void Add(int n) { if (driven.Add(n)) stack.Push(n); }
-        foreach (var c in p.Components)
+        for (int i = 0; i < p.Components.Count; i++)
         {
+            var c = p.Components[i];
             if (c.Kind == ComponentKind.Source) Add(c.Nodes[0]);
             if (c.Kind is ComponentKind.Delay or ComponentKind.Buffer) Add(c.Nodes[1]);
+            if (c.Kind == ComponentKind.Tube && tubeOutputs.TryGetValue(i, out var outs)) foreach (int o in outs) Add(o);
         }
         while (stack.Count > 0)
         {

@@ -14,12 +14,25 @@ public class GuiDialogImprinter : GuiDialogBlockEntity
 {
     public const int NameMax = 32, DescriptionMax = 120, PinNameMax = 16;
     private JObject state;
+    private bool confirming;
 
     public GuiDialogImprinter(BlockPos pos, ICoreClientAPI capi) : base(Lang.Get("signalstubes:dialog-title"), pos, capi) { }
+
+    // Closing without imprinting hands the typed values to the imprinter as a draft.
+    public override void OnGuiClosed()
+    {
+        base.OnGuiClosed();
+        if (state == null || (bool?)state["done"] == true) return;
+        var request = confirming ? edits : SingleComposer?.GetTextInput("name") == null ? null : Collect();
+        if (request == null) return;
+        request["draft"] = true;
+        capi.Network.GetChannel(ImprinterNetwork.Channel).SendPacket(new ImprintPacket { X = BlockEntityPosition.X, Y = BlockEntityPosition.Y, Z = BlockEntityPosition.Z, Json = Newtonsoft.Json.JsonConvert.SerializeObject(request, Newtonsoft.Json.Formatting.None) });
+    }
 
     public void SetState(string json)
     {
         state = JObject.Parse(json);
+        confirming = false;
         if ((bool?)state["done"] == true) { TryClose(); return; }
         Compose();
         if (!IsOpened()) TryOpen();
@@ -39,6 +52,27 @@ public class GuiDialogImprinter : GuiDialogBlockEntity
             .AddShadedDialogBG(bg)
             .AddDialogTitleBar(Lang.Get("signalstubes:dialog-title"), () => TryClose())
             .BeginChildElements(bg);
+
+        if (confirming)
+        {
+            // Soldering warning: these tubes leave their sockets for good (until the new tube is erased).
+            composer.AddStaticText(Lang.Get("signalstubes:dialog-solder-warning"), red, ElementBounds.Fixed(0, y + 4, w, row));
+            y += row;
+            foreach (var name in (JArray)state["solder"])
+            {
+                composer.AddStaticText("  " + (string)name, font, ElementBounds.Fixed(0, y + 4, w, row));
+                y += row;
+            }
+            y += pad;
+            composer.AddSwitch(null, ElementBounds.Fixed(0, y, 30, 30), "noWarn", 24);
+            composer.AddStaticText(Lang.Get("signalstubes:dialog-no-warn"), font, ElementBounds.Fixed(40, y + 4, w - 40, row));
+            y += row + pad;
+            composer.AddSmallButton(Lang.Get("signalstubes:dialog-imprint"), () => Send(true), ElementBounds.Fixed(w - 260, y, 150, row));
+            composer.AddSmallButton(Lang.Get("signalstubes:dialog-back"), () => { confirming = false; Compose(); return true; }, ElementBounds.Fixed(w - 100, y, 100, row));
+            composer.EndChildElements();
+            SingleComposer = composer.Compose();
+            return;
+        }
 
         composer.AddStaticText(Lang.Get("signalstubes:dialog-name"), label, ElementBounds.Fixed(0, y + 4, 110, row));
         composer.AddTextInput(ElementBounds.Fixed(120, y, w - 120, row), null, font, "name");
@@ -90,7 +124,23 @@ public class GuiDialogImprinter : GuiDialogBlockEntity
             y += pad;
         }
 
-        composer.AddStaticText(Lang.Get("signalstubes:dialog-parts", (int)state["parts"]), label, ElementBounds.Fixed(0, y + 4, w / 2, row));
+        if ((bool)state["foreignLocked"])
+        {
+            composer.AddStaticText(Lang.Get("signalstubes:dialog-foreign-locked", (string)state["author"]), red, ElementBounds.Fixed(0, y + 4, w, row));
+            y += row + pad;
+        }
+        else if ((bool)state["hasTube"])
+        {
+            composer.AddSwitch(null, ElementBounds.Fixed(0, y, 30, 30), "lockCopy", 24);
+            composer.AddStaticText(Lang.Get("signalstubes:dialog-lock-copy"), font, ElementBounds.Fixed(40, y + 4, w / 2 - 40, row));
+            composer.AddSwitch(null, ElementBounds.Fixed(w / 2, y, 30, 30), "lockView", 24);
+            composer.AddStaticText(Lang.Get("signalstubes:dialog-lock-view"), font, ElementBounds.Fixed(w / 2 + 40, y + 4, w / 2 - 40, row));
+            y += row + pad;
+        }
+        string author = (string)state["author"];
+        composer.AddStaticText(Lang.Get("signalstubes:dialog-parts", (int)state["parts"]) + (author.Length > 0 ? "   " + Lang.Get("signalstubes:programtube-author", author) : ""), label, ElementBounds.Fixed(0, y + 4, w - 270, row));
+        if ((bool)state["hasTube"] && !(bool)state["blank"] && !(bool)state["foreignLocked"])
+            composer.AddSmallButton(Lang.Get("signalstubes:dialog-erase"), OnErase, ElementBounds.Fixed(w - 370, y, 100, row), EnumButtonStyle.Small);
         composer.AddSmallButton(Lang.Get("signalstubes:dialog-imprint"), OnImprint, ElementBounds.Fixed(w - 260, y, 150, row), (bool)state["ok"] ? EnumButtonStyle.Normal : EnumButtonStyle.Small, "imprint");
         composer.AddSmallButton(Lang.Get("signalstubes:dialog-close"), () => TryClose(), ElementBounds.Fixed(w - 100, y, 100, row));
         composer.EndChildElements();
@@ -106,6 +156,18 @@ public class GuiDialogImprinter : GuiDialogBlockEntity
             Text("pin" + index, (string)pin["name"], PinNameMax, Lang.Get("signalstubes:pin-" + (string)pin["r"], index + 1));
         }
         for (int n = 0; n < adjustables.Count; n++) SingleComposer.GetSwitch("adj" + n).On = (bool)adjustables[n]["marked"];
+        if (SingleComposer.GetSwitch("lockCopy") != null)
+        {
+            SingleComposer.GetSwitch("lockCopy").On = (bool)state["lockCopy"];
+            SingleComposer.GetSwitch("lockView").On = (bool)state["lockView"];
+        }
+    }
+
+    private bool OnErase()
+    {
+        var request = new JObject { ["erase"] = true };
+        capi.Network.GetChannel(ImprinterNetwork.Channel).SendPacket(new ImprintPacket { X = BlockEntityPosition.X, Y = BlockEntityPosition.Y, Z = BlockEntityPosition.Z, Json = Newtonsoft.Json.JsonConvert.SerializeObject(request, Newtonsoft.Json.Formatting.None) });
+        return true;
     }
 
     private void Text(string key, string value, int max, string placeholder)
@@ -123,6 +185,8 @@ public class GuiDialogImprinter : GuiDialogBlockEntity
         return $"({dx:+#;-#;0}, {dy:+#;-#;0}, {dz:+#;-#;0})";
     }
 
+    private JObject edits;   // kept across the confirmation step
+
     private bool OnImprint()
     {
         if (SingleComposer.GetTextInput("name").GetText().Trim().Length == 0)
@@ -130,15 +194,37 @@ public class GuiDialogImprinter : GuiDialogBlockEntity
             capi.TriggerIngameError(this, "noname", Lang.Get("signalstubes:imprint-no-name"));
             return true;
         }
+        edits = Collect();
+        if (((JArray)state["solder"]).Count > 0 && (bool)state["warn"])
+        {
+            confirming = true;
+            Compose();
+            return true;
+        }
+        return Send(false);
+    }
+
+    private bool Send(bool confirmed)
+    {
+        var request = edits;
+        request["confirmSolder"] = confirmed;
+        request["noWarn"] = confirmed && (SingleComposer.GetSwitch("noWarn")?.On ?? false);
+        capi.Network.GetChannel(ImprinterNetwork.Channel).SendPacket(new ImprintPacket { X = BlockEntityPosition.X, Y = BlockEntityPosition.Y, Z = BlockEntityPosition.Z, Json = Newtonsoft.Json.JsonConvert.SerializeObject(request, Newtonsoft.Json.Formatting.None) });
+        return true;
+    }
+
+    private JObject Collect()
+    {
         var request = new JObject
         {
             ["name"] = SingleComposer.GetTextInput("name").GetText(),
             ["description"] = SingleComposer.GetTextArea("description").GetText(),
+            ["lockCopy"] = SingleComposer.GetSwitch("lockCopy")?.On ?? false,
+            ["lockView"] = SingleComposer.GetSwitch("lockView")?.On ?? false,
             ["pinNames"] = new JObject(((JArray)state["pins"]).Select(p => new JProperty(((int)p["i"]).ToString(), SingleComposer.GetTextInput("pin" + (int)p["i"]).GetText()))),
             ["exposed"] = new JArray(((JArray)state["adj"]).Where((a, n) => SingleComposer.GetSwitch("adj" + n).On)
                 .Select(a => new JObject { ["x"] = a["x"], ["y"] = a["y"], ["z"] = a["z"] }))
         };
-        capi.Network.GetChannel(ImprinterNetwork.Channel).SendPacket(new ImprintPacket { X = BlockEntityPosition.X, Y = BlockEntityPosition.Y, Z = BlockEntityPosition.Z, Json = Newtonsoft.Json.JsonConvert.SerializeObject(request, Newtonsoft.Json.Formatting.None) });
-        return true;
+        return request;
     }
 }

@@ -1,6 +1,5 @@
 {
   "game:tabname-signalstubes": "Signals Tubes",
-  "programtube-named": "Program tube: {0}",
   "programtube-pins": "Pins: {0}",
   "block-tubesocket-*": "Tube socket",
   "socket-insert": "Insert tube",
@@ -30,7 +29,6 @@
   "imprint-unmarked": "Mark removed.",
   "refuse-world-driven": "reads the world or the player",
   "refuse-unknown": "unknown part",
-  "refuse-nested-tube": "tubes inside tubes are not supported yet",
   "refuse-actuator-target": "actuator does not drive a switch",
   "refuse-switch-many-actuators": "switch driven by several actuators",
   "refuse-no-free-pin": "no free pin left",
@@ -61,5 +59,20 @@
   "pin-output": "Output {0}",
   "pin-switch": "Switch {0}",
   "pin-delay": "Delay {0}",
-  "imprint-no-name": "Give the tube a name first."
+  "imprint-no-name": "Give the tube a name first.",
+  "programtube-author": "Author: {0}",
+  "programtube-lockcopy": "Copy-locked: only the author may copy it",
+  "programtube-lockview": "View-locked: only the author may see the circuit",
+  "dialog-lock-copy": "Lock copying",
+  "dialog-lock-view": "Lock the circuit view",
+  "dialog-erase": "Erase",
+  "dialog-foreign-locked": "Locked by {0}: cannot be overwritten or erased.",
+  "imprint-locked": "This tube is locked by its author.",
+  "imprint-erased": "The tube is blank again.",
+  "dialog-solder-warning": "These tubes will be soldered in and leave their sockets:",
+  "dialog-no-warn": "Do not warn again (/tubes warn on brings it back)",
+  "dialog-back": "Back",
+  "warn-on": "You will be warned before soldering.",
+  "warn-off": "Soldering warnings are off.",
+  "programtube-soldered": "Soldered-in tubes: {0}"
 }

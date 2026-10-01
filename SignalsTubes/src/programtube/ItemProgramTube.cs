@@ -47,24 +47,41 @@ public class ItemProgramTube : Item
         renderinfo.ModelRef = mesh;
     }
 
+    // A named tube is known by its name; the kind moves down into the small print.
     public override string GetHeldItemName(ItemStack stack)
     {
-        string name = stack.Attributes.GetString("programName", "");
-        return name.Length == 0 ? base.GetHeldItemName(stack) : Lang.Get("signalstubes:programtube-named", name);
+        string name = stack.Attributes.GetString(TubeProgram.NameKey, "");
+        return name.Length == 0 ? base.GetHeldItemName(stack) : name;
     }
 
     public override void GetHeldItemInfo(ItemSlot slot, StringBuilder dsc, IWorldAccessor world, bool withDebugInfo)
     {
+        var stack = slot.Itemstack;
+        if (stack.Attributes.GetString(TubeProgram.NameKey, "").Length > 0) dsc.AppendLine(base.GetHeldItemName(stack));
         base.GetHeldItemInfo(slot, dsc, world, withDebugInfo);
-        dsc.AppendLine(Lang.Get("signalstubes:programtube-pins", TubeVisuals.PinCount(slot.Itemstack)));
-        string description = Description(slot.Itemstack);
+        string description = Description(stack);
         if (description != null) dsc.AppendLine(description);
+        if (!TubeProgram.IsBlank(stack))
+        {
+            var pins = TubeProgram.Pins(stack);
+            dsc.AppendLine(Lang.Get("signalstubes:programtube-pins", pins.Count));
+            foreach (var pin in pins)
+                dsc.AppendLine("  " + (pin.Name ?? Lang.Get("signalstubes:pin-" + Role(pin.Role), pin.Index + 1)) + (pin.Name == null ? "" : $" ({Lang.Get("signalstubes:role-" + Role(pin.Role))})"));
+            string author = TubeProgram.AuthorName(stack);
+            if (author != null) dsc.AppendLine(Lang.Get("signalstubes:programtube-author", author));
+            if (TubeProgram.LockCopy(stack)) dsc.AppendLine(Lang.Get("signalstubes:programtube-lockcopy"));
+            if (TubeProgram.LockView(stack)) dsc.AppendLine(Lang.Get("signalstubes:programtube-lockview"));
+            int soldered = TubeProgram.Soldered(stack, null).Count;
+            if (soldered > 0) dsc.AppendLine(Lang.Get("signalstubes:programtube-soldered", soldered));
+        }
     }
+
+    private static string Role(circuit.PinRole role) => role.ToString().ToLowerInvariant();
 
     /// <summary>Free text the imprinter lets the author add; null when there is none.</summary>
     public static string Description(ItemStack stack)
     {
-        string text = stack.Attributes.GetString("programDescription", "");
+        string text = stack.Attributes.GetString(TubeProgram.DescriptionKey, "");
         return text.Length == 0 ? null : text;
     }
 

@@ -1,6 +1,8 @@
 using signals.src;
 using signals.src.hangingwires;
 using signals.src.signalNetwork;
+using SignalsTubes.src.programtube;
+using SignalsTubes.src.socket;
 using Vintagestory.API.Common;
 using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
@@ -41,6 +43,26 @@ public sealed class SignalsCircuitWorld : ICircuitWorld
             if (wire.pos1 == pos) yield return new NodeRef(wire.pos2.blockPos.Copy(), wire.pos2.index);
             else if (wire.pos2 == pos) yield return new NodeRef(wire.pos1.blockPos.Copy(), wire.pos1.index);
         }
+    }
+
+    public NestedTube TubeAt(BlockPos pos, string readerUid)
+    {
+        if (api.World.BlockAccessor.GetBlockEntity(pos) is not BETubeSocket { HasTube: true } be || TubeProgram.IsBlank(be.Tube)) return null;
+        var stack = be.Tube;
+        var program = TubeProgram.Get(stack, api);
+        if (program == null) return null;   // unreadable program: behaves as blank
+        bool foreign = !TubeProgram.IsAuthor(stack, readerUid);
+        string id = stack.Attributes.GetString(TubeProgram.IdKey);
+        bool solder = id != null && (foreign && (TubeProgram.LockCopy(stack) || TubeProgram.LockView(stack)) || program.HasReferences);
+        return new NestedTube
+        {
+            Name = stack.Attributes.GetString(TubeProgram.NameKey, stack.GetName()),
+            Description = stack.Attributes.GetString(TubeProgram.DescriptionKey),
+            ProgramId = id,
+            Pins = TubeProgram.Pins(stack),
+            Solder = solder,
+            Program = solder ? null : program
+        };
     }
 
     public ITreeAttribute EntityAttributes(BlockPos pos)

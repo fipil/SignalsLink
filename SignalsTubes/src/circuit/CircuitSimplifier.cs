@@ -21,7 +21,11 @@ public static class CircuitSimplifier
         foreach (var pin in p.Pins)
             result.Pins.Add(new Pin { Index = pin.Index, Role = pin.Role, Node = pin.Node >= 0 ? Id(pin.Node) : -1, Component = pin.Component });
         foreach (var c in p.Components)
-            result.Components.Add(new Component(c.Kind, c.Param, c.Nodes.Select(Id).ToArray()) { State = c.State?.ToArray() });
+            result.Components.Add(new Component(c.Kind, c.Param, c.Nodes.Select(Id).ToArray())
+                { State = c.State?.ToArray(), ParamNode = c.ParamNode >= 0 ? Id(c.ParamNode) : -1, Ref = c.Ref, Group = c.Group });
+        foreach (var g in p.Groups)
+            result.Groups.Add(new Group { Name = g.Name, Description = g.Description, Parent = g.Parent, Ref = g.Ref,
+                Pins = g.Pins.Select(gp => new GroupPin { Index = gp.Index, Role = gp.Role, Name = gp.Name, Node = Id(gp.Node) }).ToList() });
 
         var links = new Dictionary<(int, int), Link>();
         foreach (var l in p.Links)
