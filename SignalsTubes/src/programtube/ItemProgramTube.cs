@@ -51,7 +51,7 @@ public class ItemProgramTube : Item
     public override string GetHeldItemName(ItemStack stack)
     {
         string name = stack.Attributes.GetString(TubeProgram.NameKey, "");
-        return name.Length == 0 ? base.GetHeldItemName(stack) : name;
+        return name.Length == 0 ? base.GetHeldItemName(stack) : TubeProgram.Vtml(name);
     }
 
     public override void GetHeldItemInfo(ItemSlot slot, StringBuilder dsc, IWorldAccessor world, bool withDebugInfo)
@@ -60,15 +60,15 @@ public class ItemProgramTube : Item
         if (stack.Attributes.GetString(TubeProgram.NameKey, "").Length > 0) dsc.AppendLine(base.GetHeldItemName(stack));
         base.GetHeldItemInfo(slot, dsc, world, withDebugInfo);
         string description = Description(stack);
-        if (description != null) dsc.AppendLine(description);
+        if (description != null) dsc.AppendLine(TubeProgram.Vtml(description));
         if (!TubeProgram.IsBlank(stack))
         {
             var pins = TubeProgram.Pins(stack);
             dsc.AppendLine(Lang.Get("signalstubes:programtube-pins", pins.Count));
             foreach (var pin in pins)
-                dsc.AppendLine("  " + (pin.Name ?? Lang.Get("signalstubes:pin-" + Role(pin.Role), pin.Index + 1)) + (pin.Name == null ? "" : $" ({Lang.Get("signalstubes:role-" + Role(pin.Role))})"));
+                dsc.AppendLine("  " + (TubeProgram.Vtml(pin.Name) ?? Lang.Get("signalstubes:pin-" + Role(pin.Role), pin.Index + 1)) + (pin.Name == null ? "" : $" ({Lang.Get("signalstubes:role-" + Role(pin.Role))})"));
             string author = TubeProgram.AuthorName(stack);
-            if (author != null) dsc.AppendLine(Lang.Get("signalstubes:programtube-author", author));
+            if (author != null) dsc.AppendLine(Lang.Get("signalstubes:programtube-author", TubeProgram.Vtml(author)));
             if (TubeProgram.LockCopy(stack)) dsc.AppendLine(Lang.Get("signalstubes:programtube-lockcopy"));
             if (TubeProgram.LockView(stack)) dsc.AppendLine(Lang.Get("signalstubes:programtube-lockview"));
             int soldered = TubeProgram.Soldered(stack, null).Count;

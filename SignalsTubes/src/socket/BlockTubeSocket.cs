@@ -83,18 +83,18 @@ public class BlockTubeSocket : BlockConnection
         {
             info = info.Replace(Vintagestory.API.Config.Lang.Get("signals:" + anchor) + "\r\n", "");
             string role = Vintagestory.API.Config.Lang.Get("signalstubes:pin-" + (be?.RoleOf(sel.SelectionBoxIndex) ?? "free"), sel.SelectionBoxIndex + 1);
-            string name = be?.NameOf(sel.SelectionBoxIndex);
+            string name = TubeProgram.Vtml(be?.NameOf(sel.SelectionBoxIndex));
             info += (name == null ? role : $"{sel.SelectionBoxIndex + 1}: {name} ({role.Split(':').Last().Trim()})") + "\n";
         }
         if (be is { HasTube: true })
         {
             // Same public part as the item tooltip; the pin list only when not aiming at one pin.
-            if (ItemProgramTube.Description(be.Tube) is string description) info += description + "\n";
+            if (ItemProgramTube.Description(be.Tube) is string description) info += TubeProgram.Vtml(description) + "\n";
             if (anchor == null)
                 foreach (var pin in TubeProgram.Pins(be.Tube))
-                    info += "  " + (pin.Name ?? Vintagestory.API.Config.Lang.Get("signalstubes:pin-" + pin.Role.ToString().ToLowerInvariant(), pin.Index + 1))
+                    info += "  " + (TubeProgram.Vtml(pin.Name) ?? Vintagestory.API.Config.Lang.Get("signalstubes:pin-" + pin.Role.ToString().ToLowerInvariant(), pin.Index + 1))
                         + (pin.Name == null ? "" : $" ({Vintagestory.API.Config.Lang.Get("signalstubes:role-" + pin.Role.ToString().ToLowerInvariant())})") + "\n";
-            if (TubeProgram.AuthorName(be.Tube) is string author) info += Vintagestory.API.Config.Lang.Get("signalstubes:programtube-author", author) + "\n";
+            if (TubeProgram.AuthorName(be.Tube) is string author) info += Vintagestory.API.Config.Lang.Get("signalstubes:programtube-author", TubeProgram.Vtml(author)) + "\n";
             if (TubeProgram.LockCopy(be.Tube)) info += Vintagestory.API.Config.Lang.Get("signalstubes:programtube-lockcopy") + "\n";
             if (TubeProgram.LockView(be.Tube)) info += Vintagestory.API.Config.Lang.Get("signalstubes:programtube-lockview") + "\n";
         }
@@ -103,7 +103,9 @@ public class BlockTubeSocket : BlockConnection
 
     // A loaded socket is named after its tube.
     public override string GetPlacedBlockName(IWorldAccessor world, BlockPos pos) =>
-        world.BlockAccessor.GetBlockEntity(pos) is BETubeSocket { HasTube: true } be ? be.Tube.GetName() : base.GetPlacedBlockName(world, pos);
+        world.BlockAccessor.GetBlockEntity(pos) is BETubeSocket { HasTube: true } be
+            ? (be.Tube.Attributes.GetString(TubeProgram.NameKey, "") is { Length: > 0 } name ? name : be.Tube.GetName())   // plain text here, not VTML
+            : base.GetPlacedBlockName(world, pos);
 
     public Vec3f ShapeRotation => new(Shape.rotateX, Shape.rotateY, Shape.rotateZ);
 

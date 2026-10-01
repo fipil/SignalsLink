@@ -1,6 +1,7 @@
 using SignalsTubes.src.programtube;
 using SignalsTubes.src.socket;
 using SignalsTubes.src.imprint;
+using SignalsTubes.src.copier;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Server;
@@ -29,6 +30,8 @@ namespace SignalsTubes.src
             api.RegisterBlockEntityClass("Imprinter", typeof(BEImprinter));
             api.RegisterItemClass("ImprinterPlug", typeof(ItemImprinterTool));
             api.RegisterItemClass("ImprinterProbe", typeof(ItemImprinterTool));
+            api.RegisterBlockClass("TubeCopier", typeof(BlockTubeCopier));
+            api.RegisterBlockEntityClass("TubeCopier", typeof(BETubeCopier));
         }
     }
 }

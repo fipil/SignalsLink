@@ -133,4 +133,7 @@ public static class TubeProgram
             return entry;
         }
     }
+
+    /// <summary>Player text shown in VTML tooltips: '<' would otherwise start a tag.</summary>
+    public static string Vtml(string text) => text?.Replace("&", "&amp;").Replace("<", "&lt;").Replace(">", "&gt;");
 }
