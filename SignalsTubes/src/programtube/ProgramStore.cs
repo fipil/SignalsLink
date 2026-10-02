@@ -15,6 +15,7 @@ public class ProgramStore : ModSystem
     private ICoreServerAPI sapi;
     private Dictionary<string, string> json = new();
     private readonly Dictionary<string, CircuitProgram> parsed = new();
+    private readonly Dictionary<string, string> idByJson = new();   // same program, same id
 
     public override bool ShouldLoad(EnumAppSide side) => side == EnumAppSide.Server;
 
@@ -25,6 +26,8 @@ public class ProgramStore : ModSystem
         {
             json = api.WorldManager.SaveGame.GetData<Dictionary<string, string>>(SaveKey) ?? new Dictionary<string, string>();
             parsed.Clear();
+            idByJson.Clear();
+            foreach (var pair in json) idByJson[pair.Value] = pair.Key;
         };
         api.Event.GameWorldSave += () => api.WorldManager.SaveGame.StoreData(SaveKey, json);
     }
@@ -46,20 +49,24 @@ public class ProgramStore : ModSystem
         }
     }
 
+    /// <summary>Stores the program; an identical one already stored gives its id back.</summary>
     public string Put(CircuitProgram program)
     {
-        string id = Guid.NewGuid().ToString("N");
+        string text = ProgramCodec.ToJson(program);
         lock (json)
         {
-            json[id] = ProgramCodec.ToJson(program);
+            if (idByJson.TryGetValue(text, out string known)) return known;
+            string id = Guid.NewGuid().ToString("N");
+            json[id] = text;
+            idByJson[text] = id;
             parsed[id] = program;
+            return id;
         }
-        return id;
     }
 
     public void Remove(string id)
     {
         if (id == null) return;
-        lock (json) { json.Remove(id); parsed.Remove(id); }
+        lock (json) { if (json.Remove(id, out string text)) idByJson.Remove(text); parsed.Remove(id); }
     }
 }

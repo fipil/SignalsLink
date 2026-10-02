@@ -166,4 +166,16 @@ public class TubeProgramTests
         Assert.Equal(0xFF, TubeVisuals.PinMask(stack));
         Assert.Null(TubeProgram.Author(stack));
     }
+
+    [Fact]
+    public void StoreGivesTheSameIdToTheSameProgram()
+    {
+        static CircuitProgram Make(byte level) => new() { NodeCount = 1, Components = { new Component(ComponentKind.Source, level, 0) }, Pins = { Pin.Output(0, 0) } };
+        var store = new ProgramStore();
+        string id = store.Put(Make(15));
+        Assert.Equal(id, store.Put(Make(15)));
+        Assert.NotEqual(id, store.Put(Make(7)));
+        store.Remove(id);
+        Assert.NotEqual(id, store.Put(Make(15)));
+    }
 }
