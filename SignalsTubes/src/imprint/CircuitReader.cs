@@ -67,6 +67,7 @@ public sealed class CircuitReader
             var node = queue.Dequeue();
             foreach (var other in world.WiresFrom(node))
             {
+                if (Bridges(node, other)) continue;
                 int a = Id(node), b = Id(other);
                 if (wires.Add((Math.Min(a, b), Math.Max(a, b)))) p.Links.Add(new Link(a, b));
             }
@@ -85,6 +86,21 @@ public sealed class CircuitReader
         }
         p.NodeCount = ids.Count;
         return result;
+    }
+
+    // Signals keeps one connection per pair of nodes: a wire across a part's own two ends does nothing.
+    private bool Bridges(NodeRef a, NodeRef b)
+    {
+        if (!a.Pos.Equals(b.Pos)) return false;
+        var block = world.BlockAt(a.Pos);
+        if (block == null || block.Code.Domain != Signals) return false;
+        int low = Math.Min(a.Index, b.Index), high = Math.Max(a.Index, b.Index);
+        return Kind(a.Pos) switch
+        {
+            "blockresistor" or "pass_through_connector" or "knifeswitch" => low == 0 && high == 1,
+            "blockvalve" or "blocktetrode" => low == 1 && high == 2,
+            _ => false
+        };
     }
 
     private int Id(NodeRef node)
