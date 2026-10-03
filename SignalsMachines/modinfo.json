@@ -2,12 +2,15 @@
   "type": "code",
   "modid": "signalsmachines",
   "name": "Signals Machines",
-  "authors": ["Fipil"],
+  "authors": [
+    "Fipil"
+  ],
   "description": "Machines controlled by signals.",
   "version": "0.1.0",
   "dependencies": {
-    "game": "1.22.0", 
+    "game": "1.22.0",
     "signals": "0.3.3",
-    "signalstubes": "0.1.0"
+    "signalstubes": "0.1.0",
+    "signalslink": "1.0.7"
   }
 }

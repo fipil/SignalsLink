@@ -653,7 +653,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
         {
             if (directives?.HasKeep != true || block == null) return quantity;
 
-            decimal room = directives.Keep.Value - block.CountInTarget(targetInv, BuildDirectiveContext());
+            decimal room = directives.Keep.Value - block.CountInTarget(KeepScope.Of(targetInv, EffectiveTargetSlot(directives), api), BuildDirectiveContext());
             if (room <= 0) return 0;
 
             int capped = (int)decimal.Truncate(room);

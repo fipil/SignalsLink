@@ -85,8 +85,10 @@ public sealed class SignalsRig
         });
         var network = Fake.Of<IServerNetworkAPI>((m, a) => m.Name == "RegisterChannel" ? Fake.Of<IServerNetworkChannel>() : Fake.Unhandled);
         var events = Fake.Of<IServerEventAPI>();
+        var classes = Fake.Of<IClassRegistryAPI>();   // containers ask it for an inventory network util; null is fine without a GUI
         Api = Fake.Of<ICoreServerAPI>((m, a) => m.Name switch
         {
+            "get_ClassRegistry" => classes,
             "get_Side" => EnumAppSide.Server,
             "get_World" => world,
             "get_ModLoader" => modLoader,

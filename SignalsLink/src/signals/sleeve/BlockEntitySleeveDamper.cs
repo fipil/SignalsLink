@@ -184,7 +184,7 @@ namespace SignalsLink.src.signals.sleeve
         {
             BlockPos p = GetCargoPos(Api.World, Pos);
             return p != null
-                && Api.World.BlockAccessor.GetBlockEntity(p) is IBlockEntityContainer c
+                && AutomationAccess.EntityAt(Api.World.BlockAccessor, p) is IBlockEntityContainer c   // a multiblock part counts
                 && c.Inventory != null;
         }
 
@@ -216,6 +216,10 @@ namespace SignalsLink.src.signals.sleeve
         {
             using var regexDiagnostics = RegexDiagnostics.Begin(Api, Pos, "SleeveDamper");
             if (Api is not ICoreServerAPI) return;
+
+            // A host that comes or goes as part of a multiblock does not always announce itself as a
+            // neighbour change; a cheap re-check each tick keeps the legs honest without a visible delay.
+            UpdateMountState();
 
             // Blocks with an `output` action are evaluated on EVERY tick, before anything else and
             // whatever the Input pin says. That is the whole point of the damper having an Output
@@ -445,7 +449,13 @@ namespace SignalsLink.src.signals.sleeve
             bool moved = false;
             decimal movedTotal = 0;
 
-            if (transfer != null)
+            // Either cargo block may keep its side shut (a machine door): nothing moves this tick,
+            // but the arbitration hand-off below still happens.
+            bool open = transfer != null
+                && AutomationAccess.Allows(Api.World.BlockAccessor, myCargoPos, Pos)
+                && AutomationAccess.Allows(Api.World.BlockAccessor, farCargoPos, far.blockPos);
+
+            if (open)
             {
                 ItemStackMoveOperation op = new ItemStackMoveOperation(
                     Api.World, EnumMouseButton.Left, 0, EnumMergePriority.DirectMerge, 1);

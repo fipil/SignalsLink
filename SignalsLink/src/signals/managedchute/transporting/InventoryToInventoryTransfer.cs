@@ -208,6 +208,9 @@ namespace SignalsLink.src.signals.managedchute.transporting
             return (int)TryMove(opTemplate).MovedAmount;
         }
 
+        protected override IInventory KeepScopeFor(ConditionBlock block, IInventory target) =>
+            KeepScope.Of(target, EffectiveTargetSlot(block.Directives), api);
+
         /// <summary>Which target slot a block asks for: `target last`, `target N`, or the pin.</summary>
         private int EffectiveTargetSlot(PaperConditionDirectives directives)
         {

@@ -72,6 +72,23 @@ namespace SignalsLink.Tests
         }
 
         [Fact]
+        public void With_a_target_slot_the_level_is_held_in_that_slot_alone()
+        {
+            // `target 3` + `keep 2`: two in slot 3, whatever the rest of the chest holds. Without a
+            // slot the whole inventory counts, as before.
+            ConditionBlock block = Block("game:beeswax\nkeep 2\n");
+            IInventory target = TestStacks.Inventory(4,
+                TestStacks.Item("game:beeswax", 6),
+                TestStacks.Item("game:firewood", 40),
+                TestStacks.Item("game:beeswax", 1));
+
+            Assert.Equal(7m, block.CountInTarget(KeepScope.Of(target, 0, null), TestStacks.Ctx()));
+            Assert.Equal(1m, block.CountInTarget(KeepScope.Of(target, 3, null), TestStacks.Ctx()));
+            Assert.Equal(0m, block.CountInTarget(KeepScope.Of(target, 4, null), TestStacks.Ctx()));   // empty slot
+            Assert.Same(target, KeepScope.Of(target, 9, null));   // a slot the target does not have: whole inventory
+        }
+
+        [Fact]
         public void A_glob_counts_the_whole_family_together()
         {
             // His call, and it matches what the condition already does: `game:ingot-*` with

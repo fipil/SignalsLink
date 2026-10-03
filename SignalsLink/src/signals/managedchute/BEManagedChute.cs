@@ -156,7 +156,10 @@ namespace SignalsLink.src.signals.managedchute
 
             if (transfer == null) { SetOutput(0); return; }
 
-            if (!hasCredit)
+            // Either end may keep its side shut (a machine with its door closed): nothing moves,
+            // the conditions still read the ends like a sensor.
+            if (!hasCredit || !AutomationAccess.Allows(Api.World.BlockAccessor, GetInputBlockPos(), Pos)
+                           || !AutomationAccess.Allows(Api.World.BlockAccessor, GetOutputBlockPos(), Pos))
             {
                 transfer.EvaluateOutputs();
                 return;
@@ -311,8 +314,8 @@ namespace SignalsLink.src.signals.managedchute
             BlockPos inputPos = GetInputBlockPos();
             BlockPos outputPos = GetOutputBlockPos();
 
-            BlockEntity inputBE = Api.World.BlockAccessor.GetBlockEntity(inputPos);
-            BlockEntity outputBE = Api.World.BlockAccessor.GetBlockEntity(outputPos);
+            BlockEntity inputBE = AutomationAccess.EntityAt(Api.World.BlockAccessor, inputPos);
+            BlockEntity outputBE = AutomationAccess.EntityAt(Api.World.BlockAccessor, outputPos);
 
             // Starý transfer zahodíme, když se změnilo napojení, nebo když se sousední
             // BlockEntity mezitím vytvořila znovu (load světa, reload chunku, výměna bloku) –

@@ -35,7 +35,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
                 return ResolveGroundColumn(api, pos);
             }
 
-            if (api.World.BlockAccessor.GetBlockEntity(pos) is IBlockEntityContainer container && container.Inventory != null)
+            if (AutomationAccess.EntityAt(api.World.BlockAccessor, pos) is IBlockEntityContainer container && container.Inventory != null)
             {
                 return container.Inventory;
             }

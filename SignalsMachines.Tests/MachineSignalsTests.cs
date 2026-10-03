@@ -14,7 +14,8 @@ public class MachineSignalsTests
 {
     private static BECraftingMachine Machine(SignalsRig rig, BlockPos pos, ItemStack tube = null)
     {
-        var block = new Block();
+        var block = new BlockCraftingMachine();
+        block.VariantStrict["side"] = "north";
         var be = new BECraftingMachine { Block = block };
         if (tube != null)
         {
@@ -118,5 +119,24 @@ public class MachineSignalsTests
         block.VariantStrict["side"] = variant;
         Assert.Equal(pin4, block.DoorSide(4).Code);
         Assert.Equal(pin5, block.DoorSide(5).Code);
+    }
+
+    [Fact]
+    public void AutomationComesInOnlyThroughAnOpenDoor()
+    {
+        var rig = new SignalsRig();
+        var machine = Machine(rig, At(0));
+        var west = rig.SourceBlock(At(1));
+        rig.Wire(west, 0, At(0), 4);   // pin 4 = west door of a north-facing machine
+        rig.Tick(); rig.Tick();
+        var chamber = At(0).UpCopy();
+        Assert.True(machine.AllowsAutomation(chamber, BlockFacing.WEST));
+        Assert.False(machine.AllowsAutomation(chamber, BlockFacing.EAST));
+        Assert.False(machine.AllowsAutomation(chamber, BlockFacing.NORTH));
+        Assert.False(machine.AllowsAutomation(chamber, BlockFacing.UP));
+        Assert.False(machine.AllowsAutomation(At(0), BlockFacing.WEST));   // the pedestal has no door
+        rig.Drive(west, 0, 0);
+        rig.Tick(); rig.Tick();
+        Assert.False(machine.AllowsAutomation(chamber, BlockFacing.WEST));
     }
 }

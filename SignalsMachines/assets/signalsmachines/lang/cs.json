@@ -25,5 +25,12 @@
   "side-short-east": "V",
   "side-short-south": "J",
   "side-short-west": "Z",
-  "machine-drive": "Pohon: rychlost sítě {0} %, deska {1} %"
+  "machine-drive": "Pohon: rychlost sítě {0} %, deska {1} %",
+  "machine-doors": "Dveře: {0} / {1}",
+  "door-open": "otevřené",
+  "door-closed": "zavřené",
+  "machine-cells": "Obsazená pole: {0}, výrobek: {1}",
+  "machine-recipe": "Recept: {0}",
+  "recipe-none": "žádný",
+  "machine-placer": "Postavil {0}; pracuje s jeho třídou."
 }

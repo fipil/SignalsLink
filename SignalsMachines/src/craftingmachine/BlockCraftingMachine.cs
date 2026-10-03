@@ -88,8 +88,11 @@ namespace SignalsMachines.src.craftingmachine
         {
             bool placed = base.DoPlaceBlock(world, byPlayer, blockSel, byItemStack);
             // an axle already waiting at the input: join its network
-            if (placed && world.Side == EnumAppSide.Server)
-                world.BlockAccessor.GetBlockEntity(blockSel.Position)?.GetBehavior<BEBehaviorMPBase>()?.tryConnect(AxleFacing);
+            if (placed && world.Side == EnumAppSide.Server && world.BlockAccessor.GetBlockEntity(blockSel.Position) is BECraftingMachine be)
+            {
+                be.SetPlacer(byPlayer);
+                be.GetBehavior<BEBehaviorMPBase>()?.tryConnect(AxleFacing);
+            }
             return placed;
         }
 

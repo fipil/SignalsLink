@@ -30,7 +30,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
         {
             var blockAccess = api.World.BlockAccessor;
 
-            var beIn = blockAccess.GetBlockEntity(inputPos) as IBlockEntityContainer;
+            var beIn = AutomationAccess.EntityAt(blockAccess, inputPos) as IBlockEntityContainer;
 
             // Special case: output points to an anvil -> use InventoryToAnvilTransfer
             var beAnvil = blockAccess.GetBlockEntity(outputPos) as BlockEntityAnvil;
@@ -48,7 +48,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
                 return new InventoryToFirepitTransfer(api, beIn.Inventory, outputPos, inputSlotSignal, conditionsEvaluator);
             }
 
-            var beOut = blockAccess.GetBlockEntity(outputPos) as IBlockEntityContainer;
+            var beOut = AutomationAccess.EntityAt(blockAccess, outputPos) as IBlockEntityContainer;
 
             // Only carryable containers get moved as a whole block; a barrel or boiler on the input side
             // falls through to the regular inventory -> inventory transfer below.

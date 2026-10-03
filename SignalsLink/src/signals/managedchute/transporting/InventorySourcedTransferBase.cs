@@ -299,13 +299,16 @@ namespace SignalsLink.src.signals.managedchute.transporting
         }
 
         /// <summary>What `keep N` still wants in the target, or null when the block said no such thing.</summary>
-        private static decimal? RoomFor(ConditionBlock block, IDictionary<string, object> ctx)
+        private decimal? RoomFor(ConditionBlock block, IDictionary<string, object> ctx)
         {
             if (!block.Directives.HasKeep) return null;
             if (ctx == null || !ctx.TryGetValue("targetInventory", out object obj)) return null;
 
-            return block.Directives.Keep.Value - block.CountInTarget(obj as IInventory, ctx);
+            return block.Directives.Keep.Value - block.CountInTarget(KeepScopeFor(block, obj as IInventory), ctx);
         }
+
+        /// <summary>The inventory `keep N` is counted in; a transfer that aims at one slot narrows it to that slot.</summary>
+        protected virtual IInventory KeepScopeFor(ConditionBlock block, IInventory target) => target;
 
         private TransferSelection SelectWithoutPaper()
         {

@@ -35,8 +35,7 @@ public class ProgramTubeTests
         bool Give(ItemStack stack) { returned = stack; return true; }
         var player = PlayerFake.WithInventory(inventory);
         var world = World(EnumAppSide.Server);
-        var events = Fake<IEventAPI>((m, a) => null);
-        var api = Fake<ICoreAPI>((m, a) => m.Name switch { "get_World" => world, "get_Side" => EnumAppSide.Server, "get_Event" => events, _ => null });
+        var api = MakeApi(world, EnumAppSide.Server);
         var machine = new TestMachine();
         machine.Initialize(api);
         Assert.True(machine.Interact(player));
@@ -67,7 +66,7 @@ public class ProgramTubeTests
         var inventory = Fake<IPlayerInventoryManager>((m, a) => m.Name == "get_ActiveHotbarSlot" ? hand : null);
         var player = PlayerFake.WithInventory(inventory);
         var world = World(EnumAppSide.Client);
-        var api = Fake<ICoreAPI>((m, a) => m.Name switch { "get_World" => world, "get_Side" => EnumAppSide.Client, _ => null });
+        var api = MakeApi(world, EnumAppSide.Client);
         var machine = new TestMachine(); machine.Initialize(api);
         Assert.True(machine.Interact(player));
         Assert.False(hand.Empty);
@@ -107,8 +106,7 @@ public class ProgramTubeTests
             if (m.Name == "PlaySoundAt") clicks++;
             return m.Name switch { "get_Side" => side, "get_BlockAccessor" => accessor, "get_Claims" => claims, _ => null };
         });
-        var events = Fake<IEventAPI>((m, a) => null);
-        api = Fake<ICoreAPI>((m, a) => m.Name switch { "get_World" => world, "get_Side" => side, "get_Event" => events, _ => null });
+        api = MakeApi(world, side);
         var block = new BlockCraftingMachine { EntityClass = "CraftingMachine" };
         bool result = block.OnBlockInteractStart(world, player, new BlockSelection { Position = new BlockPos(1,2,3), SelectionBoxIndex = BlockCraftingMachine.SocketBox });
         Assert.Equal(allowed, result);
@@ -117,6 +115,16 @@ public class ProgramTubeTests
         Assert.Equal(transfer ? 1 : 0, clicks);
         Assert.Equal(transfer, hand.Empty);
         Assert.Equal(transfer, entity?.HasTube == true);
+    }
+
+    // Enough of the game API for a container block entity to initialize: events, class registry and
+    // a mod loader that knows no systems.
+    private static ICoreAPI MakeApi(IWorldAccessor world, EnumAppSide side)
+    {
+        var events = Fake<IEventAPI>((m, a) => null);
+        var classes = Fake<IClassRegistryAPI>((m, a) => null);
+        var mods = Fake<IModLoader>((m, a) => null);
+        return Fake<ICoreAPI>((m, a) => m.Name switch { "get_World" => world, "get_Side" => side, "get_Event" => events, "get_ClassRegistry" => classes, "get_ModLoader" => mods, _ => null });
     }
 
     private static IWorldAccessor World(EnumAppSide side) => Fake<IWorldAccessor>((m, a) => m.Name switch { "get_Side" => side, "GetItem" => Tube, _ => null });

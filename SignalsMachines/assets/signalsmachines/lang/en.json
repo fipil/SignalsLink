@@ -25,5 +25,12 @@
   "side-short-east": "E",
   "side-short-south": "S",
   "side-short-west": "W",
-  "machine-drive": "Drive: network speed {0} %, plate {1} %"
+  "machine-drive": "Drive: network speed {0} %, plate {1} %",
+  "machine-doors": "Doors: {0} / {1}",
+  "door-open": "open",
+  "door-closed": "closed",
+  "machine-cells": "Occupied cells: {0}, product: {1}",
+  "machine-recipe": "Recipe: {0}",
+  "recipe-none": "none",
+  "machine-placer": "Placed by {0}; works with their class."
 }

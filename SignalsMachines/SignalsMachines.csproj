@@ -33,9 +33,12 @@
     </Reference>
   </ItemGroup>
 
-  <!-- Signals Tubes is a mod of its own; its DLL must not be copied next to this one. -->
+  <!-- Signals Tubes and SignalsLink are mods of their own; their DLLs must not be copied next to this one. -->
   <ItemGroup>
     <ProjectReference Include="..\SignalsTubes\SignalsTubes.csproj">
+      <Private>False</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\SignalsLink\SignalsLink.csproj">
       <Private>False</Private>
     </ProjectReference>
   </ItemGroup>

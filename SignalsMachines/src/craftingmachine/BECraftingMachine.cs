@@ -7,9 +7,25 @@ using Vintagestory.API.Common;
 using Vintagestory.API.Config;
 using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
+using Vintagestory.GameContent;
 using Vintagestory.GameContent.Mechanics;
+using SignalsLink.src.signals.managedchute.transporting;
 
 namespace SignalsMachines.src.craftingmachine;
+
+/// <summary>One of the nine cells of the plate: anything goes in, chutes may take it back out.</summary>
+public class ItemSlotGridCell : ItemSlot
+{
+    public ItemSlotGridCell(InventoryBase inventory) : base(inventory) { }
+}
+
+/// <summary>The finished product floating in the chamber: only ever taken out.</summary>
+public class ItemSlotProduct : ItemSlot
+{
+    public ItemSlotProduct(InventoryBase inventory) : base(inventory) { }
+    public override bool CanHold(ItemSlot source) => false;
+    public override bool CanTakeFrom(ItemSlot source, EnumMergePriority priority = EnumMergePriority.AutoMerge) => false;
+}
 
 /// <summary>Levels the machine is driven with this step, read from pins 1-5 or from the tube.</summary>
 public readonly record struct MachineInputs(byte Clutch, byte Crystal, byte Strength, byte DoorWest, byte DoorEast)
@@ -23,9 +39,93 @@ public readonly record struct MachineInputs(byte Clutch, byte Crystal, byte Stre
 /// reads its inputs only from the tube's output pins, wires on those pins are ignored; the tube's own
 /// input pins still read the wires (and the state pin).
 /// </summary>
-public class BECraftingMachine : BlockEntity
+public class BECraftingMachine : BlockEntityContainer, ISidedAutomation
 {
     public const int PinCount = 8, StatePin = 0, FirstInput = 1, LastInput = 5;
+    public const int GridSize = 3, GridSlots = 9, ProductSlot = 9;
+
+    private readonly InventoryGeneric inventory;
+    public override InventoryBase Inventory => inventory;
+    public override string InventoryClassName => "craftingmachine";
+    /// <summary>Called on the client whenever the slots changed, so the picture can be rebuilt.</summary>
+    public event Action SlotsChanged;
+
+    public BECraftingMachine()
+    {
+        inventory = new InventoryGeneric(GridSlots + 1, null, null, (id, inv) => id == ProductSlot ? new ItemSlotProduct(inv) : new ItemSlotGridCell(inv));
+        inventory.SlotModified += _ => { FindRecipe(); MarkDirty(); SlotsChanged?.Invoke(); };
+    }
+
+    // ---- doors: automation comes in only through a face whose door is open
+
+    /// <summary>Door on pin 4 (west in the model) or 5 (east) is open: its input level is above zero.</summary>
+    public bool DoorOpen(int pin) => inputs[pin] > 0;
+
+    /// <summary>Only the chamber (the upper block) has doors; the pedestal lets nothing through.</summary>
+    public bool AllowsAutomation(BlockPos touched, BlockFacing face)
+    {
+        if (Block is not BlockCraftingMachine block || touched.Y != Pos.Y + 1) return false;
+        return (DoorOpen(4) && face == block.DoorSide(4)) || (DoorOpen(5) && face == block.DoorSide(5));
+    }
+
+    /// <summary>Cells that hold something; the strength the recipe will ask for.</summary>
+    public int OccupiedCells => Enumerable.Range(0, GridSlots).Count(i => !inventory[i].Empty);
+
+    // ---- placer: the machine works with the class of whoever placed it
+
+    private string placerUid, placerName;
+    private HashSet<string> placerTraits;     // null = no class chosen = every trait recipe allowed (as the game does)
+    public string PlacerName => placerName;
+
+    /// <summary>Remembers the player and a snapshot of their traits; refreshed whenever they use the machine.</summary>
+    public void SetPlacer(IPlayer player)
+    {
+        if (player == null) return;
+        placerUid = player.PlayerUID;
+        placerName = player.PlayerName;
+        placerTraits = TraitsOf(player);
+        FindRecipe();
+        MarkDirty();
+    }
+
+    /// <summary>Class traits plus extra traits, the same way CharacterSystem.HasTrait reads them; null without a class.</summary>
+    private HashSet<string> TraitsOf(IPlayer player)
+    {
+        var attrs = player.Entity?.WatchedAttributes;
+        string classCode = attrs?.GetString("characterClass");
+        if (classCode == null) return null;
+        var traits = new HashSet<string>();
+        var characters = Api?.ModLoader?.GetModSystem<CharacterSystem>();
+        if (characters != null && characters.characterClassesByCode.TryGetValue(classCode, out var cls) && cls.Traits != null) traits.UnionWith(cls.Traits);
+        var extra = attrs.GetStringArray("extraTraits");
+        if (extra != null) traits.UnionWith(extra);
+        return traits;
+    }
+
+    /// <summary>The recipe the cells form right now, or null.</summary>
+    public MachineRecipes.Match Recipe { get; private set; }
+
+    private ItemSlot[] GridCells() => Enumerable.Range(0, GridSlots).Select(i => (ItemSlot)inventory[i]).ToArray();
+
+    private void FindRecipe()
+    {
+        if (Api?.Side != EnumAppSide.Server || Api.World?.GridRecipes == null) return;
+        // no class on record: the game lets such a player make every trait recipe, so does the machine
+        System.Func<string, bool> hasTrait = placerTraits == null ? _ => true : placerTraits.Contains;
+        Recipe = MachineRecipes.Find(Api.World, GridCells(), hasTrait);
+        recipeText = Recipe == null ? "" : ProductText(Recipe);
+    }
+
+    /// <summary>"3x Linen" - what one cycle would make; computed only when the cells change.</summary>
+    private string ProductText(MachineRecipes.Match match)
+    {
+        var output = match.Recipe.Output?.ResolvedItemStack;
+        if (output == null) return match.Recipe.Name?.ToString() ?? "?";
+        int count = output.StackSize * MachineRecipes.Cycles(match, GridCells(), GridSize);
+        return count + "x " + output.GetName();
+    }
+
+    private string recipeText = "";
 
     private ItemStack tube;
     private CircuitProgram program;
@@ -61,6 +161,7 @@ public class BECraftingMachine : BlockEntity
         RebuildMesh();
         mpc = GetBehavior<BEBehaviorMPConsumer>();
         SpeedSource ??= () => mpc?.Network == null ? 0 : mpc.TrueSpeed;
+        FindRecipe();
         if (api.Side == EnumAppSide.Server)
         {
             signalMod = api.ModLoader?.GetModSystem<SignalNetworkMod>();
@@ -69,7 +170,9 @@ public class BECraftingMachine : BlockEntity
         }
         else if (api is ICoreClientAPI capi && Block is BlockCraftingMachine)   // not when the block is already gone
         {
-            plateRenderer = new PlateRenderer(capi, Pos, PlateMesh(capi));
+            plateRenderer = new PlateRenderer(capi, Pos, PlateMesh(capi), ((BlockCraftingMachine)Block).RotationRadians);
+            SlotsChanged += RefreshPlateItems;
+            RefreshPlateItems();
             UpdatePlatePicture();
         }
     }
@@ -139,6 +242,7 @@ public class BECraftingMachine : BlockEntity
         // Only the server transfers items. Creative also consumes this one stack, so removing
         // the tube cannot duplicate a player's programmed item.
         if (Api.Side == EnumAppSide.Client) return true;
+        if (placerUid != null && player.PlayerUID == placerUid) placerTraits = TraitsOf(player);   // the placer's class may have changed
         if (insert)
         {
             tube = hand.TakeOut(1);
@@ -167,9 +271,14 @@ public class BECraftingMachine : BlockEntity
         tree.SetBool("tubeControls", program != null);
         tree.SetFloat("plateSpeed", plateSpeed);
         tree.SetFloat("networkSpeed", networkSpeed);
+        if (placerUid != null) tree.SetString("placer", placerUid);
+        if (placerName != null) tree.SetString("placerName", placerName);
+        if (placerTraits != null) tree.SetString("placerTraits", string.Join(",", placerTraits));
+        tree.SetString("recipe", recipeText);
     }
 
     private bool tubeControlsSynced;   // client copy of TubeControls
+    private string recipeNameSynced = "";   // client copy of the recipe name
 
     public override void FromTreeAttributes(ITreeAttribute tree, IWorldAccessor worldForResolving)
     {
@@ -182,10 +291,15 @@ public class BECraftingMachine : BlockEntity
         tubeControlsSynced = tree.GetBool("tubeControls");
         plateSpeed = tree.GetFloat("plateSpeed");
         networkSpeed = tree.GetFloat("networkSpeed");
+        placerUid = tree.GetString("placer");
+        placerName = tree.GetString("placerName");
+        placerTraits = tree.HasAttribute("placerTraits") ? new HashSet<string>(tree.GetString("placerTraits").Split(',', StringSplitOptions.RemoveEmptyEntries)) : null;
+        recipeNameSynced = tree.GetString("recipe", "");
         UpdatePlatePicture();
         if (Api is ICoreClientAPI)
         {
             RebuildMesh();
+            RefreshPlateItems();
             MarkDirty(true);
         }
         else if (Api != null) LoadProgram();
@@ -201,6 +315,12 @@ public class BECraftingMachine : BlockEntity
         dsc.AppendLine(Lang.Get("signalsmachines:machine-inputs", inputs.Clutch, inputs.Crystal, inputs.Strength, Side(4), inputs.DoorWest, Side(5), inputs.DoorEast));
         dsc.AppendLine(Lang.Get("signalsmachines:machine-state", state));
         dsc.AppendLine(Lang.Get("signalsmachines:machine-drive", (int)(networkSpeed * 100), (int)(plateSpeed * 100)));
+        dsc.AppendLine(Lang.Get("signalsmachines:machine-doors", DoorOpen(4) ? Lang.Get("signalsmachines:door-open") : Lang.Get("signalsmachines:door-closed"), DoorOpen(5) ? Lang.Get("signalsmachines:door-open") : Lang.Get("signalsmachines:door-closed")));
+        int cells = OccupiedCells;
+        if (cells > 0 || !inventory[ProductSlot].Empty) dsc.AppendLine(Lang.Get("signalsmachines:machine-cells", cells, inventory[ProductSlot].Empty ? "-" : inventory[ProductSlot].GetStackName()));
+        string recipeName = Api?.Side == EnumAppSide.Server ? recipeText : recipeNameSynced;
+        if (cells > 0) dsc.AppendLine(Lang.Get("signalsmachines:machine-recipe", recipeName.Length == 0 ? Lang.Get("signalsmachines:recipe-none") : recipeName));
+        if (placerName != null) dsc.AppendLine(Lang.Get("signalsmachines:machine-placer", placerName));
         if (tube != null) dsc.Append(ItemProgramTube.FullInfo(tube, Api.World));
     }
 
@@ -228,9 +348,16 @@ public class BECraftingMachine : BlockEntity
 
     private MeshData PlateMesh(ICoreClientAPI capi)
     {
+        // unrotated: the renderer turns plate and contents together by block rotation and running angle
         var shape = capi.Assets.Get(new AssetLocation("signalsmachines", "shapes/block/craftingmachine-plate.json")).ToObject<Shape>();
-        capi.Tesselator.TesselateShape(Block, shape, out MeshData mesh, new Vec3f(0, ((BlockCraftingMachine)Block).RotationDegrees, 0));
+        capi.Tesselator.TesselateShape(Block, shape, out MeshData mesh);
         return mesh;
+    }
+
+    private void RefreshPlateItems()
+    {
+        if (plateRenderer == null) return;
+        for (int i = 0; i <= ProductSlot; i++) plateRenderer.SetStack(i, inventory[i].Itemstack);
     }
 
     public override bool OnTesselation(ITerrainMeshPool mesher, ITesselatorAPI tesselator)
