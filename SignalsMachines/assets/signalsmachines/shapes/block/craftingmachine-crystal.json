@@ -1,0 +1,877 @@
+{
+  "editor": {
+    "allAngles": true,
+    "entityTextureMode": false
+  },
+  "textureWidth": 16,
+  "textureHeight": 16,
+  "textureSizes": {
+    "iron": [
+      16,
+      16
+    ],
+    "terminal": [
+      16,
+      16
+    ],
+    "details": [
+      32,
+      32
+    ],
+    "castiron": [
+      16,
+      16
+    ],
+    "castiron-relief": [
+      80,
+      48
+    ],
+    "glass": [
+      16,
+      16
+    ],
+    "axle-metal": [
+      16,
+      16
+    ],
+    "crafting-grid": [
+      8,
+      8
+    ],
+    "base-oak": [
+      16,
+      16
+    ],
+    "foot-rivet": [
+      16,
+      16
+    ],
+    "gearbox-cover": [
+      32,
+      16
+    ],
+    "back-frame": [
+      16,
+      16
+    ],
+    "leg-frame": [
+      16,
+      16
+    ],
+    "socket-floor": [
+      16,
+      16
+    ],
+    "pintop": [
+      16,
+      16
+    ]
+  },
+  "textures": {
+    "iron": "block/iron",
+    "terminal": "block/normal3",
+    "details": "block/details",
+    "castiron": "block/castironbrown",
+    "castiron-relief": "block/castironbrown-machine-centered",
+    "glass": "block/glass-plain",
+    "axle-metal": "block/axle-iron",
+    "crafting-grid": "block/crafting-grid",
+    "base-oak": "block/base-oak",
+    "foot-rivet": "block/foot-rivet-iron",
+    "gearbox-cover": "block/gearbox-cover",
+    "back-frame": "block/back-frame",
+    "leg-frame": "block/leg-frame",
+    "socket-floor": "block/socket-floor",
+    "pintop": "block/rustycolored"
+  },
+  "elements": [
+    {
+      "name": "crystal_slide",
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        0,
+        0,
+        0
+      ],
+      "rotationOrigin": [
+        8.0,
+        27.5,
+        8.0
+      ],
+      "faces": {},
+      "children": [
+        {
+          "name": "crystal_rod",
+          "from": [
+            7.7,
+            27.9,
+            7.7
+          ],
+          "to": [
+            8.3,
+            28.5,
+            8.3
+          ],
+          "rotationOrigin": [
+            8.0,
+            5.4,
+            8.0
+          ],
+          "faces": {
+            "north": {
+              "texture": "#iron",
+              "uv": [
+                0,
+                0,
+                0.6,
+                0.6
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "east": {
+              "texture": "#iron",
+              "uv": [
+                0,
+                0,
+                0.6,
+                0.6
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "south": {
+              "texture": "#iron",
+              "uv": [
+                0,
+                0,
+                0.6,
+                0.6
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "west": {
+              "texture": "#iron",
+              "uv": [
+                0,
+                0,
+                0.6,
+                0.6
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "up": {
+              "texture": "#iron",
+              "uv": [
+                0,
+                0,
+                0.6,
+                0.6
+              ],
+              "autoUv": false,
+              "enabled": true
+            }
+          },
+          "renderPass": 0
+        },
+        {
+          "name": "crystal_holder_0",
+          "from": [
+            7.625,
+            27.5,
+            7.3505
+          ],
+          "to": [
+            8.375,
+            27.9,
+            8.6495
+          ],
+          "rotationOrigin": [
+            8.0,
+            5.4,
+            8.0
+          ],
+          "faces": {
+            "north": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                0.75,
+                0.4
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "south": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                0.75,
+                0.4
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "up": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                0.75,
+                1.299
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "down": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                0.75,
+                1.299
+              ],
+              "autoUv": false,
+              "enabled": true
+            }
+          },
+          "renderPass": 0
+        },
+        {
+          "name": "crystal_holder_1",
+          "from": [
+            7.625,
+            27.499,
+            7.3505
+          ],
+          "to": [
+            8.375,
+            27.901,
+            8.6495
+          ],
+          "rotationOrigin": [
+            8.0,
+            5.4,
+            8.0
+          ],
+          "rotationY": 60,
+          "faces": {
+            "north": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                0.75,
+                0.402
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "south": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                0.75,
+                0.402
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "up": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                0.75,
+                1.299
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "down": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                0.75,
+                1.299
+              ],
+              "autoUv": false,
+              "enabled": true
+            }
+          },
+          "renderPass": 0
+        },
+        {
+          "name": "crystal_holder_2",
+          "from": [
+            7.625,
+            27.498,
+            7.3505
+          ],
+          "to": [
+            8.375,
+            27.902,
+            8.6495
+          ],
+          "rotationOrigin": [
+            8.0,
+            5.4,
+            8.0
+          ],
+          "rotationY": 120,
+          "faces": {
+            "north": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                0.75,
+                0.404
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "south": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                0.75,
+                0.404
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "up": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                0.75,
+                1.299
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "down": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                0.75,
+                1.299
+              ],
+              "autoUv": false,
+              "enabled": true
+            }
+          },
+          "renderPass": 0
+        },
+        {
+          "name": "crystal",
+          "from": [
+            0,
+            0,
+            0
+          ],
+          "to": [
+            0,
+            0,
+            0
+          ],
+          "rotationOrigin": [
+            8.0,
+            27.5,
+            8.0
+          ],
+          "faces": {},
+          "children": [
+            {
+              "name": "crystal_main",
+              "from": [
+                7.55,
+                25.3,
+                7.55
+              ],
+              "to": [
+                8.45,
+                27.7,
+                8.45
+              ],
+              "rotationOrigin": [
+                8.0,
+                27.5,
+                8.0
+              ],
+              "rotationY": 45,
+              "faces": {
+                "north": {
+                  "texture": "#details",
+                  "uv": [
+                    24,
+                    0,
+                    24.9,
+                    2.4
+                  ],
+                  "autoUv": false,
+                  "enabled": true
+                },
+                "east": {
+                  "texture": "#details",
+                  "uv": [
+                    25.2,
+                    0,
+                    26.099999999999998,
+                    2.4
+                  ],
+                  "autoUv": false,
+                  "enabled": true
+                },
+                "south": {
+                  "texture": "#details",
+                  "uv": [
+                    26.4,
+                    0,
+                    27.299999999999997,
+                    2.4
+                  ],
+                  "autoUv": false,
+                  "enabled": true
+                },
+                "west": {
+                  "texture": "#details",
+                  "uv": [
+                    27.6,
+                    0,
+                    28.5,
+                    2.4
+                  ],
+                  "autoUv": false,
+                  "enabled": true
+                },
+                "down": {
+                  "texture": "#details",
+                  "uv": [
+                    29,
+                    0,
+                    29.9,
+                    0.9
+                  ],
+                  "autoUv": false,
+                  "enabled": true
+                }
+              },
+              "renderPass": 0
+            },
+            {
+              "name": "crystal_side_0_dir",
+              "from": [
+                0,
+                0,
+                0
+              ],
+              "to": [
+                0,
+                0,
+                0
+              ],
+              "rotationOrigin": [
+                8.0,
+                27.5,
+                8.0
+              ],
+              "rotationY": 15,
+              "faces": {},
+              "children": [
+                {
+                  "name": "crystal_side_0",
+                  "from": [
+                    8.05,
+                    26.0,
+                    7.7
+                  ],
+                  "to": [
+                    8.65,
+                    27.7,
+                    8.3
+                  ],
+                  "rotationOrigin": [
+                    8.35,
+                    27.5,
+                    8.0
+                  ],
+                  "rotationZ": 24,
+                  "faces": {
+                    "north": {
+                      "texture": "#details",
+                      "uv": [
+                        24,
+                        0,
+                        24.6,
+                        1.7
+                      ],
+                      "autoUv": false,
+                      "enabled": true
+                    },
+                    "east": {
+                      "texture": "#details",
+                      "uv": [
+                        25.2,
+                        0,
+                        25.8,
+                        1.7
+                      ],
+                      "autoUv": false,
+                      "enabled": true
+                    },
+                    "south": {
+                      "texture": "#details",
+                      "uv": [
+                        26.4,
+                        0,
+                        27.0,
+                        1.7
+                      ],
+                      "autoUv": false,
+                      "enabled": true
+                    },
+                    "west": {
+                      "texture": "#details",
+                      "uv": [
+                        27.6,
+                        0,
+                        28.200000000000003,
+                        1.7
+                      ],
+                      "autoUv": false,
+                      "enabled": true
+                    },
+                    "down": {
+                      "texture": "#details",
+                      "uv": [
+                        29,
+                        0,
+                        29.6,
+                        0.6
+                      ],
+                      "autoUv": false,
+                      "enabled": true
+                    }
+                  },
+                  "renderPass": 0
+                }
+              ]
+            },
+            {
+              "name": "crystal_side_1_dir",
+              "from": [
+                0,
+                0,
+                0
+              ],
+              "to": [
+                0,
+                0,
+                0
+              ],
+              "rotationOrigin": [
+                8.0,
+                27.5,
+                8.0
+              ],
+              "rotationY": 100,
+              "faces": {},
+              "children": [
+                {
+                  "name": "crystal_side_1",
+                  "from": [
+                    8.1,
+                    26.3,
+                    7.75
+                  ],
+                  "to": [
+                    8.6,
+                    27.7,
+                    8.25
+                  ],
+                  "rotationOrigin": [
+                    8.35,
+                    27.5,
+                    8.0
+                  ],
+                  "rotationZ": 30,
+                  "faces": {
+                    "north": {
+                      "texture": "#details",
+                      "uv": [
+                        24,
+                        0,
+                        24.5,
+                        1.4
+                      ],
+                      "autoUv": false,
+                      "enabled": true
+                    },
+                    "east": {
+                      "texture": "#details",
+                      "uv": [
+                        25.2,
+                        0,
+                        25.7,
+                        1.4
+                      ],
+                      "autoUv": false,
+                      "enabled": true
+                    },
+                    "south": {
+                      "texture": "#details",
+                      "uv": [
+                        26.4,
+                        0,
+                        26.9,
+                        1.4
+                      ],
+                      "autoUv": false,
+                      "enabled": true
+                    },
+                    "west": {
+                      "texture": "#details",
+                      "uv": [
+                        27.6,
+                        0,
+                        28.1,
+                        1.4
+                      ],
+                      "autoUv": false,
+                      "enabled": true
+                    },
+                    "down": {
+                      "texture": "#details",
+                      "uv": [
+                        29,
+                        0,
+                        29.5,
+                        0.5
+                      ],
+                      "autoUv": false,
+                      "enabled": true
+                    }
+                  },
+                  "renderPass": 0
+                }
+              ]
+            },
+            {
+              "name": "crystal_side_2_dir",
+              "from": [
+                0,
+                0,
+                0
+              ],
+              "to": [
+                0,
+                0,
+                0
+              ],
+              "rotationOrigin": [
+                8.0,
+                27.5,
+                8.0
+              ],
+              "rotationY": 190,
+              "faces": {},
+              "children": [
+                {
+                  "name": "crystal_side_2",
+                  "from": [
+                    8.0,
+                    26.1,
+                    7.7
+                  ],
+                  "to": [
+                    8.6,
+                    27.7,
+                    8.3
+                  ],
+                  "rotationOrigin": [
+                    8.3,
+                    27.5,
+                    8.0
+                  ],
+                  "rotationZ": 22,
+                  "faces": {
+                    "north": {
+                      "texture": "#details",
+                      "uv": [
+                        24,
+                        0,
+                        24.6,
+                        1.6
+                      ],
+                      "autoUv": false,
+                      "enabled": true
+                    },
+                    "east": {
+                      "texture": "#details",
+                      "uv": [
+                        25.2,
+                        0,
+                        25.8,
+                        1.6
+                      ],
+                      "autoUv": false,
+                      "enabled": true
+                    },
+                    "south": {
+                      "texture": "#details",
+                      "uv": [
+                        26.4,
+                        0,
+                        27.0,
+                        1.6
+                      ],
+                      "autoUv": false,
+                      "enabled": true
+                    },
+                    "west": {
+                      "texture": "#details",
+                      "uv": [
+                        27.6,
+                        0,
+                        28.200000000000003,
+                        1.6
+                      ],
+                      "autoUv": false,
+                      "enabled": true
+                    },
+                    "down": {
+                      "texture": "#details",
+                      "uv": [
+                        29,
+                        0,
+                        29.6,
+                        0.6
+                      ],
+                      "autoUv": false,
+                      "enabled": true
+                    }
+                  },
+                  "renderPass": 0
+                }
+              ]
+            },
+            {
+              "name": "crystal_side_3_dir",
+              "from": [
+                0,
+                0,
+                0
+              ],
+              "to": [
+                0,
+                0,
+                0
+              ],
+              "rotationOrigin": [
+                8.0,
+                27.5,
+                8.0
+              ],
+              "rotationY": 280,
+              "faces": {},
+              "children": [
+                {
+                  "name": "crystal_side_3",
+                  "from": [
+                    8.075,
+                    26.5,
+                    7.775
+                  ],
+                  "to": [
+                    8.525,
+                    27.7,
+                    8.225
+                  ],
+                  "rotationOrigin": [
+                    8.3,
+                    27.5,
+                    8.0
+                  ],
+                  "rotationZ": 34,
+                  "faces": {
+                    "north": {
+                      "texture": "#details",
+                      "uv": [
+                        24,
+                        0,
+                        24.45,
+                        1.2
+                      ],
+                      "autoUv": false,
+                      "enabled": true
+                    },
+                    "east": {
+                      "texture": "#details",
+                      "uv": [
+                        25.2,
+                        0,
+                        25.65,
+                        1.2
+                      ],
+                      "autoUv": false,
+                      "enabled": true
+                    },
+                    "south": {
+                      "texture": "#details",
+                      "uv": [
+                        26.4,
+                        0,
+                        26.849999999999998,
+                        1.2
+                      ],
+                      "autoUv": false,
+                      "enabled": true
+                    },
+                    "west": {
+                      "texture": "#details",
+                      "uv": [
+                        27.6,
+                        0,
+                        28.05,
+                        1.2
+                      ],
+                      "autoUv": false,
+                      "enabled": true
+                    },
+                    "down": {
+                      "texture": "#details",
+                      "uv": [
+                        29,
+                        0,
+                        29.45,
+                        0.45
+                      ],
+                      "autoUv": false,
+                      "enabled": true
+                    }
+                  },
+                  "renderPass": 0
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

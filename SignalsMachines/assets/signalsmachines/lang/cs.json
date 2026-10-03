@@ -32,5 +32,19 @@
   "machine-cells": "Obsazená pole: {0}, výrobek: {1}",
   "machine-recipe": "Recept: {0}",
   "recipe-none": "žádný",
-  "machine-placer": "Postavil {0}; pracuje s jeho třídou."
+  "machine-placer": "Postavil {0}; pracuje s jeho třídou.",
+  "item-burntdust": "Spálený prach",
+  "item-burntdust-desc": "Co leželo na desce, když se krystal přetížil. K ničemu.",
+  "machine-progress": "Výroba: {0} %",
+  "machine-state-0": "čeká",
+  "machine-state-1": "recept připraven",
+  "machine-state-2": "příprava",
+  "machine-state-3": "výroba",
+  "machine-state-4": "hotovo, výrobek čeká",
+  "machine-state-10": "přetížení",
+  "machine-state-11": "krystal dole, deska se netočí",
+  "machine-state-12": "dveře otevřeny během výroby",
+  "machine-state-13": "chybná síla",
+  "machine-state-14": "výstup plný",
+  "machine-state-15": "chybí pohon"
 }

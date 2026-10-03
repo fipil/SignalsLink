@@ -1,3 +1,4 @@
+using System.IO;
 namespace SignalsTubes.src.circuit;
 
 /// <summary>
@@ -76,6 +77,68 @@ public sealed class CircuitSimulator
     };
 
     public bool HasPin(int index) => pinUsed[index];
+
+    // ---- persistence: a socket keeps its tube's memory across a reload, like Signals blocks keep theirs
+
+    private const byte StateVersion = 1;
+
+    /// <summary>Node levels, part registers, toggle positions and nested tubes, recursively.</summary>
+    public byte[] SaveState()
+    {
+        using var ms = new MemoryStream();
+        using var w = new BinaryWriter(ms);
+        w.Write(StateVersion);
+        Write(w);
+        w.Flush();
+        return ms.ToArray();
+    }
+
+    private void Write(BinaryWriter w)
+    {
+        w.Write(values.Length); w.Write(values);
+        w.Write(pinLevels);
+        w.Write(state.Length);
+        for (int i = 0; i < state.Length; i++)
+        {
+            w.Write(state[i].Length); w.Write(state[i]);
+            w.Write(toggleOn[i]);
+            w.Write(nested[i] != null);
+            nested[i]?.Write(w);
+        }
+    }
+
+    /// <summary>Restores what SaveState wrote; a mismatch (other program, other version) leaves the fresh state.</summary>
+    public bool LoadState(byte[] data)
+    {
+        if (data == null || data.Length == 0) return false;
+        try
+        {
+            using var r = new BinaryReader(new MemoryStream(data));
+            if (r.ReadByte() != StateVersion) return false;
+            return Read(r);
+        }
+        catch (IOException) { return false; }
+    }
+
+    private bool Read(BinaryReader r)
+    {
+        int n = r.ReadInt32();
+        if (n != values.Length) return false;
+        r.Read(values, 0, n);
+        r.Read(pinLevels, 0, pinLevels.Length);
+        int parts = r.ReadInt32();
+        if (parts != state.Length) return false;
+        for (int i = 0; i < parts; i++)
+        {
+            int len = r.ReadInt32();
+            if (len != state[i].Length) return false;
+            r.Read(state[i], 0, len);
+            toggleOn[i] = r.ReadBoolean();
+            bool hasNested = r.ReadBoolean();
+            if (hasNested && (nested[i] == null || !nested[i].Read(r))) return false;
+        }
+        return true;
+    }
 
     public void SetInput(int pin, byte level) => pinLevels[pin] = Math.Min(level, CircuitProgram.MaxLevel);
 

@@ -7,7 +7,28 @@
     "B": {
       "type": "item",
       "code": "signalstubes:tubebase-*",
-      "name": "color"
+      "name": "color",
+      "allowedVariants": [
+        "blue",
+        "fire",
+        "black",
+        "brown",
+        "cream",
+        "earthyorange",
+        "gray",
+        "orange",
+        "red",
+        "tan",
+        "dyedblue",
+        "dyedred",
+        "dyedyellow",
+        "dyedpurple",
+        "dyedgreen",
+        "dyedorange",
+        "dyedblack",
+        "dyedgray",
+        "dyedpink"
+      ]
     },
     "C": {
       "type": "item",

@@ -14,11 +14,15 @@ public sealed class PlateRenderer : IRenderer
     /// <summary>Model units: plate top, cell pitch and the first cell's centre (row 0 = north, column 0 = west).</summary>
     public const float PlateTop = 19.732f / 16, CellPitch = 2.5f / 16, FirstCell = 5.5f / 16, CellScale = 2.2f / 16;
     public const float ProductHeight = (19.732f + 3.5f) / 16, ProductScale = 0.25f;
+    /// <summary>The crystal's travel between lowered (as modelled) and raised, and how long the ride takes.</summary>
+    public const float CrystalTravel = 3.5f / 16, CrystalSeconds = 1f;
 
     private readonly ICoreClientAPI capi;
     private readonly BlockPos pos;
     private readonly float blockRotation;
-    private readonly MeshRef plate;
+    private readonly MeshRef plate, crystal;
+    private float crystalLift = 1;   // 0 = lowered, 1 = raised
+    public bool CrystalDown;
     private readonly MultiTextureMeshRef[] items = new MultiTextureMeshRef[BECraftingMachine.GridSlots + 1];
     private readonly bool[] flat = new bool[BECraftingMachine.GridSlots + 1];
     private readonly Matrixf model = new();
@@ -32,12 +36,13 @@ public sealed class PlateRenderer : IRenderer
     public double RenderOrder => 0.5;
     public int RenderRange => 24;
 
-    public PlateRenderer(ICoreClientAPI capi, BlockPos pos, MeshData plateMesh, float blockRotationRad)
+    public PlateRenderer(ICoreClientAPI capi, BlockPos pos, MeshData plateMesh, MeshData crystalMesh, float blockRotationRad)
     {
         this.capi = capi;
         this.pos = pos;
         blockRotation = blockRotationRad;
         plate = capi.Render.UploadMesh(plateMesh);
+        crystal = capi.Render.UploadMesh(crystalMesh);
         capi.Event.RegisterRenderer(this, EnumRenderStage.Opaque, "craftingmachine-plate");
     }
 
@@ -80,6 +85,7 @@ public sealed class PlateRenderer : IRenderer
             else angle %= GameMath.TWOPI;
         }
         else angle = (angle + speed * dt * 50f) % GameMath.TWOPI;
+        crystalLift = GameMath.Clamp(crystalLift + (CrystalDown ? -dt : dt) / CrystalSeconds, 0, 1);
     }
 
     public void OnRenderFrame(float dt, EnumRenderStage stage)
@@ -114,6 +120,13 @@ public sealed class PlateRenderer : IRenderer
             render.RenderMultiTextureMesh(items[i], "tex");
         }
 
+        // the crystal rides up and down on the machine's axis, turned with the block only
+        model.Identity().Translate(pos.X - camera.X, pos.Y - camera.Y + crystalLift * CrystalTravel, pos.Z - camera.Z)
+            .Translate(.5f, 0, .5f).RotateY(blockRotation).Translate(-.5f, 0, -.5f);
+        prog.Tex2D = capi.BlockTextureAtlas.AtlasTextures[0].TextureId;
+        prog.ModelMatrix = model.Values;
+        render.RenderMesh(crystal);
+
         if (items[BECraftingMachine.ProductSlot] != null)
         {
             // the product floats in the middle of the chamber and does not turn with the plate
@@ -130,6 +143,7 @@ public sealed class PlateRenderer : IRenderer
     {
         capi.Event.UnregisterRenderer(this, EnumRenderStage.Opaque);
         plate.Dispose();
+        crystal.Dispose();
         foreach (var item in items) item?.Dispose();
     }
 }

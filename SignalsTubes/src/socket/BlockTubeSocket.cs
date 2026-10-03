@@ -87,15 +87,21 @@ public class BlockTubeSocket : BlockConnection
             info += (TubeProgram.Vtml(be?.NameOf(sel.SelectionBoxIndex)) ?? role) + "\n";
         }
         // A tube in a socket shows just its description; the full tooltip belongs to the item and to machines.
+        // Aiming at one of its pins shows nothing but that pin (its name is the title then).
+        if (anchor != null && be is { HasTube: true }) return "";
         if (be is { HasTube: true } && ItemProgramTube.Description(be.Tube) is string description) info += TubeProgram.Vtml(description) + "\n";
         return info;
     }
 
-    // A loaded socket is named after its tube.
-    public override string GetPlacedBlockName(IWorldAccessor world, BlockPos pos) =>
-        world.BlockAccessor.GetBlockEntity(pos) is BETubeSocket { HasTube: true } be
-            ? (be.Tube.Attributes.GetString(TubeProgram.NameKey, "") is { Length: > 0 } name ? name : be.Tube.GetName())   // plain text here, not VTML
-            : base.GetPlacedBlockName(world, pos);
+    // A loaded socket is named after its tube; aimed at one of its pins, after that pin.
+    public override string GetPlacedBlockName(IWorldAccessor world, BlockPos pos)
+    {
+        if (world.BlockAccessor.GetBlockEntity(pos) is not BETubeSocket { HasTube: true } be) return base.GetPlacedBlockName(world, pos);
+        var sel = (world.Api as ICoreClientAPI)?.World.Player?.CurrentBlockSelection;
+        if (sel != null && sel.Position.Equals(pos) && GetAnchorName(world, sel) != null)
+            return be.NameOf(sel.SelectionBoxIndex) ?? Vintagestory.API.Config.Lang.Get("signalstubes:pin-" + be.RoleOf(sel.SelectionBoxIndex), sel.SelectionBoxIndex + 1);
+        return be.Tube.Attributes.GetString(TubeProgram.NameKey, "") is { Length: > 0 } name ? name : be.Tube.GetName();   // plain text here, not VTML
+    }
 
     public Vec3f ShapeRotation => new(Shape.rotateX, Shape.rotateY, Shape.rotateZ);
 

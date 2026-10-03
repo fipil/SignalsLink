@@ -122,7 +122,9 @@ public class BECraftingMachine : BlockEntityContainer, ISidedAutomation
         var output = match.Recipe.Output?.ResolvedItemStack;
         if (output == null) return match.Recipe.Name?.ToString() ?? "?";
         int count = output.StackSize * MachineRecipes.Cycles(match, GridCells(), GridSize);
-        return count + "x " + output.GetName();
+        string name;
+        try { name = output.GetName(); } catch (ArgumentNullException) { name = output.Collectible.Code.ToShortString(); }   // no language tables outside the game
+        return count + "x " + name;
     }
 
     private string recipeText = "";
@@ -134,6 +136,10 @@ public class BECraftingMachine : BlockEntityContainer, ISidedAutomation
     private MeshData tubeMesh;
     private MachineInputs inputs;
     private byte state;
+    private readonly MachineProcess process = new();
+    public MachineProcess Process => process;
+    /// <summary>Temporal stability taken from players per 0.1 s: a whisper while crafting, a blast through an open door (contract 23, 23a).</summary>
+    public const float CraftDrainPerTick = 0.0005f, LeakDrainPerTick = 0.01f, CraftDrainRange = 2f, LeakRange = 8f;
     private BEBehaviorMPConsumer mpc;
     private PlateRenderer plateRenderer;
     private float plateSpeed, syncedPlateSpeed, networkSpeed;
@@ -170,7 +176,7 @@ public class BECraftingMachine : BlockEntityContainer, ISidedAutomation
         }
         else if (api is ICoreClientAPI capi && Block is BlockCraftingMachine)   // not when the block is already gone
         {
-            plateRenderer = new PlateRenderer(capi, Pos, PlateMesh(capi), ((BlockCraftingMachine)Block).RotationRadians);
+            plateRenderer = new PlateRenderer(capi, Pos, PlateMesh(capi), CrystalMesh(capi), ((BlockCraftingMachine)Block).RotationRadians);
             SlotsChanged += RefreshPlateItems;
             RefreshPlateItems();
             UpdatePlatePicture();
@@ -182,12 +188,55 @@ public class BECraftingMachine : BlockEntityContainer, ISidedAutomation
 
     // ---- mechanics: clutch and plate
 
+    private void RunProcess(float dt)
+    {
+        bool doorsClosed = !DoorOpen(4) && !DoorOpen(5);
+        var sense = new Sense(inputs, doorsClosed, OccupiedCells, Recipe != null, inventory[ProductSlot].Empty, networkSpeed > PlateDrive.Still, PlateRunning);
+        var ev = process.Step(sense, dt);
+        if (ev == MachineProcess.Event.Craft && Recipe != null)
+            MachineRecipes.Craft(Api.World, Recipe, GridCells(), GridSize, inventory[ProductSlot], stack => Api.World.SpawnItemEntity(stack, Pos.ToVec3d().Add(.5, 1.5, .5)));
+        else if (ev == MachineProcess.Event.Overload) Burn();
+        DrainStability(doorsClosed);
+        if (process.State != state) { state = process.State; MarkDirty(); }
+        else if (state == MachineProcess.Crafting && (int)(process.Progress * 10) % 5 == 0) MarkDirty();   // progress for the info box, twice a second
+    }
+
+    /// <summary>Overload: whatever lies on the plate turns to dust, one pile per occupied cell.</summary>
+    private void Burn()
+    {
+        var dust = Api.World.GetItem(new AssetLocation("signalsmachines:burntdust"));
+        for (int i = 0; i < GridSlots; i++)
+        {
+            if (inventory[i].Empty) continue;
+            inventory[i].Itemstack = dust == null ? null : new ItemStack(dust);
+            inventory[i].MarkDirty();
+        }
+    }
+
+    private void DrainStability(bool doorsClosed)
+    {
+        bool leak = !doorsClosed && inputs.Crystal > 0 && inputs.Strength > 0;
+        bool craft = state == MachineProcess.Crafting;
+        if (!leak && !craft) return;
+        float range = leak ? LeakRange : CraftDrainRange;
+        var centre = Pos.ToVec3d().Add(.5, 1.5, .5);
+        foreach (var player in Api.World.GetPlayersAround(centre, range, range) ?? Array.Empty<IPlayer>())
+        {
+            var stability = player.Entity?.GetBehavior<Vintagestory.GameContent.EntityBehaviorTemporalStabilityAffected>();
+            if (stability == null) continue;
+            double distance = player.Entity.Pos.DistanceTo(centre);
+            float drain = leak ? LeakDrainPerTick * (float)Math.Max(0, 1 - distance / LeakRange) : CraftDrainPerTick;
+            stability.OwnStability = Math.Max(0, stability.OwnStability - drain);
+        }
+    }
+
     /// <summary>Server, every 0.1 s: the plate follows the network speed through the clutch, with inertia.</summary>
     public void OnMechanicsTick(float dt)
     {
         networkSpeed = SpeedSource();
         float target = inputs.Clutch > 0 ? networkSpeed : 0;
         plateSpeed = PlateDrive.Step(plateSpeed, target, dt);
+        RunProcess(dt);
         // clients integrate the angle themselves; send the speed when it moved, or once a second while turning
         double now = Api.World.ElapsedMilliseconds;
         if (Math.Abs(plateSpeed - syncedPlateSpeed) > .005f || (plateSpeed > 0 && now - lastPlateSync > 1000))
@@ -198,10 +247,14 @@ public class BECraftingMachine : BlockEntityContainer, ISidedAutomation
         }
     }
 
+    private byte[] savedSimState;   // from the save game, applied once the program is loaded
+
     private void LoadProgram()
     {
         program = tube == null || Api?.Side != EnumAppSide.Server ? null : TubeProgram.Get(tube, Api);
         sim = program == null ? null : new CircuitSimulator(program, id => ProgramStore.Of(Api)?.Get(id));
+        if (sim != null && savedSimState != null) sim.LoadState(savedSimState);
+        savedSimState = null;
     }
 
     // ---- signals
@@ -268,6 +321,8 @@ public class BECraftingMachine : BlockEntityContainer, ISidedAutomation
         else tree.RemoveAttribute("programTube");
         tree.SetBytes("inputs", new[] { inputs.Clutch, inputs.Crystal, inputs.Strength, inputs.DoorWest, inputs.DoorEast });
         tree.SetInt("state", state);
+        tree.SetFloat("progress", process.Progress);
+        if (sim != null) tree.SetBytes("simState", sim.SaveState()); else tree.RemoveAttribute("simState");
         tree.SetBool("tubeControls", program != null);
         tree.SetFloat("plateSpeed", plateSpeed);
         tree.SetFloat("networkSpeed", networkSpeed);
@@ -279,15 +334,19 @@ public class BECraftingMachine : BlockEntityContainer, ISidedAutomation
 
     private bool tubeControlsSynced;   // client copy of TubeControls
     private string recipeNameSynced = "";   // client copy of the recipe name
+    private float progressSynced;
 
     public override void FromTreeAttributes(ITreeAttribute tree, IWorldAccessor worldForResolving)
     {
         base.FromTreeAttributes(tree, worldForResolving);
         tube = tree.GetItemstack("programTube");
         tube?.ResolveBlockOrItem(worldForResolving);
+        savedSimState = tree.GetBytes("simState");
         var b = tree.GetBytes("inputs", new byte[5]);
         inputs = new MachineInputs(b[0], b[1], b[2], b[3], b[4]);
         state = (byte)tree.GetInt("state");
+        progressSynced = tree.GetFloat("progress");
+        if (Api?.Side == EnumAppSide.Server || Api == null) process.Restore(state, progressSynced);
         tubeControlsSynced = tree.GetBool("tubeControls");
         plateSpeed = tree.GetFloat("plateSpeed");
         networkSpeed = tree.GetFloat("networkSpeed");
@@ -313,7 +372,10 @@ public class BECraftingMachine : BlockEntityContainer, ISidedAutomation
         var block = Block as BlockCraftingMachine;
         string Side(int pin) => block == null ? "?" : Lang.Get("signalsmachines:side-short-" + block.DoorSide(pin).Code);
         dsc.AppendLine(Lang.Get("signalsmachines:machine-inputs", inputs.Clutch, inputs.Crystal, inputs.Strength, Side(4), inputs.DoorWest, Side(5), inputs.DoorEast));
-        dsc.AppendLine(Lang.Get("signalsmachines:machine-state", state));
+        dsc.AppendLine(Lang.Get("signalsmachines:machine-state", state) + " (" + Lang.Get("signalsmachines:machine-state-" + state) + ")");
+        if (state == MachineProcess.Crafting && cellsForProgress() > 0)
+            dsc.AppendLine(Lang.Get("signalsmachines:machine-progress", (int)(100 * (Api?.Side == EnumAppSide.Server ? process.Progress : progressSynced) / process.Duration(cellsForProgress()))));
+        int cellsForProgress() => OccupiedCells;
         dsc.AppendLine(Lang.Get("signalsmachines:machine-drive", (int)(networkSpeed * 100), (int)(plateSpeed * 100)));
         dsc.AppendLine(Lang.Get("signalsmachines:machine-doors", DoorOpen(4) ? Lang.Get("signalsmachines:door-open") : Lang.Get("signalsmachines:door-closed"), DoorOpen(5) ? Lang.Get("signalsmachines:door-open") : Lang.Get("signalsmachines:door-closed")));
         int cells = OccupiedCells;
@@ -344,6 +406,14 @@ public class BECraftingMachine : BlockEntityContainer, ISidedAutomation
         if (plateRenderer == null) return;
         if (inputs.Clutch > 0 && networkSpeed > PlateDrive.Still) plateRenderer.Drive(plateSpeed);
         else plateRenderer.Release();
+        plateRenderer.CrystalDown = inputs.Crystal > 0;
+    }
+
+    private MeshData CrystalMesh(ICoreClientAPI capi)
+    {
+        var shape = capi.Assets.Get(new AssetLocation("signalsmachines", "shapes/block/craftingmachine-crystal.json")).ToObject<Shape>();
+        capi.Tesselator.TesselateShape(Block, shape, out MeshData mesh);
+        return mesh;
     }
 
     private MeshData PlateMesh(ICoreClientAPI capi)

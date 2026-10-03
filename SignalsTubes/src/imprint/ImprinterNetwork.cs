@@ -116,6 +116,10 @@ public static class ImprinterNetwork
                 BEImprinter.SetSolderWarning((IServerPlayer)args.Caller.Player, (string)args[0] == "on");
                 return TextCommandResult.Success(Lang.Get("signalstubes:warn-" + (string)args[0]));
             })
+            .EndSubCommand()
+            // Diagnostics: the pins of the socket aimed at, as the Signals network sees them.
+            .BeginSubCommand("diag").WithDescription("Signals view of the socket you are looking at").RequiresPlayer()
+            .HandleWith(args => TextCommandResult.Success(SocketDiagnostics(sapi, args.Caller.Player)))
             .EndSubCommand();
 
         sapi.Network.RegisterChannel(Channel)
@@ -149,6 +153,23 @@ public static class ImprinterNetwork
                 bool done = imprinter.ApplyAndImprint(player, packet.Json);
                 if (!packet.Json.Contains("\"draft\":true")) SendState(sapi, player, imprinter, done);
             });
+    }
+
+    private static string SocketDiagnostics(ICoreServerAPI sapi, IPlayer player)
+    {
+        var sel = player.CurrentBlockSelection;
+        if (sel == null || sapi.World.BlockAccessor.GetBlockEntity(sel.Position) is not BlockEntity be) return "Aim at a socket or machine.";
+        var beh = be.GetBehavior<signals.src.signalNetwork.BEBehaviorSignalNodeProvider>();
+        if (beh == null) return be.GetType().Name + ": no Signals node provider.";
+        var wires = sapi.ModLoader.GetModSystem<signals.src.hangingwires.HangingWiresMod>();
+        var sb = new System.Text.StringBuilder();
+        sb.AppendLine(be.GetType().Name + " at " + sel.Position + (be is socket.BETubeSocket s ? (s.HasTube ? ", tube: " + s.Tube.GetName() : ", empty") : ""));
+        foreach (var node in beh.GetNodes().Values.OrderBy(n => n.Pos.index))
+        {
+            int wireCount = wires?.data.connections.Count(w => w.pos1 == node.Pos || w.pos2 == node.Pos) ?? 0;
+            sb.AppendLine($"pin {node.Pos.index + 1}: net {(node.netId?.ToString() ?? "-")}, value {node.value}, output {node.output}, connections {node.Connections.Count}, wires {wireCount}");
+        }
+        return sb.ToString();
     }
 
     private static bool Reachable(IServerPlayer player, BlockPos pos) =>

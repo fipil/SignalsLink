@@ -32,5 +32,19 @@
   "machine-cells": "Occupied cells: {0}, product: {1}",
   "machine-recipe": "Recipe: {0}",
   "recipe-none": "none",
-  "machine-placer": "Placed by {0}; works with their class."
+  "machine-placer": "Placed by {0}; works with their class.",
+  "item-burntdust": "Burnt dust",
+  "item-burntdust-desc": "What was on the plate when the crystal was overdriven. Good for nothing.",
+  "machine-progress": "Crafting: {0} %",
+  "machine-state-0": "waiting",
+  "machine-state-1": "recipe ready",
+  "machine-state-2": "preparing",
+  "machine-state-3": "crafting",
+  "machine-state-4": "done, product waiting",
+  "machine-state-10": "overloaded",
+  "machine-state-11": "crystal down, plate not turning",
+  "machine-state-12": "door opened while crafting",
+  "machine-state-13": "wrong strength",
+  "machine-state-14": "output full",
+  "machine-state-15": "no drive"
 }

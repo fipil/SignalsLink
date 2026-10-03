@@ -84,10 +84,14 @@ public class BETubeSocket : BlockEntity
         base.OnBlockBroken(byPlayer);
     }
 
+    private byte[] savedSimState;   // from the save game, applied once the program is loaded
+
     private void LoadProgram()
     {
         program = tube == null || Api.Side != EnumAppSide.Server ? null : TubeProgram.Get(tube, Api);
         sim = program == null ? null : new CircuitSimulator(program, id => ProgramStore.Of(Api)?.Get(id));
+        if (sim != null && savedSimState != null) sim.LoadState(savedSimState);
+        savedSimState = null;
     }
 
     private void OnSignalTick()
@@ -182,6 +186,7 @@ public class BETubeSocket : BlockEntity
         else tree.RemoveAttribute(TubeKey);
         tree.SetBool(LitKey, lit);
         if (imprinter != null) tree.SetBytes("imprinter", Vintagestory.API.Util.SerializerUtil.Serialize(imprinter)); else tree.RemoveAttribute("imprinter");
+        if (sim != null) tree.SetBytes("simState", sim.SaveState()); else tree.RemoveAttribute("simState");   // the tube's memory survives a reload
     }
 
     public override void FromTreeAttributes(ITreeAttribute tree, IWorldAccessor worldForResolving)
@@ -191,6 +196,7 @@ public class BETubeSocket : BlockEntity
         tube?.ResolveBlockOrItem(worldForResolving);
         lit = tree.GetBool(LitKey);
         imprinter = tree.HasAttribute("imprinter") ? Vintagestory.API.Util.SerializerUtil.Deserialize<BlockPos>(tree.GetBytes("imprinter")) : null;
+        savedSimState = tree.GetBytes("simState");
         if (Api != null) LoadProgram();
         if (Api is ICoreClientAPI) MarkDirty(true);
     }

@@ -192,4 +192,30 @@ public class CircuitSimulatorTests
         var sim = new CircuitSimulator(p);
         Assert.Equal(new byte[] { 15, 0, 15, 0, 15, 0 }, Run(sim, 6, 0));
     }
+
+    // A delay line (5 steps) remembers what went in; a saved state hands that memory to a fresh simulator.
+    [Fact]
+    public void SavedStateContinuesWhereTheOldSimulatorStopped()
+    {
+        var program = Program(2, Array.Empty<Link>(), new[] { new Component(ComponentKind.Delay, 5, 0, 1) }, Pin.Input(0, 0), Pin.Output(1, 1));
+        var sim = new CircuitSimulator(program);
+        sim.SetInput(0, 9); sim.Step(); sim.Step();
+        sim.SetInput(0, 0); sim.Step();
+        byte[] saved = sim.SaveState();
+
+        var reloaded = new CircuitSimulator(program);
+        Assert.True(reloaded.LoadState(saved));
+        bool cameOut = false;
+        for (int i = 0; i < 8; i++)
+        {
+            sim.Step(); reloaded.Step();
+            Assert.Equal(sim.GetOutput(1), reloaded.GetOutput(1));
+            cameOut |= reloaded.GetOutput(1) == 9;
+        }
+        Assert.True(cameOut);   // the 9 did come out of the reloaded line
+        // a different program refuses the state and keeps its fresh start
+        var other = new CircuitSimulator(Program(3, Array.Empty<Link>(), new[] { new Component(ComponentKind.Delay, 5, 0, 1) }, Pin.Input(0, 0), Pin.Output(1, 1)));
+        Assert.False(other.LoadState(saved));
+        Assert.False(new CircuitSimulator(program).LoadState(null));
+    }
 }

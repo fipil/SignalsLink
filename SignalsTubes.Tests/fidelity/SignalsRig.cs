@@ -57,6 +57,10 @@ public sealed class SignalsRig
     private readonly List<(NodePos control, NodePos switched)> controls = new();   // valve grids, actuators
     private readonly IServerWorldAccessor world;
     public IWorldAccessor World => world;
+    /// <summary>Grid recipes the fake world knows (for machines that craft).</summary>
+    public readonly List<GridRecipe> Recipes = new();
+    /// <summary>Items the fake world hands out by code; anything else is the tube item.</summary>
+    public readonly Dictionary<string, Item> Items = new();
 
     public SignalsRig()
     {
@@ -74,7 +78,8 @@ public sealed class SignalsRig
             "get_Logger" => logger,
             "get_Api" => Api,
             "RegisterGameTickListener" => Capture((Action<float>)a[0]),
-            "GetItem" => TubeItem,
+            "GetItem" => a[0] is AssetLocation loc && Items.TryGetValue(loc.ToString(), out var known) ? known : TubeItem,
+            "get_GridRecipes" => Recipes,
             _ => Fake.Unhandled
         });
         var modLoader = Fake.Of<IModLoader>((m, a) =>

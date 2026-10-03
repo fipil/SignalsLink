@@ -335,10 +335,12 @@ public class BEImprinter : BlockEntity
         if ((bool?)edits["draft"] == true) { SetDraft(json); return false; }
         if ((bool?)edits["erase"] == true) return Erase(player);
         if ((bool?)edits["noWarn"] == true) SetSolderWarning(player, false);
-        if (Clip((string)edits["name"], GuiDialogImprinter.NameMax).Length == 0) { Say(player, "imprint-no-name"); return false; }
-        return Imprint(player, Clip((string)edits["name"], GuiDialogImprinter.NameMax), Clip((string)edits["description"], GuiDialogImprinter.DescriptionMax),
+        if (Clip((string)edits["name"], GuiDialogImprinter.NameMax).Length == 0) { Say(player, "imprint-no-name"); SetDraft(json); return false; }
+        bool written = Imprint(player, Clip((string)edits["name"], GuiDialogImprinter.NameMax), Clip((string)edits["description"], GuiDialogImprinter.DescriptionMax),
             index => Clip((string)names?[index.ToString()], GuiDialogImprinter.PinNameMax),
             (bool?)edits["lockCopy"] == true, (bool?)edits["lockView"] == true, (bool?)edits["confirmSolder"] == true);
+        if (!written) SetDraft(json);   // a refused imprint must not throw away what was typed
+        return written;
     }
 
     private bool ForeignLocked(IServerPlayer player) =>

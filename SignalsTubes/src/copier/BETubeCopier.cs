@@ -48,7 +48,7 @@ public class BETubeCopier : BlockEntityContainer
     private float progress;    // seconds into the current copy
     private byte lastStart;
     private SignalNetworkMod signalMod;
-    private ILoadedSound workSound;   // client loop while copying
+    private ILoadedSound workSound;   // client: one 4.4 s clip at the start of a copy
     private static readonly Dictionary<string, MeshData> meshCache = new();
 
     public override InventoryBase Inventory => inventory;
@@ -93,7 +93,7 @@ public class BETubeCopier : BlockEntityContainer
         workSound = capi.World.LoadSound(new SoundParams {
             Location = new AssetLocation("signalstubes:sounds/copier-work.ogg"),
             Position = Pos.ToVec3f().Add(.5f, .6f, .5f),
-            ShouldLoop = true, DisposeOnFinish = false, Range = 12, Volume = .6f
+            ShouldLoop = false, DisposeOnFinish = false, Range = 12, Volume = .6f
         });
         workSound?.Start();
     }
