@@ -61,11 +61,32 @@ public class BECraftingMachine : BlockEntityContainer, ISidedAutomation
     /// <summary>Door on pin 4 (west in the model) or 5 (east) is open: its input level is above zero.</summary>
     public bool DoorOpen(int pin) => inputs[pin] > 0;
 
+    /// <summary>The crystal is down: the machine casts block light (BlockCraftingMachine.GetLightHsv).</summary>
+    public bool Lit => inputs.Crystal > 0;
+
+    // Lighting up: exchanging the block for itself makes the world place GetLightHsv anew (the lantern's way).
+    // Going dark the exchange sees no light on either side, so the light must be taken away by hand.
+    private void Relight()
+    {
+        if (Api == null) return;
+        if (Lit) Api.World.BlockAccessor.ExchangeBlock(Block.Id, Pos);
+        else Api.World.BlockAccessor.RemoveBlockLight(BlockCraftingMachine.CrystalLight, Pos);
+    }
+
+    private readonly long[] doorOpenedAt = new long[2];   // server: when pins 4/5 last went high
+
+    /// <summary>The door has finished its ride down; closing shuts access the moment the pin drops.</summary>
+    public bool DoorFullyOpen(int pin) =>
+        DoorOpen(pin) && Api.World.ElapsedMilliseconds - doorOpenedAt[pin - 4] >= (DoorMotion.PushSeconds + DoorMotion.OpenSlideSeconds) * 1000;
+
+    /// <summary>Nothing lands on or leaves a turning plate: clutch open and the plate at rest.</summary>
+    public bool PlateStill => inputs.Clutch == 0 && plateSpeed == 0;
+
     /// <summary>Only the chamber (the upper block) has doors; the pedestal lets nothing through.</summary>
     public bool AllowsAutomation(BlockPos touched, BlockFacing face)
     {
-        if (Block is not BlockCraftingMachine block || touched.Y != Pos.Y + 1) return false;
-        return (DoorOpen(4) && face == block.DoorSide(4)) || (DoorOpen(5) && face == block.DoorSide(5));
+        if (Block is not BlockCraftingMachine block || touched.Y != Pos.Y + 1 || !PlateStill) return false;
+        return (DoorFullyOpen(4) && face == block.DoorSide(4)) || (DoorFullyOpen(5) && face == block.DoorSide(5));
     }
 
     /// <summary>Cells that hold something; the strength the recipe will ask for.</summary>
@@ -142,6 +163,12 @@ public class BECraftingMachine : BlockEntityContainer, ISidedAutomation
     public const float CraftDrainPerTick = 0.0005f, LeakDrainPerTick = 0.01f, CraftDrainRange = 2f, LeakRange = 8f;
     private BEBehaviorMPConsumer mpc;
     private PlateRenderer plateRenderer;
+    private MachineEffects effects;
+    private int overloadSerial;
+    /// <summary>Counts overloads; the client plays the bang when it changes.</summary>
+    public int OverloadSerial => overloadSerial;
+    /// <summary>Client: the current angle of the plate picture, for effects aimed at the cells.</summary>
+    public float PlateAngle => plateRenderer?.Angle ?? 0;
     private float plateSpeed, syncedPlateSpeed, networkSpeed;
     private double lastPlateSync;
     /// <summary>Speed of the mechanical network at the axle; tests substitute it.</summary>
@@ -176,15 +203,24 @@ public class BECraftingMachine : BlockEntityContainer, ISidedAutomation
         }
         else if (api is ICoreClientAPI capi && Block is BlockCraftingMachine)   // not when the block is already gone
         {
-            plateRenderer = new PlateRenderer(capi, Pos, PlateMesh(capi), CrystalMesh(capi), ((BlockCraftingMachine)Block).RotationRadians);
+            plateRenderer = new PlateRenderer(capi, Pos, PlateMesh(capi), PartMesh(capi, "crystal"), PartMesh(capi, "door-west"), PartMesh(capi, "door-east"), ((BlockCraftingMachine)Block).RotationRadians);
             SlotsChanged += RefreshPlateItems;
             RefreshPlateItems();
             UpdatePlatePicture();
+            effects = new MachineEffects(capi, this);
+            RegisterGameTickListener(dt => effects.Tick(dt), 50);
         }
     }
 
-    public override void OnBlockUnloaded() { base.OnBlockUnloaded(); signalMod?.DisposeSignalTickListener(OnSignalTick); plateRenderer?.Dispose(); }
-    public override void OnBlockRemoved() { base.OnBlockRemoved(); signalMod?.DisposeSignalTickListener(OnSignalTick); plateRenderer?.Dispose(); }
+    public override void OnBlockUnloaded() { base.OnBlockUnloaded(); signalMod?.DisposeSignalTickListener(OnSignalTick); plateRenderer?.Dispose(); effects?.Dispose(); }
+    public override void OnBlockRemoved()
+    {
+        base.OnBlockRemoved();
+        signalMod?.DisposeSignalTickListener(OnSignalTick);
+        plateRenderer?.Dispose();
+        effects?.Dispose();
+        if (Lit) Api.World.BlockAccessor.RemoveBlockLight(BlockCraftingMachine.CrystalLight, Pos);
+    }
 
     // ---- mechanics: clutch and plate
 
@@ -195,7 +231,7 @@ public class BECraftingMachine : BlockEntityContainer, ISidedAutomation
         var ev = process.Step(sense, dt);
         if (ev == MachineProcess.Event.Craft && Recipe != null)
             MachineRecipes.Craft(Api.World, Recipe, GridCells(), GridSize, inventory[ProductSlot], stack => Api.World.SpawnItemEntity(stack, Pos.ToVec3d().Add(.5, 1.5, .5)));
-        else if (ev == MachineProcess.Event.Overload) Burn();
+        else if (ev == MachineProcess.Event.Overload) { Burn(); overloadSerial++; }
         DrainStability(doorsClosed);
         if (process.State != state) { state = process.State; MarkDirty(); }
         else if (state == MachineProcess.Crafting && (int)(process.Progress * 10) % 5 == 0) MarkDirty();   // progress for the info box, twice a second
@@ -265,7 +301,15 @@ public class BECraftingMachine : BlockEntityContainer, ISidedAutomation
         if (beh == null) return;
         byte Node(int i) => beh.GetNodeAt(new NodePos(Pos, i))?.value ?? 0;
         var next = sim == null ? Read(Node) : RunTube(Node);
-        if (next != inputs) { inputs = next; MarkDirty(); }
+        if (next != inputs)
+        {
+            foreach (int pin in new[] { 4, 5 })
+                if (inputs[pin] == 0 && next[pin] > 0) doorOpenedAt[pin - 4] = Api.World.ElapsedMilliseconds;
+            bool wasLit = Lit;
+            inputs = next;
+            if (Lit != wasLit) Relight();
+            MarkDirty();
+        }
         beh.UpdateSource(new NodePos(Pos, StatePin), state);
     }
 
@@ -322,6 +366,7 @@ public class BECraftingMachine : BlockEntityContainer, ISidedAutomation
         tree.SetBytes("inputs", new[] { inputs.Clutch, inputs.Crystal, inputs.Strength, inputs.DoorWest, inputs.DoorEast });
         tree.SetInt("state", state);
         tree.SetFloat("progress", process.Progress);
+        tree.SetInt("overloads", overloadSerial);
         if (sim != null) tree.SetBytes("simState", sim.SaveState()); else tree.RemoveAttribute("simState");
         tree.SetBool("tubeControls", program != null);
         tree.SetFloat("plateSpeed", plateSpeed);
@@ -330,11 +375,15 @@ public class BECraftingMachine : BlockEntityContainer, ISidedAutomation
         if (placerName != null) tree.SetString("placerName", placerName);
         if (placerTraits != null) tree.SetString("placerTraits", string.Join(",", placerTraits));
         tree.SetString("recipe", recipeText);
+        var product = Recipe?.Recipe.Output?.ResolvedItemStack;
+        if (product != null) tree.SetItemstack("product", product); else tree.RemoveAttribute("product");
     }
 
     private bool tubeControlsSynced;   // client copy of TubeControls
     private string recipeNameSynced = "";   // client copy of the recipe name
     private float progressSynced;
+    private ItemStack productSynced;   // client copy of what the recipe makes, for the ghost
+    private string ghostCode;          // what the renderer's ghost was built from
 
     public override void FromTreeAttributes(ITreeAttribute tree, IWorldAccessor worldForResolving)
     {
@@ -343,9 +392,12 @@ public class BECraftingMachine : BlockEntityContainer, ISidedAutomation
         tube?.ResolveBlockOrItem(worldForResolving);
         savedSimState = tree.GetBytes("simState");
         var b = tree.GetBytes("inputs", new byte[5]);
+        bool wasLit = Lit;
         inputs = new MachineInputs(b[0], b[1], b[2], b[3], b[4]);
+        if (Api is ICoreClientAPI && Lit != wasLit) Relight();   // the client lights its own chunks
         state = (byte)tree.GetInt("state");
         progressSynced = tree.GetFloat("progress");
+        overloadSerial = tree.GetInt("overloads");
         if (Api?.Side == EnumAppSide.Server || Api == null) process.Restore(state, progressSynced);
         tubeControlsSynced = tree.GetBool("tubeControls");
         plateSpeed = tree.GetFloat("plateSpeed");
@@ -354,6 +406,8 @@ public class BECraftingMachine : BlockEntityContainer, ISidedAutomation
         placerName = tree.GetString("placerName");
         placerTraits = tree.HasAttribute("placerTraits") ? new HashSet<string>(tree.GetString("placerTraits").Split(',', StringSplitOptions.RemoveEmptyEntries)) : null;
         recipeNameSynced = tree.GetString("recipe", "");
+        productSynced = tree.GetItemstack("product");
+        productSynced?.ResolveBlockOrItem(worldForResolving);
         UpdatePlatePicture();
         if (Api is ICoreClientAPI)
         {
@@ -407,11 +461,18 @@ public class BECraftingMachine : BlockEntityContainer, ISidedAutomation
         if (inputs.Clutch > 0 && networkSpeed > PlateDrive.Still) plateRenderer.Drive(plateSpeed);
         else plateRenderer.Release();
         plateRenderer.CrystalDown = inputs.Crystal > 0;
+        plateRenderer.WestDoor.Set(DoorOpen(4));
+        plateRenderer.EastDoor.Set(DoorOpen(5));
+        // the ghost of the product: rebuilt only when the recipe's output changes, shown while crafting
+        string code = productSynced?.Collectible?.Code?.ToString();
+        if (code != ghostCode) { plateRenderer.SetGhost(productSynced); ghostCode = code; }
+        int cells = OccupiedCells;
+        plateRenderer.Materialised = state == MachineProcess.Crafting && cells > 0 ? progressSynced / process.Duration(cells) : 0;
     }
 
-    private MeshData CrystalMesh(ICoreClientAPI capi)
+    private MeshData PartMesh(ICoreClientAPI capi, string part)
     {
-        var shape = capi.Assets.Get(new AssetLocation("signalsmachines", "shapes/block/craftingmachine-crystal.json")).ToObject<Shape>();
+        var shape = capi.Assets.Get(new AssetLocation("signalsmachines", "shapes/block/craftingmachine-" + part + ".json")).ToObject<Shape>();
         capi.Tesselator.TesselateShape(Block, shape, out MeshData mesh);
         return mesh;
     }

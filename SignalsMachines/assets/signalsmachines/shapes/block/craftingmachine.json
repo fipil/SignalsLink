@@ -5352,6 +5352,380 @@
       }
     },
     {
+      "name": "door_rods",
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        0,
+        0,
+        0
+      ],
+      "rotationOrigin": [
+        8,
+        18.732,
+        8
+      ],
+      "faces": {},
+      "rotationY": -90,
+      "children": [
+        {
+          "name": "rod_east_3.5",
+          "from": [
+            3.5,
+            6.935,
+            1.35
+          ],
+          "to": [
+            4.0,
+            18.735,
+            1.85
+          ],
+          "faces": {
+            "north": {
+              "texture": "#iron",
+              "uv": [
+                0,
+                0,
+                0.5,
+                11.8
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "south": {
+              "texture": "#iron",
+              "uv": [
+                0,
+                0,
+                0.5,
+                11.8
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "east": {
+              "texture": "#iron",
+              "uv": [
+                0,
+                0,
+                0.5,
+                11.8
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "west": {
+              "texture": "#iron",
+              "uv": [
+                0,
+                0,
+                0.5,
+                11.8
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "up": {
+              "texture": "#iron",
+              "uv": [
+                0,
+                0,
+                0.5,
+                0.5
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "down": {
+              "texture": "#iron",
+              "uv": [
+                0,
+                0,
+                0.5,
+                0.5
+              ],
+              "autoUv": false,
+              "enabled": true
+            }
+          },
+          "renderPass": 0,
+          "rotationOrigin": [
+            8,
+            0,
+            8
+          ],
+          "rotationY": 0
+        },
+        {
+          "name": "rod_west_3.5",
+          "from": [
+            3.5,
+            6.935,
+            1.35
+          ],
+          "to": [
+            4.0,
+            18.735,
+            1.85
+          ],
+          "faces": {
+            "north": {
+              "texture": "#iron",
+              "uv": [
+                0,
+                0,
+                0.5,
+                11.8
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "south": {
+              "texture": "#iron",
+              "uv": [
+                0,
+                0,
+                0.5,
+                11.8
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "east": {
+              "texture": "#iron",
+              "uv": [
+                0,
+                0,
+                0.5,
+                11.8
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "west": {
+              "texture": "#iron",
+              "uv": [
+                0,
+                0,
+                0.5,
+                11.8
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "up": {
+              "texture": "#iron",
+              "uv": [
+                0,
+                0,
+                0.5,
+                0.5
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "down": {
+              "texture": "#iron",
+              "uv": [
+                0,
+                0,
+                0.5,
+                0.5
+              ],
+              "autoUv": false,
+              "enabled": true
+            }
+          },
+          "renderPass": 0,
+          "rotationOrigin": [
+            8,
+            0,
+            8
+          ],
+          "rotationY": 180
+        },
+        {
+          "name": "rod_east_12.0",
+          "from": [
+            12.0,
+            6.935,
+            1.35
+          ],
+          "to": [
+            12.5,
+            18.735,
+            1.85
+          ],
+          "faces": {
+            "north": {
+              "texture": "#iron",
+              "uv": [
+                0,
+                0,
+                0.5,
+                11.8
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "south": {
+              "texture": "#iron",
+              "uv": [
+                0,
+                0,
+                0.5,
+                11.8
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "east": {
+              "texture": "#iron",
+              "uv": [
+                0,
+                0,
+                0.5,
+                11.8
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "west": {
+              "texture": "#iron",
+              "uv": [
+                0,
+                0,
+                0.5,
+                11.8
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "up": {
+              "texture": "#iron",
+              "uv": [
+                0,
+                0,
+                0.5,
+                0.5
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "down": {
+              "texture": "#iron",
+              "uv": [
+                0,
+                0,
+                0.5,
+                0.5
+              ],
+              "autoUv": false,
+              "enabled": true
+            }
+          },
+          "renderPass": 0,
+          "rotationOrigin": [
+            8,
+            0,
+            8
+          ],
+          "rotationY": 0
+        },
+        {
+          "name": "rod_west_12.0",
+          "from": [
+            12.0,
+            6.935,
+            1.35
+          ],
+          "to": [
+            12.5,
+            18.735,
+            1.85
+          ],
+          "faces": {
+            "north": {
+              "texture": "#iron",
+              "uv": [
+                0,
+                0,
+                0.5,
+                11.8
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "south": {
+              "texture": "#iron",
+              "uv": [
+                0,
+                0,
+                0.5,
+                11.8
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "east": {
+              "texture": "#iron",
+              "uv": [
+                0,
+                0,
+                0.5,
+                11.8
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "west": {
+              "texture": "#iron",
+              "uv": [
+                0,
+                0,
+                0.5,
+                11.8
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "up": {
+              "texture": "#iron",
+              "uv": [
+                0,
+                0,
+                0.5,
+                0.5
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "down": {
+              "texture": "#iron",
+              "uv": [
+                0,
+                0,
+                0.5,
+                0.5
+              ],
+              "autoUv": false,
+              "enabled": true
+            }
+          },
+          "renderPass": 0,
+          "rotationOrigin": [
+            8,
+            0,
+            8
+          ],
+          "rotationY": 180
+        }
+      ]
+    },
+    {
       "name": "chamber",
       "from": [
         0,
@@ -6291,488 +6665,6 @@
           ],
           "rotationY": 120,
           "renderPass": 0
-        },
-        {
-          "name": "window_0",
-          "from": [
-            0,
-            0,
-            0
-          ],
-          "to": [
-            0,
-            0,
-            0
-          ],
-          "rotationOrigin": [
-            8,
-            5.232,
-            8
-          ],
-          "rotationY": 0,
-          "faces": {},
-          "children": [
-            {
-              "name": "sill_0",
-              "from": [
-                4.075,
-                18.735,
-                1.2017005802921572
-              ],
-              "to": [
-                11.925,
-                20.235,
-                2.201700580292157
-              ],
-              "faces": {
-                "north": {
-                  "texture": "#castiron-relief",
-                  "uv": [
-                    11.825,
-                    11.75,
-                    19.675,
-                    13.25
-                  ],
-                  "autoUv": false,
-                  "enabled": true
-                },
-                "east": {
-                  "texture": "#castiron",
-                  "uv": [
-                    0,
-                    0,
-                    1,
-                    1.5
-                  ],
-                  "autoUv": false,
-                  "enabled": true
-                },
-                "south": {
-                  "texture": "#castiron-relief",
-                  "uv": [
-                    11.825,
-                    11.75,
-                    19.675,
-                    13.25
-                  ],
-                  "autoUv": false,
-                  "enabled": true
-                },
-                "west": {
-                  "texture": "#castiron",
-                  "uv": [
-                    0,
-                    0,
-                    1,
-                    1.5
-                  ],
-                  "autoUv": false,
-                  "enabled": true
-                },
-                "up": {
-                  "texture": "#castiron",
-                  "uv": [
-                    0,
-                    0,
-                    7.8500000000000005,
-                    1
-                  ],
-                  "autoUv": false,
-                  "enabled": true
-                },
-                "down": {
-                  "texture": "#castiron",
-                  "uv": [
-                    0,
-                    0,
-                    7.8500000000000005,
-                    1
-                  ],
-                  "autoUv": false,
-                  "enabled": true
-                }
-              },
-              "renderPass": 0
-            },
-            {
-              "name": "lintel_0",
-              "from": [
-                4.075,
-                28.847,
-                1.2017005802921572
-              ],
-              "to": [
-                11.925,
-                30.497,
-                2.201700580292157
-              ],
-              "faces": {
-                "north": {
-                  "texture": "#castiron-relief",
-                  "uv": [
-                    11.825,
-                    7.675000000000001,
-                    19.675,
-                    9.325
-                  ],
-                  "autoUv": false,
-                  "enabled": true
-                },
-                "east": {
-                  "texture": "#castiron",
-                  "uv": [
-                    0,
-                    0,
-                    1,
-                    1.6499999999999986
-                  ],
-                  "autoUv": false,
-                  "enabled": true
-                },
-                "south": {
-                  "texture": "#castiron-relief",
-                  "uv": [
-                    11.825,
-                    7.675000000000001,
-                    19.675,
-                    9.325
-                  ],
-                  "autoUv": false,
-                  "enabled": true
-                },
-                "west": {
-                  "texture": "#castiron",
-                  "uv": [
-                    0,
-                    0,
-                    1,
-                    1.6499999999999986
-                  ],
-                  "autoUv": false,
-                  "enabled": true
-                },
-                "up": {
-                  "texture": "#castiron",
-                  "uv": [
-                    0,
-                    0,
-                    7.8500000000000005,
-                    1
-                  ],
-                  "autoUv": false,
-                  "enabled": true
-                },
-                "down": {
-                  "texture": "#castiron",
-                  "uv": [
-                    0,
-                    0,
-                    7.8500000000000005,
-                    1
-                  ],
-                  "autoUv": false,
-                  "enabled": true
-                }
-              },
-              "renderPass": 0
-            },
-            {
-              "name": "post_left_0",
-              "from": [
-                4.075,
-                20.235,
-                1.2017005802921572
-              ],
-              "to": [
-                5.225,
-                28.847,
-                2.201700580292157
-              ],
-              "faces": {
-                "north": {
-                  "texture": "#castiron-relief",
-                  "uv": [
-                    8.175,
-                    6.693999999999999,
-                    9.325,
-                    15.306000000000001
-                  ],
-                  "autoUv": false,
-                  "enabled": true
-                },
-                "east": {
-                  "texture": "#castiron",
-                  "uv": [
-                    0,
-                    0,
-                    1,
-                    8.612000000000002
-                  ],
-                  "autoUv": false,
-                  "enabled": true
-                },
-                "south": {
-                  "texture": "#castiron-relief",
-                  "uv": [
-                    8.175,
-                    6.693999999999999,
-                    9.325,
-                    15.306000000000001
-                  ],
-                  "autoUv": false,
-                  "enabled": true
-                },
-                "west": {
-                  "texture": "#castiron",
-                  "uv": [
-                    0,
-                    0,
-                    1,
-                    8.612000000000002
-                  ],
-                  "autoUv": false,
-                  "enabled": true
-                }
-              },
-              "renderPass": 0
-            },
-            {
-              "name": "post_right_0",
-              "from": [
-                10.775,
-                20.235,
-                1.2017005802921572
-              ],
-              "to": [
-                11.925,
-                28.847,
-                2.201700580292157
-              ],
-              "faces": {
-                "north": {
-                  "texture": "#castiron-relief",
-                  "uv": [
-                    8.175,
-                    6.693999999999999,
-                    9.325000000000001,
-                    15.306000000000001
-                  ],
-                  "autoUv": false,
-                  "enabled": true
-                },
-                "east": {
-                  "texture": "#castiron",
-                  "uv": [
-                    0,
-                    0,
-                    1,
-                    8.612000000000002
-                  ],
-                  "autoUv": false,
-                  "enabled": true
-                },
-                "south": {
-                  "texture": "#castiron-relief",
-                  "uv": [
-                    8.175,
-                    6.693999999999999,
-                    9.325000000000001,
-                    15.306000000000001
-                  ],
-                  "autoUv": false,
-                  "enabled": true
-                },
-                "west": {
-                  "texture": "#castiron",
-                  "uv": [
-                    0,
-                    0,
-                    1,
-                    8.612000000000002
-                  ],
-                  "autoUv": false,
-                  "enabled": true
-                }
-              },
-              "renderPass": 0
-            },
-            {
-              "name": "cast_shoulder_left_0",
-              "from": [
-                4.705,
-                28.327,
-                1.202700580292157
-              ],
-              "to": [
-                5.744999999999999,
-                29.367,
-                2.202700580292157
-              ],
-              "faces": {
-                "north": {
-                  "texture": "#castiron",
-                  "uv": [
-                    0,
-                    0,
-                    1.0399999999999991,
-                    1.0399999999999991
-                  ],
-                  "autoUv": false,
-                  "enabled": true
-                },
-                "east": {
-                  "texture": "#castiron",
-                  "uv": [
-                    0,
-                    0,
-                    1,
-                    1.0399999999999991
-                  ],
-                  "autoUv": false,
-                  "enabled": true
-                },
-                "south": {
-                  "texture": "#castiron",
-                  "uv": [
-                    0,
-                    0,
-                    1.0399999999999991,
-                    1.0399999999999991
-                  ],
-                  "autoUv": false,
-                  "enabled": true
-                },
-                "west": {
-                  "texture": "#castiron",
-                  "uv": [
-                    0,
-                    0,
-                    1,
-                    1.0399999999999991
-                  ],
-                  "autoUv": false,
-                  "enabled": true
-                },
-                "up": {
-                  "texture": "#castiron",
-                  "uv": [
-                    0,
-                    0,
-                    1.0399999999999991,
-                    1
-                  ],
-                  "autoUv": false,
-                  "enabled": true
-                },
-                "down": {
-                  "texture": "#castiron",
-                  "uv": [
-                    0,
-                    0,
-                    1.0399999999999991,
-                    1
-                  ],
-                  "autoUv": false,
-                  "enabled": true
-                }
-              },
-              "rotationOrigin": [
-                5.225,
-                28.847,
-                1.2017005802921572
-              ],
-              "rotationZ": 45,
-              "renderPass": 0
-            },
-            {
-              "name": "cast_shoulder_right_0",
-              "from": [
-                10.255,
-                28.327,
-                1.202700580292157
-              ],
-              "to": [
-                11.295,
-                29.367,
-                2.202700580292157
-              ],
-              "faces": {
-                "north": {
-                  "texture": "#castiron",
-                  "uv": [
-                    0,
-                    0,
-                    1.0399999999999991,
-                    1.0399999999999991
-                  ],
-                  "autoUv": false,
-                  "enabled": true
-                },
-                "east": {
-                  "texture": "#castiron",
-                  "uv": [
-                    0,
-                    0,
-                    1,
-                    1.0399999999999991
-                  ],
-                  "autoUv": false,
-                  "enabled": true
-                },
-                "south": {
-                  "texture": "#castiron",
-                  "uv": [
-                    0,
-                    0,
-                    1.0399999999999991,
-                    1.0399999999999991
-                  ],
-                  "autoUv": false,
-                  "enabled": true
-                },
-                "west": {
-                  "texture": "#castiron",
-                  "uv": [
-                    0,
-                    0,
-                    1,
-                    1.0399999999999991
-                  ],
-                  "autoUv": false,
-                  "enabled": true
-                },
-                "up": {
-                  "texture": "#castiron",
-                  "uv": [
-                    0,
-                    0,
-                    1.0399999999999991,
-                    1
-                  ],
-                  "autoUv": false,
-                  "enabled": true
-                },
-                "down": {
-                  "texture": "#castiron",
-                  "uv": [
-                    0,
-                    0,
-                    1.0399999999999991,
-                    1
-                  ],
-                  "autoUv": false,
-                  "enabled": true
-                }
-              },
-              "rotationOrigin": [
-                10.775,
-                28.847,
-                1.2017005802921572
-              ],
-              "rotationZ": -45,
-              "renderPass": 0
-            }
-          ]
         },
         {
           "name": "window_1",
@@ -7731,488 +7623,6 @@
               "rotationOrigin": [
                 10.775,
                 28.849,
-                1.2017005802921572
-              ],
-              "rotationZ": -45,
-              "renderPass": 0
-            }
-          ]
-        },
-        {
-          "name": "window_3",
-          "from": [
-            0,
-            0,
-            0
-          ],
-          "to": [
-            0,
-            0,
-            0
-          ],
-          "rotationOrigin": [
-            8,
-            5.232,
-            8
-          ],
-          "rotationY": -180,
-          "faces": {},
-          "children": [
-            {
-              "name": "sill_3",
-              "from": [
-                4.075,
-                18.738,
-                1.2017005802921572
-              ],
-              "to": [
-                11.925,
-                20.238,
-                2.201700580292157
-              ],
-              "faces": {
-                "north": {
-                  "texture": "#castiron-relief",
-                  "uv": [
-                    11.825,
-                    11.75,
-                    19.675,
-                    13.25
-                  ],
-                  "autoUv": false,
-                  "enabled": true
-                },
-                "east": {
-                  "texture": "#castiron",
-                  "uv": [
-                    0,
-                    0,
-                    1,
-                    1.5
-                  ],
-                  "autoUv": false,
-                  "enabled": true
-                },
-                "south": {
-                  "texture": "#castiron-relief",
-                  "uv": [
-                    11.825,
-                    11.75,
-                    19.675,
-                    13.25
-                  ],
-                  "autoUv": false,
-                  "enabled": true
-                },
-                "west": {
-                  "texture": "#castiron",
-                  "uv": [
-                    0,
-                    0,
-                    1,
-                    1.5
-                  ],
-                  "autoUv": false,
-                  "enabled": true
-                },
-                "up": {
-                  "texture": "#castiron",
-                  "uv": [
-                    0,
-                    0,
-                    7.8500000000000005,
-                    1
-                  ],
-                  "autoUv": false,
-                  "enabled": true
-                },
-                "down": {
-                  "texture": "#castiron",
-                  "uv": [
-                    0,
-                    0,
-                    7.8500000000000005,
-                    1
-                  ],
-                  "autoUv": false,
-                  "enabled": true
-                }
-              },
-              "renderPass": 0
-            },
-            {
-              "name": "lintel_3",
-              "from": [
-                4.075,
-                28.85,
-                1.2017005802921572
-              ],
-              "to": [
-                11.925,
-                30.5,
-                2.201700580292157
-              ],
-              "faces": {
-                "north": {
-                  "texture": "#castiron-relief",
-                  "uv": [
-                    11.825,
-                    7.675000000000001,
-                    19.675,
-                    9.325
-                  ],
-                  "autoUv": false,
-                  "enabled": true
-                },
-                "east": {
-                  "texture": "#castiron",
-                  "uv": [
-                    0,
-                    0,
-                    1,
-                    1.6499999999999986
-                  ],
-                  "autoUv": false,
-                  "enabled": true
-                },
-                "south": {
-                  "texture": "#castiron-relief",
-                  "uv": [
-                    11.825,
-                    7.675000000000001,
-                    19.675,
-                    9.325
-                  ],
-                  "autoUv": false,
-                  "enabled": true
-                },
-                "west": {
-                  "texture": "#castiron",
-                  "uv": [
-                    0,
-                    0,
-                    1,
-                    1.6499999999999986
-                  ],
-                  "autoUv": false,
-                  "enabled": true
-                },
-                "up": {
-                  "texture": "#castiron",
-                  "uv": [
-                    0,
-                    0,
-                    7.8500000000000005,
-                    1
-                  ],
-                  "autoUv": false,
-                  "enabled": true
-                },
-                "down": {
-                  "texture": "#castiron",
-                  "uv": [
-                    0,
-                    0,
-                    7.8500000000000005,
-                    1
-                  ],
-                  "autoUv": false,
-                  "enabled": true
-                }
-              },
-              "renderPass": 0
-            },
-            {
-              "name": "post_left_3",
-              "from": [
-                4.075,
-                20.238,
-                1.2017005802921572
-              ],
-              "to": [
-                5.225,
-                28.85,
-                2.201700580292157
-              ],
-              "faces": {
-                "north": {
-                  "texture": "#castiron-relief",
-                  "uv": [
-                    8.175,
-                    6.693999999999999,
-                    9.325,
-                    15.306000000000001
-                  ],
-                  "autoUv": false,
-                  "enabled": true
-                },
-                "east": {
-                  "texture": "#castiron",
-                  "uv": [
-                    0,
-                    0,
-                    1,
-                    8.612000000000002
-                  ],
-                  "autoUv": false,
-                  "enabled": true
-                },
-                "south": {
-                  "texture": "#castiron-relief",
-                  "uv": [
-                    8.175,
-                    6.693999999999999,
-                    9.325,
-                    15.306000000000001
-                  ],
-                  "autoUv": false,
-                  "enabled": true
-                },
-                "west": {
-                  "texture": "#castiron",
-                  "uv": [
-                    0,
-                    0,
-                    1,
-                    8.612000000000002
-                  ],
-                  "autoUv": false,
-                  "enabled": true
-                }
-              },
-              "renderPass": 0
-            },
-            {
-              "name": "post_right_3",
-              "from": [
-                10.775,
-                20.238,
-                1.2017005802921572
-              ],
-              "to": [
-                11.925,
-                28.85,
-                2.201700580292157
-              ],
-              "faces": {
-                "north": {
-                  "texture": "#castiron-relief",
-                  "uv": [
-                    8.175,
-                    6.693999999999999,
-                    9.325000000000001,
-                    15.306000000000001
-                  ],
-                  "autoUv": false,
-                  "enabled": true
-                },
-                "east": {
-                  "texture": "#castiron",
-                  "uv": [
-                    0,
-                    0,
-                    1,
-                    8.612000000000002
-                  ],
-                  "autoUv": false,
-                  "enabled": true
-                },
-                "south": {
-                  "texture": "#castiron-relief",
-                  "uv": [
-                    8.175,
-                    6.693999999999999,
-                    9.325000000000001,
-                    15.306000000000001
-                  ],
-                  "autoUv": false,
-                  "enabled": true
-                },
-                "west": {
-                  "texture": "#castiron",
-                  "uv": [
-                    0,
-                    0,
-                    1,
-                    8.612000000000002
-                  ],
-                  "autoUv": false,
-                  "enabled": true
-                }
-              },
-              "renderPass": 0
-            },
-            {
-              "name": "cast_shoulder_left_3",
-              "from": [
-                4.705,
-                28.33,
-                1.202700580292157
-              ],
-              "to": [
-                5.744999999999999,
-                29.37,
-                2.202700580292157
-              ],
-              "faces": {
-                "north": {
-                  "texture": "#castiron",
-                  "uv": [
-                    0,
-                    0,
-                    1.0399999999999991,
-                    1.0399999999999991
-                  ],
-                  "autoUv": false,
-                  "enabled": true
-                },
-                "east": {
-                  "texture": "#castiron",
-                  "uv": [
-                    0,
-                    0,
-                    1,
-                    1.0399999999999991
-                  ],
-                  "autoUv": false,
-                  "enabled": true
-                },
-                "south": {
-                  "texture": "#castiron",
-                  "uv": [
-                    0,
-                    0,
-                    1.0399999999999991,
-                    1.0399999999999991
-                  ],
-                  "autoUv": false,
-                  "enabled": true
-                },
-                "west": {
-                  "texture": "#castiron",
-                  "uv": [
-                    0,
-                    0,
-                    1,
-                    1.0399999999999991
-                  ],
-                  "autoUv": false,
-                  "enabled": true
-                },
-                "up": {
-                  "texture": "#castiron",
-                  "uv": [
-                    0,
-                    0,
-                    1.0399999999999991,
-                    1
-                  ],
-                  "autoUv": false,
-                  "enabled": true
-                },
-                "down": {
-                  "texture": "#castiron",
-                  "uv": [
-                    0,
-                    0,
-                    1.0399999999999991,
-                    1
-                  ],
-                  "autoUv": false,
-                  "enabled": true
-                }
-              },
-              "rotationOrigin": [
-                5.225,
-                28.85,
-                1.2017005802921572
-              ],
-              "rotationZ": 45,
-              "renderPass": 0
-            },
-            {
-              "name": "cast_shoulder_right_3",
-              "from": [
-                10.255,
-                28.33,
-                1.202700580292157
-              ],
-              "to": [
-                11.295,
-                29.37,
-                2.202700580292157
-              ],
-              "faces": {
-                "north": {
-                  "texture": "#castiron",
-                  "uv": [
-                    0,
-                    0,
-                    1.0399999999999991,
-                    1.0399999999999991
-                  ],
-                  "autoUv": false,
-                  "enabled": true
-                },
-                "east": {
-                  "texture": "#castiron",
-                  "uv": [
-                    0,
-                    0,
-                    1,
-                    1.0399999999999991
-                  ],
-                  "autoUv": false,
-                  "enabled": true
-                },
-                "south": {
-                  "texture": "#castiron",
-                  "uv": [
-                    0,
-                    0,
-                    1.0399999999999991,
-                    1.0399999999999991
-                  ],
-                  "autoUv": false,
-                  "enabled": true
-                },
-                "west": {
-                  "texture": "#castiron",
-                  "uv": [
-                    0,
-                    0,
-                    1,
-                    1.0399999999999991
-                  ],
-                  "autoUv": false,
-                  "enabled": true
-                },
-                "up": {
-                  "texture": "#castiron",
-                  "uv": [
-                    0,
-                    0,
-                    1.0399999999999991,
-                    1
-                  ],
-                  "autoUv": false,
-                  "enabled": true
-                },
-                "down": {
-                  "texture": "#castiron",
-                  "uv": [
-                    0,
-                    0,
-                    1.0399999999999991,
-                    1
-                  ],
-                  "autoUv": false,
-                  "enabled": true
-                }
-              },
-              "rotationOrigin": [
-                10.775,
-                28.85,
                 1.2017005802921572
               ],
               "rotationZ": -45,
@@ -9288,110 +8698,6 @@
           ]
         },
         {
-          "name": "window_0_glazing",
-          "from": [
-            0,
-            0,
-            0
-          ],
-          "to": [
-            0,
-            0,
-            0
-          ],
-          "rotationOrigin": [
-            8,
-            5.232,
-            8
-          ],
-          "rotationY": 0,
-          "faces": {},
-          "children": [
-            {
-              "name": "glass_0",
-              "from": [
-                5.145,
-                20.155,
-                1.4017005802921572
-              ],
-              "to": [
-                10.855,
-                28.927,
-                2.001700580292157
-              ],
-              "faces": {
-                "north": {
-                  "texture": "#glass",
-                  "uv": [
-                    0,
-                    0,
-                    5.710000000000001,
-                    8.772
-                  ],
-                  "autoUv": false,
-                  "enabled": true
-                },
-                "east": {
-                  "texture": "#glass",
-                  "uv": [
-                    0,
-                    0,
-                    0.5999999999999999,
-                    8.772
-                  ],
-                  "autoUv": false,
-                  "enabled": true
-                },
-                "south": {
-                  "texture": "#glass",
-                  "uv": [
-                    0,
-                    0,
-                    5.710000000000001,
-                    8.772
-                  ],
-                  "autoUv": false,
-                  "enabled": true
-                },
-                "west": {
-                  "texture": "#glass",
-                  "uv": [
-                    0,
-                    0,
-                    0.5999999999999999,
-                    8.772
-                  ],
-                  "autoUv": false,
-                  "enabled": true
-                },
-                "up": {
-                  "texture": "#glass",
-                  "uv": [
-                    0,
-                    0,
-                    5.710000000000001,
-                    0.5999999999999999
-                  ],
-                  "autoUv": false,
-                  "enabled": true
-                },
-                "down": {
-                  "texture": "#glass",
-                  "uv": [
-                    0,
-                    0,
-                    5.710000000000001,
-                    0.5999999999999999
-                  ],
-                  "autoUv": false,
-                  "enabled": true
-                }
-              },
-              "renderPass": 3
-            }
-          ]
-        },
-        {
           "name": "window_1_glazing",
           "from": [
             0,
@@ -9568,110 +8874,6 @@
                     0,
                     0.5999999999999999,
                     8.771999999999998
-                  ],
-                  "autoUv": false,
-                  "enabled": true
-                },
-                "up": {
-                  "texture": "#glass",
-                  "uv": [
-                    0,
-                    0,
-                    5.710000000000001,
-                    0.5999999999999999
-                  ],
-                  "autoUv": false,
-                  "enabled": true
-                },
-                "down": {
-                  "texture": "#glass",
-                  "uv": [
-                    0,
-                    0,
-                    5.710000000000001,
-                    0.5999999999999999
-                  ],
-                  "autoUv": false,
-                  "enabled": true
-                }
-              },
-              "renderPass": 3
-            }
-          ]
-        },
-        {
-          "name": "window_3_glazing",
-          "from": [
-            0,
-            0,
-            0
-          ],
-          "to": [
-            0,
-            0,
-            0
-          ],
-          "rotationOrigin": [
-            8,
-            5.232,
-            8
-          ],
-          "rotationY": -180,
-          "faces": {},
-          "children": [
-            {
-              "name": "glass_3",
-              "from": [
-                5.145,
-                20.158,
-                1.4017005802921572
-              ],
-              "to": [
-                10.855,
-                28.93,
-                2.001700580292157
-              ],
-              "faces": {
-                "north": {
-                  "texture": "#glass",
-                  "uv": [
-                    0,
-                    0,
-                    5.710000000000001,
-                    8.772
-                  ],
-                  "autoUv": false,
-                  "enabled": true
-                },
-                "east": {
-                  "texture": "#glass",
-                  "uv": [
-                    0,
-                    0,
-                    0.5999999999999999,
-                    8.772
-                  ],
-                  "autoUv": false,
-                  "enabled": true
-                },
-                "south": {
-                  "texture": "#glass",
-                  "uv": [
-                    0,
-                    0,
-                    5.710000000000001,
-                    8.772
-                  ],
-                  "autoUv": false,
-                  "enabled": true
-                },
-                "west": {
-                  "texture": "#glass",
-                  "uv": [
-                    0,
-                    0,
-                    0.5999999999999999,
-                    8.772
                   ],
                   "autoUv": false,
                   "enabled": true

@@ -297,9 +297,12 @@ public class HangingLinksRenderer : IRenderer
                 if(!r.DefaultFrustumCuller.SphereInFrustum(b.Origin.X+16,b.Origin.Y+16,b.Origin.Z+16,40)) continue;
                 if(!bound) { if(textures[kind]<=0) textures[kind]=r.GetOrLoadTexture(LinkProfile.For(kind).Texture); r.BindTexture2d(textures[kind]); bound=true; }
                 if(b.Upload) { r.UpdateMesh(b.Gpu,b.Positions); b.Upload=false; }
-                // Lamps get lit and the sun moves; half a second is plenty. A few batches per
-                // frame keeps the work spread out instead of landing in one frame.
-                if((b.LightTime+=dt)>=.5f && relit<4) { Relight(b); relit++; }
+                // Lamps get lit and the sun moves; half a second is plenty far away, but a lamp
+                // switching next to the player shows the lag, so nearby batches follow in a tenth.
+                // A few batches per frame keeps the work spread out instead of landing in one frame.
+                double ddx=b.Origin.X+16-cam.X,ddy=b.Origin.Y+16-cam.Y,ddz=b.Origin.Z+16-cam.Z;
+                float interval=ddx*ddx+ddy*ddy+ddz*ddz<48*48 ? .1f : .5f;
+                if((b.LightTime+=dt)>=interval && relit<8) { Relight(b); relit++; }
                 shader.ModelMatrix=matrix.Identity().Translate(b.Origin.X-cam.X,b.Origin.Y-cam.Y,b.Origin.Z-cam.Z).Values;
                 if(split)
                 {

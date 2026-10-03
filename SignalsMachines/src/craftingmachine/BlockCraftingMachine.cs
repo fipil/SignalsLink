@@ -115,6 +115,16 @@ namespace SignalsMachines.src.craftingmachine
             return be.Interact(player);
         }
 
+        /// <summary>Block light while the crystal is down: temporal teal (VS hue 0-63, saturation 0-7, brightness 0-31),
+        /// as far as an oil lamp (brightness 11) reaches.</summary>
+        public static readonly byte[] CrystalLight = { 27, 7, 11 };
+
+        public override byte[] GetLightHsv(IBlockAccessor blockAccessor, BlockPos pos, ItemStack stack = null)
+        {
+            if (pos != null && blockAccessor.GetBlockEntity(pos) is BECraftingMachine { Lit: true }) return CrystalLight;
+            return base.GetLightHsv(blockAccessor, pos, stack);
+        }
+
         // Aiming at a pin: just that pin and its current level.
         public override string GetPlacedBlockInfo(IWorldAccessor world, BlockPos pos, IPlayer forPlayer)
         {

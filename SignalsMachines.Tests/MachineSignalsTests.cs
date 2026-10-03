@@ -128,13 +128,23 @@ public class MachineSignalsTests
         var machine = Machine(rig, At(0));
         var west = rig.SourceBlock(At(1));
         rig.Wire(west, 0, At(0), 4);   // pin 4 = west door of a north-facing machine
+        rig.ElapsedMilliseconds = 10_000;
         rig.Tick(); rig.Tick();
         var chamber = At(0).UpCopy();
+        Assert.False(machine.AllowsAutomation(chamber, BlockFacing.WEST));   // still riding down
+        rig.ElapsedMilliseconds += (long)((DoorMotion.PushSeconds + DoorMotion.OpenSlideSeconds) * 1000) + 1;
         Assert.True(machine.AllowsAutomation(chamber, BlockFacing.WEST));
         Assert.False(machine.AllowsAutomation(chamber, BlockFacing.EAST));
         Assert.False(machine.AllowsAutomation(chamber, BlockFacing.NORTH));
         Assert.False(machine.AllowsAutomation(chamber, BlockFacing.UP));
         Assert.False(machine.AllowsAutomation(At(0), BlockFacing.WEST));   // the pedestal has no door
+        var clutch = rig.SourceBlock(At(2));
+        rig.Wire(clutch, 0, At(0), 1);
+        rig.Tick(); rig.Tick();
+        Assert.False(machine.AllowsAutomation(chamber, BlockFacing.WEST));   // clutch closed: the plate may turn
+        rig.Drive(clutch, 0, 0);
+        rig.Tick(); rig.Tick();
+        Assert.True(machine.AllowsAutomation(chamber, BlockFacing.WEST));
         rig.Drive(west, 0, 0);
         rig.Tick(); rig.Tick();
         Assert.False(machine.AllowsAutomation(chamber, BlockFacing.WEST));

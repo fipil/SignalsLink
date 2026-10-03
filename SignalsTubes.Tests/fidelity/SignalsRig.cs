@@ -61,6 +61,8 @@ public sealed class SignalsRig
     public readonly List<GridRecipe> Recipes = new();
     /// <summary>Items the fake world hands out by code; anything else is the tube item.</summary>
     public readonly Dictionary<string, Item> Items = new();
+    /// <summary>The fake world's clock; tests move it.</summary>
+    public long ElapsedMilliseconds;
 
     public SignalsRig()
     {
@@ -80,6 +82,7 @@ public sealed class SignalsRig
             "RegisterGameTickListener" => Capture((Action<float>)a[0]),
             "GetItem" => a[0] is AssetLocation loc && Items.TryGetValue(loc.ToString(), out var known) ? known : TubeItem,
             "get_GridRecipes" => Recipes,
+            "get_ElapsedMilliseconds" => ElapsedMilliseconds,
             _ => Fake.Unhandled
         });
         var modLoader = Fake.Of<IModLoader>((m, a) =>
