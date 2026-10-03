@@ -246,6 +246,8 @@ public class BETubeCopier : BlockEntityContainer
     {
         dsc.AppendLine(Lang.Get("signalstubes:copier-state-" + state));
         dsc.AppendLine(Lang.Get("signalstubes:copier-status", charge, copies));
+        foreach (var stack in new[] { Original, Target })
+            if (stack != null && !TubeProgram.IsBlank(stack)) dsc.Append(ItemProgramTube.FullInfo(stack, Api.World));
     }
 
     // ---- mesh: cabinet with whatever sits in the two sockets

@@ -32,7 +32,7 @@ public class ProgramStore : ModSystem
         api.Event.GameWorldSave += () => api.WorldManager.SaveGame.StoreData(SaveKey, json);
     }
 
-    public static ProgramStore Of(ICoreAPI api) => api?.Side == EnumAppSide.Server ? api.ModLoader.GetModSystem<ProgramStore>() : null;
+    public static ProgramStore Of(ICoreAPI api) => api?.Side == EnumAppSide.Server ? api.ModLoader?.GetModSystem<ProgramStore>() : null;
 
     /// <summary>Shared read-only instance; simulators copy what they mutate.</summary>
     public CircuitProgram Get(string id)

@@ -61,6 +61,10 @@
     "socket-floor": [
       16,
       16
+    ],
+    "pintop": [
+      16,
+      16
     ]
   },
   "textures": {
@@ -77,7 +81,8 @@
     "gearbox-cover": "block/gearbox-cover",
     "back-frame": "block/back-frame",
     "leg-frame": "block/leg-frame",
-    "socket-floor": "block/socket-floor"
+    "socket-floor": "block/socket-floor",
+    "pintop": "block/rustycolored"
   },
   "elements": [
     {
@@ -1634,20 +1639,1883 @@
       "renderPass": 0
     },
     {
+      "name": "pedestal",
+      "from": [
+        3,
+        12.9,
+        5
+      ],
+      "to": [
+        13,
+        17.732,
+        11
+      ],
+      "faces": {
+        "north": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            10,
+            4.832
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            10,
+            4.832
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            6,
+            4.832
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            6,
+            4.832
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            10,
+            6
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      },
+      "renderPass": 0
+    },
+    {
+      "name": "pin_0",
+      "from": [
+        4.25,
+        12.9,
+        11.1
+      ],
+      "to": [
+        5.75,
+        14.9,
+        12.6
+      ],
+      "faces": {
+        "north": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            1.5,
+            2.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            1.5,
+            2.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            1.5,
+            2.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            1.5,
+            2.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#terminal",
+          "uv": [
+            7,
+            7,
+            9,
+            9
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      },
+      "renderPass": 0
+    },
+    {
+      "name": "pin_0_cap",
+      "from": [
+        4.625,
+        14.9,
+        11.475
+      ],
+      "to": [
+        5.375,
+        15.65,
+        12.225
+      ],
+      "faces": {
+        "north": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            0.75,
+            0.75
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            0.75,
+            0.75
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            0.75,
+            0.75
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            0.75,
+            0.75
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#pintop",
+          "uv": [
+            6,
+            2,
+            7,
+            3
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      },
+      "renderPass": 0
+    },
+    {
+      "name": "pin_0_collar",
+      "from": [
+        4.25,
+        15.05,
+        11.1
+      ],
+      "to": [
+        5.75,
+        15.45,
+        12.6
+      ],
+      "faces": {
+        "north": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            1.5,
+            0.4
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            1.5,
+            0.4
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            1.5,
+            0.4
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            1.5,
+            0.4
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#terminal",
+          "uv": [
+            2,
+            2,
+            4,
+            4
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "down": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            1.5,
+            1.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      },
+      "renderPass": 0
+    },
+    {
+      "name": "pin_1",
+      "from": [
+        6.25,
+        12.9,
+        11.1
+      ],
+      "to": [
+        7.75,
+        14.9,
+        12.6
+      ],
+      "faces": {
+        "north": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            1.5,
+            2.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            1.5,
+            2.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            1.5,
+            2.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            1.5,
+            2.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#terminal",
+          "uv": [
+            7,
+            7,
+            9,
+            9
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      },
+      "renderPass": 0
+    },
+    {
+      "name": "pin_1_cap",
+      "from": [
+        6.625,
+        14.9,
+        11.475
+      ],
+      "to": [
+        7.375,
+        15.65,
+        12.225
+      ],
+      "faces": {
+        "north": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            0.75,
+            0.75
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            0.75,
+            0.75
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            0.75,
+            0.75
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            0.75,
+            0.75
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#pintop",
+          "uv": [
+            2,
+            10,
+            3,
+            11
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      },
+      "renderPass": 0
+    },
+    {
+      "name": "pin_1_collar",
+      "from": [
+        6.25,
+        15.05,
+        11.1
+      ],
+      "to": [
+        7.75,
+        15.45,
+        12.6
+      ],
+      "faces": {
+        "north": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            1.5,
+            0.4
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            1.5,
+            0.4
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            1.5,
+            0.4
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            1.5,
+            0.4
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#terminal",
+          "uv": [
+            2,
+            2,
+            4,
+            4
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "down": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            1.5,
+            1.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      },
+      "renderPass": 0
+    },
+    {
+      "name": "pin_2",
+      "from": [
+        8.25,
+        12.9,
+        11.1
+      ],
+      "to": [
+        9.75,
+        14.9,
+        12.6
+      ],
+      "faces": {
+        "north": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            1.5,
+            2.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            1.5,
+            2.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            1.5,
+            2.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            1.5,
+            2.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#terminal",
+          "uv": [
+            7,
+            7,
+            9,
+            9
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      },
+      "renderPass": 0
+    },
+    {
+      "name": "pin_2_cap",
+      "from": [
+        8.625,
+        14.9,
+        11.475
+      ],
+      "to": [
+        9.375,
+        15.65,
+        12.225
+      ],
+      "faces": {
+        "north": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            0.75,
+            0.75
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            0.75,
+            0.75
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            0.75,
+            0.75
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            0.75,
+            0.75
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#pintop",
+          "uv": [
+            2,
+            10,
+            3,
+            11
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      },
+      "renderPass": 0
+    },
+    {
+      "name": "pin_2_collar",
+      "from": [
+        8.25,
+        15.05,
+        11.1
+      ],
+      "to": [
+        9.75,
+        15.45,
+        12.6
+      ],
+      "faces": {
+        "north": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            1.5,
+            0.4
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            1.5,
+            0.4
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            1.5,
+            0.4
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            1.5,
+            0.4
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#terminal",
+          "uv": [
+            2,
+            2,
+            4,
+            4
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "down": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            1.5,
+            1.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      },
+      "renderPass": 0
+    },
+    {
+      "name": "pin_3",
+      "from": [
+        10.25,
+        12.9,
+        11.1
+      ],
+      "to": [
+        11.75,
+        14.9,
+        12.6
+      ],
+      "faces": {
+        "north": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            1.5,
+            2.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            1.5,
+            2.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            1.5,
+            2.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            1.5,
+            2.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#terminal",
+          "uv": [
+            7,
+            7,
+            9,
+            9
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      },
+      "renderPass": 0
+    },
+    {
+      "name": "pin_3_cap",
+      "from": [
+        10.625,
+        14.9,
+        11.475
+      ],
+      "to": [
+        11.375,
+        15.65,
+        12.225
+      ],
+      "faces": {
+        "north": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            0.75,
+            0.75
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            0.75,
+            0.75
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            0.75,
+            0.75
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            0.75,
+            0.75
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#pintop",
+          "uv": [
+            2,
+            10,
+            3,
+            11
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      },
+      "renderPass": 0
+    },
+    {
+      "name": "pin_3_collar",
+      "from": [
+        10.25,
+        15.05,
+        11.1
+      ],
+      "to": [
+        11.75,
+        15.45,
+        12.6
+      ],
+      "faces": {
+        "north": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            1.5,
+            0.4
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            1.5,
+            0.4
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            1.5,
+            0.4
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            1.5,
+            0.4
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#terminal",
+          "uv": [
+            2,
+            2,
+            4,
+            4
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "down": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            1.5,
+            1.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      },
+      "renderPass": 0
+    },
+    {
+      "name": "pin_4",
+      "from": [
+        4.25,
+        12.9,
+        3.4
+      ],
+      "to": [
+        5.75,
+        14.9,
+        4.9
+      ],
+      "faces": {
+        "north": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            1.5,
+            2.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            1.5,
+            2.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            1.5,
+            2.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            1.5,
+            2.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#terminal",
+          "uv": [
+            7,
+            7,
+            9,
+            9
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      },
+      "renderPass": 0
+    },
+    {
+      "name": "pin_4_cap",
+      "from": [
+        4.625,
+        14.9,
+        3.775
+      ],
+      "to": [
+        5.375,
+        15.65,
+        4.525
+      ],
+      "faces": {
+        "north": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            0.75,
+            0.75
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            0.75,
+            0.75
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            0.75,
+            0.75
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            0.75,
+            0.75
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#pintop",
+          "uv": [
+            2,
+            10,
+            3,
+            11
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      },
+      "renderPass": 0
+    },
+    {
+      "name": "pin_4_collar",
+      "from": [
+        4.25,
+        15.05,
+        3.4
+      ],
+      "to": [
+        5.75,
+        15.45,
+        4.9
+      ],
+      "faces": {
+        "north": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            1.5,
+            0.4
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            1.5,
+            0.4
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            1.5,
+            0.4
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            1.5,
+            0.4
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#terminal",
+          "uv": [
+            2,
+            2,
+            4,
+            4
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "down": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            1.5,
+            1.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      },
+      "renderPass": 0
+    },
+    {
+      "name": "pin_5",
+      "from": [
+        6.25,
+        12.9,
+        3.4
+      ],
+      "to": [
+        7.75,
+        14.9,
+        4.9
+      ],
+      "faces": {
+        "north": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            1.5,
+            2.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            1.5,
+            2.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            1.5,
+            2.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            1.5,
+            2.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#terminal",
+          "uv": [
+            7,
+            7,
+            9,
+            9
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      },
+      "renderPass": 0
+    },
+    {
+      "name": "pin_5_cap",
+      "from": [
+        6.625,
+        14.9,
+        3.775
+      ],
+      "to": [
+        7.375,
+        15.65,
+        4.525
+      ],
+      "faces": {
+        "north": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            0.75,
+            0.75
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            0.75,
+            0.75
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            0.75,
+            0.75
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            0.75,
+            0.75
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#pintop",
+          "uv": [
+            2,
+            10,
+            3,
+            11
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      },
+      "renderPass": 0
+    },
+    {
+      "name": "pin_5_collar",
+      "from": [
+        6.25,
+        15.05,
+        3.4
+      ],
+      "to": [
+        7.75,
+        15.45,
+        4.9
+      ],
+      "faces": {
+        "north": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            1.5,
+            0.4
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            1.5,
+            0.4
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            1.5,
+            0.4
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            1.5,
+            0.4
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#terminal",
+          "uv": [
+            2,
+            2,
+            4,
+            4
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "down": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            1.5,
+            1.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      },
+      "renderPass": 0
+    },
+    {
+      "name": "pin_6",
+      "from": [
+        8.25,
+        12.9,
+        3.4
+      ],
+      "to": [
+        9.75,
+        14.9,
+        4.9
+      ],
+      "faces": {
+        "north": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            1.5,
+            2.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            1.5,
+            2.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            1.5,
+            2.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            1.5,
+            2.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#terminal",
+          "uv": [
+            7,
+            7,
+            9,
+            9
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      },
+      "renderPass": 0
+    },
+    {
+      "name": "pin_6_cap",
+      "from": [
+        8.625,
+        14.9,
+        3.775
+      ],
+      "to": [
+        9.375,
+        15.65,
+        4.525
+      ],
+      "faces": {
+        "north": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            0.75,
+            0.75
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            0.75,
+            0.75
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            0.75,
+            0.75
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            0.75,
+            0.75
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#terminal",
+          "uv": [
+            7,
+            7,
+            8,
+            8
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      },
+      "renderPass": 0
+    },
+    {
+      "name": "pin_6_collar",
+      "from": [
+        8.25,
+        15.05,
+        3.4
+      ],
+      "to": [
+        9.75,
+        15.45,
+        4.9
+      ],
+      "faces": {
+        "north": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            1.5,
+            0.4
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            1.5,
+            0.4
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            1.5,
+            0.4
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            1.5,
+            0.4
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#terminal",
+          "uv": [
+            2,
+            2,
+            4,
+            4
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "down": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            1.5,
+            1.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      },
+      "renderPass": 0
+    },
+    {
+      "name": "pin_7",
+      "from": [
+        10.25,
+        12.9,
+        3.4
+      ],
+      "to": [
+        11.75,
+        14.9,
+        4.9
+      ],
+      "faces": {
+        "north": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            1.5,
+            2.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            1.5,
+            2.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            1.5,
+            2.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            1.5,
+            2.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#terminal",
+          "uv": [
+            7,
+            7,
+            9,
+            9
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      },
+      "renderPass": 0
+    },
+    {
+      "name": "pin_7_cap",
+      "from": [
+        10.625,
+        14.9,
+        3.775
+      ],
+      "to": [
+        11.375,
+        15.65,
+        4.525
+      ],
+      "faces": {
+        "north": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            0.75,
+            0.75
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            0.75,
+            0.75
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            0.75,
+            0.75
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            0.75,
+            0.75
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#terminal",
+          "uv": [
+            7,
+            7,
+            8,
+            8
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      },
+      "renderPass": 0
+    },
+    {
+      "name": "pin_7_collar",
+      "from": [
+        10.25,
+        15.05,
+        3.4
+      ],
+      "to": [
+        11.75,
+        15.45,
+        4.9
+      ],
+      "faces": {
+        "north": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            1.5,
+            0.4
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            1.5,
+            0.4
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            1.5,
+            0.4
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            1.5,
+            0.4
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#terminal",
+          "uv": [
+            2,
+            2,
+            4,
+            4
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "down": {
+          "texture": "#terminal",
+          "uv": [
+            0,
+            0,
+            1.5,
+            1.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      },
+      "renderPass": 0
+    },
+    {
       "name": "grid",
       "from": [
         4.25,
-        13.5,
+        18.732,
         4.25
       ],
       "to": [
         11.75,
-        14.5,
+        19.732,
         11.75
       ],
       "rotationOrigin": [
         8,
-        14,
+        19.232,
         8
       ],
       "faces": {
@@ -1744,12 +3612,12 @@
           "name": "crystal_housing_wall_0a",
           "from": [
             6.8742,
-            26.268,
+            28.498,
             9.45
           ],
           "to": [
             9.1258,
-            28.0,
+            30.498,
             9.95
           ],
           "rotationOrigin": [
@@ -1764,7 +3632,7 @@
                 0,
                 0,
                 2.2516,
-                1.732
+                2.0
               ],
               "autoUv": false,
               "enabled": true
@@ -1775,7 +3643,40 @@
                 0,
                 0,
                 2.2516,
-                1.732
+                2.0
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "east": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                0.5,
+                2.0
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "west": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                0.5,
+                2.0
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "down": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                2.2516,
+                0.5
               ],
               "autoUv": false,
               "enabled": true
@@ -1787,12 +3688,12 @@
           "name": "crystal_housing_wall_0b",
           "from": [
             6.8742,
-            26.268,
+            28.498,
             6.05
           ],
           "to": [
             9.1258,
-            28.0,
+            30.498,
             6.55
           ],
           "rotationOrigin": [
@@ -1807,7 +3708,7 @@
                 0,
                 0,
                 2.2516,
-                1.732
+                2.0
               ],
               "autoUv": false,
               "enabled": true
@@ -1818,7 +3719,40 @@
                 0,
                 0,
                 2.2516,
-                1.732
+                2.0
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "east": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                0.5,
+                2.0
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "west": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                0.5,
+                2.0
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "down": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                2.2516,
+                0.5
               ],
               "autoUv": false,
               "enabled": true
@@ -1830,12 +3764,12 @@
           "name": "crystal_housing_wall_1a",
           "from": [
             6.8742,
-            26.268,
+            28.498,
             9.45
           ],
           "to": [
             9.1258,
-            28.0,
+            30.498,
             9.95
           ],
           "rotationOrigin": [
@@ -1851,7 +3785,7 @@
                 0,
                 0,
                 2.2516,
-                1.732
+                2.0
               ],
               "autoUv": false,
               "enabled": true
@@ -1862,7 +3796,40 @@
                 0,
                 0,
                 2.2516,
-                1.732
+                2.0
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "east": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                0.5,
+                2.0
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "west": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                0.5,
+                2.0
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "down": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                2.2516,
+                0.5
               ],
               "autoUv": false,
               "enabled": true
@@ -1874,12 +3841,12 @@
           "name": "crystal_housing_wall_1b",
           "from": [
             6.8742,
-            26.268,
+            28.498,
             6.05
           ],
           "to": [
             9.1258,
-            28.0,
+            30.498,
             6.55
           ],
           "rotationOrigin": [
@@ -1895,7 +3862,7 @@
                 0,
                 0,
                 2.2516,
-                1.732
+                2.0
               ],
               "autoUv": false,
               "enabled": true
@@ -1906,7 +3873,40 @@
                 0,
                 0,
                 2.2516,
-                1.732
+                2.0
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "east": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                0.5,
+                2.0
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "west": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                0.5,
+                2.0
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "down": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                2.2516,
+                0.5
               ],
               "autoUv": false,
               "enabled": true
@@ -1918,12 +3918,12 @@
           "name": "crystal_housing_wall_2a",
           "from": [
             6.8742,
-            26.268,
+            28.498,
             9.45
           ],
           "to": [
             9.1258,
-            28.0,
+            30.498,
             9.95
           ],
           "rotationOrigin": [
@@ -1939,7 +3939,7 @@
                 0,
                 0,
                 2.2516,
-                1.732
+                2.0
               ],
               "autoUv": false,
               "enabled": true
@@ -1950,7 +3950,40 @@
                 0,
                 0,
                 2.2516,
-                1.732
+                2.0
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "east": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                0.5,
+                2.0
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "west": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                0.5,
+                2.0
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "down": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                2.2516,
+                0.5
               ],
               "autoUv": false,
               "enabled": true
@@ -1962,12 +3995,12 @@
           "name": "crystal_housing_wall_2b",
           "from": [
             6.8742,
-            26.268,
+            28.498,
             6.05
           ],
           "to": [
             9.1258,
-            28.0,
+            30.498,
             6.55
           ],
           "rotationOrigin": [
@@ -1983,7 +4016,7 @@
                 0,
                 0,
                 2.2516,
-                1.732
+                2.0
               ],
               "autoUv": false,
               "enabled": true
@@ -1994,7 +4027,40 @@
                 0,
                 0,
                 2.2516,
-                1.732
+                2.0
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "east": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                0.5,
+                2.0
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "west": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                0.5,
+                2.0
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "down": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                2.2516,
+                0.5
               ],
               "autoUv": false,
               "enabled": true
@@ -2006,12 +4072,12 @@
           "name": "crystal_housing_cap_0",
           "from": [
             6.8742,
-            28.0,
+            31.248,
             6.05
           ],
           "to": [
             9.1258,
-            28.5,
+            32.0,
             9.95
           ],
           "rotationOrigin": [
@@ -2026,7 +4092,7 @@
                 0,
                 0,
                 2.2516,
-                0.5
+                0.752
               ],
               "autoUv": false,
               "enabled": true
@@ -2037,7 +4103,7 @@
                 0,
                 0,
                 2.2516,
-                0.5
+                0.752
               ],
               "autoUv": false,
               "enabled": true
@@ -2071,12 +4137,12 @@
           "name": "crystal_housing_cap_1",
           "from": [
             6.8742,
-            27.999,
+            31.249,
             6.05
           ],
           "to": [
             9.1258,
-            28.501,
+            32.0,
             9.95
           ],
           "rotationOrigin": [
@@ -2092,7 +4158,7 @@
                 0,
                 0,
                 2.2516,
-                0.502
+                0.751
               ],
               "autoUv": false,
               "enabled": true
@@ -2103,7 +4169,7 @@
                 0,
                 0,
                 2.2516,
-                0.502
+                0.751
               ],
               "autoUv": false,
               "enabled": true
@@ -2137,12 +4203,12 @@
           "name": "crystal_housing_cap_2",
           "from": [
             6.8742,
-            27.998,
+            31.25,
             6.05
           ],
           "to": [
             9.1258,
-            28.502,
+            32.0,
             9.95
           ],
           "rotationOrigin": [
@@ -2158,7 +4224,7 @@
                 0,
                 0,
                 2.2516,
-                0.504
+                0.75
               ],
               "autoUv": false,
               "enabled": true
@@ -2169,7 +4235,7 @@
                 0,
                 0,
                 2.2516,
-                0.504
+                0.75
               ],
               "autoUv": false,
               "enabled": true
@@ -2198,84 +4264,534 @@
             }
           },
           "renderPass": 0
+        },
+        {
+          "name": "crystal_housing_lip_0a",
+          "from": [
+            6.8742,
+            28.498,
+            8.85
+          ],
+          "to": [
+            9.1258,
+            28.748,
+            9.45
+          ],
+          "faces": {
+            "north": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                2.2516,
+                0.25
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "south": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                2.2516,
+                0.25
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "east": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                0.6,
+                0.25
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "west": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                0.6,
+                0.25
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "up": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                2.2516,
+                0.6
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "down": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                2.2516,
+                0.6
+              ],
+              "autoUv": false,
+              "enabled": true
+            }
+          },
+          "renderPass": 0,
+          "rotationOrigin": [
+            8.0,
+            0,
+            8.0
+          ]
+        },
+        {
+          "name": "crystal_housing_lip_0b",
+          "from": [
+            6.8742,
+            28.498,
+            6.55
+          ],
+          "to": [
+            9.1258,
+            28.748,
+            7.15
+          ],
+          "faces": {
+            "north": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                2.2516,
+                0.25
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "south": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                2.2516,
+                0.25
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "east": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                0.6,
+                0.25
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "west": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                0.6,
+                0.25
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "up": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                2.2516,
+                0.6
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "down": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                2.2516,
+                0.6
+              ],
+              "autoUv": false,
+              "enabled": true
+            }
+          },
+          "renderPass": 0,
+          "rotationOrigin": [
+            8.0,
+            0,
+            8.0
+          ]
+        },
+        {
+          "name": "crystal_housing_lip_1a",
+          "from": [
+            6.8742,
+            28.498,
+            8.85
+          ],
+          "to": [
+            9.1258,
+            28.748,
+            9.45
+          ],
+          "faces": {
+            "north": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                2.2516,
+                0.25
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "south": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                2.2516,
+                0.25
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "east": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                0.6,
+                0.25
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "west": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                0.6,
+                0.25
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "up": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                2.2516,
+                0.6
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "down": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                2.2516,
+                0.6
+              ],
+              "autoUv": false,
+              "enabled": true
+            }
+          },
+          "renderPass": 0,
+          "rotationOrigin": [
+            8.0,
+            0,
+            8.0
+          ],
+          "rotationY": 60
+        },
+        {
+          "name": "crystal_housing_lip_1b",
+          "from": [
+            6.8742,
+            28.498,
+            6.55
+          ],
+          "to": [
+            9.1258,
+            28.748,
+            7.15
+          ],
+          "faces": {
+            "north": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                2.2516,
+                0.25
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "south": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                2.2516,
+                0.25
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "east": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                0.6,
+                0.25
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "west": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                0.6,
+                0.25
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "up": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                2.2516,
+                0.6
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "down": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                2.2516,
+                0.6
+              ],
+              "autoUv": false,
+              "enabled": true
+            }
+          },
+          "renderPass": 0,
+          "rotationOrigin": [
+            8.0,
+            0,
+            8.0
+          ],
+          "rotationY": 60
+        },
+        {
+          "name": "crystal_housing_lip_2a",
+          "from": [
+            6.8742,
+            28.498,
+            8.85
+          ],
+          "to": [
+            9.1258,
+            28.748,
+            9.45
+          ],
+          "faces": {
+            "north": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                2.2516,
+                0.25
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "south": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                2.2516,
+                0.25
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "east": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                0.6,
+                0.25
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "west": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                0.6,
+                0.25
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "up": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                2.2516,
+                0.6
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "down": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                2.2516,
+                0.6
+              ],
+              "autoUv": false,
+              "enabled": true
+            }
+          },
+          "renderPass": 0,
+          "rotationOrigin": [
+            8.0,
+            0,
+            8.0
+          ],
+          "rotationY": 120
+        },
+        {
+          "name": "crystal_housing_lip_2b",
+          "from": [
+            6.8742,
+            28.498,
+            6.55
+          ],
+          "to": [
+            9.1258,
+            28.748,
+            7.15
+          ],
+          "faces": {
+            "north": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                2.2516,
+                0.25
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "south": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                2.2516,
+                0.25
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "east": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                0.6,
+                0.25
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "west": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                0.6,
+                0.25
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "up": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                2.2516,
+                0.6
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "down": {
+              "texture": "#castiron",
+              "uv": [
+                0,
+                0,
+                2.2516,
+                0.6
+              ],
+              "autoUv": false,
+              "enabled": true
+            }
+          },
+          "renderPass": 0,
+          "rotationOrigin": [
+            8.0,
+            0,
+            8.0
+          ],
+          "rotationY": 120
         }
       ]
-    },
-    {
-      "name": "head_guide",
-      "from": [
-        7,
-        28.5,
-        7
-      ],
-      "to": [
-        9,
-        30.2,
-        9
-      ],
-      "rotationOrigin": [
-        8,
-        0,
-        8
-      ],
-      "faces": {
-        "north": {
-          "texture": "#castiron",
-          "uv": [
-            0,
-            0,
-            2,
-            1.7
-          ],
-          "autoUv": false,
-          "enabled": true
-        },
-        "east": {
-          "texture": "#castiron",
-          "uv": [
-            0,
-            0,
-            2,
-            1.7
-          ],
-          "autoUv": false,
-          "enabled": true
-        },
-        "south": {
-          "texture": "#castiron",
-          "uv": [
-            0,
-            0,
-            2,
-            1.7
-          ],
-          "autoUv": false,
-          "enabled": true
-        },
-        "west": {
-          "texture": "#castiron",
-          "uv": [
-            0,
-            0,
-            2,
-            1.7
-          ],
-          "autoUv": false,
-          "enabled": true
-        },
-        "up": {
-          "texture": "#castiron",
-          "uv": [
-            0,
-            0,
-            2,
-            2
-          ],
-          "autoUv": false,
-          "enabled": true
-        }
-      },
-      "renderPass": 0
     },
     {
       "name": "crystal_slide",
@@ -2291,7 +4807,7 @@
       ],
       "rotationOrigin": [
         8.0,
-        22.1,
+        27.5,
         8.0
       ],
       "faces": {},
@@ -2300,17 +4816,17 @@
           "name": "crystal_rod",
           "from": [
             7.7,
-            22.5,
+            27.9,
             7.7
           ],
           "to": [
             8.3,
-            26.3,
+            28.5,
             8.3
           ],
           "rotationOrigin": [
             8.0,
-            0,
+            5.4,
             8.0
           ],
           "faces": {
@@ -2320,7 +4836,7 @@
                 0,
                 0,
                 0.6,
-                3.8
+                0.6
               ],
               "autoUv": false,
               "enabled": true
@@ -2331,7 +4847,7 @@
                 0,
                 0,
                 0.6,
-                3.8
+                0.6
               ],
               "autoUv": false,
               "enabled": true
@@ -2342,7 +4858,7 @@
                 0,
                 0,
                 0.6,
-                3.8
+                0.6
               ],
               "autoUv": false,
               "enabled": true
@@ -2353,7 +4869,7 @@
                 0,
                 0,
                 0.6,
-                3.8
+                0.6
               ],
               "autoUv": false,
               "enabled": true
@@ -2376,17 +4892,17 @@
           "name": "crystal_holder_0",
           "from": [
             7.625,
-            22.1,
+            27.5,
             7.3505
           ],
           "to": [
             8.375,
-            22.5,
+            27.9,
             8.6495
           ],
           "rotationOrigin": [
             8.0,
-            0,
+            5.4,
             8.0
           ],
           "faces": {
@@ -2441,17 +4957,17 @@
           "name": "crystal_holder_1",
           "from": [
             7.625,
-            22.099,
+            27.499,
             7.3505
           ],
           "to": [
             8.375,
-            22.501,
+            27.901,
             8.6495
           ],
           "rotationOrigin": [
             8.0,
-            0,
+            5.4,
             8.0
           ],
           "rotationY": 60,
@@ -2507,17 +5023,17 @@
           "name": "crystal_holder_2",
           "from": [
             7.625,
-            22.098,
+            27.498,
             7.3505
           ],
           "to": [
             8.375,
-            22.502,
+            27.902,
             8.6495
           ],
           "rotationOrigin": [
             8.0,
-            0,
+            5.4,
             8.0
           ],
           "rotationY": 120,
@@ -2583,7 +5099,7 @@
           ],
           "rotationOrigin": [
             8.0,
-            22.1,
+            27.5,
             8.0
           ],
           "faces": {},
@@ -2592,17 +5108,17 @@
               "name": "crystal_main",
               "from": [
                 7.55,
-                19.9,
+                25.3,
                 7.55
               ],
               "to": [
                 8.45,
-                22.3,
+                27.7,
                 8.45
               ],
               "rotationOrigin": [
                 8.0,
-                22.1,
+                27.5,
                 8.0
               ],
               "rotationY": 45,
@@ -2679,7 +5195,7 @@
               ],
               "rotationOrigin": [
                 8.0,
-                22.1,
+                27.5,
                 8.0
               ],
               "rotationY": 15,
@@ -2689,17 +5205,17 @@
                   "name": "crystal_side_0",
                   "from": [
                     8.05,
-                    20.6,
+                    26.0,
                     7.7
                   ],
                   "to": [
                     8.65,
-                    22.3,
+                    27.7,
                     8.3
                   ],
                   "rotationOrigin": [
                     8.35,
-                    22.1,
+                    27.5,
                     8.0
                   ],
                   "rotationZ": 24,
@@ -2778,7 +5294,7 @@
               ],
               "rotationOrigin": [
                 8.0,
-                22.1,
+                27.5,
                 8.0
               ],
               "rotationY": 100,
@@ -2788,17 +5304,17 @@
                   "name": "crystal_side_1",
                   "from": [
                     8.1,
-                    20.9,
+                    26.3,
                     7.75
                   ],
                   "to": [
                     8.6,
-                    22.3,
+                    27.7,
                     8.25
                   ],
                   "rotationOrigin": [
                     8.35,
-                    22.1,
+                    27.5,
                     8.0
                   ],
                   "rotationZ": 30,
@@ -2877,7 +5393,7 @@
               ],
               "rotationOrigin": [
                 8.0,
-                22.1,
+                27.5,
                 8.0
               ],
               "rotationY": 190,
@@ -2887,17 +5403,17 @@
                   "name": "crystal_side_2",
                   "from": [
                     8.0,
-                    20.7,
+                    26.1,
                     7.7
                   ],
                   "to": [
                     8.6,
-                    22.3,
+                    27.7,
                     8.3
                   ],
                   "rotationOrigin": [
                     8.3,
-                    22.1,
+                    27.5,
                     8.0
                   ],
                   "rotationZ": 22,
@@ -2976,7 +5492,7 @@
               ],
               "rotationOrigin": [
                 8.0,
-                22.1,
+                27.5,
                 8.0
               ],
               "rotationY": 280,
@@ -2986,17 +5502,17 @@
                   "name": "crystal_side_3",
                   "from": [
                     8.075,
-                    21.1,
+                    26.5,
                     7.775
                   ],
                   "to": [
                     8.525,
-                    22.3,
+                    27.7,
                     8.225
                   ],
                   "rotationOrigin": [
                     8.3,
-                    22.1,
+                    27.5,
                     8.0
                   ],
                   "rotationZ": 34,
@@ -3414,1216 +5930,6 @@
           "autoUv": false
         }
       }
-    },
-    {
-      "name": "signal_pin_0",
-      "from": [
-        7,
-        26.268,
-        13
-      ],
-      "to": [
-        9,
-        28.268,
-        15
-      ],
-      "rotationOrigin": [
-        8,
-        26.268,
-        14
-      ],
-      "faces": {
-        "north": {
-          "texture": "#terminal",
-          "uv": [
-            7,
-            7,
-            9,
-            9
-          ],
-          "autoUv": false,
-          "enabled": true
-        },
-        "east": {
-          "texture": "#terminal",
-          "uv": [
-            7,
-            14,
-            9,
-            16
-          ],
-          "autoUv": false,
-          "enabled": true
-        },
-        "south": {
-          "texture": "#terminal",
-          "uv": [
-            7,
-            7,
-            9,
-            9
-          ],
-          "autoUv": false,
-          "enabled": true
-        },
-        "west": {
-          "texture": "#terminal",
-          "uv": [
-            7,
-            14,
-            9,
-            16
-          ],
-          "autoUv": false,
-          "enabled": true
-        },
-        "up": {
-          "texture": "#terminal",
-          "uv": [
-            7,
-            14,
-            9,
-            16
-          ],
-          "autoUv": false,
-          "enabled": true
-        }
-      },
-      "children": [
-        {
-          "name": "signal_pin_0_part_0",
-          "from": [
-            0.5,
-            2,
-            0.5
-          ],
-          "to": [
-            1.5,
-            3,
-            1.5
-          ],
-          "rotationOrigin": [
-            2,
-            1.5,
-            1.5
-          ],
-          "faces": {
-            "north": {
-              "texture": "#terminal",
-              "uv": [
-                0.5,
-                0.5,
-                1.5,
-                1.5
-              ],
-              "autoUv": false,
-              "enabled": true
-            },
-            "east": {
-              "texture": "#terminal",
-              "uv": [
-                2,
-                1,
-                3,
-                2
-              ],
-              "autoUv": false,
-              "enabled": true
-            },
-            "south": {
-              "texture": "#terminal",
-              "uv": [
-                0.5,
-                0.5,
-                1.5,
-                1.5
-              ],
-              "autoUv": false,
-              "enabled": true
-            },
-            "west": {
-              "texture": "#terminal",
-              "uv": [
-                2,
-                1,
-                3,
-                2
-              ],
-              "autoUv": false,
-              "enabled": true
-            },
-            "up": {
-              "texture": "#terminal",
-              "uv": [
-                2,
-                1,
-                3,
-                2
-              ],
-              "autoUv": false,
-              "enabled": true
-            }
-          },
-          "renderPass": 0
-        },
-        {
-          "name": "signal_pin_0_part_1",
-          "from": [
-            0,
-            2.2,
-            0
-          ],
-          "to": [
-            2,
-            2.7,
-            2
-          ],
-          "rotationOrigin": [
-            1,
-            3.2,
-            3.2
-          ],
-          "faces": {
-            "north": {
-              "texture": "#terminal",
-              "uv": [
-                2,
-                2,
-                4,
-                2.5
-              ],
-              "autoUv": false,
-              "enabled": true
-            },
-            "east": {
-              "texture": "#terminal",
-              "uv": [
-                0,
-                0,
-                2,
-                0.5
-              ],
-              "autoUv": false,
-              "enabled": true
-            },
-            "south": {
-              "texture": "#terminal",
-              "uv": [
-                2,
-                2,
-                4,
-                2.5
-              ],
-              "autoUv": false,
-              "enabled": true
-            },
-            "west": {
-              "texture": "#terminal",
-              "uv": [
-                0,
-                0,
-                2,
-                0.5
-              ],
-              "autoUv": false,
-              "enabled": true
-            },
-            "up": {
-              "texture": "#terminal",
-              "uv": [
-                0,
-                0,
-                2,
-                2
-              ],
-              "autoUv": false,
-              "enabled": true
-            },
-            "down": {
-              "texture": "#terminal",
-              "uv": [
-                0,
-                0,
-                2,
-                2
-              ],
-              "autoUv": false,
-              "enabled": true
-            }
-          },
-          "renderPass": 0
-        }
-      ],
-      "renderPass": 0,
-      "rotationY": 0
-    },
-    {
-      "name": "signal_pin_1",
-      "from": [
-        4.7,
-        26.268,
-        11.9
-      ],
-      "to": [
-        6.7,
-        28.268,
-        13.9
-      ],
-      "rotationOrigin": [
-        5.7,
-        26.268,
-        12.9
-      ],
-      "faces": {
-        "north": {
-          "texture": "#terminal",
-          "uv": [
-            7,
-            7,
-            9,
-            9
-          ],
-          "autoUv": false,
-          "enabled": true
-        },
-        "east": {
-          "texture": "#terminal",
-          "uv": [
-            7,
-            14,
-            9,
-            16
-          ],
-          "autoUv": false,
-          "enabled": true
-        },
-        "south": {
-          "texture": "#terminal",
-          "uv": [
-            7,
-            7,
-            9,
-            9
-          ],
-          "autoUv": false,
-          "enabled": true
-        },
-        "west": {
-          "texture": "#terminal",
-          "uv": [
-            7,
-            14,
-            9,
-            16
-          ],
-          "autoUv": false,
-          "enabled": true
-        },
-        "up": {
-          "texture": "#terminal",
-          "uv": [
-            7,
-            14,
-            9,
-            16
-          ],
-          "autoUv": false,
-          "enabled": true
-        }
-      },
-      "children": [
-        {
-          "name": "signal_pin_1_part_0",
-          "from": [
-            0.5,
-            2,
-            0.5
-          ],
-          "to": [
-            1.5,
-            3,
-            1.5
-          ],
-          "rotationOrigin": [
-            2,
-            1.5,
-            1.5
-          ],
-          "faces": {
-            "north": {
-              "texture": "#terminal",
-              "uv": [
-                0.5,
-                0.5,
-                1.5,
-                1.5
-              ],
-              "autoUv": false,
-              "enabled": true
-            },
-            "east": {
-              "texture": "#terminal",
-              "uv": [
-                2,
-                1,
-                3,
-                2
-              ],
-              "autoUv": false,
-              "enabled": true
-            },
-            "south": {
-              "texture": "#terminal",
-              "uv": [
-                0.5,
-                0.5,
-                1.5,
-                1.5
-              ],
-              "autoUv": false,
-              "enabled": true
-            },
-            "west": {
-              "texture": "#terminal",
-              "uv": [
-                2,
-                1,
-                3,
-                2
-              ],
-              "autoUv": false,
-              "enabled": true
-            },
-            "up": {
-              "texture": "#terminal",
-              "uv": [
-                2,
-                1,
-                3,
-                2
-              ],
-              "autoUv": false,
-              "enabled": true
-            }
-          },
-          "renderPass": 0
-        },
-        {
-          "name": "signal_pin_1_part_1",
-          "from": [
-            0,
-            2.2,
-            0
-          ],
-          "to": [
-            2,
-            2.7,
-            2
-          ],
-          "rotationOrigin": [
-            1,
-            3.2,
-            3.2
-          ],
-          "faces": {
-            "north": {
-              "texture": "#terminal",
-              "uv": [
-                2,
-                2,
-                4,
-                2.5
-              ],
-              "autoUv": false,
-              "enabled": true
-            },
-            "east": {
-              "texture": "#terminal",
-              "uv": [
-                0,
-                0,
-                2,
-                0.5
-              ],
-              "autoUv": false,
-              "enabled": true
-            },
-            "south": {
-              "texture": "#terminal",
-              "uv": [
-                2,
-                2,
-                4,
-                2.5
-              ],
-              "autoUv": false,
-              "enabled": true
-            },
-            "west": {
-              "texture": "#terminal",
-              "uv": [
-                0,
-                0,
-                2,
-                0.5
-              ],
-              "autoUv": false,
-              "enabled": true
-            },
-            "up": {
-              "texture": "#terminal",
-              "uv": [
-                0,
-                0,
-                2,
-                2
-              ],
-              "autoUv": false,
-              "enabled": true
-            },
-            "down": {
-              "texture": "#terminal",
-              "uv": [
-                0,
-                0,
-                2,
-                2
-              ],
-              "autoUv": false,
-              "enabled": true
-            }
-          },
-          "renderPass": 0
-        }
-      ],
-      "renderPass": 0,
-      "rotationY": -30
-    },
-    {
-      "name": "signal_pin_2",
-      "from": [
-        2.4,
-        26.268,
-        10.55
-      ],
-      "to": [
-        4.4,
-        28.268,
-        12.55
-      ],
-      "rotationOrigin": [
-        3.4,
-        26.268,
-        11.55
-      ],
-      "faces": {
-        "north": {
-          "texture": "#terminal",
-          "uv": [
-            7,
-            7,
-            9,
-            9
-          ],
-          "autoUv": false,
-          "enabled": true
-        },
-        "east": {
-          "texture": "#terminal",
-          "uv": [
-            7,
-            14,
-            9,
-            16
-          ],
-          "autoUv": false,
-          "enabled": true
-        },
-        "south": {
-          "texture": "#terminal",
-          "uv": [
-            7,
-            7,
-            9,
-            9
-          ],
-          "autoUv": false,
-          "enabled": true
-        },
-        "west": {
-          "texture": "#terminal",
-          "uv": [
-            7,
-            14,
-            9,
-            16
-          ],
-          "autoUv": false,
-          "enabled": true
-        },
-        "up": {
-          "texture": "#terminal",
-          "uv": [
-            7,
-            14,
-            9,
-            16
-          ],
-          "autoUv": false,
-          "enabled": true
-        }
-      },
-      "children": [
-        {
-          "name": "signal_pin_2_part_0",
-          "from": [
-            0.5,
-            2,
-            0.5
-          ],
-          "to": [
-            1.5,
-            3,
-            1.5
-          ],
-          "rotationOrigin": [
-            2,
-            1.5,
-            1.5
-          ],
-          "faces": {
-            "north": {
-              "texture": "#terminal",
-              "uv": [
-                0.5,
-                0.5,
-                1.5,
-                1.5
-              ],
-              "autoUv": false,
-              "enabled": true
-            },
-            "east": {
-              "texture": "#terminal",
-              "uv": [
-                2,
-                1,
-                3,
-                2
-              ],
-              "autoUv": false,
-              "enabled": true
-            },
-            "south": {
-              "texture": "#terminal",
-              "uv": [
-                0.5,
-                0.5,
-                1.5,
-                1.5
-              ],
-              "autoUv": false,
-              "enabled": true
-            },
-            "west": {
-              "texture": "#terminal",
-              "uv": [
-                2,
-                1,
-                3,
-                2
-              ],
-              "autoUv": false,
-              "enabled": true
-            },
-            "up": {
-              "texture": "#terminal",
-              "uv": [
-                2,
-                1,
-                3,
-                2
-              ],
-              "autoUv": false,
-              "enabled": true
-            }
-          },
-          "renderPass": 0
-        },
-        {
-          "name": "signal_pin_2_part_1",
-          "from": [
-            0,
-            2.2,
-            0
-          ],
-          "to": [
-            2,
-            2.7,
-            2
-          ],
-          "rotationOrigin": [
-            1,
-            3.2,
-            3.2
-          ],
-          "faces": {
-            "north": {
-              "texture": "#terminal",
-              "uv": [
-                2,
-                2,
-                4,
-                2.5
-              ],
-              "autoUv": false,
-              "enabled": true
-            },
-            "east": {
-              "texture": "#terminal",
-              "uv": [
-                0,
-                0,
-                2,
-                0.5
-              ],
-              "autoUv": false,
-              "enabled": true
-            },
-            "south": {
-              "texture": "#terminal",
-              "uv": [
-                2,
-                2,
-                4,
-                2.5
-              ],
-              "autoUv": false,
-              "enabled": true
-            },
-            "west": {
-              "texture": "#terminal",
-              "uv": [
-                0,
-                0,
-                2,
-                0.5
-              ],
-              "autoUv": false,
-              "enabled": true
-            },
-            "up": {
-              "texture": "#terminal",
-              "uv": [
-                0,
-                0,
-                2,
-                2
-              ],
-              "autoUv": false,
-              "enabled": true
-            },
-            "down": {
-              "texture": "#terminal",
-              "uv": [
-                0,
-                0,
-                2,
-                2
-              ],
-              "autoUv": false,
-              "enabled": true
-            }
-          },
-          "renderPass": 0
-        }
-      ],
-      "renderPass": 0,
-      "rotationY": -30
-    },
-    {
-      "name": "signal_pin_3",
-      "from": [
-        9.3,
-        26.268,
-        11.9
-      ],
-      "to": [
-        11.3,
-        28.268,
-        13.9
-      ],
-      "rotationOrigin": [
-        10.3,
-        26.268,
-        12.9
-      ],
-      "faces": {
-        "north": {
-          "texture": "#terminal",
-          "uv": [
-            7,
-            7,
-            9,
-            9
-          ],
-          "autoUv": false,
-          "enabled": true
-        },
-        "east": {
-          "texture": "#terminal",
-          "uv": [
-            7,
-            14,
-            9,
-            16
-          ],
-          "autoUv": false,
-          "enabled": true
-        },
-        "south": {
-          "texture": "#terminal",
-          "uv": [
-            7,
-            7,
-            9,
-            9
-          ],
-          "autoUv": false,
-          "enabled": true
-        },
-        "west": {
-          "texture": "#terminal",
-          "uv": [
-            7,
-            14,
-            9,
-            16
-          ],
-          "autoUv": false,
-          "enabled": true
-        },
-        "up": {
-          "texture": "#terminal",
-          "uv": [
-            7,
-            14,
-            9,
-            16
-          ],
-          "autoUv": false,
-          "enabled": true
-        }
-      },
-      "children": [
-        {
-          "name": "signal_pin_3_part_0",
-          "from": [
-            0.5,
-            2,
-            0.5
-          ],
-          "to": [
-            1.5,
-            3,
-            1.5
-          ],
-          "rotationOrigin": [
-            2,
-            1.5,
-            1.5
-          ],
-          "faces": {
-            "north": {
-              "texture": "#terminal",
-              "uv": [
-                0.5,
-                0.5,
-                1.5,
-                1.5
-              ],
-              "autoUv": false,
-              "enabled": true
-            },
-            "east": {
-              "texture": "#terminal",
-              "uv": [
-                2,
-                1,
-                3,
-                2
-              ],
-              "autoUv": false,
-              "enabled": true
-            },
-            "south": {
-              "texture": "#terminal",
-              "uv": [
-                0.5,
-                0.5,
-                1.5,
-                1.5
-              ],
-              "autoUv": false,
-              "enabled": true
-            },
-            "west": {
-              "texture": "#terminal",
-              "uv": [
-                2,
-                1,
-                3,
-                2
-              ],
-              "autoUv": false,
-              "enabled": true
-            },
-            "up": {
-              "texture": "#terminal",
-              "uv": [
-                2,
-                1,
-                3,
-                2
-              ],
-              "autoUv": false,
-              "enabled": true
-            }
-          },
-          "renderPass": 0
-        },
-        {
-          "name": "signal_pin_3_part_1",
-          "from": [
-            0,
-            2.2,
-            0
-          ],
-          "to": [
-            2,
-            2.7,
-            2
-          ],
-          "rotationOrigin": [
-            1,
-            3.2,
-            3.2
-          ],
-          "faces": {
-            "north": {
-              "texture": "#terminal",
-              "uv": [
-                2,
-                2,
-                4,
-                2.5
-              ],
-              "autoUv": false,
-              "enabled": true
-            },
-            "east": {
-              "texture": "#terminal",
-              "uv": [
-                0,
-                0,
-                2,
-                0.5
-              ],
-              "autoUv": false,
-              "enabled": true
-            },
-            "south": {
-              "texture": "#terminal",
-              "uv": [
-                2,
-                2,
-                4,
-                2.5
-              ],
-              "autoUv": false,
-              "enabled": true
-            },
-            "west": {
-              "texture": "#terminal",
-              "uv": [
-                0,
-                0,
-                2,
-                0.5
-              ],
-              "autoUv": false,
-              "enabled": true
-            },
-            "up": {
-              "texture": "#terminal",
-              "uv": [
-                0,
-                0,
-                2,
-                2
-              ],
-              "autoUv": false,
-              "enabled": true
-            },
-            "down": {
-              "texture": "#terminal",
-              "uv": [
-                0,
-                0,
-                2,
-                2
-              ],
-              "autoUv": false,
-              "enabled": true
-            }
-          },
-          "renderPass": 0
-        }
-      ],
-      "renderPass": 0,
-      "rotationY": 30
-    },
-    {
-      "name": "signal_pin_4",
-      "from": [
-        11.6,
-        26.268,
-        10.55
-      ],
-      "to": [
-        13.6,
-        28.268,
-        12.55
-      ],
-      "rotationOrigin": [
-        12.6,
-        26.268,
-        11.55
-      ],
-      "faces": {
-        "north": {
-          "texture": "#terminal",
-          "uv": [
-            7,
-            7,
-            9,
-            9
-          ],
-          "autoUv": false,
-          "enabled": true
-        },
-        "east": {
-          "texture": "#terminal",
-          "uv": [
-            7,
-            14,
-            9,
-            16
-          ],
-          "autoUv": false,
-          "enabled": true
-        },
-        "south": {
-          "texture": "#terminal",
-          "uv": [
-            7,
-            7,
-            9,
-            9
-          ],
-          "autoUv": false,
-          "enabled": true
-        },
-        "west": {
-          "texture": "#terminal",
-          "uv": [
-            7,
-            14,
-            9,
-            16
-          ],
-          "autoUv": false,
-          "enabled": true
-        },
-        "up": {
-          "texture": "#terminal",
-          "uv": [
-            7,
-            14,
-            9,
-            16
-          ],
-          "autoUv": false,
-          "enabled": true
-        }
-      },
-      "children": [
-        {
-          "name": "signal_pin_4_part_0",
-          "from": [
-            0.5,
-            2,
-            0.5
-          ],
-          "to": [
-            1.5,
-            3,
-            1.5
-          ],
-          "rotationOrigin": [
-            2,
-            1.5,
-            1.5
-          ],
-          "faces": {
-            "north": {
-              "texture": "#terminal",
-              "uv": [
-                0.5,
-                0.5,
-                1.5,
-                1.5
-              ],
-              "autoUv": false,
-              "enabled": true
-            },
-            "east": {
-              "texture": "#terminal",
-              "uv": [
-                2,
-                1,
-                3,
-                2
-              ],
-              "autoUv": false,
-              "enabled": true
-            },
-            "south": {
-              "texture": "#terminal",
-              "uv": [
-                0.5,
-                0.5,
-                1.5,
-                1.5
-              ],
-              "autoUv": false,
-              "enabled": true
-            },
-            "west": {
-              "texture": "#terminal",
-              "uv": [
-                2,
-                1,
-                3,
-                2
-              ],
-              "autoUv": false,
-              "enabled": true
-            },
-            "up": {
-              "texture": "#terminal",
-              "uv": [
-                2,
-                1,
-                3,
-                2
-              ],
-              "autoUv": false,
-              "enabled": true
-            }
-          },
-          "renderPass": 0
-        },
-        {
-          "name": "signal_pin_4_part_1",
-          "from": [
-            0,
-            2.2,
-            0
-          ],
-          "to": [
-            2,
-            2.7,
-            2
-          ],
-          "rotationOrigin": [
-            1,
-            3.2,
-            3.2
-          ],
-          "faces": {
-            "north": {
-              "texture": "#terminal",
-              "uv": [
-                2,
-                2,
-                4,
-                2.5
-              ],
-              "autoUv": false,
-              "enabled": true
-            },
-            "east": {
-              "texture": "#terminal",
-              "uv": [
-                0,
-                0,
-                2,
-                0.5
-              ],
-              "autoUv": false,
-              "enabled": true
-            },
-            "south": {
-              "texture": "#terminal",
-              "uv": [
-                2,
-                2,
-                4,
-                2.5
-              ],
-              "autoUv": false,
-              "enabled": true
-            },
-            "west": {
-              "texture": "#terminal",
-              "uv": [
-                0,
-                0,
-                2,
-                0.5
-              ],
-              "autoUv": false,
-              "enabled": true
-            },
-            "up": {
-              "texture": "#terminal",
-              "uv": [
-                0,
-                0,
-                2,
-                2
-              ],
-              "autoUv": false,
-              "enabled": true
-            },
-            "down": {
-              "texture": "#terminal",
-              "uv": [
-                0,
-                0,
-                2,
-                2
-              ],
-              "autoUv": false,
-              "enabled": true
-            }
-          },
-          "renderPass": 0
-        }
-      ],
-      "renderPass": 0,
-      "rotationY": 30
     },
     {
       "name": "tube_socket_base",
@@ -5131,7 +6437,7 @@
       ],
       "rotationOrigin": [
         8,
-        13.5,
+        18.732,
         8
       ],
       "faces": {},
@@ -5141,17 +6447,17 @@
           "name": "chamber_floor_0",
           "from": [
             4.075,
-            12.5,
+            17.732,
             1.2017005802921572
           ],
           "to": [
             11.925,
-            13.5,
+            18.732,
             14.798299419707842
           ],
           "rotationOrigin": [
             8,
-            0,
+            5.232,
             8
           ],
           "faces": {
@@ -5206,17 +6512,17 @@
           "name": "chamber_floor_1",
           "from": [
             4.075,
-            12.501,
+            17.733,
             1.2017005802921572
           ],
           "to": [
             11.925,
-            13.501,
+            18.733,
             14.798299419707842
           ],
           "rotationOrigin": [
             8,
-            0,
+            5.232,
             8
           ],
           "faces": {
@@ -5272,17 +6578,17 @@
           "name": "chamber_floor_2",
           "from": [
             4.075,
-            12.502,
+            17.734,
             1.2017005802921572
           ],
           "to": [
             11.925,
-            13.502,
+            18.734,
             14.798299419707842
           ],
           "rotationOrigin": [
             8,
-            0,
+            5.232,
             8
           ],
           "faces": {
@@ -5338,17 +6644,17 @@
           "name": "chamber_roof_0n",
           "from": [
             4.075,
-            25.266,
+            30.498,
             1.2017
           ],
           "to": [
             11.925,
-            26.016,
+            31.248,
             6.55
           ],
           "rotationOrigin": [
             8,
-            0,
+            5.232,
             8
           ],
           "faces": {
@@ -5403,17 +6709,17 @@
           "name": "chamber_roof_0s",
           "from": [
             4.075,
-            25.266,
+            30.498,
             9.45
           ],
           "to": [
             11.925,
-            26.016,
+            31.248,
             14.7983
           ],
           "rotationOrigin": [
             8,
-            0,
+            5.232,
             8
           ],
           "faces": {
@@ -5468,17 +6774,17 @@
           "name": "chamber_roof_1n",
           "from": [
             4.075,
-            25.267,
+            30.499,
             1.2017
           ],
           "to": [
             11.925,
-            26.017,
+            31.249,
             6.55
           ],
           "rotationOrigin": [
             8,
-            0,
+            5.232,
             8
           ],
           "faces": {
@@ -5534,17 +6840,17 @@
           "name": "chamber_roof_1s",
           "from": [
             4.075,
-            25.267,
+            30.499,
             9.45
           ],
           "to": [
             11.925,
-            26.017,
+            31.249,
             14.7983
           ],
           "rotationOrigin": [
             8,
-            0,
+            5.232,
             8
           ],
           "faces": {
@@ -5600,17 +6906,17 @@
           "name": "chamber_roof_2n",
           "from": [
             4.075,
-            25.267999999999997,
+            30.5,
             1.2017
           ],
           "to": [
             11.925,
-            26.017999999999997,
+            31.25,
             6.55
           ],
           "rotationOrigin": [
             8,
-            0,
+            5.232,
             8
           ],
           "faces": {
@@ -5666,17 +6972,17 @@
           "name": "chamber_roof_2s",
           "from": [
             4.075,
-            25.267999999999997,
+            30.5,
             9.45
           ],
           "to": [
             11.925,
-            26.017999999999997,
+            31.25,
             14.7983
           ],
           "rotationOrigin": [
             8,
-            0,
+            5.232,
             8
           ],
           "faces": {
@@ -5732,12 +7038,12 @@
           "name": "chamber_roof_bead_0n",
           "from": [
             4.2,
-            26.016,
+            31.248,
             1.4182
           ],
           "to": [
             11.8,
-            26.266,
+            31.498,
             6.55
           ],
           "faces": {
@@ -5777,7 +7083,7 @@
           },
           "rotationOrigin": [
             8,
-            0,
+            5.232,
             8
           ],
           "rotationY": 0,
@@ -5787,12 +7093,12 @@
           "name": "chamber_roof_bead_0s",
           "from": [
             4.2,
-            26.016,
+            31.248,
             9.45
           ],
           "to": [
             11.8,
-            26.266,
+            31.498,
             14.5818
           ],
           "faces": {
@@ -5832,7 +7138,7 @@
           },
           "rotationOrigin": [
             8,
-            0,
+            5.232,
             8
           ],
           "rotationY": 0,
@@ -5842,12 +7148,12 @@
           "name": "chamber_roof_bead_1n",
           "from": [
             4.2,
-            26.017,
+            31.249,
             1.4182
           ],
           "to": [
             11.8,
-            26.267,
+            31.499,
             6.55
           ],
           "faces": {
@@ -5887,7 +7193,7 @@
           },
           "rotationOrigin": [
             8,
-            0,
+            5.232,
             8
           ],
           "rotationY": 60,
@@ -5897,12 +7203,12 @@
           "name": "chamber_roof_bead_1s",
           "from": [
             4.2,
-            26.017,
+            31.249,
             9.45
           ],
           "to": [
             11.8,
-            26.267,
+            31.499,
             14.5818
           ],
           "faces": {
@@ -5942,7 +7248,7 @@
           },
           "rotationOrigin": [
             8,
-            0,
+            5.232,
             8
           ],
           "rotationY": 60,
@@ -5952,12 +7258,12 @@
           "name": "chamber_roof_bead_2n",
           "from": [
             4.2,
-            26.017999999999997,
+            31.25,
             1.4182
           ],
           "to": [
             11.8,
-            26.267999999999997,
+            31.5,
             6.55
           ],
           "faces": {
@@ -5997,7 +7303,7 @@
           },
           "rotationOrigin": [
             8,
-            0,
+            5.232,
             8
           ],
           "rotationY": 120,
@@ -6007,12 +7313,12 @@
           "name": "chamber_roof_bead_2s",
           "from": [
             4.2,
-            26.017999999999997,
+            31.25,
             9.45
           ],
           "to": [
             11.8,
-            26.267999999999997,
+            31.5,
             14.5818
           ],
           "faces": {
@@ -6052,7 +7358,7 @@
           },
           "rotationOrigin": [
             8,
-            0,
+            5.232,
             8
           ],
           "rotationY": 120,
@@ -6072,7 +7378,7 @@
           ],
           "rotationOrigin": [
             8,
-            0,
+            5.232,
             8
           ],
           "rotationY": 0,
@@ -6082,12 +7388,12 @@
               "name": "sill_0",
               "from": [
                 4.075,
-                13.503,
+                18.735,
                 1.2017005802921572
               ],
               "to": [
                 11.925,
-                15.003,
+                20.235,
                 2.201700580292157
               ],
               "faces": {
@@ -6164,12 +7470,12 @@
               "name": "lintel_0",
               "from": [
                 4.075,
-                23.615000000000002,
+                28.847,
                 1.2017005802921572
               ],
               "to": [
                 11.925,
-                25.265,
+                30.497,
                 2.201700580292157
               ],
               "faces": {
@@ -6246,12 +7552,12 @@
               "name": "post_left_0",
               "from": [
                 4.075,
-                15.003,
+                20.235,
                 1.2017005802921572
               ],
               "to": [
                 5.225,
-                23.615000000000002,
+                28.847,
                 2.201700580292157
               ],
               "faces": {
@@ -6306,12 +7612,12 @@
               "name": "post_right_0",
               "from": [
                 10.775,
-                15.003,
+                20.235,
                 1.2017005802921572
               ],
               "to": [
                 11.925,
-                23.615000000000002,
+                28.847,
                 2.201700580292157
               ],
               "faces": {
@@ -6366,12 +7672,12 @@
               "name": "cast_shoulder_left_0",
               "from": [
                 4.705,
-                23.095000000000002,
+                28.327,
                 1.202700580292157
               ],
               "to": [
                 5.744999999999999,
-                24.135,
+                29.367,
                 2.202700580292157
               ],
               "faces": {
@@ -6444,7 +7750,7 @@
               },
               "rotationOrigin": [
                 5.225,
-                23.615000000000002,
+                28.847,
                 1.2017005802921572
               ],
               "rotationZ": 45,
@@ -6454,12 +7760,12 @@
               "name": "cast_shoulder_right_0",
               "from": [
                 10.255,
-                23.095000000000002,
+                28.327,
                 1.202700580292157
               ],
               "to": [
                 11.295,
-                24.135,
+                29.367,
                 2.202700580292157
               ],
               "faces": {
@@ -6532,7 +7838,7 @@
               },
               "rotationOrigin": [
                 10.775,
-                23.615000000000002,
+                28.847,
                 1.2017005802921572
               ],
               "rotationZ": -45,
@@ -6554,7 +7860,7 @@
           ],
           "rotationOrigin": [
             8,
-            0,
+            5.232,
             8
           ],
           "rotationY": 60,
@@ -6564,12 +7870,12 @@
               "name": "sill_1",
               "from": [
                 4.075,
-                13.504,
+                18.736,
                 1.2017005802921572
               ],
               "to": [
                 11.925,
-                15.004,
+                20.236,
                 2.201700580292157
               ],
               "faces": {
@@ -6646,12 +7952,12 @@
               "name": "lintel_1",
               "from": [
                 4.075,
-                23.616000000000003,
+                28.848,
                 1.2017005802921572
               ],
               "to": [
                 11.925,
-                25.266000000000002,
+                30.498,
                 2.201700580292157
               ],
               "faces": {
@@ -6728,12 +8034,12 @@
               "name": "post_left_1",
               "from": [
                 4.075,
-                15.004,
+                20.236,
                 1.2017005802921572
               ],
               "to": [
                 5.225,
-                23.616000000000003,
+                28.848,
                 2.201700580292157
               ],
               "faces": {
@@ -6788,12 +8094,12 @@
               "name": "post_right_1",
               "from": [
                 10.775,
-                15.004,
+                20.236,
                 1.2017005802921572
               ],
               "to": [
                 11.925,
-                23.616000000000003,
+                28.848,
                 2.201700580292157
               ],
               "faces": {
@@ -6848,12 +8154,12 @@
               "name": "cast_shoulder_left_1",
               "from": [
                 4.705,
-                23.096000000000004,
+                28.328,
                 1.202700580292157
               ],
               "to": [
                 5.744999999999999,
-                24.136000000000003,
+                29.368,
                 2.202700580292157
               ],
               "faces": {
@@ -6926,7 +8232,7 @@
               },
               "rotationOrigin": [
                 5.225,
-                23.616000000000003,
+                28.848,
                 1.2017005802921572
               ],
               "rotationZ": 45,
@@ -6936,12 +8242,12 @@
               "name": "cast_shoulder_right_1",
               "from": [
                 10.255,
-                23.096000000000004,
+                28.328,
                 1.202700580292157
               ],
               "to": [
                 11.295,
-                24.136000000000003,
+                29.368,
                 2.202700580292157
               ],
               "faces": {
@@ -7014,7 +8320,7 @@
               },
               "rotationOrigin": [
                 10.775,
-                23.616000000000003,
+                28.848,
                 1.2017005802921572
               ],
               "rotationZ": -45,
@@ -7036,7 +8342,7 @@
           ],
           "rotationOrigin": [
             8,
-            0,
+            5.232,
             8
           ],
           "rotationY": 120,
@@ -7046,12 +8352,12 @@
               "name": "sill_2",
               "from": [
                 4.075,
-                13.505,
+                18.737,
                 1.2017005802921572
               ],
               "to": [
                 11.925,
-                15.005,
+                20.237,
                 2.201700580292157
               ],
               "faces": {
@@ -7128,12 +8434,12 @@
               "name": "lintel_2",
               "from": [
                 4.075,
-                23.617,
+                28.849,
                 1.2017005802921572
               ],
               "to": [
                 11.925,
-                25.267,
+                30.499,
                 2.201700580292157
               ],
               "faces": {
@@ -7210,12 +8516,12 @@
               "name": "post_left_2",
               "from": [
                 4.075,
-                15.005,
+                20.237,
                 1.2017005802921572
               ],
               "to": [
                 5.225,
-                23.617,
+                28.849,
                 2.201700580292157
               ],
               "faces": {
@@ -7270,12 +8576,12 @@
               "name": "post_right_2",
               "from": [
                 10.775,
-                15.005,
+                20.237,
                 1.2017005802921572
               ],
               "to": [
                 11.925,
-                23.617,
+                28.849,
                 2.201700580292157
               ],
               "faces": {
@@ -7330,12 +8636,12 @@
               "name": "cast_shoulder_left_2",
               "from": [
                 4.705,
-                23.097,
+                28.329,
                 1.202700580292157
               ],
               "to": [
                 5.744999999999999,
-                24.137,
+                29.369,
                 2.202700580292157
               ],
               "faces": {
@@ -7408,7 +8714,7 @@
               },
               "rotationOrigin": [
                 5.225,
-                23.617,
+                28.849,
                 1.2017005802921572
               ],
               "rotationZ": 45,
@@ -7418,12 +8724,12 @@
               "name": "cast_shoulder_right_2",
               "from": [
                 10.255,
-                23.097,
+                28.329,
                 1.202700580292157
               ],
               "to": [
                 11.295,
-                24.137,
+                29.369,
                 2.202700580292157
               ],
               "faces": {
@@ -7496,7 +8802,7 @@
               },
               "rotationOrigin": [
                 10.775,
-                23.617,
+                28.849,
                 1.2017005802921572
               ],
               "rotationZ": -45,
@@ -7518,7 +8824,7 @@
           ],
           "rotationOrigin": [
             8,
-            0,
+            5.232,
             8
           ],
           "rotationY": -180,
@@ -7528,12 +8834,12 @@
               "name": "sill_3",
               "from": [
                 4.075,
-                13.506,
+                18.738,
                 1.2017005802921572
               ],
               "to": [
                 11.925,
-                15.006,
+                20.238,
                 2.201700580292157
               ],
               "faces": {
@@ -7610,12 +8916,12 @@
               "name": "lintel_3",
               "from": [
                 4.075,
-                23.618000000000002,
+                28.85,
                 1.2017005802921572
               ],
               "to": [
                 11.925,
-                25.268,
+                30.5,
                 2.201700580292157
               ],
               "faces": {
@@ -7692,12 +8998,12 @@
               "name": "post_left_3",
               "from": [
                 4.075,
-                15.006,
+                20.238,
                 1.2017005802921572
               ],
               "to": [
                 5.225,
-                23.618000000000002,
+                28.85,
                 2.201700580292157
               ],
               "faces": {
@@ -7752,12 +9058,12 @@
               "name": "post_right_3",
               "from": [
                 10.775,
-                15.006,
+                20.238,
                 1.2017005802921572
               ],
               "to": [
                 11.925,
-                23.618000000000002,
+                28.85,
                 2.201700580292157
               ],
               "faces": {
@@ -7812,12 +9118,12 @@
               "name": "cast_shoulder_left_3",
               "from": [
                 4.705,
-                23.098000000000003,
+                28.33,
                 1.202700580292157
               ],
               "to": [
                 5.744999999999999,
-                24.138,
+                29.37,
                 2.202700580292157
               ],
               "faces": {
@@ -7890,7 +9196,7 @@
               },
               "rotationOrigin": [
                 5.225,
-                23.618000000000002,
+                28.85,
                 1.2017005802921572
               ],
               "rotationZ": 45,
@@ -7900,12 +9206,12 @@
               "name": "cast_shoulder_right_3",
               "from": [
                 10.255,
-                23.098000000000003,
+                28.33,
                 1.202700580292157
               ],
               "to": [
                 11.295,
-                24.138,
+                29.37,
                 2.202700580292157
               ],
               "faces": {
@@ -7978,7 +9284,7 @@
               },
               "rotationOrigin": [
                 10.775,
-                23.618000000000002,
+                28.85,
                 1.2017005802921572
               ],
               "rotationZ": -45,
@@ -8000,7 +9306,7 @@
           ],
           "rotationOrigin": [
             8,
-            0,
+            5.232,
             8
           ],
           "rotationY": -60,
@@ -8010,12 +9316,12 @@
               "name": "sill_5",
               "from": [
                 4.075,
-                13.508000000000001,
+                18.74,
                 1.2017005802921572
               ],
               "to": [
                 11.925,
-                15.008000000000001,
+                20.24,
                 2.201700580292157
               ],
               "faces": {
@@ -8092,12 +9398,12 @@
               "name": "lintel_5",
               "from": [
                 4.075,
-                23.62,
+                28.852,
                 1.2017005802921572
               ],
               "to": [
                 11.925,
-                25.27,
+                30.502,
                 2.201700580292157
               ],
               "faces": {
@@ -8174,12 +9480,12 @@
               "name": "post_left_5",
               "from": [
                 4.075,
-                15.008000000000001,
+                20.24,
                 1.2017005802921572
               ],
               "to": [
                 5.225,
-                23.62,
+                28.852,
                 2.201700580292157
               ],
               "faces": {
@@ -8234,12 +9540,12 @@
               "name": "post_right_5",
               "from": [
                 10.775,
-                15.008000000000001,
+                20.24,
                 1.2017005802921572
               ],
               "to": [
                 11.925,
-                23.62,
+                28.852,
                 2.201700580292157
               ],
               "faces": {
@@ -8294,12 +9600,12 @@
               "name": "cast_shoulder_left_5",
               "from": [
                 4.705,
-                23.1,
+                28.332,
                 1.202700580292157
               ],
               "to": [
                 5.744999999999999,
-                24.14,
+                29.372,
                 2.202700580292157
               ],
               "faces": {
@@ -8372,7 +9678,7 @@
               },
               "rotationOrigin": [
                 5.225,
-                23.62,
+                28.852,
                 1.2017005802921572
               ],
               "rotationZ": 45,
@@ -8382,12 +9688,12 @@
               "name": "cast_shoulder_right_5",
               "from": [
                 10.255,
-                23.1,
+                28.332,
                 1.202700580292157
               ],
               "to": [
                 11.295,
-                24.14,
+                29.372,
                 2.202700580292157
               ],
               "faces": {
@@ -8460,7 +9766,7 @@
               },
               "rotationOrigin": [
                 10.775,
-                23.62,
+                28.852,
                 1.2017005802921572
               ],
               "rotationZ": -45,
@@ -8482,7 +9788,7 @@
           ],
           "rotationOrigin": [
             8,
-            0,
+            5.232,
             8
           ],
           "rotationY": -120,
@@ -8502,7 +9808,7 @@
               ],
               "rotationOrigin": [
                 4.075,
-                13.503,
+                18.735,
                 1.2017005802921572
               ],
               "faces": {},
@@ -8511,12 +9817,12 @@
                   "name": "sill_4",
                   "from": [
                     4.075,
-                    13.507,
+                    18.739,
                     1.2017005802921572
                   ],
                   "to": [
                     11.925,
-                    15.007,
+                    20.239,
                     2.201700580292157
                   ],
                   "faces": {
@@ -8593,12 +9899,12 @@
                   "name": "lintel_4",
                   "from": [
                     4.075,
-                    23.619000000000003,
+                    28.851,
                     1.2017005802921572
                   ],
                   "to": [
                     11.925,
-                    25.269000000000002,
+                    30.501,
                     2.201700580292157
                   ],
                   "faces": {
@@ -8675,12 +9981,12 @@
                   "name": "post_left_4",
                   "from": [
                     4.075,
-                    15.007,
+                    20.239,
                     1.2017005802921572
                   ],
                   "to": [
                     5.225,
-                    23.619000000000003,
+                    28.851,
                     2.201700580292157
                   ],
                   "faces": {
@@ -8735,12 +10041,12 @@
                   "name": "post_right_4",
                   "from": [
                     10.775,
-                    15.007,
+                    20.239,
                     1.2017005802921572
                   ],
                   "to": [
                     11.925,
-                    23.619000000000003,
+                    28.851,
                     2.201700580292157
                   ],
                   "faces": {
@@ -8795,12 +10101,12 @@
                   "name": "cast_shoulder_left_4",
                   "from": [
                     4.705,
-                    23.099000000000004,
+                    28.331,
                     1.202700580292157
                   ],
                   "to": [
                     5.744999999999999,
-                    24.139000000000003,
+                    29.371,
                     2.202700580292157
                   ],
                   "faces": {
@@ -8873,7 +10179,7 @@
                   },
                   "rotationOrigin": [
                     5.225,
-                    23.619000000000003,
+                    28.851,
                     1.2017005802921572
                   ],
                   "rotationZ": 45,
@@ -8883,12 +10189,12 @@
                   "name": "cast_shoulder_right_4",
                   "from": [
                     10.255,
-                    23.099000000000004,
+                    28.331,
                     1.202700580292157
                   ],
                   "to": [
                     11.295,
-                    24.139000000000003,
+                    29.371,
                     2.202700580292157
                   ],
                   "faces": {
@@ -8961,7 +10267,7 @@
                   },
                   "rotationOrigin": [
                     10.775,
-                    23.619000000000003,
+                    28.851,
                     1.2017005802921572
                   ],
                   "rotationZ": -45,
@@ -8971,12 +10277,12 @@
                   "name": "glass_4",
                   "from": [
                     5.145,
-                    14.927,
+                    20.159,
                     1.4017005802921572
                   ],
                   "to": [
                     10.855,
-                    23.699,
+                    28.931,
                     2.001700580292157
                   ],
                   "faces": {
@@ -9067,7 +10373,7 @@
           ],
           "rotationOrigin": [
             8,
-            0,
+            5.232,
             8
           ],
           "rotationY": 0,
@@ -9077,12 +10383,12 @@
               "name": "glass_0",
               "from": [
                 5.145,
-                14.923,
+                20.155,
                 1.4017005802921572
               ],
               "to": [
                 10.855,
-                23.695,
+                28.927,
                 2.001700580292157
               ],
               "faces": {
@@ -9171,7 +10477,7 @@
           ],
           "rotationOrigin": [
             8,
-            0,
+            5.232,
             8
           ],
           "rotationY": 60,
@@ -9181,12 +10487,12 @@
               "name": "glass_1",
               "from": [
                 5.145,
-                14.924,
+                20.156,
                 1.4017005802921572
               ],
               "to": [
                 10.855,
-                23.696,
+                28.928,
                 2.001700580292157
               ],
               "faces": {
@@ -9275,7 +10581,7 @@
           ],
           "rotationOrigin": [
             8,
-            0,
+            5.232,
             8
           ],
           "rotationY": 120,
@@ -9285,12 +10591,12 @@
               "name": "glass_2",
               "from": [
                 5.145,
-                14.925,
+                20.157,
                 1.4017005802921572
               ],
               "to": [
                 10.855,
-                23.697,
+                28.929,
                 2.001700580292157
               ],
               "faces": {
@@ -9379,7 +10685,7 @@
           ],
           "rotationOrigin": [
             8,
-            0,
+            5.232,
             8
           ],
           "rotationY": -180,
@@ -9389,12 +10695,12 @@
               "name": "glass_3",
               "from": [
                 5.145,
-                14.926,
+                20.158,
                 1.4017005802921572
               ],
               "to": [
                 10.855,
-                23.698,
+                28.93,
                 2.001700580292157
               ],
               "faces": {
@@ -9483,7 +10789,7 @@
           ],
           "rotationOrigin": [
             8,
-            0,
+            5.232,
             8
           ],
           "rotationY": -60,
@@ -9493,12 +10799,12 @@
               "name": "glass_5",
               "from": [
                 5.145,
-                14.928,
+                20.16,
                 1.4017005802921572
               ],
               "to": [
                 10.855,
-                23.7,
+                28.932,
                 2.001700580292157
               ],
               "faces": {

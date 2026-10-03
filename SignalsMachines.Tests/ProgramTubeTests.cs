@@ -77,7 +77,7 @@ public class ProgramTubeTests
     public void UpperProxyCannotOperateSocket()
     {
         var block = new BlockCraftingMachine();
-        Assert.False(block.MBOnBlockInteractStart(null, null, new BlockSelection { SelectionBoxIndex = 0 }, new Vec3i(0, 1, 0)));
+        Assert.False(block.MBOnBlockInteractStart(null, null, new BlockSelection { SelectionBoxIndex = BlockCraftingMachine.SocketBox }, new Vec3i(0, 1, 0)));
     }
 
     [Theory]
@@ -108,7 +108,7 @@ public class ProgramTubeTests
         });
         api = Fake<ICoreAPI>((m, a) => m.Name switch { "get_World" => world, "get_Side" => side, _ => null });
         var block = new BlockCraftingMachine { EntityClass = "CraftingMachine" };
-        bool result = block.OnBlockInteractStart(world, player, new BlockSelection { Position = new BlockPos(1,2,3), SelectionBoxIndex = 0 });
+        bool result = block.OnBlockInteractStart(world, player, new BlockSelection { Position = new BlockPos(1,2,3), SelectionBoxIndex = BlockCraftingMachine.SocketBox });
         Assert.Equal(allowed, result);
         bool transfer = allowed && side == EnumAppSide.Server;
         Assert.Equal(transfer ? 1 : 0, spawned);

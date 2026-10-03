@@ -94,7 +94,7 @@ public class BlockImprinter : Block
     public override string GetPlacedBlockInfo(IWorldAccessor world, BlockPos pos, IPlayer forPlayer)
     {
         string info = base.GetPlacedBlockInfo(world, pos, forPlayer);
-        if (world.BlockAccessor.GetBlockEntity(pos) is BEImprinter be && be.HasTube) info += be.Tube.GetName() + "\n";
+        if (world.BlockAccessor.GetBlockEntity(pos) is BEImprinter be && be.HasTube) info += ItemProgramTube.FullInfo(be.Tube, world);
         return info;
     }
 }

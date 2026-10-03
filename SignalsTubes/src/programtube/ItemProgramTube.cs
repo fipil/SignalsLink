@@ -59,6 +59,12 @@ public class ItemProgramTube : Item
         var stack = slot.Itemstack;
         if (stack.Attributes.GetString(TubeProgram.NameKey, "").Length > 0) dsc.AppendLine(base.GetHeldItemName(stack));
         base.GetHeldItemInfo(slot, dsc, world, withDebugInfo);
+        AppendDetails(stack, dsc);
+    }
+
+    /// <summary>Description, pins, author, locks: the part shared by the tooltip and machine info.</summary>
+    public static void AppendDetails(ItemStack stack, StringBuilder dsc)
+    {
         string description = Description(stack);
         if (description != null) dsc.AppendLine(TubeProgram.Vtml(description));
         if (!TubeProgram.IsBlank(stack))
@@ -77,6 +83,17 @@ public class ItemProgramTube : Item
     }
 
     private static string Role(circuit.PinRole role) => role.ToString().ToLowerInvariant();
+
+    /// <summary>Block info of a machine holding the tube: a blank line, "Tube: name", then the details.</summary>
+    public static string FullInfo(ItemStack stack, IWorldAccessor world)
+    {
+        if (stack?.Collectible is not ItemProgramTube item) return "";
+        var sb = new StringBuilder();
+        sb.AppendLine();
+        sb.AppendLine(Lang.Get("signalstubes:tube-held", item.GetHeldItemName(stack)));
+        AppendDetails(stack, sb);
+        return sb.ToString();
+    }
 
     /// <summary>Free text the imprinter lets the author add; null when there is none.</summary>
     public static string Description(ItemStack stack)

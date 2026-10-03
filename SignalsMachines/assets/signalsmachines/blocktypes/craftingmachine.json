@@ -170,41 +170,142 @@
     },
     "tube-base-dyedpink": {
       "base": "signalstubes:block/tube-base-dyedpink"
+    },
+    "pintop": {
+      "base": "signalsmachines:block/rustycolored"
     }
   },
   "attributes": {
     "upperPartBoxes": [
       {
-        "x1": 0,
-        "y1": 0,
-        "z1": 0,
-        "x2": 1,
-        "y2": 0.64175,
-        "z2": 1
+        "x1": 0.1313,
+        "y1": 0.1082,
+        "z1": 0.075,
+        "x2": 0.8688,
+        "y2": 0.9688,
+        "z2": 0.925
+      }
+    ],
+    "signalNodes": [
+      {
+        "index": 0,
+        "name": "cm-state",
+        "x1": 0.26562,
+        "y1": 0.80625,
+        "z1": 0.69375,
+        "x2": 0.35938,
+        "y2": 0.97813,
+        "z2": 0.7875,
+        "rotateYbytype": {
+          "*-east": 270,
+          "*-south": 180,
+          "*-west": 90
+        }
       },
       {
-        "x1": 0.40625,
-        "y1": 0.64175,
-        "z1": 0.40625,
-        "x2": 0.59375,
-        "y2": 0.69475,
-        "z2": 0.59375
+        "index": 1,
+        "name": "cm-clutch",
+        "x1": 0.39062,
+        "y1": 0.80625,
+        "z1": 0.69375,
+        "x2": 0.48438,
+        "y2": 0.97813,
+        "z2": 0.7875,
+        "rotateYbytype": {
+          "*-east": 270,
+          "*-south": 180,
+          "*-west": 90
+        }
       },
       {
-        "x1": 0.4375,
-        "y1": 0.69475,
-        "z1": 0.4375,
-        "x2": 0.5625,
-        "y2": 0.851,
-        "z2": 0.5625
+        "index": 2,
+        "name": "cm-crystal",
+        "x1": 0.51562,
+        "y1": 0.80625,
+        "z1": 0.69375,
+        "x2": 0.60938,
+        "y2": 0.97813,
+        "z2": 0.7875,
+        "rotateYbytype": {
+          "*-east": 270,
+          "*-south": 180,
+          "*-west": 90
+        }
       },
       {
-        "x1": 0.08,
-        "y1": 0.64175,
-        "z1": 0.65,
-        "x2": 0.92,
-        "y2": 0.85,
-        "z2": 1
+        "index": 3,
+        "name": "cm-strength",
+        "x1": 0.64062,
+        "y1": 0.80625,
+        "z1": 0.69375,
+        "x2": 0.73438,
+        "y2": 0.97813,
+        "z2": 0.7875,
+        "rotateYbytype": {
+          "*-east": 270,
+          "*-south": 180,
+          "*-west": 90
+        }
+      },
+      {
+        "index": 4,
+        "name": "cm-door-west",
+        "x1": 0.26562,
+        "y1": 0.80625,
+        "z1": 0.2125,
+        "x2": 0.35938,
+        "y2": 0.97813,
+        "z2": 0.30625,
+        "rotateYbytype": {
+          "*-east": 270,
+          "*-south": 180,
+          "*-west": 90
+        }
+      },
+      {
+        "index": 5,
+        "name": "cm-door-east",
+        "x1": 0.39062,
+        "y1": 0.80625,
+        "z1": 0.2125,
+        "x2": 0.48438,
+        "y2": 0.97813,
+        "z2": 0.30625,
+        "rotateYbytype": {
+          "*-east": 270,
+          "*-south": 180,
+          "*-west": 90
+        }
+      },
+      {
+        "index": 6,
+        "name": "cm-reserve-6",
+        "x1": 0.51562,
+        "y1": 0.80625,
+        "z1": 0.2125,
+        "x2": 0.60938,
+        "y2": 0.97813,
+        "z2": 0.30625,
+        "rotateYbytype": {
+          "*-east": 270,
+          "*-south": 180,
+          "*-west": 90
+        }
+      },
+      {
+        "index": 7,
+        "name": "cm-reserve-7",
+        "x1": 0.64062,
+        "y1": 0.80625,
+        "z1": 0.2125,
+        "x2": 0.73438,
+        "y2": 0.97813,
+        "z2": 0.30625,
+        "rotateYbytype": {
+          "*-east": 270,
+          "*-south": 180,
+          "*-west": 90
+        }
       }
     ]
   },
@@ -256,5 +357,54 @@
     },
     "scale": 0.65
   },
-  "entityClass": "CraftingMachine"
+  "entityClass": "CraftingMachine",
+  "entityBehaviors": [
+    {
+      "name": "BEBehaviorSignalConnector",
+      "properties": {
+        "signalNodes": [
+          {
+            "index": 0,
+            "isSource": true,
+            "output": 0
+          },
+          {
+            "index": 1,
+            "isSource": true,
+            "output": 0
+          },
+          {
+            "index": 2,
+            "isSource": true,
+            "output": 0
+          },
+          {
+            "index": 3,
+            "isSource": true,
+            "output": 0
+          },
+          {
+            "index": 4,
+            "isSource": true,
+            "output": 0
+          },
+          {
+            "index": 5,
+            "isSource": true,
+            "output": 0
+          },
+          {
+            "index": 6,
+            "isSource": true,
+            "output": 0
+          },
+          {
+            "index": 7,
+            "isSource": true,
+            "output": 0
+          }
+        ]
+      }
+    }
+  ]
 }

@@ -106,5 +106,6 @@
   "copier-charged": "Nabito: {0}.",
   "copier-full": "Kopírka je plně nabitá.",
   "signals:copier-start": "Start (vstup)",
-  "signals:copier-state": "Stav (výstup)"
+  "signals:copier-state": "Stav (výstup)",
+  "tube-held": "Elektronka: {0}"
 }

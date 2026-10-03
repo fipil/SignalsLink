@@ -106,5 +106,6 @@
   "copier-charged": "Charged: {0}.",
   "copier-full": "The copier is fully charged.",
   "signals:copier-start": "Start (input)",
-  "signals:copier-state": "State (output)"
+  "signals:copier-state": "State (output)",
+  "tube-held": "Tube: {0}"
 }

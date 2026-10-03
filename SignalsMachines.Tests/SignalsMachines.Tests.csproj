@@ -47,5 +47,6 @@
   <ItemGroup>
     <ProjectReference Include="../SignalsMachines/SignalsMachines.csproj" AdditionalProperties="SkipModPublish=true" />
     <ProjectReference Include="../SignalsTubes/SignalsTubes.csproj" AdditionalProperties="SkipModPublish=true" />
+    <ProjectReference Include="../SignalsTubes.Tests/SignalsTubes.Tests.csproj" />
   </ItemGroup>
 </Project>

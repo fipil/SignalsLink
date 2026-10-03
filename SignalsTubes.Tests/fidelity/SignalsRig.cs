@@ -56,6 +56,7 @@ public sealed class SignalsRig
     private readonly List<Action<float>> gameTicks = new();
     private readonly List<(NodePos control, NodePos switched)> controls = new();   // valve grids, actuators
     private readonly IServerWorldAccessor world;
+    public IWorldAccessor World => world;
 
     public SignalsRig()
     {
@@ -106,6 +107,9 @@ public sealed class SignalsRig
 
     // ---- placing devices
 
+    /// <summary>Behavior properties: n source nodes at output 0, like a socket's pins.</summary>
+    public static string SourceNodes(int n) => Nodes(Enumerable.Range(0, n).Select(i => Source(i, 0)).ToArray()) + "}";
+
     private static string Nodes(params string[] nodes) => "{\"signalNodes\":[" + string.Join(",", nodes) + "]";
     private static string Plain(int index) => "{\"index\":" + index + ",\"isSource\":false}";
     private static string Source(int index, int output) => "{\"index\":" + index + ",\"isSource\":true,\"output\":" + output + "}";
@@ -113,7 +117,8 @@ public sealed class SignalsRig
     private static object Internal(string typeName) =>
         Activator.CreateInstance(SignalsAssembly.GetType("signals.src.signalNetwork." + typeName, true), true);
 
-    private BlockPos Place(BlockPos pos, Block block, string code, BlockEntity be, System.Func<BlockEntity, BlockEntityBehavior> behavior, string properties, params (string, string)[] variants)
+    /// <summary>Any block entity with one Signals behavior, for devices of other mods.</summary>
+    public BlockPos Place(BlockPos pos, Block block, string code, BlockEntity be, System.Func<BlockEntity, BlockEntityBehavior> behavior, string properties, params (string, string)[] variants)
     {
         if (entities.ContainsKey(pos)) throw new InvalidOperationException("Position taken: " + pos);
         block.Code = new AssetLocation(code);
@@ -145,8 +150,7 @@ public sealed class SignalsRig
             tree.SetItemstack("programTube", tube);
             be.FromTreeAttributes(tree, world);
         }
-        return Place(pos, block, "signalstubes:tubesocket-north-down", be, e => new BEBehaviorSignalConnector(e),
-            Nodes(Enumerable.Range(0, 8).Select(i => Source(i, 0)).ToArray()) + "}");
+        return Place(pos, block, "signalstubes:tubesocket-north-down", be, e => new BEBehaviorSignalConnector(e), SourceNodes(8));
     }
 
     public BlockPos SourceBlock(BlockPos pos, int output = 15) =>
