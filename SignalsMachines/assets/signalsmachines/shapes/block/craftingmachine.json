@@ -3502,93 +3502,6 @@
       "renderPass": 0
     },
     {
-      "name": "grid",
-      "from": [
-        4.25,
-        18.732,
-        4.25
-      ],
-      "to": [
-        11.75,
-        19.732,
-        11.75
-      ],
-      "rotationOrigin": [
-        8,
-        19.232,
-        8
-      ],
-      "faces": {
-        "north": {
-          "texture": "#castiron",
-          "uv": [
-            0,
-            0,
-            7.5,
-            1
-          ],
-          "autoUv": false,
-          "enabled": true
-        },
-        "east": {
-          "texture": "#castiron",
-          "uv": [
-            0,
-            0,
-            7.5,
-            1
-          ],
-          "autoUv": false,
-          "enabled": true
-        },
-        "south": {
-          "texture": "#castiron",
-          "uv": [
-            0,
-            0,
-            7.5,
-            1
-          ],
-          "autoUv": false,
-          "enabled": true
-        },
-        "west": {
-          "texture": "#castiron",
-          "uv": [
-            0,
-            0,
-            7.5,
-            1
-          ],
-          "autoUv": false,
-          "enabled": true
-        },
-        "up": {
-          "texture": "#crafting-grid",
-          "uv": [
-            0,
-            0,
-            7.5,
-            7.5
-          ],
-          "autoUv": false,
-          "enabled": true
-        },
-        "down": {
-          "texture": "#castiron",
-          "uv": [
-            0,
-            0,
-            7.5,
-            7.5
-          ],
-          "autoUv": false,
-          "enabled": true
-        }
-      },
-      "renderPass": 0
-    },
-    {
       "name": "crystal_housing",
       "from": [
         0,
@@ -5664,192 +5577,6 @@
       "renderPass": 0
     },
     {
-      "name": "input_axle",
-      "from": [
-        0,
-        0,
-        0
-      ],
-      "to": [
-        0,
-        0,
-        0
-      ],
-      "faces": {},
-      "rotationOrigin": [
-        8,
-        8,
-        0
-      ],
-      "renderPass": 0,
-      "children": [
-        {
-          "name": "input_axle_horizontal",
-          "from": [
-            6,
-            7,
-            0
-          ],
-          "to": [
-            10,
-            9,
-            4.5
-          ],
-          "renderPass": 0,
-          "faces": {
-            "north": {
-              "texture": "#axle-metal",
-              "uv": [
-                0,
-                0,
-                4,
-                2
-              ],
-              "enabled": true,
-              "autoUv": false
-            },
-            "east": {
-              "texture": "#axle-metal",
-              "uv": [
-                0,
-                0,
-                4.5,
-                2
-              ],
-              "enabled": true,
-              "autoUv": false
-            },
-            "south": {
-              "texture": "#axle-metal",
-              "uv": [
-                0,
-                0,
-                4,
-                2
-              ],
-              "enabled": true,
-              "autoUv": false
-            },
-            "west": {
-              "texture": "#axle-metal",
-              "uv": [
-                0,
-                0,
-                4.5,
-                2
-              ],
-              "enabled": true,
-              "autoUv": false
-            },
-            "up": {
-              "texture": "#axle-metal",
-              "uv": [
-                0,
-                0,
-                4,
-                4.5
-              ],
-              "enabled": true,
-              "autoUv": false
-            },
-            "down": {
-              "texture": "#axle-metal",
-              "uv": [
-                0,
-                0,
-                4,
-                4.5
-              ],
-              "enabled": true,
-              "autoUv": false
-            }
-          }
-        },
-        {
-          "name": "input_axle_vertical",
-          "from": [
-            7,
-            6,
-            0.01
-          ],
-          "to": [
-            9,
-            10,
-            4.49
-          ],
-          "renderPass": 0,
-          "faces": {
-            "north": {
-              "texture": "#axle-metal",
-              "uv": [
-                0,
-                0,
-                2,
-                4
-              ],
-              "enabled": true,
-              "autoUv": false
-            },
-            "east": {
-              "texture": "#axle-metal",
-              "uv": [
-                0,
-                0,
-                4.48,
-                4
-              ],
-              "enabled": true,
-              "autoUv": false
-            },
-            "south": {
-              "texture": "#axle-metal",
-              "uv": [
-                0,
-                0,
-                2,
-                4
-              ],
-              "enabled": true,
-              "autoUv": false
-            },
-            "west": {
-              "texture": "#axle-metal",
-              "uv": [
-                0,
-                0,
-                4.48,
-                4
-              ],
-              "enabled": true,
-              "autoUv": false
-            },
-            "up": {
-              "texture": "#axle-metal",
-              "uv": [
-                0,
-                0,
-                2,
-                4.48
-              ],
-              "enabled": true,
-              "autoUv": false
-            },
-            "down": {
-              "texture": "#axle-metal",
-              "uv": [
-                0,
-                0,
-                2,
-                4.48
-              ],
-              "enabled": true,
-              "autoUv": false
-            }
-          }
-        }
-      ]
-    },
-    {
       "name": "gearbox",
       "from": [
         5,
@@ -5858,7 +5585,7 @@
       ],
       "to": [
         11,
-        13.25,
+        12.5,
         8
       ],
       "renderPass": 0,
@@ -5869,7 +5596,7 @@
             0,
             0,
             6,
-            12.25
+            11.5
           ],
           "enabled": true,
           "autoUv": false
@@ -5880,7 +5607,7 @@
             8,
             0,
             12.8,
-            12.25
+            11.5
           ],
           "enabled": true,
           "autoUv": false
@@ -5891,7 +5618,7 @@
             0,
             0,
             6,
-            12.25
+            11.5
           ],
           "enabled": true,
           "autoUv": false
@@ -5902,18 +5629,7 @@
             8,
             0,
             12.8,
-            12.25
-          ],
-          "enabled": true,
-          "autoUv": false
-        },
-        "up": {
-          "texture": "#castiron",
-          "uv": [
-            0,
-            0,
-            6,
-            4.8
+            11.5
           ],
           "enabled": true,
           "autoUv": false

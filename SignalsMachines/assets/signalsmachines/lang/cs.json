@@ -24,5 +24,6 @@
   "side-short-north": "S",
   "side-short-east": "V",
   "side-short-south": "J",
-  "side-short-west": "Z"
+  "side-short-west": "Z",
+  "machine-drive": "Pohon: rychlost sítě {0} %, deska {1} %"
 }

@@ -3,6 +3,7 @@ using SignalsTubes.src.programtube;
 using Vintagestory.API.Common;
 using Vintagestory.API.MathTools;
 using Vintagestory.GameContent;
+using Vintagestory.GameContent.Mechanics;
 using Vintagestory.API.Client;
 
 namespace SignalsMachines.src.craftingmachine
@@ -12,7 +13,7 @@ namespace SignalsMachines.src.craftingmachine
     /// manages its upper proxy, including placement, breaking and creative picking.
     /// Selection boxes: 0-7 the Signals pins (anchors from the blocktype), 8 the tube socket, then the body.
     /// </summary>
-    public class BlockCraftingMachine : BlockConnection, IMultiBlockColSelBoxes, IMultiBlockInteract
+    public class BlockCraftingMachine : BlockConnection, IMultiBlockColSelBoxes, IMultiBlockInteract, IMechanicalPowerBlock
     {
         public const int PinCount = BECraftingMachine.PinCount;
         public const int SocketBox = PinCount;
@@ -20,7 +21,7 @@ namespace SignalsMachines.src.craftingmachine
         private Cuboidf[] emptySocketBoxes;
         private Cuboidf[] occupiedSocketBoxes;
         public float RotationRadians => RotationDegrees * GameMath.DEG2RAD;
-        private int RotationDegrees => Variant["side"] switch { "east" => 270, "south" => 180, "west" => 90, _ => 0 };
+        public int RotationDegrees => Variant["side"] switch { "east" => 270, "south" => 180, "west" => 90, _ => 0 };
 
         public override void OnLoaded(ICoreAPI api)
         {
@@ -66,6 +67,32 @@ namespace SignalsMachines.src.craftingmachine
         public WorldInteraction[] MBGetPlacedBlockInteractionHelp(IWorldAccessor world, BlockSelection selection, IPlayer player, Vec3i offset) => Array.Empty<WorldInteraction>();
         public BlockSounds MBGetSounds(IBlockAccessor accessor, BlockSelection selection, ItemStack stack, Vec3i offset) => Sounds;
 
+        // ---- mechanical power: the input axle on the model's north face, turned with the block
+
+        /// <summary>World side the input axle sticks out of.</summary>
+        public BlockFacing AxleFacing => SideOf(new Cuboidf(7/16f, .5f, 0, 9/16f, .55f, 1/16f));
+
+        private BlockFacing SideOf(Cuboidf modelBox)
+        {
+            var box = modelBox.RotatedCopy(0, RotationDegrees, 0, new Vec3d(.5, .5, .5));
+            double dx = (box.X1 + box.X2) / 2 - .5, dz = (box.Z1 + box.Z2) / 2 - .5;
+            return Math.Abs(dx) > Math.Abs(dz) ? (dx < 0 ? BlockFacing.WEST : BlockFacing.EAST) : (dz < 0 ? BlockFacing.NORTH : BlockFacing.SOUTH);
+        }
+
+        public bool HasMechPowerConnectorAt(IWorldAccessor world, BlockPos pos, BlockFacing face, BlockMPBase forBlock) => face == AxleFacing;
+        public void DidConnectAt(IWorldAccessor world, BlockPos pos, BlockFacing face) { }
+        public MechanicalNetwork GetNetwork(IWorldAccessor world, BlockPos pos) =>
+            world.BlockAccessor.GetBlockEntity(pos)?.GetBehavior<BEBehaviorMPBase>()?.Network;
+
+        public override bool DoPlaceBlock(IWorldAccessor world, IPlayer byPlayer, BlockSelection blockSel, ItemStack byItemStack)
+        {
+            bool placed = base.DoPlaceBlock(world, byPlayer, blockSel, byItemStack);
+            // an axle already waiting at the input: join its network
+            if (placed && world.Side == EnumAppSide.Server)
+                world.BlockAccessor.GetBlockEntity(blockSel.Position)?.GetBehavior<BEBehaviorMPBase>()?.tryConnect(AxleFacing);
+            return placed;
+        }
+
         public override bool OnBlockInteractStart(IWorldAccessor world, IPlayer player, BlockSelection selection)
         {
             if (selection.SelectionBoxIndex != SocketBox)
@@ -110,12 +137,7 @@ namespace SignalsMachines.src.craftingmachine
         }
 
         /// <summary>World side of a door: west/east in the model, turned with the block.</summary>
-        public BlockFacing DoorSide(int pin)
-        {
-            var box = new Cuboidf(pin == 4 ? 0 : 15/16f, .5f, 7/16f, pin == 4 ? 1/16f : 1, .55f, 9/16f).RotatedCopy(0, RotationDegrees, 0, new Vec3d(.5, .5, .5));
-            double dx = (box.X1 + box.X2) / 2 - .5, dz = (box.Z1 + box.Z2) / 2 - .5;
-            return Math.Abs(dx) > Math.Abs(dz) ? (dx < 0 ? BlockFacing.WEST : BlockFacing.EAST) : (dz < 0 ? BlockFacing.NORTH : BlockFacing.SOUTH);
-        }
+        public BlockFacing DoorSide(int pin) => SideOf(new Cuboidf(pin == 4 ? 0 : 15/16f, .5f, 7/16f, pin == 4 ? 1/16f : 1, .55f, 9/16f));
 
         public override WorldInteraction[] GetPlacedBlockInteractionHelp(IWorldAccessor world, BlockSelection selection, IPlayer player)
         {

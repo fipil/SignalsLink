@@ -1,0 +1,275 @@
+{
+  "editor": {
+    "allAngles": true,
+    "entityTextureMode": false
+  },
+  "textureWidth": 16,
+  "textureHeight": 16,
+  "textureSizes": {
+    "iron": [
+      16,
+      16
+    ],
+    "terminal": [
+      16,
+      16
+    ],
+    "details": [
+      32,
+      32
+    ],
+    "castiron": [
+      16,
+      16
+    ],
+    "castiron-relief": [
+      80,
+      48
+    ],
+    "glass": [
+      16,
+      16
+    ],
+    "axle-metal": [
+      16,
+      16
+    ],
+    "crafting-grid": [
+      8,
+      8
+    ],
+    "base-oak": [
+      16,
+      16
+    ],
+    "foot-rivet": [
+      16,
+      16
+    ],
+    "gearbox-cover": [
+      32,
+      16
+    ],
+    "back-frame": [
+      16,
+      16
+    ],
+    "leg-frame": [
+      16,
+      16
+    ],
+    "socket-floor": [
+      16,
+      16
+    ],
+    "pintop": [
+      16,
+      16
+    ]
+  },
+  "textures": {
+    "iron": "block/iron",
+    "terminal": "block/normal3",
+    "details": "block/details",
+    "castiron": "block/castironbrown",
+    "castiron-relief": "block/castironbrown-machine-centered",
+    "glass": "block/glass-plain",
+    "axle-metal": "block/axle-iron",
+    "crafting-grid": "block/crafting-grid",
+    "base-oak": "block/base-oak",
+    "foot-rivet": "block/foot-rivet-iron",
+    "gearbox-cover": "block/gearbox-cover",
+    "back-frame": "block/back-frame",
+    "leg-frame": "block/leg-frame",
+    "socket-floor": "block/socket-floor",
+    "pintop": "block/rustycolored"
+  },
+  "elements": [
+    {
+      "name": "input_axle",
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        0,
+        0,
+        0
+      ],
+      "faces": {},
+      "rotationOrigin": [
+        8,
+        8,
+        0
+      ],
+      "renderPass": 0,
+      "children": [
+        {
+          "name": "input_axle_horizontal",
+          "from": [
+            6,
+            7,
+            0
+          ],
+          "to": [
+            10,
+            9,
+            4.5
+          ],
+          "renderPass": 0,
+          "faces": {
+            "north": {
+              "texture": "#axle-metal",
+              "uv": [
+                0,
+                0,
+                4,
+                2
+              ],
+              "enabled": true,
+              "autoUv": false
+            },
+            "east": {
+              "texture": "#axle-metal",
+              "uv": [
+                0,
+                0,
+                4.5,
+                2
+              ],
+              "enabled": true,
+              "autoUv": false
+            },
+            "south": {
+              "texture": "#axle-metal",
+              "uv": [
+                0,
+                0,
+                4,
+                2
+              ],
+              "enabled": true,
+              "autoUv": false
+            },
+            "west": {
+              "texture": "#axle-metal",
+              "uv": [
+                0,
+                0,
+                4.5,
+                2
+              ],
+              "enabled": true,
+              "autoUv": false
+            },
+            "up": {
+              "texture": "#axle-metal",
+              "uv": [
+                0,
+                0,
+                4,
+                4.5
+              ],
+              "enabled": true,
+              "autoUv": false
+            },
+            "down": {
+              "texture": "#axle-metal",
+              "uv": [
+                0,
+                0,
+                4,
+                4.5
+              ],
+              "enabled": true,
+              "autoUv": false
+            }
+          }
+        },
+        {
+          "name": "input_axle_vertical",
+          "from": [
+            7,
+            6,
+            0.01
+          ],
+          "to": [
+            9,
+            10,
+            4.49
+          ],
+          "renderPass": 0,
+          "faces": {
+            "north": {
+              "texture": "#axle-metal",
+              "uv": [
+                0,
+                0,
+                2,
+                4
+              ],
+              "enabled": true,
+              "autoUv": false
+            },
+            "east": {
+              "texture": "#axle-metal",
+              "uv": [
+                0,
+                0,
+                4.48,
+                4
+              ],
+              "enabled": true,
+              "autoUv": false
+            },
+            "south": {
+              "texture": "#axle-metal",
+              "uv": [
+                0,
+                0,
+                2,
+                4
+              ],
+              "enabled": true,
+              "autoUv": false
+            },
+            "west": {
+              "texture": "#axle-metal",
+              "uv": [
+                0,
+                0,
+                4.48,
+                4
+              ],
+              "enabled": true,
+              "autoUv": false
+            },
+            "up": {
+              "texture": "#axle-metal",
+              "uv": [
+                0,
+                0,
+                2,
+                4.48
+              ],
+              "enabled": true,
+              "autoUv": false
+            },
+            "down": {
+              "texture": "#axle-metal",
+              "uv": [
+                0,
+                0,
+                2,
+                4.48
+              ],
+              "enabled": true,
+              "autoUv": false
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

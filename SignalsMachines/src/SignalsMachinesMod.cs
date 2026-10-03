@@ -24,6 +24,7 @@ namespace SignalsMachines.src
             base.Start(api);
             api.RegisterBlockClass("CraftingMachine", typeof(BlockCraftingMachine));
             api.RegisterBlockEntityClass("CraftingMachine", typeof(BECraftingMachine));
+            api.RegisterBlockEntityBehaviorClass("MPMachineAxle", typeof(BEBehaviorMPMachineAxle));
         }
 
         public override void StartClientSide(ICoreClientAPI api)

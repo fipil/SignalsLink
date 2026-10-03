@@ -35,7 +35,8 @@ public class ProgramTubeTests
         bool Give(ItemStack stack) { returned = stack; return true; }
         var player = PlayerFake.WithInventory(inventory);
         var world = World(EnumAppSide.Server);
-        var api = Fake<ICoreAPI>((m, a) => m.Name switch { "get_World" => world, "get_Side" => EnumAppSide.Server, _ => null });
+        var events = Fake<IEventAPI>((m, a) => null);
+        var api = Fake<ICoreAPI>((m, a) => m.Name switch { "get_World" => world, "get_Side" => EnumAppSide.Server, "get_Event" => events, _ => null });
         var machine = new TestMachine();
         machine.Initialize(api);
         Assert.True(machine.Interact(player));
@@ -106,7 +107,8 @@ public class ProgramTubeTests
             if (m.Name == "PlaySoundAt") clicks++;
             return m.Name switch { "get_Side" => side, "get_BlockAccessor" => accessor, "get_Claims" => claims, _ => null };
         });
-        api = Fake<ICoreAPI>((m, a) => m.Name switch { "get_World" => world, "get_Side" => side, _ => null });
+        var events = Fake<IEventAPI>((m, a) => null);
+        api = Fake<ICoreAPI>((m, a) => m.Name switch { "get_World" => world, "get_Side" => side, "get_Event" => events, _ => null });
         var block = new BlockCraftingMachine { EntityClass = "CraftingMachine" };
         bool result = block.OnBlockInteractStart(world, player, new BlockSelection { Position = new BlockPos(1,2,3), SelectionBoxIndex = BlockCraftingMachine.SocketBox });
         Assert.Equal(allowed, result);

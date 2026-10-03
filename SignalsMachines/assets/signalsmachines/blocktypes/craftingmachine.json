@@ -405,6 +405,15 @@
           }
         ]
       }
+    },
+    {
+      "name": "MPMachineAxle",
+      "properties": {
+        "resistance": 0.1,
+        "mechPartShape": {
+          "base": "signalsmachines:block/craftingmachine-axle"
+        }
+      }
     }
   ]
 }

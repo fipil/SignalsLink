@@ -24,5 +24,6 @@
   "side-short-north": "N",
   "side-short-east": "E",
   "side-short-south": "S",
-  "side-short-west": "W"
+  "side-short-west": "W",
+  "machine-drive": "Drive: network speed {0} %, plate {1} %"
 }

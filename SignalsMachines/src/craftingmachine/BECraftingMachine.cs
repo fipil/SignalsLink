@@ -7,6 +7,7 @@ using Vintagestory.API.Common;
 using Vintagestory.API.Config;
 using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
+using Vintagestory.GameContent.Mechanics;
 
 namespace SignalsMachines.src.craftingmachine;
 
@@ -33,6 +34,12 @@ public class BECraftingMachine : BlockEntity
     private MeshData tubeMesh;
     private MachineInputs inputs;
     private byte state;
+    private BEBehaviorMPConsumer mpc;
+    private PlateRenderer plateRenderer;
+    private float plateSpeed, syncedPlateSpeed, networkSpeed;
+    private double lastPlateSync;
+    /// <summary>Speed of the mechanical network at the axle; tests substitute it.</summary>
+    public Func<float> SpeedSource;
 
     public bool HasTube => tube != null;
     public ItemStack Tube => tube;
@@ -40,6 +47,11 @@ public class BECraftingMachine : BlockEntity
     public bool TubeControls => program != null;
     public MachineInputs Inputs => inputs;
     public byte State => state;
+    /// <summary>Plate speed in network units (clutch, inertia).</summary>
+    public float PlateSpeed => plateSpeed;
+    public float NetworkSpeed => networkSpeed;
+    /// <summary>The plate turns fast enough for the machine to work.</summary>
+    public bool PlateRunning => PlateDrive.Running(plateSpeed, networkSpeed);
 
     public override void Initialize(ICoreAPI api)
     {
@@ -47,15 +59,41 @@ public class BECraftingMachine : BlockEntity
         tube?.ResolveBlockOrItem(api.World);
         LoadProgram();
         RebuildMesh();
+        mpc = GetBehavior<BEBehaviorMPConsumer>();
+        SpeedSource ??= () => mpc?.Network == null ? 0 : mpc.TrueSpeed;
         if (api.Side == EnumAppSide.Server)
         {
             signalMod = api.ModLoader?.GetModSystem<SignalNetworkMod>();
             signalMod?.RegisterSignalTickListener(OnSignalTick);
+            RegisterGameTickListener(OnMechanicsTick, 100);
+        }
+        else if (api is ICoreClientAPI capi && Block is BlockCraftingMachine)   // not when the block is already gone
+        {
+            plateRenderer = new PlateRenderer(capi, Pos, PlateMesh(capi));
+            UpdatePlatePicture();
         }
     }
 
-    public override void OnBlockUnloaded() { base.OnBlockUnloaded(); signalMod?.DisposeSignalTickListener(OnSignalTick); }
-    public override void OnBlockRemoved() { base.OnBlockRemoved(); signalMod?.DisposeSignalTickListener(OnSignalTick); }
+    public override void OnBlockUnloaded() { base.OnBlockUnloaded(); signalMod?.DisposeSignalTickListener(OnSignalTick); plateRenderer?.Dispose(); }
+    public override void OnBlockRemoved() { base.OnBlockRemoved(); signalMod?.DisposeSignalTickListener(OnSignalTick); plateRenderer?.Dispose(); }
+
+    // ---- mechanics: clutch and plate
+
+    /// <summary>Server, every 0.1 s: the plate follows the network speed through the clutch, with inertia.</summary>
+    public void OnMechanicsTick(float dt)
+    {
+        networkSpeed = SpeedSource();
+        float target = inputs.Clutch > 0 ? networkSpeed : 0;
+        plateSpeed = PlateDrive.Step(plateSpeed, target, dt);
+        // clients integrate the angle themselves; send the speed when it moved, or once a second while turning
+        double now = Api.World.ElapsedMilliseconds;
+        if (Math.Abs(plateSpeed - syncedPlateSpeed) > .005f || (plateSpeed > 0 && now - lastPlateSync > 1000))
+        {
+            syncedPlateSpeed = plateSpeed;
+            lastPlateSync = now;
+            MarkDirty();
+        }
+    }
 
     private void LoadProgram()
     {
@@ -127,6 +165,8 @@ public class BECraftingMachine : BlockEntity
         tree.SetBytes("inputs", new[] { inputs.Clutch, inputs.Crystal, inputs.Strength, inputs.DoorWest, inputs.DoorEast });
         tree.SetInt("state", state);
         tree.SetBool("tubeControls", program != null);
+        tree.SetFloat("plateSpeed", plateSpeed);
+        tree.SetFloat("networkSpeed", networkSpeed);
     }
 
     private bool tubeControlsSynced;   // client copy of TubeControls
@@ -140,6 +180,9 @@ public class BECraftingMachine : BlockEntity
         inputs = new MachineInputs(b[0], b[1], b[2], b[3], b[4]);
         state = (byte)tree.GetInt("state");
         tubeControlsSynced = tree.GetBool("tubeControls");
+        plateSpeed = tree.GetFloat("plateSpeed");
+        networkSpeed = tree.GetFloat("networkSpeed");
+        UpdatePlatePicture();
         if (Api is ICoreClientAPI)
         {
             RebuildMesh();
@@ -157,6 +200,7 @@ public class BECraftingMachine : BlockEntity
         string Side(int pin) => block == null ? "?" : Lang.Get("signalsmachines:side-short-" + block.DoorSide(pin).Code);
         dsc.AppendLine(Lang.Get("signalsmachines:machine-inputs", inputs.Clutch, inputs.Crystal, inputs.Strength, Side(4), inputs.DoorWest, Side(5), inputs.DoorEast));
         dsc.AppendLine(Lang.Get("signalsmachines:machine-state", state));
+        dsc.AppendLine(Lang.Get("signalsmachines:machine-drive", (int)(networkSpeed * 100), (int)(plateSpeed * 100)));
         if (tube != null) dsc.Append(ItemProgramTube.FullInfo(tube, Api.World));
     }
 
@@ -165,19 +209,35 @@ public class BECraftingMachine : BlockEntity
     private void RebuildMesh()
     {
         tubeMesh = null;
-        if (Api is not ICoreClientAPI capi || tube?.Collectible is not ItemProgramTube item) return;
+        if (Api is not ICoreClientAPI capi || tube?.Collectible is not ItemProgramTube item || Block is not BlockCraftingMachine block) return;
         MeshData mesh = item.BuildMesh(capi, tube, capi.Tesselator.GetTextureSource(Block));
         mesh.Scale(new Vec3f(), .5f, .5f, .5f);
         mesh.Translate(4f / 16, 1f / 16, 8f / 16);
-        mesh.Rotate(new Vec3f(.5f, .5f, .5f), 0, ((BlockCraftingMachine)Block).RotationRadians, 0);
+        mesh.Rotate(new Vec3f(.5f, .5f, .5f), 0, block.RotationRadians, 0);
         tubeMesh = mesh;
+    }
+
+    // The client turns the plate at the synced speed while the clutch is closed and brakes it into the
+    // home position itself once it opens, so the picture always comes to rest aligned with the grid.
+    private void UpdatePlatePicture()
+    {
+        if (plateRenderer == null) return;
+        if (inputs.Clutch > 0 && networkSpeed > PlateDrive.Still) plateRenderer.Drive(plateSpeed);
+        else plateRenderer.Release();
+    }
+
+    private MeshData PlateMesh(ICoreClientAPI capi)
+    {
+        var shape = capi.Assets.Get(new AssetLocation("signalsmachines", "shapes/block/craftingmachine-plate.json")).ToObject<Shape>();
+        capi.Tesselator.TesselateShape(Block, shape, out MeshData mesh, new Vec3f(0, ((BlockCraftingMachine)Block).RotationDegrees, 0));
+        return mesh;
     }
 
     public override bool OnTesselation(ITerrainMeshPool mesher, ITesselatorAPI tesselator)
     {
         var mesh = tubeMesh;
         if (mesh != null) mesher.AddMeshData(mesh.Clone());
-        return false; // Keep the ordinary block mesh, adding only the installed tube.
+        return false; // Keep the ordinary block mesh (axle and plate are rendered separately).
     }
 
     public override void OnBlockBroken(IPlayer byPlayer = null)
