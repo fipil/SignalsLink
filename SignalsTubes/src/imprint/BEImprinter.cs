@@ -93,7 +93,7 @@ public class BEImprinter : BlockEntity
         bool changed = false;
         foreach (var tool in new[] { plug, probe })
             if (tool.Out && Holder(tool) == null) { Revoke(tool); changed = true; }
-        if (socket != null && (Api.World.BlockAccessor.GetBlockEntity(socket) is not BETubeSocket || TooFar(socket))) { Unlink(); changed = true; }
+        if (socket != null && (Api.World.BlockAccessor.GetBlockEntity(socket) is not ITubeSocket || TooFar(socket))) { Unlink(); changed = true; }
         if (socket != null) changed |= Refresh();
         if (changed) MarkDirty(true);
     }
@@ -164,7 +164,7 @@ public class BEImprinter : BlockEntity
     {
         if (!plug.Out || player.PlayerUID != plug.Holder) return false;
         if (TooFar(socketPos)) { Say(player, "imprint-too-far"); return false; }
-        if (Api.World.BlockAccessor.GetBlockEntity(socketPos) is not BETubeSocket target) return false;
+        if (Api.World.BlockAccessor.GetBlockEntity(socketPos) is not ITubeSocket target) return false;
         Revoke(plug);
         socket = socketPos.Copy();
         target.SetImprinter(Pos);
@@ -184,7 +184,7 @@ public class BEImprinter : BlockEntity
 
     private void Unlink()
     {
-        if (socket != null && Api.World.BlockAccessor.GetBlockEntity(socket) is BETubeSocket target) target.SetImprinter(null);
+        if (socket != null && Api.World.BlockAccessor.GetBlockEntity(socket) is ITubeSocket target) target.SetImprinter(null);
         socket = null;
         draft = null;
         exposed.Clear();
@@ -296,7 +296,7 @@ public class BEImprinter : BlockEntity
             root = CircuitSimplifier.Simplify(result.Program);
             rootName = Lang.Get("signalstubes:schematic-network");
             foreach (var s in result.Soldered)
-                if (Api.World.BlockAccessor.GetBlockEntity(s.Pos) is BETubeSocket { HasTube: true } be)
+                if (Api.World.BlockAccessor.GetBlockEntity(s.Pos) is ITubeSocket { HasTube: true } be)
                 {
                     string id = be.Tube.Attributes.GetString(TubeProgram.IdKey);
                     if (id != null) refs[id] = new SchematicLevel.ReferenceInfo(TubeProgram.Author(be.Tube), TubeProgram.LockView(be.Tube), s.Name);
@@ -390,7 +390,7 @@ public class BEImprinter : BlockEntity
         // Soldering: the referenced tubes leave their sockets and travel inside the new tube.
         var consumed = new List<ItemStack>();
         foreach (var s in result.Soldered)
-            if (Api.World.BlockAccessor.GetBlockEntity(s.Pos) is BETubeSocket be && be.TakeTube() is ItemStack taken) consumed.Add(taken);
+            if (Api.World.BlockAccessor.GetBlockEntity(s.Pos) is ITubeSocket be && be.TakeTube() is ItemStack taken) consumed.Add(taken);
         var previous = TubeProgram.Soldered(tube, Api.World);   // re-imprinting a composite keeps what it already held
         TubeProgram.Set(tube, program, ProgramStore.Of(Api), player.PlayerUID, player.PlayerName, lockCopy || program.HasReferences, lockView);
         TubeProgram.SetSoldered(tube, previous.Concat(consumed));
@@ -476,8 +476,11 @@ public class BEImprinter : BlockEntity
         DisposeCables();
         if (socket != null)
         {
-            var end = BlockTubeSocket.PlugCableEnd(capi.World.BlockAccessor, socket);
-            plugCable = new CableRenderer(capi, PlugAnchor(), () => end, CableMesh.PlugCable, CableRenderer.WireTexture);
+            // the socket says where its plug head is; its entity may not be loaded here yet, so ask until it answers
+            Vec3d end = null;
+            var at = socket.Copy();
+            plugCable = new CableRenderer(capi, PlugAnchor(), () => end ??= (capi.World.BlockAccessor.GetBlockEntity(at) as ITubeSocket)?.PlugCableEnd(),
+                CableMesh.PlugCable, CableRenderer.WireTexture);
         }
         else if (plug.Out && plug.Holder == capi.World.Player.PlayerUID)
             plugCable = new CableRenderer(capi, PlugAnchor(), HandOf(capi, PlugCode), CableMesh.PlugCable, CableRenderer.WireTexture);

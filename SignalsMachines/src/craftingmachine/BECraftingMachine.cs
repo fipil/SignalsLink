@@ -39,9 +39,11 @@ public readonly record struct MachineInputs(byte Clutch, byte Crystal, byte Stre
 /// reads its inputs only from the tube's output pins, wires on those pins are ignored; the tube's own
 /// input pins still read the wires (and the state pin).
 /// </summary>
-public class BECraftingMachine : BlockEntityContainer, ISidedAutomation
+public class BECraftingMachine : BlockEntityContainer, ISidedAutomation, SignalsTubes.src.socket.ITubeSocket
 {
     public const int PinCount = 8, StatePin = 0, FirstInput = 1, LastInput = 5;
+    /// <summary>The socket sits where the socket block's would, moved 4 units towards the model's south.</summary>
+    public static readonly Vec3f SocketShift = new(0, 0, 4);
     public const int GridSize = 3, GridSlots = 9, ProductSlot = 9;
 
     private readonly InventoryGeneric inventory;
@@ -328,7 +330,33 @@ public class BECraftingMachine : BlockEntityContainer, ISidedAutomation
         return new(Out(1), Out(2), Out(3), Out(4), Out(5));
     }
 
-    // ---- socket
+    // ---- socket (also an imprinter's target: the plug goes in while no tube sits here)
+
+    private BlockPos imprinter;
+    public BlockPos Imprinter => imprinter;
+
+    public void SetImprinter(BlockPos pos)
+    {
+        imprinter = pos?.Copy();
+        RebuildMesh();
+        MarkDirty(true);
+    }
+
+    public ItemStack TakeTube()
+    {
+        var taken = tube;
+        tube = null;
+        LoadProgram();
+        MarkDirty(true);
+        return taken;
+    }
+
+    public Vec3d PlugCableEnd()
+    {
+        var local = new Cuboidf(8 / 16f, 7 / 16f, 12 / 16f, 8 / 16f, 7 / 16f, 12 / 16f)
+            .RotatedCopy(0, ((BlockCraftingMachine)Block).RotationDegrees, 0, new Vec3d(.5, .5, .5));
+        return Pos.ToVec3d().Add(local.MidX, local.MidY, local.MidZ);
+    }
 
     public bool Interact(IPlayer player)
     {
@@ -363,6 +391,7 @@ public class BECraftingMachine : BlockEntityContainer, ISidedAutomation
         base.ToTreeAttributes(tree);
         if (tube != null) tree.SetItemstack("programTube", tube);
         else tree.RemoveAttribute("programTube");
+        if (imprinter != null) tree.SetBytes("imprinter", Vintagestory.API.Util.SerializerUtil.Serialize(imprinter)); else tree.RemoveAttribute("imprinter");
         tree.SetBytes("inputs", new[] { inputs.Clutch, inputs.Crystal, inputs.Strength, inputs.DoorWest, inputs.DoorEast });
         tree.SetInt("state", state);
         tree.SetFloat("progress", process.Progress);
@@ -390,6 +419,7 @@ public class BECraftingMachine : BlockEntityContainer, ISidedAutomation
         base.FromTreeAttributes(tree, worldForResolving);
         tube = tree.GetItemstack("programTube");
         tube?.ResolveBlockOrItem(worldForResolving);
+        imprinter = tree.HasAttribute("imprinter") ? Vintagestory.API.Util.SerializerUtil.Deserialize<BlockPos>(tree.GetBytes("imprinter")) : null;
         savedSimState = tree.GetBytes("simState");
         var b = tree.GetBytes("inputs", new byte[5]);
         bool wasLit = Lit;
@@ -445,12 +475,29 @@ public class BECraftingMachine : BlockEntityContainer, ISidedAutomation
     private void RebuildMesh()
     {
         tubeMesh = null;
-        if (Api is not ICoreClientAPI capi || tube?.Collectible is not ItemProgramTube item || Block is not BlockCraftingMachine block) return;
-        MeshData mesh = item.BuildMesh(capi, tube, capi.Tesselator.GetTextureSource(Block));
-        mesh.Scale(new Vec3f(), .5f, .5f, .5f);
-        mesh.Translate(4f / 16, 1f / 16, 8f / 16);
+        if (Api is not ICoreClientAPI capi || Block is not BlockCraftingMachine block) return;
+        if (tube?.Collectible is ItemProgramTube item)
+        {
+            MeshData mesh = item.BuildMesh(capi, tube, capi.Tesselator.GetTextureSource(Block));
+            mesh.Scale(new Vec3f(), .5f, .5f, .5f);
+            mesh.Translate(4f / 16, 1f / 16, 8f / 16);
+            mesh.Rotate(new Vec3f(.5f, .5f, .5f), 0, block.RotationRadians, 0);
+            tubeMesh = mesh;
+        }
+        else if (imprinter != null) tubeMesh = PlugMesh(capi, block);
+    }
+
+    // The imprinter's plug head, borrowed from the socket block's shape and moved onto this socket.
+    private static MeshData PlugMesh(ICoreClientAPI capi, BlockCraftingMachine block)
+    {
+        var socketBlock = capi.World.GetBlock(new AssetLocation("signalstubes:tubesocket-north-down"));
+        if (socketBlock == null) return null;
+        var shape = capi.Assets.Get(new AssetLocation("signalstubes", "shapes/block/tubesocket.json")).ToObject<Shape>().Clone();
+        shape.Elements = shape.Elements.Where(e => e.Name.StartsWith("plug_")).ToArray();
+        capi.Tesselator.TesselateShape(socketBlock, shape, out MeshData mesh);
+        mesh.Translate(SocketShift.X / 16, SocketShift.Y / 16, SocketShift.Z / 16);
         mesh.Rotate(new Vec3f(.5f, .5f, .5f), 0, block.RotationRadians, 0);
-        tubeMesh = mesh;
+        return mesh;
     }
 
     // The client turns the plate at the synced speed while the clutch is closed and brakes it into the
@@ -461,6 +508,9 @@ public class BECraftingMachine : BlockEntityContainer, ISidedAutomation
         if (inputs.Clutch > 0 && networkSpeed > PlateDrive.Still) plateRenderer.Drive(plateSpeed);
         else plateRenderer.Release();
         plateRenderer.CrystalDown = inputs.Crystal > 0;
+        // full glow at the strength the batch asks for (or anything above it); without a batch at 9
+        int wanted = OccupiedCells > 0 ? OccupiedCells : 9;
+        plateRenderer.CrystalGlow = inputs.Strength == 0 ? 0 : Math.Min(1f, (float)inputs.Strength / wanted);
         plateRenderer.WestDoor.Set(DoorOpen(4));
         plateRenderer.EastDoor.Set(DoorOpen(5));
         // the ghost of the product: rebuilt only when the recipe's output changes, shown while crafting

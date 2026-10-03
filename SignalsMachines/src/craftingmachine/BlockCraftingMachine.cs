@@ -112,6 +112,23 @@ namespace SignalsMachines.src.craftingmachine
                 be = world.BlockAccessor.GetBlockEntity(selection.Position) as BECraftingMachine;
                 if (be == null) return false;
             }
+            // The imprinter's plug: in while the socket is empty, out again with an empty hand (as in the socket block).
+            var hand = player.InventoryManager.ActiveHotbarSlot;
+            if (SignalsTubes.src.imprint.ItemImprinterTool.IsPlug(hand.Itemstack))
+            {
+                if (be.HasTube) return false;
+                var imprinterPos = SignalsTubes.src.imprint.ItemImprinterTool.ImprinterOf(hand.Itemstack);
+                if (world.Side == EnumAppSide.Server && world.BlockAccessor.GetBlockEntity(imprinterPos) is SignalsTubes.src.imprint.BEImprinter imprinter)
+                    imprinter.LinkTo((Vintagestory.API.Server.IServerPlayer)player, selection.Position);
+                return true;
+            }
+            if (be.Imprinter != null)
+            {
+                if (!hand.Empty) return false;
+                if (world.Side == EnumAppSide.Server && world.BlockAccessor.GetBlockEntity(be.Imprinter) is SignalsTubes.src.imprint.BEImprinter imprinter)
+                    imprinter.UnplugToHand((Vintagestory.API.Server.IServerPlayer)player);
+                return true;
+            }
             return be.Interact(player);
         }
 
@@ -157,6 +174,10 @@ namespace SignalsMachines.src.craftingmachine
             if (selection.SelectionBoxIndex != SocketBox)
                 return base.GetPlacedBlockInteractionHelp(world, selection, player);
             var be = world.BlockAccessor.GetBlockEntity(selection.Position) as BECraftingMachine;
+            if (SignalsTubes.src.imprint.ItemImprinterTool.IsPlug(player.InventoryManager.ActiveHotbarSlot.Itemstack))
+                return new[] { new WorldInteraction { ActionLangCode = "signalstubes:socket-plug", MouseButton = EnumMouseButton.Right } };
+            if (be?.Imprinter != null)
+                return new[] { new WorldInteraction { ActionLangCode = "signalstubes:socket-unplug", MouseButton = EnumMouseButton.Right } };
             bool hasTube = be?.HasTube == true;
             var tube = world.GetItem(new AssetLocation("signalstubes:programtube-fire"));
             return new[] { new WorldInteraction {

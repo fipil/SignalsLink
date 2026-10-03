@@ -24,6 +24,9 @@ public sealed class PlateRenderer : IRenderer
     private readonly MeshRef plate, crystal, doorWest, doorEast;
     private float crystalLift = 1;   // 0 = lowered, 1 = raised
     public bool CrystalDown;
+    /// <summary>How brightly the crystal should glow, 0-1; the picture glides towards it.</summary>
+    public float CrystalGlow;
+    private float glow;
     public readonly DoorMotion WestDoor = new(), EastDoor = new();
     private readonly MultiTextureMeshRef[] items = new MultiTextureMeshRef[BECraftingMachine.GridSlots + 1];
     private readonly bool[] flat = new bool[BECraftingMachine.GridSlots + 1];
@@ -82,8 +85,32 @@ public sealed class PlateRenderer : IRenderer
         if (stack.Class == EnumItemClass.Block) capi.Tesselator.TesselateBlock(stack.Block, out mesh);
         else capi.Tesselator.TesselateItem(stack.Item, out mesh);
         flat[slot] = stack.Class == EnumItemClass.Item && stack.Item.Shape == null;   // a plain texture item lies flat; shaped items stand as modelled
+        if (!flat[slot]) Ground(mesh, slot == BECraftingMachine.ProductSlot ? 1 : ShapedFit);   // the product keeps the ghost's full size
         items[slot] = capi.Render.UploadMultiTextureMesh(mesh);
     }
+
+    // Shaped items are modelled for the hand, in all sizes and often hanging above their origin:
+    // set them down on the floor, centred, and fit the largest side to the cell.
+    private static void Ground(MeshData mesh, float fitTo)
+    {
+        if (mesh.VerticesCount == 0) return;
+        float minX = float.MaxValue, minY = float.MaxValue, minZ = float.MaxValue, maxX = float.MinValue, maxY = float.MinValue, maxZ = float.MinValue;
+        for (int i = 0; i < mesh.VerticesCount; i++)
+        {
+            float x = mesh.xyz[i * 3], y = mesh.xyz[i * 3 + 1], z = mesh.xyz[i * 3 + 2];
+            minX = Math.Min(minX, x); maxX = Math.Max(maxX, x);
+            minY = Math.Min(minY, y); maxY = Math.Max(maxY, y);
+            minZ = Math.Min(minZ, z); maxZ = Math.Max(maxZ, z);
+        }
+        float size = Math.Max(maxX - minX, Math.Max(maxY - minY, maxZ - minZ));
+        if (size <= 0) return;
+        mesh.Translate(.5f - (minX + maxX) / 2, -minY, .5f - (minZ + maxZ) / 2);
+        float fit = fitTo / size;
+        mesh.Scale(new Vec3f(.5f, 0, .5f), fit, fit, fit);
+    }
+
+    /// <summary>Shaped items fill this much of their cell (the product scales the same way).</summary>
+    public const float ShapedFit = 2f / 3;
 
     /// <summary>What is being made: shown as a translucent ghost while Materialised is above zero; null removes it.</summary>
     public void SetGhost(ItemStack stack)
@@ -94,6 +121,7 @@ public sealed class PlateRenderer : IRenderer
         MeshData mesh;
         if (stack.Class == EnumItemClass.Block) capi.Tesselator.TesselateBlock(stack.Block, out mesh);
         else capi.Tesselator.TesselateItem(stack.Item, out mesh);
+        if (!(stack.Class == EnumItemClass.Item && stack.Item.Shape == null)) Ground(mesh, 1);   // exactly as the product will hang
         ghost = capi.Render.UploadMultiTextureMesh(mesh);
     }
 
@@ -109,6 +137,7 @@ public sealed class PlateRenderer : IRenderer
         }
         else angle = (angle + speed * dt * 50f) % GameMath.TWOPI;
         crystalLift = GameMath.Clamp(crystalLift + (CrystalDown ? -dt : dt) / CrystalSeconds, 0, 1);
+        glow += (CrystalGlow - glow) * Math.Min(1, dt * 3);
         WestDoor.Advance(dt);
         EastDoor.Advance(dt);
     }
@@ -150,7 +179,10 @@ public sealed class PlateRenderer : IRenderer
             .Translate(.5f, 0, .5f).RotateY(blockRotation).Translate(-.5f, 0, -.5f);
         prog.Tex2D = capi.BlockTextureAtlas.AtlasTextures[0].TextureId;
         prog.ModelMatrix = model.Values;
+        prog.ExtraGlow = (int)(255 * glow);   // the crystal glows with the strength it gets
+        prog.RgbaGlowIn = new Vec4f(0.5f, 1f, 1f, 0.6f * glow);
         render.RenderMesh(crystal);
+        prog.ExtraGlow = 0;
 
         // the doors: pushed out along their normal (model west = -x, east = +x) and dropped, turned with the block
         foreach (var (door, mesh, nx) in new[] { (WestDoor, doorWest, -1f), (EastDoor, doorEast, 1f) })

@@ -121,6 +121,32 @@ public class MachineSignalsTests
         Assert.Equal(pin5, block.DoorSide(5).Code);
     }
 
+    // The imprinter reads the circuit hanging on the machine's own pins: what drives the machine comes
+    // out as output pins, the state pin the circuit listens to as an input pin.
+    [Fact]
+    public void ImprintingFromTheMachineSocketGetsTheRolesRight()
+    {
+        var rig = new SignalsRig();
+        Machine(rig, At(0));
+        var source = rig.SourceBlock(At(1), 9);
+        var valve = rig.Valve(At(2));
+        rig.Wire(source, 0, At(0), 1);        // clutch straight from the source
+        rig.Wire(At(0), 0, valve, 0);         // the valve is controlled by the machine's state
+        rig.Wire(source, 0, valve, 1);
+        rig.Wire(valve, 2, At(0), 3);         // strength through the valve
+        var read = SignalsTubes.src.imprint.CircuitReader.Read(new SignalsTubes.src.imprint.SignalsCircuitWorld(rig.Api), At(0));
+        Assert.True(read.Ok);
+        var roles = read.Program.Pins.OrderBy(p => p.Index).Select(p => (p.Index, p.Role)).ToList();
+        Assert.Equal(new[] { (0, PinRole.Input), (1, PinRole.Output), (3, PinRole.Output) }, roles);
+
+        // the tube written from it drives a machine the same way the wires did
+        var rig2 = new SignalsRig();
+        var machine = Machine(rig2, At(0), rig2.Tube(read.Program, "auto"));
+        for (int i = 0; i < 4; i++) rig2.Tick();
+        Assert.True(machine.TubeControls);
+        Assert.Equal(9, machine.Inputs.Clutch);
+    }
+
     [Fact]
     public void AutomationComesInOnlyThroughAnOpenDoor()
     {

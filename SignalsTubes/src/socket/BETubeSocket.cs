@@ -15,8 +15,9 @@ namespace SignalsTubes.src.socket;
 /// steps once, the output pins are driven. Pins are Signals nodes provided by BEBehaviorSignalConnector;
 /// all eight are sources with output 0, so unused and input pins simply follow the wire.
 /// </summary>
-public class BETubeSocket : BlockEntity
+public class BETubeSocket : BlockEntity, ITubeSocket
 {
+    public Vec3d PlugCableEnd() => BlockTubeSocket.PlugCableEnd(Api.World.BlockAccessor, Pos);
     private const string TubeKey = "programTube";
     private const string LitKey = "lit";
 
