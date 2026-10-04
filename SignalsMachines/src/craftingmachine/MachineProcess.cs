@@ -20,6 +20,8 @@ public sealed class MachineProcess
 
     public byte State { get; private set; }
     public float Progress { get; private set; }
+    /// <summary>Why the last step saw an overload condition, or null (for traces).</summary>
+    public string LastReason { get; private set; }
     public float Duration(int cells) => BaseSeconds + SecondsPerCell * cells;
     public bool InError => State >= Overloaded && State != OutputFull;
 
@@ -35,6 +37,7 @@ public sealed class MachineProcess
         // too much for the batch on the plate; not while the finished product waits (the batch is gone),
         // and not over an empty plate (nothing to burn - the leak through an open door punishes that)
         bool tooStrong = inp.Crystal > 0 && s.Cells > 0 && s.ProductEmpty && inp.Strength > s.Cells + 1;
+        LastReason = tooSteep ? $"steep: strength {lastStrength} -> {inp.Strength}" : tooStrong ? $"too strong: strength {inp.Strength} over {s.Cells} cells" : null;
         lastStrength = inp.Strength;
         first = false;
         if (State != Overloaded && (tooSteep || tooStrong))

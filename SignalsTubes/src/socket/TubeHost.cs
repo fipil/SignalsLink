@@ -54,6 +54,15 @@ public sealed class TubeHost
 
     private readonly byte[] lastIn = new byte[CircuitProgram.MaxPins], lastOut = new byte[CircuitProgram.MaxPins];
 
+    /// <summary>The last step on one line: in[pin=level ...] out[pin=level ...] (for traces).</summary>
+    public string DescribeShort()
+    {
+        if (program == null) return "tube: none";
+        var pins = program.Pins.OrderBy(p => p.Index).ToList();
+        return "tube in[" + string.Join(" ", pins.Where(p => p.Role != PinRole.Output).Select(p => $"{p.Index + 1}={lastIn[p.Index]}"))
+            + "] out[" + string.Join(" ", pins.Where(p => p.Role == PinRole.Output).Select(p => $"{p.Index + 1}={lastOut[p.Index]}")) + "]";
+    }
+
     /// <summary>What the tube saw and gave on each of its pins in the last step (for /tubes diag).</summary>
     public string Describe()
     {

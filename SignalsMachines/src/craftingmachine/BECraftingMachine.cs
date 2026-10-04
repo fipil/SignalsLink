@@ -266,13 +266,14 @@ public class BECraftingMachine : BlockEntityContainer, ISidedAutomation, Signals
         }
     }
 
-    public override void OnBlockUnloaded() { base.OnBlockUnloaded(); signalMod?.DisposeSignalTickListener(OnSignalTick); plateRenderer?.Dispose(); effects?.Dispose(); }
+    public override void OnBlockUnloaded() { base.OnBlockUnloaded(); signalMod?.DisposeSignalTickListener(OnSignalTick); plateRenderer?.Dispose(); effects?.Dispose(); trace?.Dispose(); trace = null; }
     public override void OnBlockRemoved()
     {
         base.OnBlockRemoved();
         signalMod?.DisposeSignalTickListener(OnSignalTick);
         plateRenderer?.Dispose();
         effects?.Dispose();
+        trace?.Dispose(); trace = null;
         if (Lit) Api.World.BlockAccessor.RemoveBlockLight(BlockCraftingMachine.CrystalLight, Pos);
     }
 
@@ -284,7 +285,12 @@ public class BECraftingMachine : BlockEntityContainer, ISidedAutomation, Signals
         // the leak below follows the pins alone, as the doors are no longer open then
         bool doorsClosed = !DoorOpen(4) && !DoorOpen(5);
         var sense = new Sense(inputs, DoorShut(4) && DoorShut(5), OccupiedCells, Recipe != null, inventory[ProductSlot].Empty, networkSpeed > PlateDrive.Still, PlateRunning);
+        byte stateBefore = process.State;
         var ev = process.Step(sense, dt);
+        if (trace != null)
+            TraceLine($"mechanics: inputs {inputs} doorsShut {sense.DoorsClosed} cells {sense.Cells} recipe {sense.HasRecipe} productEmpty {sense.ProductEmpty} "
+                + $"netRunning {sense.NetworkRunning} plateRunning {sense.PlateRunning} plateSpeed {plateSpeed:0.000} progress {process.Progress:0.0} "
+                + $"state {stateBefore} -> {process.State}{(ev != MachineProcess.Event.None ? " EVENT " + ev : "")}{(process.LastReason != null ? " [" + process.LastReason + "]" : "")}");
         if (ev == MachineProcess.Event.Craft && Recipe != null)
             MachineRecipes.Craft(Api.World, Recipe, GridCells(), GridSize, inventory[ProductSlot], stack => Api.World.SpawnItemEntity(stack, Pos.ToVec3d().Add(.5, 1.5, .5)), Pos.ToVec3d().Add(.5, 1.5, .5));
         else if (ev == MachineProcess.Event.Overload) { Burn(); overloadSerial++; }
@@ -359,10 +365,19 @@ public class BECraftingMachine : BlockEntityContainer, ISidedAutomation, Signals
         if (beh == null) return;
         byte Node(int i) => TubeHost.PinLevel(beh, Pos, i);
         var next = TubeControls ? RunTube(Node) : Read(Node);
+        bool forgiven = false;
+        var before = inputs;
+        // A controller that was just connected takes over only with a demand the machine can take: until the
+        // tube asks for something that would not overload the batch, its outputs are left waiting.
+        if (TubeControls && !tubeArmed)
+        {
+            if (WouldOverload(next)) { TraceLine($"signal: tube not yet armed, holding {inputs} against {next}"); beh.UpdateSource(new NodePos(Pos, StatePin), state); return; }
+            tubeArmed = true;
+        }
         if (next != inputs)
         {
             // the first change after a tube went in or out is the operator's doing, not a surge
-            if (forgiveNextChange) { process.Forgive(); forgiveNextChange = false; }
+            if (forgiveNextChange) { process.Forgive(); forgiveNextChange = false; forgiven = true; }
             foreach (int pin in new[] { 4, 5 })
             {
                 if (inputs[pin] == 0 && next[pin] > 0) doorOpenedAt[pin - 4] = Api.World.ElapsedMilliseconds;
@@ -374,7 +389,22 @@ public class BECraftingMachine : BlockEntityContainer, ISidedAutomation, Signals
             MarkDirty();
         }
         beh.UpdateSource(new NodePos(Pos, StatePin), state);
+        if (trace != null) trace.SignalStep(this, beh, before, inputs, forgiven, TubeControls ? host.DescribeShort() : null);
     }
+
+    // ---- trace (debug): "/machines trace" while aiming at the machine; lives until switched off or the server stops
+
+    private MachineTrace trace;
+    public bool Tracing => trace != null;
+
+    public string ToggleTrace()
+    {
+        if (trace != null) { trace.Dispose(); trace = null; return null; }
+        trace = MachineTrace.Start((Vintagestory.API.Server.ICoreServerAPI)Api, this);
+        return trace.Path;
+    }
+
+    private void TraceLine(string text) => trace?.Line(text);
 
     public static bool IsMachineInput(int pin) => pin >= FirstInput && pin <= LastInput;
 
@@ -405,12 +435,17 @@ public class BECraftingMachine : BlockEntityContainer, ISidedAutomation, Signals
         var taken = tube;
         tube = null;
         LoadProgram();
-        forgiveNextChange = true;
+        forgiveNextChange = true; tubeArmed = false;
         MarkDirty(true);
         return taken;
     }
 
     private bool forgiveNextChange;   // set when the tube goes in or out; the first input change after that is not judged for steepness
+    private bool tubeArmed;           // a tube's outputs are taken only from its first acceptable demand on
+
+    /// <summary>The batch rule of the process, asked ahead: crystal down and more strength than the cells can take.</summary>
+    private bool WouldOverload(MachineInputs demand) =>
+        demand.Crystal > 0 && OccupiedCells > 0 && inventory[ProductSlot].Empty && demand.Strength > OccupiedCells + 1;
 
     public string Diagnostics() => host == null ? null : host.Describe() + $"machine: inputs {inputs}, state {state}, tube controls {TubeControls}\n";
 
@@ -447,7 +482,8 @@ public class BECraftingMachine : BlockEntityContainer, ISidedAutomation, Signals
                 Api.World.SpawnItemEntity(taken, Pos.ToVec3d().Add(.5, .5, .5));
         }
         LoadProgram();
-        forgiveNextChange = true;   // whatever the new controller starts with is not a surge
+        forgiveNextChange = true; tubeArmed = false;   // whatever the new controller starts with is not a surge, and it is taken only once acceptable
+        if (trace != null) { TraceLine(insert ? "=== TUBE INSERTED by " + player.PlayerName + " ===" : "=== TUBE REMOVED by " + player.PlayerName + " ==="); trace.Header(this); }
         MarkDirty(true);
         Api.World.PlaySoundAt(new AssetLocation("signalsmachines:sounds/tube-click"), Pos.X + .5, Pos.Y + .15, Pos.Z + .5, null, false, 12, .65f);
         return true;

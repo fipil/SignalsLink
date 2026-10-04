@@ -81,6 +81,26 @@ public class MachineCycleTests
         Assert.NotEqual(MachineProcess.Overloaded, machine.State);
     }
 
+    // A tube whose opening demand would burn the batch (crystal down, strength 15 over two cells) is not
+    // connected yet: the machine holds its inputs instead of overloading.
+    [Fact]
+    public void ATubeDemandingAnOverloadOnInsertionIsHeldOff()
+    {
+        var (rig, machine, _, _, _) = Setup();
+        machine.Inventory[0].Itemstack = new ItemStack(Flint, 1); machine.Inventory[0].MarkDirty();
+        machine.Inventory[1].Itemstack = new ItemStack(Stick, 1); machine.Inventory[1].MarkDirty();
+        var fullBlast = SignalsTubes.src.circuit.ProgramCodec.FromJson(
+            "{\"v\":1,\"n\":2,\"links\":[],\"parts\":[{\"k\":\"source\",\"n\":[0],\"p\":15},{\"k\":\"source\",\"n\":[1],\"p\":1}],\"pins\":[{\"i\":3,\"r\":\"out\",\"n\":0},{\"i\":2,\"r\":\"out\",\"n\":1}]}");
+        var hand = new DummySlot { Itemstack = rig.Tube(fullBlast, "blast") };
+        var player = PlayerFake.WithInventory(Fake.Of<IPlayerInventoryManager>((m, a) => m.Name == "get_ActiveHotbarSlot" ? hand : Fake.Unhandled));
+        Seconds(rig, machine, 0.5f);
+        Assert.True(machine.Interact(player));
+        Seconds(rig, machine, 1f);
+        Assert.NotEqual(MachineProcess.Overloaded, machine.State);
+        Assert.Equal(new MachineInputs(0, 0, 0, 0, 0), machine.Inputs);
+        Assert.False(machine.Inventory[0].Empty);   // nothing burnt
+    }
+
     [Fact]
     public void TheOperatorSequenceMakesTheProductAndSignalsItsState()
     {
