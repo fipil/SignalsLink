@@ -193,7 +193,7 @@
   "block-normal-generic-bottomlesschest-*": "Baú sem fundo",
   "block-normal-generic-recyclerchest-*": "Baú de reciclagem",
   "block-recyclerchest-*": "Baú de reciclagem",
-  "bottomlesschest-help": "Cada espaço repõe o item inserido à quantidade original. Agachar + correr + botão direito do rato com a mão vazia apaga todos os padrões e o conteúdo.",
+  "bottomlesschest-help": "Cada espaço repõe o item inserido até à quantidade original. Agachar + correr + botão direito do rato com a mão vazia apaga todos os padrões e conteúdos. Na janela do baú, Shift + clique num espaço cheio com o cursor vazio apaga apenas esse espaço.",
   "bottomlesschest-title": "Baú sem fundo",
   "recycler-cancel": "Cancelar",
   "recycler-full": "Quando estiver cheio",

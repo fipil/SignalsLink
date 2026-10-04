@@ -193,7 +193,7 @@
   "block-normal-generic-bottomlesschest-*": "Forziere senza fondo",
   "block-normal-generic-recyclerchest-*": "Forziere di smaltimento",
   "block-recyclerchest-*": "Forziere di smaltimento",
-  "bottomlesschest-help": "Ogni slot ripristina la quantità originale dell'oggetto inserito. Accovacciarsi + corsa + clic destro a mani vuote cancella tutti i modelli e il contenuto.",
+  "bottomlesschest-help": "Ogni slot ripristina l'oggetto inserito alla quantità originale. Accovacciati + sprint + clic destro a mani vuote cancella tutti i modelli e il contenuto. Nella finestra del baule, Maiusc + clic su uno slot pieno con il cursore vuoto cancella solo quello slot.",
   "bottomlesschest-title": "Forziere senza fondo",
   "recycler-cancel": "Annulla",
   "recycler-full": "Quando è completamente pieno",

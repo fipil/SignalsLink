@@ -193,7 +193,7 @@
   "block-normal-generic-bottomlesschest-*": "Cofre sin fondo",
   "block-normal-generic-recyclerchest-*": "Cofre triturador",
   "block-recyclerchest-*": "Cofre triturador",
-  "bottomlesschest-help": "Cada ranura repone el objeto insertado hasta su cantidad original. Agacharse + correr + clic derecho con la mano vacía borra todos los patrones y el contenido.",
+  "bottomlesschest-help": "Cada ranura repone el objeto insertado a su cantidad original. Agacharse + correr + clic derecho con la mano vacía borra todos los patrones y el contenido. En la ventana del cofre, Mayús + clic en una ranura llena con el cursor vacío borra solo esa ranura.",
   "bottomlesschest-title": "Cofre sin fondo",
   "recycler-cancel": "Cancelar",
   "recycler-full": "Al llenarse por completo",

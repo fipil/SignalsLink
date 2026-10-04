@@ -193,7 +193,7 @@
   "block-normal-generic-bottomlesschest-*": "Unendliche Truhe",
   "block-normal-generic-recyclerchest-*": "Entsorgungstruhe",
   "block-recyclerchest-*": "Entsorgungstruhe",
-  "bottomlesschest-help": "Jeder Slot füllt den eingelegten Gegenstand auf die ursprüngliche Anzahl auf. Schleichen + Sprinten + Rechtsklick mit leerer Hand löscht alle Vorlagen und den Inhalt.",
+  "bottomlesschest-help": "Jeder Slot füllt den eingelegten Gegenstand auf die ursprüngliche Anzahl auf. Schleichen + Sprinten + Rechtsklick mit leerer Hand löscht alle Vorlagen und Inhalte. Im Truhenfenster löscht Shift + Klick auf einen vollen Slot mit leerem Cursor nur diesen Slot.",
   "bottomlesschest-title": "Unendliche Truhe",
   "recycler-cancel": "Abbrechen",
   "recycler-full": "Bei vollständiger Füllung",

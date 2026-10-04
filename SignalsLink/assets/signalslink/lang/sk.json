@@ -193,7 +193,7 @@
   "block-normal-generic-bottomlesschest-*": "Bezedná truhlica",
   "block-normal-generic-recyclerchest-*": "Likvidačná truhlica",
   "block-recyclerchest-*": "Likvidačná truhlica",
-  "bottomlesschest-help": "Každý slot doplní vloženú položku na pôvodný počet. Plíženie + šprint + pravé tlačidlo prázdnou rukou vymaže všetky vzory a obsah.",
+  "bottomlesschest-help": "Každý slot dopĺňa vloženú položku na pôvodný počet. Plíženie + šprint + pravé tlačidlo prázdnou rukou vymaže všetky vzory a obsah. V okne truhlice Shift + klik na plný slot s prázdnym kurzorom vymaže len tento slot.",
   "bottomlesschest-title": "Bezedná truhlica",
   "recycler-cancel": "Zrušiť",
   "recycler-full": "Pri úplnom zaplnení",

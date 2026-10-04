@@ -193,7 +193,7 @@
   "block-normal-generic-bottomlesschest-*": "Bezdenna skrzynia",
   "block-normal-generic-recyclerchest-*": "Skrzynia utylizacyjna",
   "block-recyclerchest-*": "Skrzynia utylizacyjna",
-  "bottomlesschest-help": "Każdy slot uzupełnia umieszczony przedmiot do pierwotnej liczby. Skradanie + sprint + prawy przycisk myszy pustą ręką usuwa wszystkie wzory i zawartość.",
+  "bottomlesschest-help": "Każdy slot uzupełnia umieszczony przedmiot do pierwotnej liczby. Skradanie + sprint + prawy przycisk myszy pustą ręką usuwa wszystkie wzory i zawartość. W oknie skrzyni Shift + kliknięcie pełnego slotu pustym kursorem usuwa tylko ten slot.",
   "bottomlesschest-title": "Bezdenna skrzynia",
   "recycler-cancel": "Anuluj",
   "recycler-full": "Przy pełnym zapełnieniu",
