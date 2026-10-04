@@ -25,6 +25,7 @@ public class GuiDialogImprinter : GuiDialogBlockEntity
     public override void OnGuiClosed()
     {
         base.OnGuiClosed();
+        typed.Clear();   // the draft below carries it to the server; a reopened dialog starts from what the server says
         if (state == null || (bool?)state["done"] == true) return;
         var request = confirming ? edits : SingleComposer?.GetTextInput("name") == null ? null : Collect();
         if (request == null) return;
@@ -34,12 +35,28 @@ public class GuiDialogImprinter : GuiDialogBlockEntity
 
     public void SetState(string json)
     {
+        Remember();
         state = JObject.Parse(json);
         confirming = false;
         if ((bool?)state["done"] == true) { TryClose(); return; }
         Compose();
         if (!IsOpened()) TryOpen();
     }
+
+    // What the player has typed so far; a redraw (a new pin, a step into a nested tube) must not throw it away.
+    private readonly Dictionary<string, string> typed = new();
+
+    private void Remember()
+    {
+        if (SingleComposer == null || confirming) return;
+        void Keep(string key, string value) { if (value != null) typed[key] = value; }
+        Keep("name", SingleComposer.GetTextInput("name")?.GetText());
+        Keep("description", SingleComposer.GetTextArea("description")?.GetText());
+        foreach (var pin in state?["pins"] as JArray ?? new JArray())
+            Keep("pin" + (int)pin["i"], SingleComposer.GetTextInput("pin" + (int)pin["i"])?.GetText());
+    }
+
+    private string Typed(string key, string fromState) => typed.TryGetValue(key, out var value) ? value : fromState;
 
     private void Compose()
     {
@@ -108,7 +125,8 @@ public class GuiDialogImprinter : GuiDialogBlockEntity
             foreach (var adj in adjustables)
             {
                 var target = new BlockPos((int)adj["x"], (int)adj["y"], (int)adj["z"]);
-                composer.AddSwitch(_ => ImprinterNetwork.ToggleMark(capi, BlockEntityPosition, target), ElementBounds.Fixed(10, y, 30, 30), "adj" + n, 24);
+                // the pin list changes with the mark: ask for the new state right away (same channel, so it arrives after the toggle)
+                composer.AddSwitch(_ => { ImprinterNetwork.ToggleMark(capi, BlockEntityPosition, target); Request(); }, ElementBounds.Fixed(10, y, 30, 30), "adj" + n, 24);
                 composer.AddStaticText(Lang.Get("signalstubes:part-" + (string)adj["kind"]) + " " + Where(adj), font, ElementBounds.Fixed(50, y + 4, w - 50, row));
                 y += row + 4; n++;
             }
@@ -170,14 +188,14 @@ public class GuiDialogImprinter : GuiDialogBlockEntity
         SingleComposer = composer.Compose();
         canvas?.SetLevel(schematic);
 
-        Text("name", (string)state["name"], NameMax, Lang.Get("signalstubes:dialog-name-hint"));
+        Text("name", Typed("name", (string)state["name"]), NameMax, Lang.Get("signalstubes:dialog-name-hint"));
         var description = SingleComposer.GetTextArea("description");
         description.SetMaxLength(DescriptionMax);
-        description.SetValue((string)state["description"] ?? "");
+        description.SetValue(Typed("description", (string)state["description"]) ?? "");
         foreach (var pin in pins)
         {
             int index = (int)pin["i"];
-            Text("pin" + index, (string)pin["name"], PinNameMax, Lang.Get("signalstubes:pin-" + (string)pin["r"], index + 1));
+            Text("pin" + index, Typed("pin" + index, (string)pin["name"]), PinNameMax, Lang.Get("signalstubes:pin-" + (string)pin["r"], index + 1));
         }
         for (int n = 0; n < adjustables.Count; n++) SingleComposer.GetSwitch("adj" + n).On = (bool)adjustables[n]["marked"];
         if (SingleComposer.GetSwitch("lockCopy") != null)

@@ -29,6 +29,7 @@
   "imprint-unmarked": "Označení zrušeno.",
   "refuse-world-driven": "čte svět nebo hráče",
   "refuse-unknown": "neznámá součástka",
+  "refuse-external": "zařízení jiného modu: smí viset jen přímo na pinu patice",
   "refuse-actuator-target": "aktivátor neovládá vypínač",
   "refuse-switch-many-actuators": "vypínač ovládá víc aktivátorů",
   "refuse-no-free-pin": "došly volné kolíky",

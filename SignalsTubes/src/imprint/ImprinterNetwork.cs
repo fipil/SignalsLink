@@ -163,12 +163,14 @@ public static class ImprinterNetwork
         if (beh == null) return be.GetType().Name + ": no Signals node provider.";
         var wires = sapi.ModLoader.GetModSystem<signals.src.hangingwires.HangingWiresMod>();
         var sb = new System.Text.StringBuilder();
-        sb.AppendLine(be.GetType().Name + " at " + sel.Position + (be is socket.BETubeSocket s ? (s.HasTube ? ", tube: " + s.Tube.GetName() : ", empty") : ""));
+        var tubeSocket = be as socket.ITubeSocket;
+        sb.AppendLine(be.GetType().Name + " at " + sel.Position + (tubeSocket == null ? "" : tubeSocket.HasTube ? ", tube: " + tubeSocket.Tube.GetName() : ", empty"));
         foreach (var node in beh.GetNodes().Values.OrderBy(n => n.Pos.index))
         {
             int wireCount = wires?.data.connections.Count(w => w.pos1 == node.Pos || w.pos2 == node.Pos) ?? 0;
             sb.AppendLine($"pin {node.Pos.index + 1}: net {(node.netId?.ToString() ?? "-")}, value {node.value}, output {node.output}, connections {node.Connections.Count}, wires {wireCount}");
         }
+        if (tubeSocket?.Diagnostics() is string tube) sb.Append(tube);
         return sb.ToString();
     }
 

@@ -18,4 +18,8 @@ public interface ITubeSocket
     ItemStack TakeTube();
     /// <summary>World point where the plug cable meets the plug head.</summary>
     Vec3d PlugCableEnd();
+    /// <summary>What the socket itself calls a pin (a machine's "Clutch", "Crystal"...), or null when it has no say.</summary>
+    string PinName(int index) => null;
+    /// <summary>For /tubes diag: how the socket sees its tube right now, or null.</summary>
+    string Diagnostics() => null;
 }

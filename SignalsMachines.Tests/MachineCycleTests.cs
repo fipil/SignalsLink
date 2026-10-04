@@ -43,6 +43,44 @@ public class MachineCycleTests
         for (float t = 0; t < seconds - 1e-4f; t += 0.1f) { rig.Tick(); machine.OnMechanicsTick(0.1f); }
     }
 
+    // No wire at all on the machine: the tube still sees the state the machine drives onto pin 0
+    // (an unwired pin has no network) and its output lands on the clutch.
+    [Fact]
+    public void ATubeReadsTheMachinesOwnStatePinWithoutAnyWire()
+    {
+        var (rig, machine, _, _, _) = Setup();
+        var stateToClutch = SignalsTubes.src.circuit.ProgramCodec.FromJson(
+            "{\"v\":1,\"n\":2,\"links\":[[0,1,0,0]],\"parts\":[],\"pins\":[{\"i\":0,\"r\":\"in\",\"n\":0},{\"i\":1,\"r\":\"out\",\"n\":1}]}");
+        var tree = new Vintagestory.API.Datastructures.TreeAttribute();
+        tree.SetInt("posx", 0); tree.SetInt("posy", 0); tree.SetInt("posz", 0);
+        tree.SetItemstack("programTube", rig.Tube(stateToClutch, "state to clutch"));
+        machine.FromTreeAttributes(tree, rig.World);
+        Assert.True(machine.TubeControls);
+        machine.Inventory[0].Itemstack = new ItemStack(Flint, 1); machine.Inventory[0].MarkDirty();
+        machine.Inventory[1].Itemstack = new ItemStack(Stick, 1); machine.Inventory[1].MarkDirty();
+        Seconds(rig, machine, 1f);
+        // ready (1) closes the clutch, which makes it "preparing" (2); the tube follows and settles there
+        Assert.Equal(MachineProcess.Preparing, machine.State);
+        Assert.Equal(machine.State, machine.Inputs.Clutch);
+    }
+
+    // A tube put into the socket may start with any strength: the first change after insertion is not a surge.
+    [Fact]
+    public void InsertingATubeForgivesItsOpeningStrength()
+    {
+        var (rig, machine, _, _, _) = Setup();
+        var nineAtOnce = SignalsTubes.src.circuit.ProgramCodec.FromJson(
+            "{\"v\":1,\"n\":1,\"links\":[],\"parts\":[{\"k\":\"source\",\"n\":[0],\"p\":9}],\"pins\":[{\"i\":3,\"r\":\"out\",\"n\":0}]}");
+        var hand = new DummySlot { Itemstack = rig.Tube(nineAtOnce, "nine") };
+        var player = PlayerFake.WithInventory(Fake.Of<IPlayerInventoryManager>((m, a) => m.Name == "get_ActiveHotbarSlot" ? hand : Fake.Unhandled));
+        Seconds(rig, machine, 0.5f);   // the machine has been running: a jump 0 -> 9 would be a surge
+        Assert.True(machine.Interact(player));
+        Assert.True(machine.TubeControls);
+        Seconds(rig, machine, 1f);
+        Assert.Equal(9, machine.Inputs.Strength);
+        Assert.NotEqual(MachineProcess.Overloaded, machine.State);
+    }
+
     [Fact]
     public void TheOperatorSequenceMakesTheProductAndSignalsItsState()
     {

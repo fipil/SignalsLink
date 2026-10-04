@@ -126,5 +126,11 @@ public class MachineRecipesTests
         Assert.Equal(98, Knife.GetRemainingDurability(grid[0].Itemstack));
         Assert.Equal(Bowl, grid[1].Itemstack.Item);    // bowls came back into their cell
         Assert.Equal(2, grid[1].StackSize);
+
+        // a worn-out tool breaks in its cell, without the game's break sound at a missing entity
+        grid[0].Itemstack.Attributes.SetInt("durability", 1);
+        Assert.NotNull(MachineRecipes.Find(world, grid));
+        MachineRecipes.Craft(world, MachineRecipes.Find(world, grid), grid, 3, new DummySlot(), _ => { });
+        Assert.True(grid[0].Empty);
     }
 }

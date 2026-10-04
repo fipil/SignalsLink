@@ -32,6 +32,7 @@ public sealed class CircuitReader
     private readonly ICircuitWorld world;
     private readonly BlockPos socket;
     private readonly ISet<BlockPos> exposed;
+    private readonly ISet<int> reservedPins;   // pins the socket itself gives a meaning (a machine's); never handed to exposed parts
     private readonly string readerUid;
     private readonly Dictionary<int, int[]> tubeOutputs = new();   // Tube part index -> nodes it drives
     private const int InnerNodeBase = 1000;   // synthetic node indices for an inlined tube's internal nodes
@@ -42,15 +43,16 @@ public sealed class CircuitReader
     private readonly HashSet<(int, int)> wires = new();
     private readonly Queue<NodeRef> queue = new();
 
-    private CircuitReader(ICircuitWorld world, BlockPos socket, ISet<BlockPos> exposed, string readerUid)
+    private CircuitReader(ICircuitWorld world, BlockPos socket, ISet<BlockPos> exposed, string readerUid, ISet<int> reservedPins)
     {
-        this.world = world; this.socket = socket; this.exposed = exposed; this.readerUid = readerUid;
+        this.world = world; this.socket = socket; this.exposed = exposed; this.readerUid = readerUid; this.reservedPins = reservedPins;
     }
 
     /// <param name="exposed">Positions of switches and delays the author wants on pins.</param>
     /// <param name="readerUid">Who imprints; decides whether nested tubes are inlined or soldered.</param>
-    public static Result Read(ICircuitWorld world, BlockPos socket, ISet<BlockPos> exposed = null, string readerUid = null) =>
-        new CircuitReader(world, socket, exposed ?? new HashSet<BlockPos>(), readerUid).Run();
+    /// <param name="reservedPins">Pins with a fixed meaning on this socket (a machine's); exposed parts get only the others.</param>
+    public static Result Read(ICircuitWorld world, BlockPos socket, ISet<BlockPos> exposed = null, string readerUid = null, ISet<int> reservedPins = null) =>
+        new CircuitReader(world, socket, exposed ?? new HashSet<BlockPos>(), readerUid, reservedPins ?? new HashSet<int>()).Run();
 
     private Result Run()
     {
@@ -68,6 +70,13 @@ public sealed class CircuitReader
             foreach (var other in world.WiresFrom(node))
             {
                 if (Bridges(node, other)) continue;
+                // Devices of other mods (chutes, dampers, machines) are never imprinted: hanging straight on a
+                // socket pin they stay outside and the pin is the tube's boundary; deeper inside they cannot be.
+                if (External(other.Pos))
+                {
+                    if (!node.Pos.Equals(socket)) Refuse(other.Pos, "external");
+                    continue;
+                }
                 int a = Id(node), b = Id(other);
                 if (wires.Add((Math.Min(a, b), Math.Max(a, b)))) p.Links.Add(new Link(a, b));
             }
@@ -80,12 +89,22 @@ public sealed class CircuitReader
                 p.Pins.Add(driven.Contains(pinNodes[i]) ? Pin.Output(i, pinNodes[i]) : Pin.Input(i, pinNodes[i]));
         foreach (var a in result.Adjustables.Where(a => exposed.Contains(a.Pos)))
         {
-            int free = Enumerable.Range(0, CircuitProgram.MaxPins).FirstOrDefault(i => p.Pins.All(pin => pin.Index != i), -1);
+            int free = Enumerable.Range(0, CircuitProgram.MaxPins).FirstOrDefault(i => !reservedPins.Contains(i) && p.Pins.All(pin => pin.Index != i), -1);
             if (free < 0) { Refuse(a.Pos, "no-free-pin"); continue; }
             p.Pins.Add(a.Kind == ComponentKind.Switch ? Pin.Switch(free, a.Component) : Pin.Delay(free, a.Component));
         }
         p.NodeCount = ids.Count;
         return result;
+    }
+
+    // A block with signal nodes that is neither a Signals part nor a tube socket: a device of another mod.
+    private bool External(BlockPos pos)
+    {
+        if (pos.Equals(socket)) return false;
+        var block = world.BlockAt(pos);
+        if (block == null || block.Code.Domain == Signals) return false;
+        if (block.Code.Domain == "signalstubes" && block.Code.Path.StartsWith(SocketPath)) return false;
+        return world.NodesAt(pos).Count > 0;
     }
 
     // Signals keeps one connection per pair of nodes: a wire across a part's own two ends does nothing.

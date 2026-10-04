@@ -29,6 +29,7 @@
   "imprint-unmarked": "Mark removed.",
   "refuse-world-driven": "reads the world or the player",
   "refuse-unknown": "unknown part",
+  "refuse-external": "device of another mod: it may hang only directly on a socket pin",
   "refuse-actuator-target": "actuator does not drive a switch",
   "refuse-switch-many-actuators": "switch driven by several actuators",
   "refuse-no-free-pin": "no free pin left",

@@ -180,5 +180,10 @@ public class MachineSignalsTests
         rig.Drive(west, 0, 0);
         rig.Tick(); rig.Tick();
         Assert.False(machine.AllowsAutomation(chamber, BlockFacing.WEST));
+        // the process treats the door as shut only once it has slid back and pushed in
+        Assert.False(machine.DoorShut(4));
+        rig.ElapsedMilliseconds += (long)((DoorMotion.CloseSlideSeconds + DoorMotion.PushSeconds) * 1000) + 1;
+        Assert.True(machine.DoorShut(4));
+        Assert.True(machine.DoorShut(5));   // never opened: shut from the start
     }
 }

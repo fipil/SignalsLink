@@ -2,6 +2,7 @@ using signals.src;
 using signals.src.signalNetwork;
 using SignalsTubes.src.circuit;
 using SignalsTubes.src.programtube;
+using SignalsTubes.src.socket;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Config;
@@ -75,7 +76,12 @@ public class BECraftingMachine : BlockEntityContainer, ISidedAutomation, Signals
         else Api.World.BlockAccessor.RemoveBlockLight(BlockCraftingMachine.CrystalLight, Pos);
     }
 
-    private readonly long[] doorOpenedAt = new long[2];   // server: when pins 4/5 last went high
+    // server: when pins 4/5 last went high / low; a door never seen closing counts as long shut
+    private readonly long[] doorOpenedAt = new long[2], doorClosedAt = { long.MinValue / 2, long.MinValue / 2 };
+
+    /// <summary>The door is back in its frame: pin low and the closing ride (slide + push) over. Opening breaks it at once.</summary>
+    public bool DoorShut(int pin) =>
+        !DoorOpen(pin) && Api.World.ElapsedMilliseconds - doorClosedAt[pin - 4] >= (DoorMotion.CloseSlideSeconds + DoorMotion.PushSeconds) * 1000;
 
     private int doorsReady;   // bit 0 = pin 4, bit 1 = pin 5; the server works it out, the client gets it synced
 
@@ -194,8 +200,7 @@ public class BECraftingMachine : BlockEntityContainer, ISidedAutomation, Signals
     private string recipeText = "";
 
     private ItemStack tube;
-    private CircuitProgram program;
-    private CircuitSimulator sim;
+    private TubeHost host;   // runs the tube's program (server)
     private SignalNetworkMod signalMod;
     private MeshData tubeMesh;
     private MachineInputs inputs;
@@ -224,7 +229,7 @@ public class BECraftingMachine : BlockEntityContainer, ISidedAutomation, Signals
     public bool HasTube => tube != null;
     public ItemStack Tube => tube;
     /// <summary>A programmed tube sits in the socket and drives the inputs.</summary>
-    public bool TubeControls => program != null;
+    public bool TubeControls => host?.Controls == true;
     public MachineInputs Inputs => inputs;
     public byte State => state;
     /// <summary>Plate speed in network units (clutch, inertia).</summary>
@@ -275,11 +280,13 @@ public class BECraftingMachine : BlockEntityContainer, ISidedAutomation, Signals
 
     private void RunProcess(float dt)
     {
+        // the process waits for the doors to finish closing (the crystal must not light while they still slide);
+        // the leak below follows the pins alone, as the doors are no longer open then
         bool doorsClosed = !DoorOpen(4) && !DoorOpen(5);
-        var sense = new Sense(inputs, doorsClosed, OccupiedCells, Recipe != null, inventory[ProductSlot].Empty, networkSpeed > PlateDrive.Still, PlateRunning);
+        var sense = new Sense(inputs, DoorShut(4) && DoorShut(5), OccupiedCells, Recipe != null, inventory[ProductSlot].Empty, networkSpeed > PlateDrive.Still, PlateRunning);
         var ev = process.Step(sense, dt);
         if (ev == MachineProcess.Event.Craft && Recipe != null)
-            MachineRecipes.Craft(Api.World, Recipe, GridCells(), GridSize, inventory[ProductSlot], stack => Api.World.SpawnItemEntity(stack, Pos.ToVec3d().Add(.5, 1.5, .5)));
+            MachineRecipes.Craft(Api.World, Recipe, GridCells(), GridSize, inventory[ProductSlot], stack => Api.World.SpawnItemEntity(stack, Pos.ToVec3d().Add(.5, 1.5, .5)), Pos.ToVec3d().Add(.5, 1.5, .5));
         else if (ev == MachineProcess.Event.Overload) { Burn(); overloadSerial++; }
         DrainStability(doorsClosed);
         if (process.State != state) { state = process.State; MarkDirty(); }
@@ -334,14 +341,14 @@ public class BECraftingMachine : BlockEntityContainer, ISidedAutomation, Signals
         }
     }
 
-    private byte[] savedSimState;   // from the save game, applied once the program is loaded
+    private byte[] savedSimState;
 
     private void LoadProgram()
     {
-        program = tube == null || Api?.Side != EnumAppSide.Server ? null : TubeProgram.Get(tube, Api);
-        sim = program == null ? null : new CircuitSimulator(program, id => ProgramStore.Of(Api)?.Get(id));
-        if (sim != null && savedSimState != null) sim.LoadState(savedSimState);
-        savedSimState = null;
+        if (Api == null) return;
+        host ??= new TubeHost(Api);
+        if (savedSimState != null) { host.RestoreState(savedSimState); savedSimState = null; }
+        host.Load(tube);
     }
 
     // ---- signals
@@ -350,12 +357,17 @@ public class BECraftingMachine : BlockEntityContainer, ISidedAutomation, Signals
     {
         var beh = GetBehavior<BEBehaviorSignalConnector>();
         if (beh == null) return;
-        byte Node(int i) => beh.GetNodeAt(new NodePos(Pos, i))?.value ?? 0;
-        var next = sim == null ? Read(Node) : RunTube(Node);
+        byte Node(int i) => TubeHost.PinLevel(beh, Pos, i);
+        var next = TubeControls ? RunTube(Node) : Read(Node);
         if (next != inputs)
         {
+            // the first change after a tube went in or out is the operator's doing, not a surge
+            if (forgiveNextChange) { process.Forgive(); forgiveNextChange = false; }
             foreach (int pin in new[] { 4, 5 })
+            {
                 if (inputs[pin] == 0 && next[pin] > 0) doorOpenedAt[pin - 4] = Api.World.ElapsedMilliseconds;
+                if (inputs[pin] > 0 && next[pin] == 0) doorClosedAt[pin - 4] = Api.World.ElapsedMilliseconds;
+            }
             bool wasLit = Lit;
             inputs = next;
             if (Lit != wasLit) Relight();
@@ -372,11 +384,8 @@ public class BECraftingMachine : BlockEntityContainer, ISidedAutomation, Signals
     /// <summary>One tube step: its input pins read the state and reserve pins, its output pins become the machine's inputs.</summary>
     private MachineInputs RunTube(System.Func<int, byte> node)
     {
-        foreach (var pin in program.Pins)
-            if (pin.Role != PinRole.Output) sim.SetInput(pin.Index, IsMachineInput(pin.Index) ? (byte)0 : node(pin.Index));
-        sim.Step();
-        byte Out(int i) => program.Pins.Any(p => p.Index == i && p.Role == PinRole.Output) ? sim.GetOutput(i) : (byte)0;
-        return new(Out(1), Out(2), Out(3), Out(4), Out(5));
+        host.Step(node, IsMachineInput);
+        return new(host.Output(1), host.Output(2), host.Output(3), host.Output(4), host.Output(5));
     }
 
     // ---- socket (also an imprinter's target: the plug goes in while no tube sits here)
@@ -396,9 +405,17 @@ public class BECraftingMachine : BlockEntityContainer, ISidedAutomation, Signals
         var taken = tube;
         tube = null;
         LoadProgram();
+        forgiveNextChange = true;
         MarkDirty(true);
         return taken;
     }
+
+    private bool forgiveNextChange;   // set when the tube goes in or out; the first input change after that is not judged for steepness
+
+    public string Diagnostics() => host == null ? null : host.Describe() + $"machine: inputs {inputs}, state {state}, tube controls {TubeControls}\n";
+
+    /// <summary>The imprinter prefills pin names with these; reserve pins 6-7 stay unnamed.</summary>
+    public string PinName(int index) => index <= LastInput ? (Block as BlockCraftingMachine)?.PinName(index) : null;
 
     public Vec3d PlugCableEnd()
     {
@@ -430,6 +447,7 @@ public class BECraftingMachine : BlockEntityContainer, ISidedAutomation, Signals
                 Api.World.SpawnItemEntity(taken, Pos.ToVec3d().Add(.5, .5, .5));
         }
         LoadProgram();
+        forgiveNextChange = true;   // whatever the new controller starts with is not a surge
         MarkDirty(true);
         Api.World.PlaySoundAt(new AssetLocation("signalsmachines:sounds/tube-click"), Pos.X + .5, Pos.Y + .15, Pos.Z + .5, null, false, 12, .65f);
         return true;
@@ -446,8 +464,8 @@ public class BECraftingMachine : BlockEntityContainer, ISidedAutomation, Signals
         tree.SetInt("doorsReady", doorsReady);
         tree.SetFloat("progress", process.Progress);
         tree.SetInt("overloads", overloadSerial);
-        if (sim != null) tree.SetBytes("simState", sim.SaveState()); else tree.RemoveAttribute("simState");
-        tree.SetBool("tubeControls", program != null);
+        if (host?.SaveState() is byte[] simState) tree.SetBytes("simState", simState); else tree.RemoveAttribute("simState");
+        tree.SetBool("tubeControls", TubeControls);
         tree.SetFloat("plateSpeed", plateSpeed);
         tree.SetFloat("networkSpeed", networkSpeed);
         if (placerUid != null) tree.SetString("placer", placerUid);
@@ -470,7 +488,7 @@ public class BECraftingMachine : BlockEntityContainer, ISidedAutomation, Signals
         tube = tree.GetItemstack("programTube");
         tube?.ResolveBlockOrItem(worldForResolving);
         imprinter = tree.HasAttribute("imprinter") ? Vintagestory.API.Util.SerializerUtil.Deserialize<BlockPos>(tree.GetBytes("imprinter")) : null;
-        savedSimState = tree.GetBytes("simState");
+        savedSimState = tree.GetBytes("simState");   // handed to the host once it exists (the tree may come before Initialize)
         var b = tree.GetBytes("inputs", new byte[5]);
         bool wasLit = Lit;
         inputs = new MachineInputs(b[0], b[1], b[2], b[3], b[4]);
@@ -502,6 +520,13 @@ public class BECraftingMachine : BlockEntityContainer, ISidedAutomation, Signals
     public override void GetBlockInfo(IPlayer forPlayer, System.Text.StringBuilder dsc)
     {
         base.GetBlockInfo(forPlayer, dsc);
+        // aimed at the tube in the socket: the tube and nothing else; elsewhere the machine alone
+        var sel = forPlayer?.Entity?.BlockSelection;
+        if (tube != null && sel != null && sel.Position.Equals(Pos) && sel.SelectionBoxIndex == BlockCraftingMachine.SocketBox)
+        {
+            dsc.Append(ItemProgramTube.FullInfo(tube, Api.World).TrimStart('\r', '\n'));
+            return;
+        }
         bool byTube = Api?.Side == EnumAppSide.Server ? TubeControls : tubeControlsSynced;
         dsc.AppendLine(Lang.Get(byTube ? "signalsmachines:machine-control-tube" : "signalsmachines:machine-control-wires"));
         var block = Block as BlockCraftingMachine;
@@ -518,7 +543,6 @@ public class BECraftingMachine : BlockEntityContainer, ISidedAutomation, Signals
         string recipeName = Api?.Side == EnumAppSide.Server ? recipeText : recipeNameSynced;
         if (cells > 0) dsc.AppendLine(Lang.Get("signalsmachines:machine-recipe", recipeName.Length == 0 ? Lang.Get("signalsmachines:recipe-none") : recipeName));
         if (placerName != null) dsc.AppendLine(Lang.Get("signalsmachines:machine-placer", placerName));
-        if (tube != null) dsc.Append(ItemProgramTube.FullInfo(tube, Api.World));
     }
 
     // ---- mesh

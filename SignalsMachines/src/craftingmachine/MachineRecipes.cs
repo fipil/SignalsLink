@@ -1,5 +1,6 @@
 using System.Reflection;
 using Vintagestory.API.Common;
+using Vintagestory.API.MathTools;
 
 namespace SignalsMachines.src.craftingmachine;
 
@@ -112,7 +113,7 @@ public static class MachineRecipes
     /// taken from their cells, tools wear, returned items stay in the emptied cell or are handed to
     /// <paramref name="overflow"/>.
     /// </summary>
-    public static int Craft(IWorldAccessor world, Match match, ItemSlot[] grid, int width, ItemSlot output, Action<ItemStack> overflow)
+    public static int Craft(IWorldAccessor world, Match match, ItemSlot[] grid, int width, ItemSlot output, Action<ItemStack> overflow, Vec3d soundAt = null)
     {
         int cycles = Cycles(match, grid, width);
         var assignment = Assignment(match, grid, width);
@@ -131,8 +132,15 @@ public static class MachineRecipes
             }
             else if (props.DurabilityChange < 0)
             {
-                for (int k = 0; k < cycles && slot.Itemstack != null; k++)
-                    slot.Itemstack.Collectible.DamageItem(world, null, slot, props.DurabilityCost, props.BreakOnZeroDurability);
+                // by hand, not DamageItem: the game's version plays the break sound at a (here missing) entity
+                var tool = slot.Itemstack;
+                int left = tool.Collectible.GetRemainingDurability(tool) - props.DurabilityCost * cycles;
+                if (left <= 0 && props.BreakOnZeroDurability)
+                {
+                    slot.Itemstack = null;
+                    if (soundAt != null) world.PlaySoundAt(new AssetLocation("sounds/effect/toolbreak"), soundAt.X, soundAt.Y, soundAt.Z, null, true, 16);
+                }
+                else tool.Attributes.SetInt("durability", Math.Max(left, 1));
             }
             if (ingredient.ReturnedStack?.ResolvedItemStack != null)
             {

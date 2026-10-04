@@ -53,6 +53,31 @@ public class CircuitReaderTests
         return (w, w.Put("signalstubes:tubesocket-north-down", 0, 8));
     }
 
+    // A damper's output wired to a pin: the damper stays outside, the pin is an input of the tube; the
+    // tube may also drive such a device, then the pin is an output. Deeper inside the circuit it is refused.
+    [Fact]
+    public void DevicesOfOtherModsStayOutsideWhenTheyHangOnAPin()
+    {
+        var (w, socket) = Socket();
+        var damper = w.Put("signalslink:sleevedamper-north-down", 1, 4);
+        var chute = w.Put("signalslink:managedchute-north-down", 2, 4);
+        var source = w.Put("signals:blocksource", 3, 1);
+        w.Wire(damper, 3, socket, 6).Wire(source, 0, socket, 2).Wire(socket, 2, chute, 0);
+        var r = CircuitReader.Read(w, socket);
+        Assert.True(r.Ok);
+        Assert.Equal(PinRole.Input, r.Program.Pins.Single(p => p.Index == 6).Role);
+        Assert.Equal(PinRole.Output, r.Program.Pins.Single(p => p.Index == 2).Role);
+        Assert.Equal(new[] { ComponentKind.Source }, r.Program.Components.Select(c => c.Kind));
+
+        var (w2, socket2) = Socket();
+        var valve = w2.Put("signals:blockvalve-off-north-down", 1, 3);
+        var sensor = w2.Put("signalslink:blocksensor-off-fwd-north-down", 2, 2);
+        w2.Wire(socket2, 0, valve, 1).Wire(sensor, 0, valve, 0).Wire(valve, 2, socket2, 1);
+        var r2 = CircuitReader.Read(w2, socket2);
+        Assert.False(r2.Ok);
+        Assert.Equal("external", r2.Refusals.Single().Reason);
+    }
+
     [Fact]
     public void InverterOnASocketBecomesValveWithInputAndOutputPins()
     {
@@ -123,6 +148,12 @@ public class CircuitReaderTests
         var pin = Assert.Single(r.Program.Pins, x => x.Role == PinRole.Switch);
         Assert.Equal(1, pin.Index);   // first free index after the wired pin 0
         Assert.Equal(0, pin.Component);
+
+        // a machine's socket: its own pins 0-5 are never handed out, the switch lands on the first reserve pin
+        r = CircuitReader.Read(w, socket, new HashSet<BlockPos> { sw }, null, new HashSet<int> { 0, 1, 2, 3, 4, 5 });
+        Assert.Equal(6, Assert.Single(r.Program.Pins, x => x.Role == PinRole.Switch).Index);
+        r = CircuitReader.Read(w, socket, new HashSet<BlockPos> { sw }, null, new HashSet<int> { 0, 1, 2, 3, 4, 5, 6, 7 });
+        Assert.Equal("no-free-pin", Assert.Single(r.Refusals).Reason);
     }
 
     [Fact]
@@ -161,7 +192,7 @@ public class CircuitReaderTests
     {
         var (w, socket) = Socket();
         var button = w.Put("signals:buttonswitch-north-down-off", 1, 2);
-        var strange = w.Put("othermod:gizmo", 2, 1);
+        var strange = w.Put("signals:blockgizmo-north", 2, 1);   // a Signals part the reader does not know
         var lamp = w.Put("signals:blocklightbulb-off-north-down", 4, 1);
         w.Wire(socket, 0, button, 0).Wire(socket, 1, strange, 0).Wire(socket, 3, lamp, 0);
 

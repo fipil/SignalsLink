@@ -208,10 +208,20 @@ namespace SignalsMachines.src.craftingmachine
                 return base.GetPlacedBlockInfo(world, pos, forPlayer).Replace(Vintagestory.API.Config.Lang.Get("signals:" + anchor) + "\r\n", "");
             int pin = sel.SelectionBoxIndex;
             var be = world.BlockAccessor.GetBlockEntity(pos) as BECraftingMachine;
-            string info = PinName(pin, anchor) + "\n";
+            // a reserve pin the tube uses carries the name imprinted into it
+            string tubeName = pin > BECraftingMachine.LastInput && be?.Tube != null
+                ? TubeProgram.Pins(be.Tube).FirstOrDefault(p => p.Index == pin)?.Name : null;
+            string info = (string.IsNullOrEmpty(tubeName) ? PinName(pin, anchor) : TubeProgram.Vtml(tubeName)) + "\n";
             if (be != null && pin <= BECraftingMachine.LastInput)
                 info += Vintagestory.API.Config.Lang.Get("signalsmachines:machine-pin-level", pin == BECraftingMachine.StatePin ? be.State : be.Inputs[pin]) + "\n";
             return info;
+        }
+
+        /// <summary>The pin's name without a selection: by its anchor index (for the imprinter's pin list).</summary>
+        public string PinName(int pin)
+        {
+            var anchor = wireAnchors?.FirstOrDefault(a => a.Index == pin)?.Name;
+            return anchor == null ? null : PinName(pin, anchor);
         }
 
         /// <summary>Door pins are named by the side the door faces in the world, the rest by their anchor name.</summary>

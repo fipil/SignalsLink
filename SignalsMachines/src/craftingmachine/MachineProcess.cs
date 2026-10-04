@@ -87,6 +87,9 @@ public sealed class MachineProcess
     }
 
     private void Fail(byte error) { State = error; Progress = 0; ResetTimers(); }
+
+    /// <summary>The next step takes the strength as it comes, without the steepness check (a tube was just put in or taken out).</summary>
+    public void Forgive() => first = true;
     private void ResetTimers() { pausedFor = wrongStrengthFor = plateStillFor = noDriveFor = 0; }
 
     /// <summary>Restores a saved state (progress keeps running after a reload).</summary>

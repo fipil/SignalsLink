@@ -203,7 +203,16 @@ public class BEImprinter : BlockEntity
 
     // ---- server: reading and imprinting
 
-    private CircuitReader.Result Read(string uid = null) => CircuitReader.Read(new SignalsCircuitWorld(Api), socket, exposed, uid ?? operatorUid);
+    private CircuitReader.Result Read(string uid = null) => CircuitReader.Read(new SignalsCircuitWorld(Api), socket, exposed, uid ?? operatorUid, ReservedPins());
+
+    // the pins a machine socket gives a meaning to; exposed switches and delays go to the others
+    private ISet<int> ReservedPins()
+    {
+        var reserved = new HashSet<int>();
+        if (socket != null && Api.World.BlockAccessor.GetBlockEntity(socket) is ITubeSocket target)
+            for (int i = 0; i < CircuitProgram.MaxPins; i++) if (target.PinName(i) != null) reserved.Add(i);
+        return reserved;
+    }
 
     private const string NoWarnKey = "signalstubes-nosolderwarn";
     public static bool WarnsAboutSoldering(IServerPlayer player) => player.GetModdata(NoWarnKey) == null;
@@ -232,11 +241,13 @@ public class BEImprinter : BlockEntity
     private void ShowHighlights()
     {
         if (operatorUid == null || Api.World.PlayerByUid(operatorUid) is not IServerPlayer player) return;
+        // Arbitrary = one highlight per listed block (Cube would read the list as two corners of a box)
         Api.World.HighlightBlocks(player, RefusedSlot, refused.ToList(),
-            refused.Select(_ => ColorUtil.ColorFromRgba(220, 40, 40, 96)).ToList(), EnumHighlightBlocksMode.Absolute, EnumHighlightShape.Cube);
+            refused.Select(_ => ColorUtil.ColorFromRgba(220, 40, 40, 96)).ToList(), EnumHighlightBlocksMode.Absolute, EnumHighlightShape.Arbitrary);
         var marked = socket == null ? new List<BlockPos>() : exposed.ToList();
+        Api.Logger.Debug("[signalstubes] imprinter {0}: highlights to {1}: {2} refused, {3} marked, socket {4}", Pos, player.PlayerName, refused.Count, marked.Count, socket);
         Api.World.HighlightBlocks(player, MarkedSlot, marked,
-            marked.Select(_ => ColorUtil.ColorFromRgba(40, 200, 60, 96)).ToList(), EnumHighlightBlocksMode.Absolute, EnumHighlightShape.Cube);
+            marked.Select(_ => ColorUtil.ColorFromRgba(40, 200, 60, 96)).ToList(), EnumHighlightBlocksMode.Absolute, EnumHighlightShape.Arbitrary);
     }
 
     /// <summary>Everything the dialog shows, as JSON. Pin and tube names come from the tube already inserted.</summary>
@@ -245,7 +256,9 @@ public class BEImprinter : BlockEntity
         operatorUid = player.PlayerUID;
         var result = socket == null ? null : Read(player.PlayerUID);
         var existingPins = tube == null ? new List<PublicPin>() : TubeProgram.Pins(tube);
-        string PinName(int index) => (string)draft?["pinNames"]?[index.ToString()] ?? existingPins.FirstOrDefault(p => p.Index == index)?.Name ?? "";
+        // a machine socket names its own pins; they come prefilled so the imprinted tube carries them
+        var target = socket == null ? null : Api.World.BlockAccessor.GetBlockEntity(socket) as ITubeSocket;
+        string PinName(int index) => (string)draft?["pinNames"]?[index.ToString()] ?? existingPins.FirstOrDefault(p => p.Index == index)?.Name ?? target?.PinName(index) ?? "";
         bool foreignLocked = tube != null && !TubeProgram.IsAuthor(tube, player.PlayerUID) && (TubeProgram.LockCopy(tube) || TubeProgram.LockView(tube));
         var state = new Newtonsoft.Json.Linq.JObject
         {
