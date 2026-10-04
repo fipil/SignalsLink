@@ -120,6 +120,15 @@ public static class ImprinterNetwork
             // Diagnostics: the pins of the socket aimed at, as the Signals network sees them.
             .BeginSubCommand("diag").WithDescription("Signals view of the socket you are looking at").RequiresPlayer()
             .HandleWith(args => TextCommandResult.Success(SocketDiagnostics(sapi, args.Caller.Player)))
+            .EndSubCommand()
+            // Admin: the tube in hand to a file on the server, and back into the hand of whoever imports it.
+            .BeginSubCommand("export").WithDescription("Write the tube in your hand to ModData/signalstubes/tubes/<name>.json (no name: the tube's own)")
+            .WithArgs(parsers.OptionalAll("name")).RequiresPlayer().RequiresPrivilege(Privilege.controlserver)
+            .HandleWith(args => ExportTube(sapi, (IServerPlayer)args.Caller.Player, (string)args[0]))
+            .EndSubCommand()
+            .BeginSubCommand("import").WithDescription("Create the tube from ModData/signalstubes/tubes/<name>.json; you become its author")
+            .WithArgs(parsers.All("name")).RequiresPlayer().RequiresPrivilege(Privilege.controlserver)
+            .HandleWith(args => ImportTube(sapi, (IServerPlayer)args.Caller.Player, (string)args[0]))
             .EndSubCommand();
 
         sapi.Network.RegisterChannel(Channel)
@@ -153,6 +162,39 @@ public static class ImprinterNetwork
                 bool done = imprinter.ApplyAndImprint(player, packet.Json);
                 if (!packet.Json.Contains("\"draft\":true")) SendState(sapi, player, imprinter, done);
             });
+    }
+
+    // "Řízení craftovacího stroje" -> "Řízení-craftovacího-stroje.json": spaces become dashes, anything a file name cannot carry is dropped
+    private static string TubeFile(ICoreServerAPI sapi, string name, out string error)
+    {
+        error = null;
+        string file = new string((name ?? "").Trim().Select(c => char.IsWhiteSpace(c) ? '-' : c).Where(c => char.IsLetterOrDigit(c) || c is '-' or '_' or '.').ToArray()).Trim('.');
+        if (file.Length == 0) { error = "Give the file a name (letters, digits, - and _)."; return null; }
+        return System.IO.Path.Combine(sapi.GetOrCreateDataPath(System.IO.Path.Combine("ModData", "signalstubes", "tubes")), file + ".json");
+    }
+
+    private static TextCommandResult ExportTube(ICoreServerAPI sapi, IServerPlayer player, string name)
+    {
+        var stack = player.InventoryManager.ActiveHotbarSlot?.Itemstack;
+        if (stack?.Collectible is not programtube.ItemProgramTube) return TextCommandResult.Error("Hold the tube to export.");
+        if (string.IsNullOrWhiteSpace(name)) name = stack.Attributes.GetString(programtube.TubeProgram.NameKey);
+        string path = TubeFile(sapi, name, out string error);
+        if (path == null) return TextCommandResult.Error(error);
+        System.IO.File.WriteAllText(path, Newtonsoft.Json.JsonConvert.SerializeObject(programtube.TubeTransfer.Export(stack, sapi), Newtonsoft.Json.Formatting.Indented));
+        return TextCommandResult.Success("Exported to " + path);
+    }
+
+    private static TextCommandResult ImportTube(ICoreServerAPI sapi, IServerPlayer player, string name)
+    {
+        string path = TubeFile(sapi, name, out string error);
+        if (path == null) return TextCommandResult.Error(error);
+        if (!System.IO.File.Exists(path)) return TextCommandResult.Error("No such file: " + path);
+        ItemStack stack;
+        try { stack = programtube.TubeTransfer.Import(Newtonsoft.Json.Linq.JObject.Parse(System.IO.File.ReadAllText(path)), sapi, player.PlayerUID, player.PlayerName); }
+        catch (Exception e) when (e is FormatException or Newtonsoft.Json.JsonException) { return TextCommandResult.Error("Unreadable tube file: " + e.Message); }
+        if (stack == null) return TextCommandResult.Error("The file names an item this server does not have.");
+        if (!player.InventoryManager.TryGiveItemstack(stack, true)) sapi.World.SpawnItemEntity(stack, player.Entity.Pos.XYZ);
+        return TextCommandResult.Success("Imported " + (stack.Attributes.GetString(programtube.TubeProgram.NameKey) ?? stack.GetName()) + "; you are its author now.");
     }
 
     private static string SocketDiagnostics(ICoreServerAPI sapi, IPlayer player)
