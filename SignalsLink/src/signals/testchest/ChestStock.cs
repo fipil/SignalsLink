@@ -7,7 +7,10 @@ using Vintagestory.API.Datastructures;
 
 namespace SignalsLink.src.signals.testchest;
 
-/// <summary>Server-only stock policy on a real vanilla InventoryBase. No replacement inventory or fake slots.</summary>
+/// <summary>
+/// Server-only stock policy on real vanilla slots: chutes and tests see ordinary ItemSlots, never fakes.
+/// The bottomless chest swaps in <see cref="ClearableInventory"/> (an InventoryGeneric) only to read clicks in its GUI.
+/// </summary>
 public sealed class ChestStock : IDisposable
 {
     private readonly InventoryBase inventory;
@@ -135,6 +138,20 @@ public sealed class ChestStock : IDisposable
             changed?.Invoke();
         }
         finally { recycling = false; }
+    }
+    /// <summary>Forgets one slot's template and empties it (the bottomless chest's per-slot delete).</summary>
+    public void ClearSlot(int index)
+    {
+        if (index < 0 || index >= inventory.Count) return;
+        updating = true;
+        try
+        {
+            templates[index] = null; previous[index] = null;
+            RemoveFromQueue(index, int.MaxValue);
+            inventory[index].Itemstack = null; inventory[index].MarkDirty();
+            changed?.Invoke();
+        }
+        finally { updating = false; }
     }
     public void Clear()
     {

@@ -5352,380 +5352,6 @@
       }
     },
     {
-      "name": "door_rods",
-      "from": [
-        0,
-        0,
-        0
-      ],
-      "to": [
-        0,
-        0,
-        0
-      ],
-      "rotationOrigin": [
-        8,
-        18.732,
-        8
-      ],
-      "faces": {},
-      "rotationY": -90,
-      "children": [
-        {
-          "name": "rod_east_3.5",
-          "from": [
-            3.5,
-            6.935,
-            1.35
-          ],
-          "to": [
-            4.0,
-            18.735,
-            1.85
-          ],
-          "faces": {
-            "north": {
-              "texture": "#iron",
-              "uv": [
-                0,
-                0,
-                0.5,
-                11.8
-              ],
-              "autoUv": false,
-              "enabled": true
-            },
-            "south": {
-              "texture": "#iron",
-              "uv": [
-                0,
-                0,
-                0.5,
-                11.8
-              ],
-              "autoUv": false,
-              "enabled": true
-            },
-            "east": {
-              "texture": "#iron",
-              "uv": [
-                0,
-                0,
-                0.5,
-                11.8
-              ],
-              "autoUv": false,
-              "enabled": true
-            },
-            "west": {
-              "texture": "#iron",
-              "uv": [
-                0,
-                0,
-                0.5,
-                11.8
-              ],
-              "autoUv": false,
-              "enabled": true
-            },
-            "up": {
-              "texture": "#iron",
-              "uv": [
-                0,
-                0,
-                0.5,
-                0.5
-              ],
-              "autoUv": false,
-              "enabled": true
-            },
-            "down": {
-              "texture": "#iron",
-              "uv": [
-                0,
-                0,
-                0.5,
-                0.5
-              ],
-              "autoUv": false,
-              "enabled": true
-            }
-          },
-          "renderPass": 0,
-          "rotationOrigin": [
-            8,
-            0,
-            8
-          ],
-          "rotationY": 0
-        },
-        {
-          "name": "rod_west_3.5",
-          "from": [
-            3.5,
-            6.935,
-            1.35
-          ],
-          "to": [
-            4.0,
-            18.735,
-            1.85
-          ],
-          "faces": {
-            "north": {
-              "texture": "#iron",
-              "uv": [
-                0,
-                0,
-                0.5,
-                11.8
-              ],
-              "autoUv": false,
-              "enabled": true
-            },
-            "south": {
-              "texture": "#iron",
-              "uv": [
-                0,
-                0,
-                0.5,
-                11.8
-              ],
-              "autoUv": false,
-              "enabled": true
-            },
-            "east": {
-              "texture": "#iron",
-              "uv": [
-                0,
-                0,
-                0.5,
-                11.8
-              ],
-              "autoUv": false,
-              "enabled": true
-            },
-            "west": {
-              "texture": "#iron",
-              "uv": [
-                0,
-                0,
-                0.5,
-                11.8
-              ],
-              "autoUv": false,
-              "enabled": true
-            },
-            "up": {
-              "texture": "#iron",
-              "uv": [
-                0,
-                0,
-                0.5,
-                0.5
-              ],
-              "autoUv": false,
-              "enabled": true
-            },
-            "down": {
-              "texture": "#iron",
-              "uv": [
-                0,
-                0,
-                0.5,
-                0.5
-              ],
-              "autoUv": false,
-              "enabled": true
-            }
-          },
-          "renderPass": 0,
-          "rotationOrigin": [
-            8,
-            0,
-            8
-          ],
-          "rotationY": 180
-        },
-        {
-          "name": "rod_east_12.0",
-          "from": [
-            12.0,
-            6.935,
-            1.35
-          ],
-          "to": [
-            12.5,
-            18.735,
-            1.85
-          ],
-          "faces": {
-            "north": {
-              "texture": "#iron",
-              "uv": [
-                0,
-                0,
-                0.5,
-                11.8
-              ],
-              "autoUv": false,
-              "enabled": true
-            },
-            "south": {
-              "texture": "#iron",
-              "uv": [
-                0,
-                0,
-                0.5,
-                11.8
-              ],
-              "autoUv": false,
-              "enabled": true
-            },
-            "east": {
-              "texture": "#iron",
-              "uv": [
-                0,
-                0,
-                0.5,
-                11.8
-              ],
-              "autoUv": false,
-              "enabled": true
-            },
-            "west": {
-              "texture": "#iron",
-              "uv": [
-                0,
-                0,
-                0.5,
-                11.8
-              ],
-              "autoUv": false,
-              "enabled": true
-            },
-            "up": {
-              "texture": "#iron",
-              "uv": [
-                0,
-                0,
-                0.5,
-                0.5
-              ],
-              "autoUv": false,
-              "enabled": true
-            },
-            "down": {
-              "texture": "#iron",
-              "uv": [
-                0,
-                0,
-                0.5,
-                0.5
-              ],
-              "autoUv": false,
-              "enabled": true
-            }
-          },
-          "renderPass": 0,
-          "rotationOrigin": [
-            8,
-            0,
-            8
-          ],
-          "rotationY": 0
-        },
-        {
-          "name": "rod_west_12.0",
-          "from": [
-            12.0,
-            6.935,
-            1.35
-          ],
-          "to": [
-            12.5,
-            18.735,
-            1.85
-          ],
-          "faces": {
-            "north": {
-              "texture": "#iron",
-              "uv": [
-                0,
-                0,
-                0.5,
-                11.8
-              ],
-              "autoUv": false,
-              "enabled": true
-            },
-            "south": {
-              "texture": "#iron",
-              "uv": [
-                0,
-                0,
-                0.5,
-                11.8
-              ],
-              "autoUv": false,
-              "enabled": true
-            },
-            "east": {
-              "texture": "#iron",
-              "uv": [
-                0,
-                0,
-                0.5,
-                11.8
-              ],
-              "autoUv": false,
-              "enabled": true
-            },
-            "west": {
-              "texture": "#iron",
-              "uv": [
-                0,
-                0,
-                0.5,
-                11.8
-              ],
-              "autoUv": false,
-              "enabled": true
-            },
-            "up": {
-              "texture": "#iron",
-              "uv": [
-                0,
-                0,
-                0.5,
-                0.5
-              ],
-              "autoUv": false,
-              "enabled": true
-            },
-            "down": {
-              "texture": "#iron",
-              "uv": [
-                0,
-                0,
-                0.5,
-                0.5
-              ],
-              "autoUv": false,
-              "enabled": true
-            }
-          },
-          "renderPass": 0,
-          "rotationOrigin": [
-            8,
-            0,
-            8
-          ],
-          "rotationY": 180
-        }
-      ]
-    },
-    {
       "name": "chamber",
       "from": [
         0,
@@ -9006,6 +8632,192 @@
                 }
               },
               "renderPass": 3
+            }
+          ]
+        },
+        {
+          "name": "window_0_canopy",
+          "from": [
+            0,
+            0,
+            0
+          ],
+          "to": [
+            0,
+            0,
+            0
+          ],
+          "rotationOrigin": [
+            8,
+            5.232,
+            8
+          ],
+          "rotationY": 0,
+          "faces": {},
+          "children": [
+            {
+              "name": "canopy_door-east",
+              "from": [
+                4.075,
+                30.498,
+                0.4017
+              ],
+              "to": [
+                11.925,
+                31.248,
+                1.2017
+              ],
+              "faces": {
+                "north": {
+                  "texture": "#castiron",
+                  "uv": [
+                    0,
+                    0,
+                    7.85,
+                    0.75
+                  ],
+                  "autoUv": false,
+                  "enabled": true
+                },
+                "east": {
+                  "texture": "#castiron",
+                  "uv": [
+                    0,
+                    0,
+                    0.8,
+                    0.75
+                  ],
+                  "autoUv": false,
+                  "enabled": true
+                },
+                "west": {
+                  "texture": "#castiron",
+                  "uv": [
+                    0,
+                    0,
+                    0.8,
+                    0.75
+                  ],
+                  "autoUv": false,
+                  "enabled": true
+                },
+                "up": {
+                  "texture": "#castiron",
+                  "uv": [
+                    0,
+                    0,
+                    7.85,
+                    0.8
+                  ],
+                  "autoUv": false,
+                  "enabled": true
+                },
+                "down": {
+                  "texture": "#castiron",
+                  "uv": [
+                    0,
+                    0,
+                    7.85,
+                    0.8
+                  ],
+                  "autoUv": false,
+                  "enabled": true
+                }
+              },
+              "renderPass": 0
+            }
+          ]
+        },
+        {
+          "name": "window_3_canopy",
+          "from": [
+            0,
+            0,
+            0
+          ],
+          "to": [
+            0,
+            0,
+            0
+          ],
+          "rotationOrigin": [
+            8,
+            5.232,
+            8
+          ],
+          "rotationY": -180,
+          "faces": {},
+          "children": [
+            {
+              "name": "canopy_door-west",
+              "from": [
+                4.075,
+                30.498,
+                0.4017
+              ],
+              "to": [
+                11.925,
+                31.248,
+                1.2017
+              ],
+              "faces": {
+                "north": {
+                  "texture": "#castiron",
+                  "uv": [
+                    0,
+                    0,
+                    7.85,
+                    0.75
+                  ],
+                  "autoUv": false,
+                  "enabled": true
+                },
+                "east": {
+                  "texture": "#castiron",
+                  "uv": [
+                    0,
+                    0,
+                    0.8,
+                    0.75
+                  ],
+                  "autoUv": false,
+                  "enabled": true
+                },
+                "west": {
+                  "texture": "#castiron",
+                  "uv": [
+                    0,
+                    0,
+                    0.8,
+                    0.75
+                  ],
+                  "autoUv": false,
+                  "enabled": true
+                },
+                "up": {
+                  "texture": "#castiron",
+                  "uv": [
+                    0,
+                    0,
+                    7.85,
+                    0.8
+                  ],
+                  "autoUv": false,
+                  "enabled": true
+                },
+                "down": {
+                  "texture": "#castiron",
+                  "uv": [
+                    0,
+                    0,
+                    7.85,
+                    0.8
+                  ],
+                  "autoUv": false,
+                  "enabled": true
+                }
+              },
+              "renderPass": 0
             }
           ]
         }

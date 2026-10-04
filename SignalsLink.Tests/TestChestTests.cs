@@ -66,6 +66,26 @@ public class TestChestTests
         stock.Clear(); Assert.True(inventory.Empty); Assert.Equal(0, stock.TemplateCount);
     }
     [Fact]
+    public void Shift_click_with_an_empty_mouse_deletes_one_slot_of_the_bottomless_chest()
+    {
+        var inventory = new ClearableInventory(2, "test-chest", null, Api);
+        using var stock = new ChestStock(inventory, null, true, null);
+        inventory.OnClearSlot = stock.ClearSlot;
+        Put(inventory, 0, Stack("game:firewood", 4)); Put(inventory, 1, Stack("game:stone", 12));
+        var mouse = new DummySlot();
+        var shiftClick = new ItemStackMoveOperation(null, EnumMouseButton.Left, EnumModifierKey.SHIFT, EnumMergePriority.AutoMerge, 1);
+        inventory.ActivateSlot(0, mouse, ref shiftClick);
+        Assert.True(inventory[0].Empty); Assert.True(mouse.Empty);
+        Assert.Equal(1, stock.TemplateCount);
+        Put(inventory, 0, Stack("game:bone", 1)); Assert.Equal(2, stock.TemplateCount);   // the slot is free for a new template
+        Assert.Equal(12, inventory[1].TakeOut(12).StackSize); inventory[1].MarkDirty();
+        Assert.Equal(12, inventory[1].StackSize);                                        // an ordinary take still refills
+        var plainClick = new ItemStackMoveOperation(null, EnumMouseButton.Left, 0, EnumMergePriority.AutoMerge, 1);
+        Assert.False(ClearableInventory.IsClearGesture(inventory[1], mouse, plainClick));
+        Assert.False(ClearableInventory.IsClearGesture(inventory[1], new DummySlot(Stack("game:stone", 1)), shiftClick));
+    }
+
+    [Fact]
     public void Normal_transfer_and_paper_conditions_can_read_the_real_source_inventory()
     {
         var source = Inventory(); var target = Inventory();

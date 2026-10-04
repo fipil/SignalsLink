@@ -57,9 +57,64 @@ namespace SignalsMachines.src.craftingmachine
 
         public override bool DoPartialSelection(IWorldAccessor world, BlockPos pos) => true;
 
-        // Upper proxy selection indices describe the chamber, never the socket below it.
-        public bool MBDoPartialSelection(IWorldAccessor world, BlockPos pos, Vec3i offset) => false;
-        public bool MBOnBlockInteractStart(IWorldAccessor world, IPlayer player, BlockSelection selection, Vec3i offset) => false;
+        // Upper proxy selection: with a door open and the plate still, the chamber opens up into its walls
+        // and the nine cells plus the product (boxes 0-9) can be reached by hand through the doorway.
+        // The vanilla proxy hands over the offset *to the controller* (pos + offset is the controller).
+        public bool MBDoPartialSelection(IWorldAccessor world, BlockPos pos, Vec3i offset) =>
+            world.BlockAccessor.GetBlockEntity(pos.AddCopy(offset)) is BECraftingMachine { HandAccess: true };
+
+        public bool MBOnBlockInteractStart(IWorldAccessor world, IPlayer player, BlockSelection selection, Vec3i offset)
+        {
+            var be = world.BlockAccessor.GetBlockEntity(selection.Position.AddCopy(offset)) as BECraftingMachine;
+            if (be is not { HandAccess: true } || selection.SelectionBoxIndex > BECraftingMachine.ProductSlot) return false;
+            if (!world.Claims.TryAccess(player, selection.Position, EnumBlockAccessFlags.Use)) return false;
+            return be.HandleCell(player, selection.SelectionBoxIndex);
+        }
+
+        // the shell around the cells (floor, roof, walls that stay), per combination of open doors
+        private readonly Dictionary<(bool west, bool east), Cuboidf[]> shellByDoors = new();
+
+        // Cells 0-8, product 9, then the shell. A cell's box is the size of what lies in it, so the hand can
+        // reach past the front row; an empty cell is a low pad. The client measures the drawn item; the server,
+        // which only needs the box order, falls back to a rule of thumb.
+        private Cuboidf[] OpenChamberBoxes(BECraftingMachine be, bool westOpen, bool eastOpen)
+        {
+            var boxes = new List<Cuboidf>();
+            const float top = 19.732f - 16, pitch = 2.5f, first = 5.5f, cell = 2.2f, pad = 0.3f;
+            for (int i = 0; i < BECraftingMachine.GridSlots; i++)
+            {
+                float cx = first + pitch * (i % BECraftingMachine.GridSize), cz = first + pitch * (i / BECraftingMachine.GridSize);
+                var stack = be.Inventory[i].Itemstack;
+                var extent = be.CellExtent(i);
+                float w, h, d;
+                if (stack == null) (w, h, d) = (cell, pad, cell);
+                else if (extent != null) (w, h, d) = (extent.X * cell, extent.Y * cell, extent.Z * cell);
+                else if (stack.Class == EnumItemClass.Block || stack.Item?.Shape != null) w = h = d = cell * PlateRenderer.ShapedFit;
+                else (w, h, d) = (cell, pad, cell);
+                h = Math.Max(h, pad);
+                boxes.Add(new Cuboidf((cx - w / 2) / 16, top / 16, (cz - d / 2) / 16, (cx + w / 2) / 16, (top + h) / 16, (cz + d / 2) / 16));
+            }
+            boxes.Add(new Cuboidf(7 / 16f, 6.6f / 16, 7 / 16f, 9 / 16f, 8.6f / 16, 9 / 16f));   // the product
+            boxes.AddRange(Shell(westOpen, eastOpen));
+            return Rotate(boxes.ToArray());
+        }
+
+        private Cuboidf[] Shell(bool westOpen, bool eastOpen)
+        {
+            if (shellByDoors.TryGetValue((westOpen, eastOpen), out var cached)) return cached;
+            var boxes = new List<Cuboidf>();
+            const float top = 19.732f - 16;
+            // the chamber as a shell: floor, roof, the two blind walls, and the door walls that are shut
+            var c = Attributes["upperPartBoxes"].AsObject<Cuboidf[]>()[0];
+            const float wall = 1 / 16f;
+            boxes.Add(new Cuboidf(c.X1, c.Y1, c.Z1, c.X2, top / 16, c.Z2));                 // floor up to the plate
+            boxes.Add(new Cuboidf(c.X1, 14.498f / 16, c.Z1, c.X2, c.Y2, c.Z2));            // roof slab
+            boxes.Add(new Cuboidf(c.X1, c.Y1, c.Z1, c.X2, c.Y2, c.Z1 + wall));             // north
+            boxes.Add(new Cuboidf(c.X1, c.Y1, c.Z2 - wall, c.X2, c.Y2, c.Z2));             // south
+            if (!westOpen) boxes.Add(new Cuboidf(c.X1, c.Y1, c.Z1, c.X1 + wall, c.Y2, c.Z2));
+            if (!eastOpen) boxes.Add(new Cuboidf(c.X2 - wall, c.Y1, c.Z1, c.X2, c.Y2, c.Z2));
+            return shellByDoors[(westOpen, eastOpen)] = boxes.ToArray();   // unrotated; the caller rotates the whole set
+        }
         public bool MBOnBlockInteractStep(float seconds, IWorldAccessor world, IPlayer player, BlockSelection selection, Vec3i offset) => false;
         public void MBOnBlockInteractStop(float seconds, IWorldAccessor world, IPlayer player, BlockSelection selection, Vec3i offset) { }
         public bool MBOnBlockInteractCancel(float seconds, IWorldAccessor world, IPlayer player, BlockSelection selection, EnumItemUseCancelReason reason, Vec3i offset) => true;
@@ -194,6 +249,8 @@ namespace SignalsMachines.src.craftingmachine
 
         public Cuboidf[] MBGetSelectionBoxes(IBlockAccessor blockAccessor, BlockPos pos, Vec3i offset)
         {
+            if (blockAccessor.GetBlockEntity(pos.AddCopy(offset)) is BECraftingMachine { HandAccess: true } be)
+                return OpenChamberBoxes(be, be.DoorFullyOpen(4), be.DoorFullyOpen(5));
             return upperPartBoxes;
         }
     }

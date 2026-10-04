@@ -2,6 +2,7 @@
 Tweak: A storage yard now needs only 2 tiles instead of 4.
 Tweak: Chutes and dampers now reach the inventory of a multiblock through any of its blocks, not only the main one; a damper hung on such a block loses its legs as on a chest.
 Tweak: A block can keep automation out through chosen faces (used by Signals Machines for machine doors).
+Tweak: Bottomless chest: Shift + click on a filled slot with an empty cursor clears just that slot (pattern and contents).
 BEWARE, possible breaking change in `keep`: when a paper block also names a target slot (`target N`, `target last`, or the Target pin), `keep N` now counts only what lies in that slot, not the whole target inventory. Before, `target 3` + `keep 5` filled slot 3 until the chest as a whole held 5; now it holds 5 in slot 3. Papers without a target slot are unchanged. Check papers that combine the two: the level you meant for the whole container must now be written without `target`, or split per slot.
 
 1.0.6 - published 2026-09-28 20:45

@@ -202,7 +202,7 @@
   "block-normal-generic-bottomlesschest-*": "Bezedná truhla",
   "block-bottomlesschest-*": "Bezedná truhla",
   "bottomlesschest-title": "Bezedná truhla",
-  "bottomlesschest-help": "Každý slot doplňuje vloženou položku na původní počet. Plížení + sprint + pravé tlačítko prázdnou rukou vymaže všechny vzory a obsah.",
+  "bottomlesschest-help": "Každý slot doplňuje vloženou položku na původní počet. Plížení + sprint + pravé tlačítko prázdnou rukou vymaže všechny vzory a obsah. V okně truhly Shift + klik na plný slot s prázdným kurzorem vymaže jen ten slot.",
   "block-normal-generic-recyclerchest-*": "Likvidační truhla",
   "block-recyclerchest-*": "Likvidační truhla",
   "recyclerchest-title": "Likvidační truhla",

@@ -13,7 +13,7 @@ namespace SignalsTubes.src.imprint;
 /// </summary>
 public class GuiDialogImprinter : GuiDialogBlockEntity
 {
-    public const int NameMax = 32, DescriptionMax = 120, PinNameMax = 16;
+    public const int NameMax = 32, DescriptionMax = 120, PinNameMax = 24;
     private JObject state;
     private bool confirming;
     private readonly List<string> path = new();

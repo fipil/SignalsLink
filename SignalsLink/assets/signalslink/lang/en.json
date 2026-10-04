@@ -202,7 +202,7 @@
   "block-normal-generic-bottomlesschest-*": "Bottomless Chest",
   "block-bottomlesschest-*": "Bottomless Chest",
   "bottomlesschest-title": "Bottomless Chest",
-  "bottomlesschest-help": "Each slot replenishes the inserted item to its original quantity. Sneak + sprint + right-click with an empty hand clears all patterns and contents.",
+  "bottomlesschest-help": "Each slot replenishes the inserted item to its original quantity. Sneak + sprint + right-click with an empty hand clears all patterns and contents. In the chest window, Shift + click on a filled slot with an empty cursor clears that one slot.",
   "block-normal-generic-recyclerchest-*": "Recycler Chest",
   "block-recyclerchest-*": "Recycler Chest",
   "recyclerchest-title": "Recycler Chest",

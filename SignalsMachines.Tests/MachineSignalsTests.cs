@@ -16,6 +16,7 @@ public class MachineSignalsTests
     {
         var block = new BlockCraftingMachine();
         block.VariantStrict["side"] = "north";
+        block.Attributes = JsonObject.FromJson("{\"upperPartBoxes\":[{\"x1\":0.1313,\"y1\":0.1082,\"z1\":0.075,\"x2\":0.8688,\"y2\":0.9688,\"z2\":0.925}]}");
         var be = new BECraftingMachine { Block = block };
         if (tube != null)
         {
@@ -158,8 +159,13 @@ public class MachineSignalsTests
         rig.Tick(); rig.Tick();
         var chamber = At(0).UpCopy();
         Assert.False(machine.AllowsAutomation(chamber, BlockFacing.WEST));   // still riding down
+        Assert.False(machine.HandAccess);
         rig.ElapsedMilliseconds += (long)((DoorMotion.PushSeconds + DoorMotion.OpenSlideSeconds) * 1000) + 1;
         Assert.True(machine.AllowsAutomation(chamber, BlockFacing.WEST));
+        Assert.True(machine.HandAccess);
+        // the proxy above opens up: nine cells, the product, and the shell without the west wall
+        var boxes = ((BlockCraftingMachine)machine.Block).MBGetSelectionBoxes(rig.World.BlockAccessor, chamber, new Vec3i(0, -1, 0));   // vanilla passes the offset to the controller
+        Assert.Equal(BECraftingMachine.GridSlots + 1 + 5, boxes.Length);
         Assert.False(machine.AllowsAutomation(chamber, BlockFacing.EAST));
         Assert.False(machine.AllowsAutomation(chamber, BlockFacing.NORTH));
         Assert.False(machine.AllowsAutomation(chamber, BlockFacing.UP));

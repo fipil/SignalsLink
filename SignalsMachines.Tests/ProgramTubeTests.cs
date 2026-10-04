@@ -77,7 +77,10 @@ public class ProgramTubeTests
     public void UpperProxyCannotOperateSocket()
     {
         var block = new BlockCraftingMachine();
-        Assert.False(block.MBOnBlockInteractStart(null, null, new BlockSelection { SelectionBoxIndex = BlockCraftingMachine.SocketBox }, new Vec3i(0, 1, 0)));
+        var accessor = Fake<IBlockAccessor>((m, a) => null);   // no machine entity below
+        var world = Fake<IWorldAccessor>((m, a) => m.Name == "get_BlockAccessor" ? accessor : null);
+        var selection = new BlockSelection { Position = new BlockPos(1, 3, 3), SelectionBoxIndex = BlockCraftingMachine.SocketBox };
+        Assert.False(block.MBOnBlockInteractStart(world, null, selection, new Vec3i(0, -1, 0)));
     }
 
     [Theory]

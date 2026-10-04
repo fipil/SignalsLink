@@ -245,9 +245,15 @@ public class GuiElementSchematic : GuiElement
                 break;
             }
             case "delay":
+            {
                 ctx.Rectangle(2, 2, w - 4, h - 4); ctx.Stroke();
-                Text(ctx, font, e.Param.ToString(), w / 2, h / 2);   // the setting as the block shows it
+                Text(ctx, font, e.Param.ToString(), w / 2, h / 2);   // the true setting (the block's info line shows value + 1)
+                // the block marks its output end with a small square; so does the symbol (the layout may mirror it)
+                var outPort = e.Ports[1];   // ports are added input, output, setting (see SchematicLayout)
+                double sx = outPort.Side == SchematicLayout.Side.Left ? 6 : w - 12;
+                ctx.Rectangle(sx, outPort.Y - e.Y - 3, 6, 6); ctx.Fill();
                 break;
+            }
             case "buffer":
                 ctx.MoveTo(4, 2); ctx.LineTo(w - 4, h / 2); ctx.LineTo(4, h - 2); ctx.ClosePath(); ctx.Stroke();
                 break;

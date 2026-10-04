@@ -1,0 +1,215 @@
+{
+  "editor": {
+    "allAngles": true,
+    "entityTextureMode": false
+  },
+  "textureWidth": 16,
+  "textureHeight": 16,
+  "textureSizes": {
+    "iron": [
+      16,
+      16
+    ],
+    "terminal": [
+      16,
+      16
+    ],
+    "details": [
+      32,
+      32
+    ],
+    "castiron": [
+      16,
+      16
+    ],
+    "castiron-relief": [
+      80,
+      48
+    ],
+    "glass": [
+      16,
+      16
+    ],
+    "axle-metal": [
+      16,
+      16
+    ],
+    "crafting-grid": [
+      8,
+      8
+    ],
+    "base-oak": [
+      16,
+      16
+    ],
+    "foot-rivet": [
+      16,
+      16
+    ],
+    "gearbox-cover": [
+      32,
+      16
+    ],
+    "back-frame": [
+      16,
+      16
+    ],
+    "leg-frame": [
+      16,
+      16
+    ],
+    "socket-floor": [
+      16,
+      16
+    ],
+    "pintop": [
+      16,
+      16
+    ]
+  },
+  "textures": {
+    "iron": "block/iron",
+    "terminal": "block/normal3",
+    "details": "block/details",
+    "castiron": "block/castironbrown",
+    "castiron-relief": "block/castironbrown-machine-centered",
+    "glass": "block/glass-plain",
+    "axle-metal": "block/axle-iron",
+    "crafting-grid": "block/crafting-grid",
+    "base-oak": "block/base-oak",
+    "foot-rivet": "block/foot-rivet-iron",
+    "gearbox-cover": "block/gearbox-cover",
+    "back-frame": "block/back-frame",
+    "leg-frame": "block/leg-frame",
+    "socket-floor": "block/socket-floor",
+    "pintop": "block/rustycolored"
+  },
+  "elements": [
+    {
+      "name": "door-west-glass",
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        0,
+        0,
+        0
+      ],
+      "rotationOrigin": [
+        8,
+        18.732,
+        8
+      ],
+      "faces": {},
+      "rotationY": -90,
+      "children": [
+        {
+          "name": "window_3_glazing",
+          "from": [
+            0,
+            0,
+            0
+          ],
+          "to": [
+            0,
+            0,
+            0
+          ],
+          "rotationOrigin": [
+            8,
+            5.232,
+            8
+          ],
+          "rotationY": -180,
+          "faces": {},
+          "children": [
+            {
+              "name": "glass_3",
+              "from": [
+                5.145,
+                20.158,
+                1.4017005802921572
+              ],
+              "to": [
+                10.855,
+                28.93,
+                2.001700580292157
+              ],
+              "faces": {
+                "north": {
+                  "texture": "#glass",
+                  "uv": [
+                    0,
+                    0,
+                    5.710000000000001,
+                    8.772
+                  ],
+                  "autoUv": false,
+                  "enabled": true
+                },
+                "east": {
+                  "texture": "#glass",
+                  "uv": [
+                    0,
+                    0,
+                    0.5999999999999999,
+                    8.772
+                  ],
+                  "autoUv": false,
+                  "enabled": true
+                },
+                "south": {
+                  "texture": "#glass",
+                  "uv": [
+                    0,
+                    0,
+                    5.710000000000001,
+                    8.772
+                  ],
+                  "autoUv": false,
+                  "enabled": true
+                },
+                "west": {
+                  "texture": "#glass",
+                  "uv": [
+                    0,
+                    0,
+                    0.5999999999999999,
+                    8.772
+                  ],
+                  "autoUv": false,
+                  "enabled": true
+                },
+                "up": {
+                  "texture": "#glass",
+                  "uv": [
+                    0,
+                    0,
+                    5.710000000000001,
+                    0.5999999999999999
+                  ],
+                  "autoUv": false,
+                  "enabled": true
+                },
+                "down": {
+                  "texture": "#glass",
+                  "uv": [
+                    0,
+                    0,
+                    5.710000000000001,
+                    0.5999999999999999
+                  ],
+                  "autoUv": false,
+                  "enabled": true
+                }
+              },
+              "renderPass": 3
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

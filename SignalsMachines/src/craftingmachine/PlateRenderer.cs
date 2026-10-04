@@ -21,7 +21,9 @@ public sealed class PlateRenderer : IRenderer
     private readonly ICoreClientAPI capi;
     private readonly BlockPos pos;
     private readonly float blockRotation;
-    private readonly MeshRef plate, crystal, doorWest, doorEast;
+    private readonly MeshRef plate, crystal, doorWest, doorEast, rodsWest, rodsEast, glassWest, glassEast;
+    /// <summary>Piston rods: a unit-tall mesh whose top sits inside the canopy at this height, stretched down to the lintel.</summary>
+    public const float RodTop = 30.798f / 16, RodInset = 0.4f;   // shut: 0.1 of rod shows under the canopy (a hint of the pistons); open: sunk into the lintel
     private float crystalLift = 1;   // 0 = lowered, 1 = raised
     public bool CrystalDown;
     /// <summary>How brightly the crystal should glow, 0-1; the picture glides towards it.</summary>
@@ -48,7 +50,8 @@ public sealed class PlateRenderer : IRenderer
     public double RenderOrder => 0.5;
     public int RenderRange => 24;
 
-    public PlateRenderer(ICoreClientAPI capi, BlockPos pos, MeshData plateMesh, MeshData crystalMesh, MeshData doorWestMesh, MeshData doorEastMesh, float blockRotationRad)
+    public PlateRenderer(ICoreClientAPI capi, BlockPos pos, MeshData plateMesh, MeshData crystalMesh, MeshData doorWestMesh, MeshData doorEastMesh,
+        MeshData rodsWestMesh, MeshData rodsEastMesh, MeshData glassWestMesh, MeshData glassEastMesh, float blockRotationRad)
     {
         this.capi = capi;
         this.pos = pos;
@@ -57,6 +60,10 @@ public sealed class PlateRenderer : IRenderer
         crystal = capi.Render.UploadMesh(crystalMesh);
         doorWest = capi.Render.UploadMesh(doorWestMesh);
         doorEast = capi.Render.UploadMesh(doorEastMesh);
+        rodsWest = capi.Render.UploadMesh(rodsWestMesh);
+        rodsEast = capi.Render.UploadMesh(rodsEastMesh);
+        glassWest = capi.Render.UploadMesh(glassWestMesh);
+        glassEast = capi.Render.UploadMesh(glassEastMesh);
         capi.Event.RegisterRenderer(this, EnumRenderStage.Opaque, "craftingmachine-plate");
     }
 
@@ -85,15 +92,20 @@ public sealed class PlateRenderer : IRenderer
         if (stack.Class == EnumItemClass.Block) capi.Tesselator.TesselateBlock(stack.Block, out mesh);
         else capi.Tesselator.TesselateItem(stack.Item, out mesh);
         flat[slot] = stack.Class == EnumItemClass.Item && stack.Item.Shape == null;   // a plain texture item lies flat; shaped items stand as modelled
-        if (!flat[slot]) Ground(mesh, slot == BECraftingMachine.ProductSlot ? 1 : ShapedFit);   // the product keeps the ghost's full size
+        if (!flat[slot]) extents[slot] = Ground(mesh, slot == BECraftingMachine.ProductSlot ? 1 : ShapedFit);   // the product keeps the ghost's full size
+        else extents[slot] = new Vec3f(1, 1 / 16f, 1);   // a texture lying flat
         items[slot] = capi.Render.UploadMultiTextureMesh(mesh);
     }
 
+    private readonly Vec3f[] extents = new Vec3f[BECraftingMachine.GridSlots + 1];
+    /// <summary>Size of what a cell shows, in cell units (1 = the whole cell), or null when empty.</summary>
+    public Vec3f Extent(int slot) => items[slot] == null ? null : extents[slot];
+
     // Shaped items are modelled for the hand, in all sizes and often hanging above their origin:
     // set them down on the floor, centred, and fit the largest side to the cell.
-    private static void Ground(MeshData mesh, float fitTo)
+    private static Vec3f Ground(MeshData mesh, float fitTo)
     {
-        if (mesh.VerticesCount == 0) return;
+        if (mesh.VerticesCount == 0) return new Vec3f();
         float minX = float.MaxValue, minY = float.MaxValue, minZ = float.MaxValue, maxX = float.MinValue, maxY = float.MinValue, maxZ = float.MinValue;
         for (int i = 0; i < mesh.VerticesCount; i++)
         {
@@ -103,10 +115,11 @@ public sealed class PlateRenderer : IRenderer
             minZ = Math.Min(minZ, z); maxZ = Math.Max(maxZ, z);
         }
         float size = Math.Max(maxX - minX, Math.Max(maxY - minY, maxZ - minZ));
-        if (size <= 0) return;
+        if (size <= 0) return new Vec3f();
         mesh.Translate(.5f - (minX + maxX) / 2, -minY, .5f - (minZ + maxZ) / 2);
         float fit = fitTo / size;
         mesh.Scale(new Vec3f(.5f, 0, .5f), fit, fit, fit);
+        return new Vec3f((maxX - minX) * fit, (maxY - minY) * fit, (maxZ - minZ) * fit);
     }
 
     /// <summary>Shaped items fill this much of their cell (the product scales the same way).</summary>
@@ -185,14 +198,25 @@ public sealed class PlateRenderer : IRenderer
         prog.ExtraGlow = 0;
 
         // the doors: pushed out along their normal (model west = -x, east = +x) and dropped, turned with the block
-        foreach (var (door, mesh, nx) in new[] { (WestDoor, doorWest, -1f), (EastDoor, doorEast, 1f) })
+        void DoorPlace(DoorMotion door, float nx)
         {
             var (outward, down) = door.Offsets;
             model.Identity().Translate(pos.X - camera.X, pos.Y - camera.Y, pos.Z - camera.Z)
                 .Translate(.5f, 0, .5f).RotateY(blockRotation).Translate(-.5f, 0, -.5f)
                 .Translate(nx * outward, -down, 0);
             prog.ModelMatrix = model.Values;
+        }
+
+        foreach (var (door, mesh, rods, nx) in new[] { (WestDoor, doorWest, rodsWest, -1f), (EastDoor, doorEast, rodsEast, 1f) })
+        {
+            var down = door.Offsets.down;
+            DoorPlace(door, nx);
             render.RenderMesh(mesh);
+            // the piston rods reach from the canopy down to the door's lintel: the unit rod stretched from its top
+            model.Identity().Translate(pos.X - camera.X, pos.Y - camera.Y, pos.Z - camera.Z)
+                .Translate(.5f, RodTop, .5f).RotateY(blockRotation).Scale(1, down * 16 + RodInset, 1).Translate(-.5f, -RodTop, -.5f);
+            prog.ModelMatrix = model.Values;
+            render.RenderMesh(rods);
         }
 
         // the product floats in the middle of the chamber and does not turn with the plate
@@ -223,6 +247,14 @@ public sealed class PlateRenderer : IRenderer
                 prog.ExtraGlow = 0;
             }
         }
+
+        // the door glass last and without depth writes: what is behind it (the far door, the product) stays visible
+        render.GLDepthMask(false);
+        DoorPlace(WestDoor, -1);
+        render.RenderMesh(glassWest);
+        DoorPlace(EastDoor, 1);
+        render.RenderMesh(glassEast);
+        render.GLDepthMask(true);
         prog.Stop();
     }
 
@@ -250,6 +282,10 @@ public sealed class PlateRenderer : IRenderer
         crystal.Dispose();
         doorWest.Dispose();
         doorEast.Dispose();
+        rodsWest.Dispose();
+        rodsEast.Dispose();
+        glassWest.Dispose();
+        glassEast.Dispose();
         foreach (var item in items) item?.Dispose();
         ghost?.Dispose();
     }

@@ -63,8 +63,8 @@ public class BECraftingMachine : BlockEntityContainer, ISidedAutomation, Signals
     /// <summary>Door on pin 4 (west in the model) or 5 (east) is open: its input level is above zero.</summary>
     public bool DoorOpen(int pin) => inputs[pin] > 0;
 
-    /// <summary>The crystal is down: the machine casts block light (BlockCraftingMachine.GetLightHsv).</summary>
-    public bool Lit => inputs.Crystal > 0;
+    /// <summary>The crystal is down and powered: the machine casts block light (BlockCraftingMachine.GetLightHsv).</summary>
+    public bool Lit => inputs.Crystal > 0 && inputs.Strength > 0;
 
     // Lighting up: exchanging the block for itself makes the world place GetLightHsv anew (the lantern's way).
     // Going dark the exchange sees no light on either side, so the light must be taken away by hand.
@@ -77,12 +77,53 @@ public class BECraftingMachine : BlockEntityContainer, ISidedAutomation, Signals
 
     private readonly long[] doorOpenedAt = new long[2];   // server: when pins 4/5 last went high
 
+    private int doorsReady;   // bit 0 = pin 4, bit 1 = pin 5; the server works it out, the client gets it synced
+
     /// <summary>The door has finished its ride down; closing shuts access the moment the pin drops.</summary>
-    public bool DoorFullyOpen(int pin) =>
-        DoorOpen(pin) && Api.World.ElapsedMilliseconds - doorOpenedAt[pin - 4] >= (DoorMotion.PushSeconds + DoorMotion.OpenSlideSeconds) * 1000;
+    public bool DoorFullyOpen(int pin) => Api?.Side == EnumAppSide.Client
+        ? (doorsReady >> (pin - 4) & 1) != 0
+        : DoorOpen(pin) && Api.World.ElapsedMilliseconds - doorOpenedAt[pin - 4] >= (DoorMotion.PushSeconds + DoorMotion.OpenSlideSeconds) * 1000;
+
+    // server, every mechanics tick: tell the clients when a door becomes usable or stops being so
+    private void TrackDoors()
+    {
+        int now = (DoorFullyOpen(4) ? 1 : 0) | (DoorFullyOpen(5) ? 2 : 0);
+        if (now != doorsReady) { doorsReady = now; MarkDirty(); }
+    }
 
     /// <summary>Nothing lands on or leaves a turning plate: clutch open and the plate at rest.</summary>
     public bool PlateStill => inputs.Clutch == 0 && plateSpeed == 0;
+
+    /// <summary>A hand reaches the cells on the same terms as automation: some door fully open, plate still.</summary>
+    public bool HandAccess => PlateStill && (DoorFullyOpen(4) || DoorFullyOpen(5));
+
+    /// <summary>
+    /// Hand on a cell (0-8) or the product (9) through an open door: a held stack goes in, one piece or
+    /// the whole stack when sneaking; an empty hand takes everything the cell holds. Server moves the items.
+    /// </summary>
+    public bool HandleCell(IPlayer player, int slot)
+    {
+        if (!HandAccess || slot < 0 || slot > ProductSlot) return false;
+        var hand = player.InventoryManager.ActiveHotbarSlot;
+        var cell = inventory[slot];
+        bool put = !hand.Empty && slot != ProductSlot && cell.CanHold(hand);
+        bool take = hand.Empty && !cell.Empty;
+        if (!put && !take) return false;
+        if (Api.Side == EnumAppSide.Client) return true;
+        if (put)
+        {
+            int count = player.Entity.Controls.Sneak ? hand.StackSize : 1;
+            if (hand.TryPutInto(Api.World, cell, count) == 0) return false;
+        }
+        else
+        {
+            var taken = cell.TakeOutWhole();
+            if (!player.InventoryManager.TryGiveItemstack(taken, true)) Api.World.SpawnItemEntity(taken, Pos.ToVec3d().Add(.5, 1.5, .5));
+        }
+        cell.MarkDirty();
+        Api.World.PlaySoundAt(new AssetLocation("sounds/player/build"), Pos.X + .5, Pos.Y + 1.3, Pos.Z + .5, player, true, 12, .5f);
+        return true;
+    }
 
     /// <summary>Only the chamber (the upper block) has doors; the pedestal lets nothing through.</summary>
     public bool AllowsAutomation(BlockPos touched, BlockFacing face)
@@ -163,6 +204,8 @@ public class BECraftingMachine : BlockEntityContainer, ISidedAutomation, Signals
     public MachineProcess Process => process;
     /// <summary>Temporal stability taken from players per 0.1 s: a whisper while crafting, a blast through an open door (contract 23, 23a).</summary>
     public const float CraftDrainPerTick = 0.0005f, LeakDrainPerTick = 0.01f, CraftDrainRange = 2f, LeakRange = 8f;
+    /// <summary>Reaching into the open chamber with the crystal lit: a steep extra drain right at the door.</summary>
+    public const float DoorwayDrainPerTick = 0.05f, DoorwayRange = 1.5f;
     private BEBehaviorMPConsumer mpc;
     private PlateRenderer plateRenderer;
     private MachineEffects effects;
@@ -171,6 +214,8 @@ public class BECraftingMachine : BlockEntityContainer, ISidedAutomation, Signals
     public int OverloadSerial => overloadSerial;
     /// <summary>Client: the current angle of the plate picture, for effects aimed at the cells.</summary>
     public float PlateAngle => plateRenderer?.Angle ?? 0;
+    /// <summary>Client: how much of its cell the drawn item takes (cell units); null without a picture.</summary>
+    public Vec3f CellExtent(int slot) => plateRenderer?.Extent(slot);
     private float plateSpeed, syncedPlateSpeed, networkSpeed;
     private double lastPlateSync;
     /// <summary>Speed of the mechanical network at the axle; tests substitute it.</summary>
@@ -205,7 +250,9 @@ public class BECraftingMachine : BlockEntityContainer, ISidedAutomation, Signals
         }
         else if (api is ICoreClientAPI capi && Block is BlockCraftingMachine)   // not when the block is already gone
         {
-            plateRenderer = new PlateRenderer(capi, Pos, PlateMesh(capi), PartMesh(capi, "crystal"), PartMesh(capi, "door-west"), PartMesh(capi, "door-east"), ((BlockCraftingMachine)Block).RotationRadians);
+            plateRenderer = new PlateRenderer(capi, Pos, PlateMesh(capi), PartMesh(capi, "crystal"), PartMesh(capi, "door-west"), PartMesh(capi, "door-east"),
+                PartMesh(capi, "door-west-rods"), PartMesh(capi, "door-east-rods"), PartMesh(capi, "door-west-glass"), PartMesh(capi, "door-east-glass"),
+                ((BlockCraftingMachine)Block).RotationRadians);
             SlotsChanged += RefreshPlateItems;
             RefreshPlateItems();
             UpdatePlatePicture();
@@ -264,6 +311,7 @@ public class BECraftingMachine : BlockEntityContainer, ISidedAutomation, Signals
             if (stability == null) continue;
             double distance = player.Entity.Pos.DistanceTo(centre);
             float drain = leak ? LeakDrainPerTick * (float)Math.Max(0, 1 - distance / LeakRange) : CraftDrainPerTick;
+            if (leak && distance < DoorwayRange) drain += DoorwayDrainPerTick * (float)(1 - distance / DoorwayRange);   // standing in the doorway
             stability.OwnStability = Math.Max(0, stability.OwnStability - drain);
         }
     }
@@ -274,6 +322,7 @@ public class BECraftingMachine : BlockEntityContainer, ISidedAutomation, Signals
         networkSpeed = SpeedSource();
         float target = inputs.Clutch > 0 ? networkSpeed : 0;
         plateSpeed = PlateDrive.Step(plateSpeed, target, dt);
+        TrackDoors();
         RunProcess(dt);
         // clients integrate the angle themselves; send the speed when it moved, or once a second while turning
         double now = Api.World.ElapsedMilliseconds;
@@ -394,6 +443,7 @@ public class BECraftingMachine : BlockEntityContainer, ISidedAutomation, Signals
         if (imprinter != null) tree.SetBytes("imprinter", Vintagestory.API.Util.SerializerUtil.Serialize(imprinter)); else tree.RemoveAttribute("imprinter");
         tree.SetBytes("inputs", new[] { inputs.Clutch, inputs.Crystal, inputs.Strength, inputs.DoorWest, inputs.DoorEast });
         tree.SetInt("state", state);
+        tree.SetInt("doorsReady", doorsReady);
         tree.SetFloat("progress", process.Progress);
         tree.SetInt("overloads", overloadSerial);
         if (sim != null) tree.SetBytes("simState", sim.SaveState()); else tree.RemoveAttribute("simState");
@@ -426,6 +476,7 @@ public class BECraftingMachine : BlockEntityContainer, ISidedAutomation, Signals
         inputs = new MachineInputs(b[0], b[1], b[2], b[3], b[4]);
         if (Api is ICoreClientAPI && Lit != wasLit) Relight();   // the client lights its own chunks
         state = (byte)tree.GetInt("state");
+        doorsReady = tree.GetInt("doorsReady");   // the server recomputes its own from the clock next tick
         progressSynced = tree.GetFloat("progress");
         overloadSerial = tree.GetInt("overloads");
         if (Api?.Side == EnumAppSide.Server || Api == null) process.Restore(state, progressSynced);

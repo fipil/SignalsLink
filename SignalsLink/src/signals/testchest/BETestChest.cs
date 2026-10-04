@@ -14,11 +14,35 @@ public class BETestChest : BlockEntityGenericTypedContainer
     private const int ConfigurePacket = 21401;
     public ChestStock Stock { get; private set; }
     public bool Infinite => Block?.FirstCodePart() == "bottomlesschest";
+    // The vanilla container keeps its inventory in an internal field; the bottomless chest needs its own
+    // class there (ClearableInventory) to read the delete gesture in the GUI. Everything else is copied over.
+    private static readonly System.Reflection.FieldInfo InventoryField =
+        typeof(BlockEntityGenericTypedContainer).GetField("inventory", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+
+    protected override void InitInventory(Block block)
+    {
+        base.InitInventory(block);
+        if (block?.FirstCodePart() != "bottomlesschest" || InventoryField == null || Inventory is not InventoryGeneric vanilla || vanilla is ClearableInventory) return;
+        var own = new ClearableInventory(vanilla.Count, null, null, null)
+        {
+            BaseWeight = vanilla.BaseWeight,
+            OnGetSuitability = vanilla.OnGetSuitability,
+            OnGetAutoPullFromSlot = vanilla.OnGetAutoPullFromSlot,
+            PerishableFactorByFoodCategory = vanilla.PerishableFactorByFoodCategory,
+            TransitionableSpeedMulByType = vanilla.TransitionableSpeedMulByType,
+            PutLocked = vanilla.PutLocked
+        };
+        own.OnInventoryOpened += OnInvOpened;
+        own.OnInventoryClosed += OnInvClosed;
+        InventoryField.SetValue(this, own);
+    }
+
     public override void Initialize(ICoreAPI api)
     {
         base.Initialize(api);
         if (api.Side != EnumAppSide.Server) return;
         Stock = new ChestStock(Inventory, api.World, Infinite, () => MarkDirty());
+        if (Inventory is ClearableInventory clearable) clearable.OnClearSlot = index => Stock.ClearSlot(index);
         Stock.Read(savedStock);
         if (!Infinite) RegisterGameTickListener(dt =>
         {
