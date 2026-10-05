@@ -13,7 +13,6 @@ public sealed class MachineEffects : IPointLight
 {
     public const float HumBasePitch = 0.8f, HumPitchPerLevel = 0.055f;   // 1 -> 0.86, 9 -> 1.3
     public const float HumIdleVolume = 0.25f, HumWorkVolume = 0.7f;
-    public const float SmogRange = 1f, LeakRange = BECraftingMachine.LeakRange;
 
     private readonly ICoreClientAPI capi;
     private readonly BECraftingMachine be;
@@ -50,9 +49,9 @@ public sealed class MachineEffects : IPointLight
         bool crafting = be.State == MachineProcess.Crafting;
         Hum(inputs.Crystal > 0 && inputs.Strength > 0, crafting, inputs.Strength, dt);
         Spin(inputs.Clutch > 0 && be.PlateSpeed > PlateDrive.Still);
-        if (crafting) { Zaps(dt); Smog(dt, false); }
-        bool leak = (be.DoorOpen(4) || be.DoorOpen(5)) && inputs.Crystal > 0 && inputs.Strength > 0;
-        if (leak) Smog(dt, true);
+        if (crafting) { Zaps(dt); Smog(dt); }
+        if (!be.Cloud.Empty) CloudMotes(dt);
+        Smoke(dt);
         if (!be.Inventory[BECraftingMachine.ProductSlot].Empty) Aura(dt);
         Doors(dt);
         if (be.OverloadSerial != lastOverload) { lastOverload = be.OverloadSerial; Overload(); }
@@ -138,29 +137,116 @@ public sealed class MachineEffects : IPointLight
         return new Vec3d(cx + dx * c + dz * s, world.Y, cz - dx * s + dz * c);
     }
 
-    // ---- temporal smog: a whisper while crafting, a blast through an open door
+    // ---- temporal smog: slow, large wisps filling the chamber while crafting
 
-    private void Smog(float dt, bool leak)
+    private void Smog(float dt)
     {
         smogIn -= dt;
         if (smogIn > 0) return;
-        smogIn = leak ? 0.05f : 0.08f;
-        var origin = pos.ToVec3d().Add(CrystalTip);
-        float speed = leak ? 2.5f : 0.35f;
-        float life = leak ? 2.5f : 2.2f;
-        // the leak pours from the crystal; while crafting the whole chamber fills with slow, large wisps
-        var from = leak ? origin : pos.ToVec3d().Add(ChamberCentre).Add(-.3, -.2, -.3);
-        var to = leak ? origin.AddCopy(.001, .001, .001) : pos.ToVec3d().Add(ChamberCentre).Add(.3, .25, .3);
-        var p = new SimpleParticleProperties(leak ? 4 : 3, leak ? 8 : 6, ColorUtil.ToRgba(140, 90, 220, 210),
-            from, to, new Vec3f(-speed, -speed * .3f, -speed), new Vec3f(speed, speed * .3f, speed),
-            life, 0, leak ? 0.1f : 0.2f, leak ? 0.25f : 0.45f, EnumParticleModel.Quad)
+        smogIn = 0.08f;
+        var centre = pos.ToVec3d().Add(ChamberCentre);
+        var p = new SimpleParticleProperties(3, 6, ColorUtil.ToRgba(140, 90, 220, 210),
+            centre.AddCopy(-.3, -.2, -.3), centre.AddCopy(.3, .25, .3), new Vec3f(-.35f, -.1f, -.35f), new Vec3f(.35f, .1f, .35f),
+            2.2f, 0, 0.2f, 0.45f, EnumParticleModel.Quad)
         {
             WithTerrainCollision = false, SelfPropelled = true, GravityEffect = 0, VertexFlags = 120,
-            LifeLength = life, addLifeLength = life * 0.8f          // each dies somewhere else
+            LifeLength = 2.2f, addLifeLength = 1.8f          // each dies somewhere else
         };
         p.OpacityEvolve = EvolvingNatFloat.create(EnumTransformFunction.QUADRATIC, -255);
         p.SizeEvolve = EvolvingNatFloat.create(EnumTransformFunction.LINEAR, 0.3f);
         capi.World.SpawnParticles(p);
+    }
+
+    // ---- the leak cloud: in every block it has flowed into, motes in the temporal hue surface near the top now and
+    //      then (the stronger the block, the more often), sink at a steady crawl and die at the floor - so the ones
+    //      two metres up live twice as long as the ones a metre up
+
+    private float motesIn;
+    public const float MoteSinkSpeed = 0.1f, MoteDriftSpeed = 0.15f, MoteSecondsPerMetre = 10f;
+    private static readonly int TemporalMote = ColorUtil.ToRgba(150, 90, 230, 210);
+
+    private void CloudMotes(float dt)
+    {
+        motesIn -= dt;
+        if (motesIn > 0) return;
+        motesIn = 0.1f;   // five rounds a second
+        var accessor = capi.World.BlockAccessor;
+        var cells = be.Cloud.Cells;
+        foreach (var (cell, data) in cells)
+        {
+            float intensity = data.Intensity;
+            if (intensity < 0.02f) continue;
+            // a block with cloud below it is passed through by the motes from above: it adds only a few of its own
+            bool stacked = cells.ContainsKey(cell.DownCopy());
+            double chance = (0.2 + intensity * 0.5) * (stacked ? 0.35 : 1);
+            if (random.NextDouble() > chance) continue;
+            // the floor under this block: down through passable blocks, at most three
+            int drop = 0;
+            while (drop < 3 && Passable(accessor, cell.X, cell.Y - 1 - drop, cell.Z)) drop++;
+            double startY = 0.55 + random.NextDouble() * 0.35;
+            float height = (float)(drop + startY) - 0.08f;     // dies just above the floor, nothing piles up there
+            float life = height / MoteSinkSpeed;
+            var at = cell.ToVec3d().Add(0.15 + random.NextDouble() * 0.7, startY, 0.15 + random.NextDouble() * 0.7);
+            // drifts down the slope the cloud runs along here (water-like), and sinks; a falling column just drops
+            var flow = data.Flow;
+            float drift = flow.Y < 0 ? 0 : MoteDriftSpeed, sink = flow.Y < 0 ? MoteSinkSpeed * 2 : MoteSinkSpeed;
+            if (flow.Y < 0) life = height / sink;
+            var p = new SimpleParticleProperties(1, 1, TemporalMote, at, at.AddCopy(.001, .001, .001),
+                new Vec3f(flow.X * drift - .02f, -sink, flow.Z * drift - .02f), new Vec3f(flow.X * drift + .02f, -sink, flow.Z * drift + .02f),
+                life, 0, 0.2f + 0.3f * intensity, 0.4f + 0.4f * intensity, EnumParticleModel.Quad)
+            {
+                WithTerrainCollision = false, SelfPropelled = true, GravityEffect = 0, VertexFlags = (byte)(40 + 100 * intensity)
+            };
+            // surfaces from nothing and dissolves again at the end (the game's one fade-in-and-out curve), swelling on the way down
+            p.OpacityEvolve = EvolvingNatFloat.create(EnumTransformFunction.CLAMPEDPOSITIVESINUS, (float)Math.PI);
+            p.SizeEvolve = EvolvingNatFloat.create(EnumTransformFunction.LINEAR, 0.7f);
+            capi.World.SpawnParticles(p);
+        }
+    }
+
+    private static bool Passable(IBlockAccessor accessor, int x, int y, int z)
+    {
+        var block = accessor.GetBlock(x, y, z);
+        if (block == null || block.Id == 0) return true;
+        var boxes = block.GetCollisionBoxes(accessor, new BlockPos(x, y, z, 0));
+        return boxes == null || boxes.Length == 0;
+    }
+
+    // ---- smoke after an overload: the chamber fills with dense grey smoke that thins over a minute behind shut
+    //      doors, or rolls out of an open door into the block before it and clears in seconds
+
+    private float smokeLeft, smokeIn;
+    public const float SmokeSeconds = 60f, SmokeVentFactor = 10f;
+
+    private void Smoke(float dt)
+    {
+        if (smokeLeft <= 0) return;
+        bool west = be.DoorOpen(4), east = be.DoorOpen(5);
+        smokeLeft -= dt * (west || east ? SmokeVentFactor : 1);
+        smokeIn -= dt;
+        if (smokeIn > 0) return;
+        smokeIn = 0.12f;
+        float density = Math.Clamp(smokeLeft / SmokeSeconds, 0, 1);
+        var centre = pos.ToVec3d().Add(ChamberCentre);
+        var inside = new SimpleParticleProperties(1, 1 + (int)(density * 6), ColorUtil.ToRgba(200, 70, 70, 72),
+            centre.AddCopy(-.38, -.3, -.38), centre.AddCopy(.38, .35, .38), new Vec3f(-.05f, 0, -.05f), new Vec3f(.05f, .04f, .05f),
+            1.5f, 0, 0.35f, 0.7f, EnumParticleModel.Quad) { WithTerrainCollision = false, SelfPropelled = true, GravityEffect = 0, addLifeLength = 1f };
+        inside.OpacityEvolve = EvolvingNatFloat.create(EnumTransformFunction.LINEAR, -160);
+        inside.SizeEvolve = EvolvingNatFloat.create(EnumTransformFunction.LINEAR, 0.3f);
+        capi.World.SpawnParticles(inside);
+        foreach (int pin in new[] { 4, 5 })
+        {
+            if (!be.DoorOpen(pin)) continue;
+            var side = ((BlockCraftingMachine)be.Block).DoorSide(pin);
+            var mouth = pos.ToVec3d().Add(.5 + side.Normali.X, 1.5, .5 + side.Normali.Z);
+            var outside = new SimpleParticleProperties(2, 2 + (int)(density * 6), ColorUtil.ToRgba(180, 80, 80, 82),
+                mouth.AddCopy(-.4, -.4, -.4), mouth.AddCopy(.4, .4, .4),
+                new Vec3f(side.Normali.X * .3f - .2f, .1f, side.Normali.Z * .3f - .2f), new Vec3f(side.Normali.X * .8f + .2f, .5f, side.Normali.Z * .8f + .2f),
+                2.5f, -0.01f, 0.4f, 0.9f, EnumParticleModel.Quad) { WithTerrainCollision = true, SelfPropelled = true, addLifeLength = 1.5f };
+            outside.OpacityEvolve = EvolvingNatFloat.create(EnumTransformFunction.LINEAR, -200);
+            outside.SizeEvolve = EvolvingNatFloat.create(EnumTransformFunction.LINEAR, 0.8f);
+            capi.World.SpawnParticles(outside);
+        }
     }
 
     // ---- a finished product waits: temporal motes drift slowly about the chamber
@@ -230,6 +316,7 @@ public sealed class MachineEffects : IPointLight
     private void Overload()
     {
         capi.World.PlaySoundAt(new AssetLocation("signalsmachines:sounds/overload.ogg"), pos.X + .5, pos.Y + 1.5, pos.Z + .5, null, false, 24, 1f);
+        smokeLeft = SmokeSeconds;
         var centre = pos.ToVec3d().Add(ChamberCentre);
         var flash = new SimpleParticleProperties(40, 60, ColorUtil.ToRgba(255, 200, 255, 255), centre, centre,
             new Vec3f(-2, -1, -2), new Vec3f(2, 2, 2), 0.4f, 0, 0.2f, 0.6f, EnumParticleModel.Quad) { WithTerrainCollision = false, SelfPropelled = true, VertexFlags = 255 };

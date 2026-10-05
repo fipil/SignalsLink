@@ -209,28 +209,59 @@ public class BECraftingMachine : BlockEntityContainer, ISidedAutomation, Signals
     public MachineProcess Process => process;
     // Temporal instability around the machine (contract 23, 23a), fed into the game's own stability field so the
     // player's gear turns and drains the vanilla way. The game turns the gear by (stability - 1) per tick: a plain
-    // unstable area (0) barely moves it, a rift pushes the player's offset down to -20 and makes it whir. The
-    // machine pulls the field to targets on that scale: a whisper while crafting behind closed doors (-1, the bar
-    // lasts minutes), a blast through an open door with the crystal lit, graded by the strength (-5 .. -14, about a
-    // minute), rift-like in the doorway and after an overload (-20, under a minute).
-    public const float CraftDrainRange = 2f, LeakRange = 8f, DoorwayRange = 1.5f;
-    public const float CraftPull = 2f, LeakBase = 6f, LeakPerLevel = 1f, DoorwayExtra = 6f, OverloadLevel = 15f;
+    // unstable area (0) barely moves it, a rift pushes the player's offset down to -20 and makes it whir.
+    // Behind closed doors the running machine only seeps a little (-0, "leaky seals"). Through an open door with the
+    // crystal lit the leak pours out as a cloud (MachineCloud) that flows through the air a block a second; where it
+    // lies, the stability is pulled down by its intensity, up to -20 right at the door after an overload.
+    public const float CraftDrainRange = 2f, CraftPull = 1f;
+    public const float LeakBase = 6f, LeakPerLevel = 1f, OverloadLevel = 15f, PullScale = LeakBase + LeakPerLevel * OverloadLevel;
+
+    private readonly MachineCloud cloud = new();
+    private float cloudClock;
+    public MachineCloud Cloud => cloud;
 
     /// <summary>How far below 1 this machine pulls the temporal stability at a point (0 = leaves it alone).</summary>
     public float Instability(double x, double y, double z)
     {
-        double d = Math.Sqrt((x - Pos.X - .5) * (x - Pos.X - .5) + (y - Pos.Y - 1.5) * (y - Pos.Y - 1.5) + (z - Pos.Z - .5) * (z - Pos.Z - .5));
         float pull = 0;
-        if (state == MachineProcess.Crafting && d < CraftDrainRange) pull = CraftPull;
-        bool lit = inputs.Crystal > 0 && inputs.Strength > 0;
-        if (lit && (DoorOpen(4) || DoorOpen(5)) && d < LeakRange)
+        if (state == MachineProcess.Crafting)
         {
-            float level = state == MachineProcess.Overloaded ? OverloadLevel : inputs.Strength;   // after a bang the crystal rages
-            float peak = LeakBase + LeakPerLevel * level;
-            pull = Math.Max(pull, peak * (float)(1 - d / LeakRange));
-            if (d < DoorwayRange) pull += DoorwayExtra * (float)(1 - d / DoorwayRange);
+            double d = Math.Sqrt((x - Pos.X - .5) * (x - Pos.X - .5) + (y - Pos.Y - 1.5) * (y - Pos.Y - 1.5) + (z - Pos.Z - .5) * (z - Pos.Z - .5));
+            if (d < CraftDrainRange) pull = CraftPull;
         }
-        return pull;
+        // the game asks at the feet; the cloud's motes fall up to three blocks, so a player under a cell is in it too
+        float inCloud = Math.Max(cloud.At(x, y, z), Math.Max(cloud.At(x, y + 1, z), cloud.At(x, y + 2, z)));
+        return Math.Max(pull, PullScale * inCloud);
+    }
+
+    /// <summary>The blocks in front of open doors while the crystal is lit, with the source strength 0..1.</summary>
+    public IEnumerable<(BlockPos pos, float strength)> CloudSources()
+    {
+        if (!(inputs.Crystal > 0 && inputs.Strength > 0) || Block is not BlockCraftingMachine block) yield break;
+        float level = state == MachineProcess.Overloaded ? OverloadLevel : inputs.Strength;   // after a bang the crystal rages
+        float strength = (LeakBase + LeakPerLevel * level) / PullScale;
+        foreach (int pin in new[] { 4, 5 })
+            if (DoorOpen(pin)) yield return (Pos.UpCopy().Add(block.DoorSide(pin)), strength);
+    }
+
+    /// <summary>Where the cloud may flow: anything a player could stand in.</summary>
+    private bool Passable(BlockPos pos)
+    {
+        var block = Api.World.BlockAccessor.GetBlock(pos);
+        if (block == null || block.Id == 0) return true;
+        var boxes = block.GetCollisionBoxes(Api.World.BlockAccessor, pos);
+        return boxes == null || boxes.Length == 0;
+    }
+
+    // server, twice a second: the cloud flows, fades, and goes to the clients when it changed
+    private void StepCloud(float dt)
+    {
+        cloudClock += dt;
+        if (cloudClock < 0.5f) return;
+        float step = cloudClock;
+        cloudClock = 0;
+        if (cloud.Empty && !CloudSources().Any()) return;
+        if (cloud.Step(step, CloudSources(), Passable)) MarkDirty();
     }
 
     private BEBehaviorMPConsumer mpc;
@@ -341,6 +372,7 @@ public class BECraftingMachine : BlockEntityContainer, ISidedAutomation, Signals
         plateSpeed = PlateDrive.Step(plateSpeed, target, dt);
         TrackDoors();
         RunProcess(dt);
+        StepCloud(dt);
         // clients integrate the angle themselves; send the speed when it moved, or once a second while turning
         double now = Api.World.ElapsedMilliseconds;
         if (Math.Abs(plateSpeed - syncedPlateSpeed) > .005f || (plateSpeed > 0 && now - lastPlateSync > 1000))
@@ -502,6 +534,7 @@ public class BECraftingMachine : BlockEntityContainer, ISidedAutomation, Signals
         tree.SetBytes("inputs", new[] { inputs.Clutch, inputs.Crystal, inputs.Strength, inputs.DoorWest, inputs.DoorEast });
         tree.SetInt("state", state);
         tree.SetInt("doorsReady", doorsReady);
+        if (cloud.Empty) tree.RemoveAttribute("cloud"); else tree.SetBytes("cloud", cloud.Serialize(Pos));
         tree.SetFloat("progress", process.Progress);
         tree.SetInt("overloads", overloadSerial);
         if (host?.SaveState() is byte[] simState) tree.SetBytes("simState", simState); else tree.RemoveAttribute("simState");
@@ -535,6 +568,7 @@ public class BECraftingMachine : BlockEntityContainer, ISidedAutomation, Signals
         if (Api is ICoreClientAPI && Lit != wasLit) Relight();   // the client lights its own chunks
         state = (byte)tree.GetInt("state");
         doorsReady = tree.GetInt("doorsReady");   // the server recomputes its own from the clock next tick
+        if (Api is ICoreClientAPI || Api == null) cloud.Deserialize(tree.GetBytes("cloud"), Pos);   // the server keeps its own, with ages and fades
         progressSynced = tree.GetFloat("progress");
         overloadSerial = tree.GetInt("overloads");
         if (Api?.Side == EnumAppSide.Server || Api == null) process.Restore(state, progressSynced);

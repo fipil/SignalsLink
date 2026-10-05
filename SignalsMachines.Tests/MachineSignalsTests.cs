@@ -148,10 +148,10 @@ public class MachineSignalsTests
         Assert.Equal(9, machine.Inputs.Clutch);
     }
 
-    // The instability field: nothing at rest, a whisper while crafting, a blast through an open door graded by
-    // strength, worst in the doorway and after an overload, fading with distance.
+    // The instability field: nothing at rest, a whisper while crafting, and through an open door a cloud whose
+    // pull grows with the strength and with an overload, fading with distance along its path.
     [Fact]
-    public void InstabilityGrowsWithStrengthOpenDoorsAndOverload()
+    public void InstabilityWhispersWhileCraftingAndPoursOutOfAnOpenDoorByStrength()
     {
         var rig = new SignalsRig();
         var block = new BlockCraftingMachine();
@@ -166,16 +166,29 @@ public class MachineSignalsTests
             be.FromTreeAttributes(tree, rig.World);
             return be;
         }
-        double x = .5, y = 1.5, z = 1.2;   // 0.7 from the chamber centre: in the doorway
+        double x = .5, y = 1.5, z = .5;   // the chamber itself
         Assert.Equal(0, Machine(MachineProcess.Ready, 0, 0, 0).Instability(x, y, z));
-        float crafting = Machine(MachineProcess.Crafting, 1, 4, 0).Instability(x, y, z);
-        float leak2 = Machine(MachineProcess.Preparing, 1, 2, 15).Instability(x, y, z);
-        float leak9 = Machine(MachineProcess.Preparing, 1, 9, 15).Instability(x, y, z);
-        float blown = Machine(MachineProcess.Overloaded, 1, 9, 15).Instability(x, y, z);
-        Assert.True(0 < crafting && crafting < leak2 && leak2 < leak9 && leak9 < blown);
-        Assert.True(Machine(MachineProcess.Preparing, 1, 9, 15).Instability(x, y, 6) < leak9);          // farther = milder
-        Assert.Equal(0, Machine(MachineProcess.Preparing, 1, 9, 15).Instability(x, y, 20));            // out of range
-        Assert.Equal(0, Machine(MachineProcess.Preparing, 1, 0, 15).Instability(x, y, z));             // no strength, no glow, no leak
+        Assert.Equal(BECraftingMachine.CraftPull, Machine(MachineProcess.Crafting, 1, 4, 0).Instability(x, y, z));
+        Assert.Equal(0, Machine(MachineProcess.Crafting, 1, 4, 0).Instability(x, y, 6));   // the whisper stays close
+
+        // the cloud: fed from the block in front of the west door (pin 4), everything passable
+        float PullAt(BECraftingMachine be, int seconds, double px, double py, double pz)
+        {
+            for (int i = 0; i < seconds; i++) be.Cloud.Step(1, be.CloudSources(), p => p.Y >= 1);   // the ground is at the chamber's level
+            return be.Instability(px, py, pz);
+        }
+        var west = block.DoorSide(4);
+        double dx = .5 + west.Normali.X, dz = .5 + west.Normali.Z;   // the doorway block
+        float leak2 = PullAt(Machine(MachineProcess.Preparing, 1, 2, 15), 1, dx, 1.5, dz);
+        float leak9 = PullAt(Machine(MachineProcess.Preparing, 1, 9, 15), 1, dx, 1.5, dz);
+        float blown = PullAt(Machine(MachineProcess.Overloaded, 1, 9, 15), 1, dx, 1.5, dz);
+        Assert.True(0 < leak2 && leak2 < leak9 && leak9 < blown);
+        Assert.Equal(BECraftingMachine.PullScale, blown, 2);                                   // rift-like at the door
+        Assert.Equal(0, Machine(MachineProcess.Preparing, 1, 0, 15).Instability(dx, 1.5, dz));   // no strength, no leak
+        var far = Machine(MachineProcess.Preparing, 1, 9, 15);
+        float atDoor = PullAt(far, 12, dx, 1.5, dz);
+        float threeAway = far.Instability(dx + west.Normali.X * 3, 1.5, dz + west.Normali.Z * 3);
+        Assert.True(0 < threeAway && threeAway < atDoor);                                      // weaker down the path
     }
 
     [Fact]
