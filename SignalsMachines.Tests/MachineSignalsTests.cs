@@ -148,6 +148,36 @@ public class MachineSignalsTests
         Assert.Equal(9, machine.Inputs.Clutch);
     }
 
+    // The instability field: nothing at rest, a whisper while crafting, a blast through an open door graded by
+    // strength, worst in the doorway and after an overload, fading with distance.
+    [Fact]
+    public void InstabilityGrowsWithStrengthOpenDoorsAndOverload()
+    {
+        var rig = new SignalsRig();
+        var block = new BlockCraftingMachine();
+        block.VariantStrict["side"] = "north";
+        BECraftingMachine Machine(byte state, byte crystal, byte strength, byte door)
+        {
+            var be = new BECraftingMachine { Block = block };
+            var tree = new TreeAttribute();
+            tree.SetInt("posx", 0); tree.SetInt("posy", 0); tree.SetInt("posz", 0);
+            tree.SetBytes("inputs", new byte[] { 0, crystal, strength, door, 0 });
+            tree.SetInt("state", state);
+            be.FromTreeAttributes(tree, rig.World);
+            return be;
+        }
+        double x = .5, y = 1.5, z = 1.2;   // 0.7 from the chamber centre: in the doorway
+        Assert.Equal(0, Machine(MachineProcess.Ready, 0, 0, 0).Instability(x, y, z));
+        float crafting = Machine(MachineProcess.Crafting, 1, 4, 0).Instability(x, y, z);
+        float leak2 = Machine(MachineProcess.Preparing, 1, 2, 15).Instability(x, y, z);
+        float leak9 = Machine(MachineProcess.Preparing, 1, 9, 15).Instability(x, y, z);
+        float blown = Machine(MachineProcess.Overloaded, 1, 9, 15).Instability(x, y, z);
+        Assert.True(0 < crafting && crafting < leak2 && leak2 < leak9 && leak9 < blown);
+        Assert.True(Machine(MachineProcess.Preparing, 1, 9, 15).Instability(x, y, 6) < leak9);          // farther = milder
+        Assert.Equal(0, Machine(MachineProcess.Preparing, 1, 9, 15).Instability(x, y, 20));            // out of range
+        Assert.Equal(0, Machine(MachineProcess.Preparing, 1, 0, 15).Instability(x, y, z));             // no strength, no glow, no leak
+    }
+
     [Fact]
     public void AutomationComesInOnlyThroughAnOpenDoor()
     {

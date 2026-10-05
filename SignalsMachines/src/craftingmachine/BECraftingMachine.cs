@@ -207,10 +207,32 @@ public class BECraftingMachine : BlockEntityContainer, ISidedAutomation, Signals
     private byte state;
     private readonly MachineProcess process = new();
     public MachineProcess Process => process;
-    /// <summary>Temporal stability taken from players per 0.1 s: a whisper while crafting, a blast through an open door (contract 23, 23a).</summary>
-    public const float CraftDrainPerTick = 0.0005f, LeakDrainPerTick = 0.01f, CraftDrainRange = 2f, LeakRange = 8f;
-    /// <summary>Reaching into the open chamber with the crystal lit: a steep extra drain right at the door.</summary>
-    public const float DoorwayDrainPerTick = 0.05f, DoorwayRange = 1.5f;
+    // Temporal instability around the machine (contract 23, 23a), fed into the game's own stability field so the
+    // player's gear turns and drains the vanilla way. The game turns the gear by (stability - 1) per tick: a plain
+    // unstable area (0) barely moves it, a rift pushes the player's offset down to -20 and makes it whir. The
+    // machine pulls the field to targets on that scale: a whisper while crafting behind closed doors (-1, the bar
+    // lasts minutes), a blast through an open door with the crystal lit, graded by the strength (-5 .. -14, about a
+    // minute), rift-like in the doorway and after an overload (-20, under a minute).
+    public const float CraftDrainRange = 2f, LeakRange = 8f, DoorwayRange = 1.5f;
+    public const float CraftPull = 2f, LeakBase = 6f, LeakPerLevel = 1f, DoorwayExtra = 6f, OverloadLevel = 15f;
+
+    /// <summary>How far below 1 this machine pulls the temporal stability at a point (0 = leaves it alone).</summary>
+    public float Instability(double x, double y, double z)
+    {
+        double d = Math.Sqrt((x - Pos.X - .5) * (x - Pos.X - .5) + (y - Pos.Y - 1.5) * (y - Pos.Y - 1.5) + (z - Pos.Z - .5) * (z - Pos.Z - .5));
+        float pull = 0;
+        if (state == MachineProcess.Crafting && d < CraftDrainRange) pull = CraftPull;
+        bool lit = inputs.Crystal > 0 && inputs.Strength > 0;
+        if (lit && (DoorOpen(4) || DoorOpen(5)) && d < LeakRange)
+        {
+            float level = state == MachineProcess.Overloaded ? OverloadLevel : inputs.Strength;   // after a bang the crystal rages
+            float peak = LeakBase + LeakPerLevel * level;
+            pull = Math.Max(pull, peak * (float)(1 - d / LeakRange));
+            if (d < DoorwayRange) pull += DoorwayExtra * (float)(1 - d / DoorwayRange);
+        }
+        return pull;
+    }
+
     private BEBehaviorMPConsumer mpc;
     private PlateRenderer plateRenderer;
     private MachineEffects effects;
@@ -241,6 +263,7 @@ public class BECraftingMachine : BlockEntityContainer, ISidedAutomation, Signals
     public override void Initialize(ICoreAPI api)
     {
         base.Initialize(api);
+        api.ModLoader?.GetModSystem<SignalsMachinesMod>()?.Register(this);
         tube?.ResolveBlockOrItem(api.World);
         LoadProgram();
         RebuildMesh();
@@ -266,10 +289,11 @@ public class BECraftingMachine : BlockEntityContainer, ISidedAutomation, Signals
         }
     }
 
-    public override void OnBlockUnloaded() { base.OnBlockUnloaded(); signalMod?.DisposeSignalTickListener(OnSignalTick); plateRenderer?.Dispose(); effects?.Dispose(); trace?.Dispose(); trace = null; }
+    public override void OnBlockUnloaded() { base.OnBlockUnloaded(); Api?.ModLoader?.GetModSystem<SignalsMachinesMod>()?.Unregister(this); signalMod?.DisposeSignalTickListener(OnSignalTick); plateRenderer?.Dispose(); effects?.Dispose(); trace?.Dispose(); trace = null; }
     public override void OnBlockRemoved()
     {
         base.OnBlockRemoved();
+        Api?.ModLoader?.GetModSystem<SignalsMachinesMod>()?.Unregister(this);
         signalMod?.DisposeSignalTickListener(OnSignalTick);
         plateRenderer?.Dispose();
         effects?.Dispose();
@@ -281,9 +305,7 @@ public class BECraftingMachine : BlockEntityContainer, ISidedAutomation, Signals
 
     private void RunProcess(float dt)
     {
-        // the process waits for the doors to finish closing (the crystal must not light while they still slide);
-        // the leak below follows the pins alone, as the doors are no longer open then
-        bool doorsClosed = !DoorOpen(4) && !DoorOpen(5);
+        // the process waits for the doors to finish closing (the crystal must not light while they still slide)
         var sense = new Sense(inputs, DoorShut(4) && DoorShut(5), OccupiedCells, Recipe != null, inventory[ProductSlot].Empty, networkSpeed > PlateDrive.Still, PlateRunning);
         byte stateBefore = process.State;
         var ev = process.Step(sense, dt);
@@ -294,7 +316,6 @@ public class BECraftingMachine : BlockEntityContainer, ISidedAutomation, Signals
         if (ev == MachineProcess.Event.Craft && Recipe != null)
             MachineRecipes.Craft(Api.World, Recipe, GridCells(), GridSize, inventory[ProductSlot], stack => Api.World.SpawnItemEntity(stack, Pos.ToVec3d().Add(.5, 1.5, .5)), Pos.ToVec3d().Add(.5, 1.5, .5));
         else if (ev == MachineProcess.Event.Overload) { Burn(); overloadSerial++; }
-        DrainStability(doorsClosed);
         if (process.State != state) { state = process.State; MarkDirty(); }
         else if (state == MachineProcess.Crafting && (int)(process.Progress * 10) % 5 == 0) MarkDirty();   // progress for the info box, twice a second
     }
@@ -311,23 +332,6 @@ public class BECraftingMachine : BlockEntityContainer, ISidedAutomation, Signals
         }
     }
 
-    private void DrainStability(bool doorsClosed)
-    {
-        bool leak = !doorsClosed && inputs.Crystal > 0 && inputs.Strength > 0;
-        bool craft = state == MachineProcess.Crafting;
-        if (!leak && !craft) return;
-        float range = leak ? LeakRange : CraftDrainRange;
-        var centre = Pos.ToVec3d().Add(.5, 1.5, .5);
-        foreach (var player in Api.World.GetPlayersAround(centre, range, range) ?? Array.Empty<IPlayer>())
-        {
-            var stability = player.Entity?.GetBehavior<Vintagestory.GameContent.EntityBehaviorTemporalStabilityAffected>();
-            if (stability == null) continue;
-            double distance = player.Entity.Pos.DistanceTo(centre);
-            float drain = leak ? LeakDrainPerTick * (float)Math.Max(0, 1 - distance / LeakRange) : CraftDrainPerTick;
-            if (leak && distance < DoorwayRange) drain += DoorwayDrainPerTick * (float)(1 - distance / DoorwayRange);   // standing in the doorway
-            stability.OwnStability = Math.Max(0, stability.OwnStability - drain);
-        }
-    }
 
     /// <summary>Server, every 0.1 s: the plate follows the network speed through the clutch, with inertia.</summary>
     public void OnMechanicsTick(float dt)
