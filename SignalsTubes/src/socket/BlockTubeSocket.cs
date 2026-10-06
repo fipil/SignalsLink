@@ -109,7 +109,7 @@ public class BlockTubeSocket : BlockConnection
     public static Vec3d PlugCableEnd(IBlockAccessor accessor, BlockPos pos)
     {
         var block = accessor.GetBlock(pos) as BlockTubeSocket;
-        var local = new Cuboidf(8 / 16f, 7 / 16f, 8 / 16f, 8 / 16f, 7 / 16f, 8 / 16f);
+        var local = new Cuboidf(8 / 16f, 4.25f / 16, 3 / 16f, 8 / 16f, 4.25f / 16, 3 / 16f);
         if (block != null) local = local.RotatedCopy(block.Shape.rotateX, block.Shape.rotateY, block.Shape.rotateZ, new Vec3d(.5, .5, .5));
         return pos.ToVec3d().Add(local.MidX, local.MidY, local.MidZ);
     }

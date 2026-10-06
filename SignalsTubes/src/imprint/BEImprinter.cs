@@ -56,9 +56,9 @@ public class BEImprinter : BlockEntity
             .RotatedCopy(0, ((BlockImprinter)Block).RotationDegrees, 0, new Vec3d(.5, .5, .5));
         return Pos.ToVec3d().Add(local.MidX, local.MidY, local.MidZ);
     }
-    // the cables run into the gap under the overhanging top plate
-    public Vec3d PlugAnchor() => Anchor(6.5f, 13, 10.5f);
-    public Vec3d ProbeAnchor() => Anchor(11, 13, 10.5f);
+    // the cables come out of the pedestal's front, under the upper plate
+    public Vec3d PlugAnchor() => Anchor(7, 15.5f, 6);
+    public Vec3d ProbeAnchor() => Anchor(9, 15.5f, 6);
 
     public override void Initialize(ICoreAPI api)
     {
@@ -506,19 +506,52 @@ public class BEImprinter : BlockEntity
             probeCable = new CableRenderer(capi, ProbeAnchor(), HandOf(capi, ProbeCode), CableMesh.ProbeLead, CableRenderer.RedTexture);
     }
 
-    // Roughly the right hand of the local player while the tool is in the active slot.
+    // Where the tool's cable stub is in the world: the held item is placed exactly as the game places it
+    // (entity model matrix * right-hand attachment pose * the item's hand transform), so the end of the cable
+    // follows the hand through its animations - in first person too, where the game draws the arms the same way.
+    // Without a matrix (no renderer yet) a point ahead of and right of the camera stands in.
     private System.Func<Vec3d> HandOf(ICoreClientAPI capi, string code) => () =>
     {
         var player = capi.World.Player;
-        if (!ItemImprinterTool.BelongsTo(player.InventoryManager.ActiveHotbarSlot?.Itemstack, code, Pos)) return null;
-        float yaw = player.Entity.Pos.Yaw;
-        return player.Entity.Pos.XYZ.Add(-Math.Sin(yaw) * .3 + Math.Cos(yaw) * .35, player.Entity.LocalEyePos.Y - .5, -Math.Cos(yaw) * .3 - Math.Sin(yaw) * .35);
+        var slot = player.InventoryManager.ActiveHotbarSlot;
+        if (!ItemImprinterTool.BelongsTo(slot?.Itemstack, code, Pos)) return null;
+        var stub = code == PlugCode ? new Vec4f(10 / 16f, .5f / 16, 8 / 16f, 1) : new Vec4f(2 / 16f, .5f / 16, 8 / 16f, 1);
+        var e = player.Entity;
+        if (e.Properties.Client.Renderer is Vintagestory.GameContent.EntityShapeRenderer renderer && renderer.ModelMat != null
+            && e.AnimManager?.Animator?.GetAttachmentPointPose("RightHand") is { } apap)
+        {
+            var tf = capi.Render.GetItemStackRenderInfo(slot, EnumItemRenderTarget.HandTp, 0).Transform?.EnsureDefaultValues();
+            if (tf != null)
+            {
+                var ap = apap.AttachPoint;
+                var m = new Matrixf().Set(renderer.ModelMat).Mul(apap.AnimModelMatrix)
+                    .Translate(tf.Origin.X, tf.Origin.Y, tf.Origin.Z)
+                    .Scale(tf.ScaleXYZ.X, tf.ScaleXYZ.Y, tf.ScaleXYZ.Z)
+                    .Translate((float)(ap.PosX / 16.0 + tf.Translation.X), (float)(ap.PosY / 16.0 + tf.Translation.Y), (float)(ap.PosZ / 16.0 + tf.Translation.Z))
+                    .Rotate((float)(ap.RotationX + tf.Rotation.X) * GameMath.DEG2RAD, (float)(ap.RotationY + tf.Rotation.Y) * GameMath.DEG2RAD, (float)(ap.RotationZ + tf.Rotation.Z) * GameMath.DEG2RAD)
+                    .Translate(-tf.Origin.X, -tf.Origin.Y, -tf.Origin.Z);
+                var p = m.TransformVector(stub);
+                return e.CameraPos.AddCopy(p.X, p.Y, p.Z);   // the model matrix is relative to the camera
+            }
+        }
+        var view = e.Pos.GetViewVector().ToVec3d().Normalize();
+        var rightDir = new Vec3d(-Math.Cos(e.Pos.Yaw), 0, Math.Sin(e.Pos.Yaw));
+        var upDir = view.Cross(rightDir).Normalize();
+        const double ahead = .55, right = .3, down = .3;
+        return e.CameraPos.AddCopy(view.X * ahead + rightDir.X * right - upDir.X * down, view.Y * ahead - upDir.Y * down, view.Z * ahead + rightDir.Z * right - upDir.Z * down);
     };
 
     public override bool OnTesselation(ITerrainMeshPool mesher, ITesselatorAPI tesselator)
     {
         mesher.AddMeshData(GetMesh((ICoreClientAPI)Api));
         return true;
+    }
+
+    private ShapeElement[] WithoutTakenTools(ShapeElement[] elements)
+    {
+        var kept = elements.Where(e => (PlugHome || !e.Name.StartsWith("plug_")) && (ProbeHome || !e.Name.StartsWith("probe_"))).ToArray();
+        foreach (var e in kept) if (e.Children != null) e.Children = WithoutTakenTools(e.Children);
+        return kept;
     }
 
     private MeshData GetMesh(ICoreClientAPI capi)
@@ -530,9 +563,10 @@ public class BEImprinter : BlockEntity
             if (meshCache.TryGetValue(key, out var cached)) return cached;
             if (meshCache.Count >= 64) meshCache.Clear();
             Shape shape = capi.Assets.Get(new AssetLocation("signalstubes", "shapes/block/imprinter.json")).ToObject<Shape>().Clone();
-            shape.Elements = shape.Elements.Where(e => (PlugHome || !e.Name.StartsWith("plug_")) && (ProbeHome || !e.Name.StartsWith("probe_"))).ToArray();
+            // the tools sit in a rotated group on the slope, so the filter has to walk into children
+            shape.Elements = WithoutTakenTools(shape.Elements);
             if (tube?.Collectible is ItemProgramTube item)
-                TubeVisuals.Append(shape, item.BuildShape(tube, false), .5f, new Vec3f(4, 14.9f, 4));
+                TubeVisuals.Append(shape, item.BuildShape(tube, false), .5f, new Vec3f(4, 17.9f, 0.5f));
             capi.Tesselator.TesselateShape(block, shape, out MeshData mesh, new Vec3f(0, block.Shape.rotateY, 0));
             meshCache[key] = mesh;
             return mesh;

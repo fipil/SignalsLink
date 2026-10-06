@@ -490,7 +490,7 @@ public class BECraftingMachine : BlockEntityContainer, ISidedAutomation, Signals
 
     public Vec3d PlugCableEnd()
     {
-        var local = new Cuboidf(8 / 16f, 7 / 16f, 12 / 16f, 8 / 16f, 7 / 16f, 12 / 16f)
+        var local = new Cuboidf(8 / 16f, 4.25f / 16, 7 / 16f, 8 / 16f, 4.25f / 16, 7 / 16f)
             .RotatedCopy(0, ((BlockCraftingMachine)Block).RotationDegrees, 0, new Vec3d(.5, .5, .5));
         return Pos.ToVec3d().Add(local.MidX, local.MidY, local.MidZ);
     }

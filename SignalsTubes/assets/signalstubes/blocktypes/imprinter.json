@@ -153,6 +153,12 @@
     },
     "panel": {
       "base": "signalstubes:block/oak-panel"
+    },
+    "porcelain": {
+      "base": "signalstubes:block/pin-porcelain"
+    },
+    "leather": {
+      "base": "signalstubes:block/leather"
     }
   },
   "drawtype": "json",
@@ -173,7 +179,7 @@
     "y1": 0,
     "z1": 0.0625,
     "x2": 0.9375,
-    "y2": 0.9062,
+    "y2": 1.0938,
     "z2": 0.9375
   },
   "sounds": {
@@ -185,14 +191,14 @@
   "guiTransform": {
     "origin": {
       "x": 0.5,
-      "y": 0.35,
+      "y": 0.45,
       "z": 0.5
     },
     "rotation": {
       "x": -22.5,
-      "y": -45,
+      "y": 135,
       "z": 0
     },
-    "scale": 1.1
+    "scale": 1.0
   }
 }

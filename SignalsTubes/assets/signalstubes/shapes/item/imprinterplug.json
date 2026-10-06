@@ -5,182 +5,100 @@
   "textureWidth": 16,
   "textureHeight": 16,
   "textureSizes": {
-    "terminal": [
+    "porcelain": [
+      16,
+      16
+    ],
+    "leather": [
       16,
       16
     ],
     "cable": [
       16,
       16
-    ],
-    "metal": [
-      16,
-      16
     ]
   },
   "textures": {
-    "terminal": "block/normal3",
-    "cable": "block/iron",
-    "metal": "block/axle-iron"
+    "porcelain": "block/pin-porcelain",
+    "leather": "block/leather",
+    "cable": "block/iron"
   },
   "elements": [
     {
-      "name": "head",
+      "name": "plate",
       "from": [
         4,
-        3,
-        7
+        -2,
+        5
       ],
       "to": [
-        11,
-        11,
-        8.5
+        10,
+        -1,
+        11
       ],
       "faces": {
         "north": {
-          "texture": "#terminal",
+          "texture": "#porcelain",
           "uv": [
-            0,
-            0,
-            7.0,
-            8.0
+            2,
+            2,
+            14,
+            4
           ],
           "autoUv": false,
           "enabled": true
         },
         "south": {
-          "texture": "#terminal",
+          "texture": "#porcelain",
           "uv": [
-            0,
-            0,
-            7.0,
-            8.0
+            2,
+            2,
+            14,
+            4
           ],
           "autoUv": false,
           "enabled": true
         },
         "east": {
-          "texture": "#terminal",
+          "texture": "#porcelain",
           "uv": [
-            0,
-            0,
-            1.5,
-            8.0
+            2,
+            2,
+            14,
+            4
           ],
           "autoUv": false,
           "enabled": true
         },
         "west": {
-          "texture": "#terminal",
+          "texture": "#porcelain",
           "uv": [
-            0,
-            0,
-            1.5,
-            8.0
+            2,
+            2,
+            14,
+            4
           ],
           "autoUv": false,
           "enabled": true
         },
         "up": {
-          "texture": "#terminal",
+          "texture": "#porcelain",
           "uv": [
-            0,
-            0,
-            7.0,
-            1.5
+            2,
+            2,
+            14,
+            14
           ],
           "autoUv": false,
           "enabled": true
         },
         "down": {
-          "texture": "#terminal",
+          "texture": "#porcelain",
           "uv": [
-            0,
-            0,
-            7.0,
-            1.5
-          ],
-          "autoUv": false,
-          "enabled": true
-        }
-      },
-      "renderPass": 0
-    },
-    {
-      "name": "grip",
-      "from": [
-        6.5,
-        5,
-        8.5
-      ],
-      "to": [
-        8.5,
-        8.5,
-        9.5
-      ],
-      "faces": {
-        "north": {
-          "texture": "#metal",
-          "uv": [
-            0,
-            0,
-            2.0,
-            3.5
-          ],
-          "autoUv": false,
-          "enabled": true
-        },
-        "south": {
-          "texture": "#metal",
-          "uv": [
-            0,
-            0,
-            2.0,
-            3.5
-          ],
-          "autoUv": false,
-          "enabled": true
-        },
-        "east": {
-          "texture": "#metal",
-          "uv": [
-            0,
-            0,
-            1.0,
-            3.5
-          ],
-          "autoUv": false,
-          "enabled": true
-        },
-        "west": {
-          "texture": "#metal",
-          "uv": [
-            0,
-            0,
-            1.0,
-            3.5
-          ],
-          "autoUv": false,
-          "enabled": true
-        },
-        "up": {
-          "texture": "#metal",
-          "uv": [
-            0,
-            0,
-            2.0,
-            1.0
-          ],
-          "autoUv": false,
-          "enabled": true
-        },
-        "down": {
-          "texture": "#metal",
-          "uv": [
-            0,
-            0,
-            2.0,
-            1.0
+            2,
+            2,
+            14,
+            14
           ],
           "autoUv": false,
           "enabled": true
@@ -191,78 +109,78 @@
     {
       "name": "block",
       "from": [
-        6.5,
-        11,
+        8,
+        -1,
         6.5
       ],
       "to": [
-        8.5,
-        13.5,
-        9
+        10,
+        1,
+        9.5
       ],
       "faces": {
         "north": {
-          "texture": "#terminal",
+          "texture": "#porcelain",
           "uv": [
-            0,
-            0,
-            2.0,
-            2.5
+            2,
+            2,
+            6,
+            6
           ],
           "autoUv": false,
           "enabled": true
         },
         "south": {
-          "texture": "#terminal",
+          "texture": "#porcelain",
           "uv": [
-            0,
-            0,
-            2.0,
-            2.5
+            2,
+            2,
+            6,
+            6
           ],
           "autoUv": false,
           "enabled": true
         },
         "east": {
-          "texture": "#terminal",
+          "texture": "#porcelain",
           "uv": [
-            0,
-            0,
-            2.5,
-            2.5
+            2,
+            2,
+            8.0,
+            6
           ],
           "autoUv": false,
           "enabled": true
         },
         "west": {
-          "texture": "#terminal",
+          "texture": "#porcelain",
           "uv": [
-            0,
-            0,
-            2.5,
-            2.5
+            2,
+            2,
+            8.0,
+            6
           ],
           "autoUv": false,
           "enabled": true
         },
         "up": {
-          "texture": "#terminal",
+          "texture": "#porcelain",
           "uv": [
-            0,
-            0,
-            2.0,
-            2.5
+            2,
+            2,
+            6,
+            8.0
           ],
           "autoUv": false,
           "enabled": true
         },
         "down": {
-          "texture": "#terminal",
+          "texture": "#porcelain",
           "uv": [
-            0,
-            0,
-            2.0,
-            2.5
+            2,
+            2,
+            6,
+            8.0
           ],
           "autoUv": false,
           "enabled": true
@@ -271,80 +189,80 @@
       "renderPass": 0
     },
     {
-      "name": "cable",
+      "name": "rod",
       "from": [
-        7.1,
-        13.5,
-        7.4
+        4,
+        0,
+        7.5
       ],
       "to": [
-        7.9,
-        16,
-        8.1
+        8,
+        1,
+        8.5
       ],
       "faces": {
         "north": {
-          "texture": "#cable",
+          "texture": "#leather",
           "uv": [
-            0,
-            0,
-            0.8,
-            2.5
+            2,
+            2,
+            10,
+            4
           ],
           "autoUv": false,
           "enabled": true
         },
         "south": {
-          "texture": "#cable",
+          "texture": "#leather",
           "uv": [
-            0,
-            0,
-            0.8,
-            2.5
+            2,
+            2,
+            10,
+            4
           ],
           "autoUv": false,
           "enabled": true
         },
         "east": {
-          "texture": "#cable",
+          "texture": "#leather",
           "uv": [
-            0,
-            0,
-            0.7,
-            2.5
+            2,
+            2,
+            4.0,
+            4
           ],
           "autoUv": false,
           "enabled": true
         },
         "west": {
-          "texture": "#cable",
+          "texture": "#leather",
           "uv": [
-            0,
-            0,
-            0.7,
-            2.5
+            2,
+            2,
+            4.0,
+            4
           ],
           "autoUv": false,
           "enabled": true
         },
         "up": {
-          "texture": "#cable",
+          "texture": "#leather",
           "uv": [
-            0,
-            0,
-            0.8,
-            0.7
+            2,
+            2,
+            10,
+            4.0
           ],
           "autoUv": false,
           "enabled": true
         },
         "down": {
-          "texture": "#cable",
+          "texture": "#leather",
           "uv": [
-            0,
-            0,
-            0.8,
-            0.7
+            2,
+            2,
+            10,
+            4.0
           ],
           "autoUv": false,
           "enabled": true

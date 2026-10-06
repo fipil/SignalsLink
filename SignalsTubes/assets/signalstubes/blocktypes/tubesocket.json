@@ -443,6 +443,12 @@
     },
     "cable": {
       "base": "signalstubes:block/iron"
+    },
+    "porcelain": {
+      "base": "signalstubes:block/pin-porcelain"
+    },
+    "leather": {
+      "base": "signalstubes:block/leather"
     }
   },
   "drawtype": "json",

@@ -1,6 +1,7 @@
 using SignalsTubes.src.programtube;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
+using Vintagestory.API.Config;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Server;
 using Vintagestory.GameContent;
@@ -23,19 +24,21 @@ public class BlockImprinter : Block, IMultiBlockColSelBoxes, IMultiBlockInteract
     public override void OnLoaded(ICoreAPI api)
     {
         base.OnLoaded(api);
-        // the cradles lie on the 45 degree slope between the front block (top 7.5) and the rear body (top 12.5)
+        // the tools lie on the slope (y 11.5 at the front wall to 14.5 at z 8); the socket sits on the upper plate
         boxes = new[] {
-            Rot(3.5f, 8.5f, 10, 8, 13, 15),          // plug cradle
-            Rot(5, 14.5f, 5, 11, 16, 11),            // socket on the plate
-            Rot(10, 8.5f, 10, 13, 12.5f, 15),        // probe stand
-            Rot(1, 0, 1, 15, 12.5f, 10),             // rear body
-            Rot(1.5f, 12.5f, 1.5f, 14.5f, 14.5f, 11.5f),   // top plate and neck
-            Rot(1, 0, 10, 15, 8.5f, 15),             // front block
-            Rot(8, 8.5f, 10, 10, 12.5f, 15),         // slope between the cradles
-            Rot(1, 8.5f, 10, 3.5f, 12, 15),          // slope edges
-            Rot(13, 8.5f, 10, 15, 12, 15)
+            Rot(2, 11.5f, 8, 8, 17, 15),             // plug on the slope, left
+            Rot(5, 17.5f, 1.5f, 11, 19, 7.5f),       // socket on the upper plate
+            Rot(9.5f, 11.5f, 8, 13.5f, 15, 15),      // probe on the slope, right
+            Rot(1, 0, 1, 15, 10.5f, 15),             // cabinet
+            Rot(1, 10.5f, 1, 15, 14.5f, 8),          // head, rear part
+            Rot(1, 10.5f, 8, 15, 11.5f, 15),         // front wall
+            Rot(8, 11.5f, 8, 9.5f, 14.5f, 15),       // slope between the tools
+            Rot(1, 11.5f, 8, 2, 14.5f, 15),          // slope edges
+            Rot(13.5f, 11.5f, 8, 15, 14.5f, 15),
+            Rot(3, 14.5f, 3, 13, 16.5f, 6),          // pedestal
+            Rot(1, 16.5f, 1, 15, 17.5f, 8)           // upper plate
         };
-        upperTube = new[] { Rot(5, 0, 5, 11, 6.5f, 11) };
+        upperTube = new[] { Rot(5, 0, 1.5f, 11, 9.5f, 7.5f) };
     }
 
     public override Cuboidf[] GetSelectionBoxes(IBlockAccessor accessor, BlockPos pos) => boxes;
@@ -101,10 +104,33 @@ public class BlockImprinter : Block, IMultiBlockColSelBoxes, IMultiBlockInteract
             Itemstacks = be is { HasTube: true } || tube == null ? null : new[] { new ItemStack(tube) } } };
     }
 
+    // Looking at a part (plug, socket, probe) names it and says what it is for instead of the block's own tooltip.
+    // The selection box comes from the client's current selection; a box in the block above is the tube in the socket.
+    private string PartKey(BlockPos pos)
+    {
+        var sel = (api as ICoreClientAPI)?.World.Player?.CurrentBlockSelection;
+        if (sel == null) return null;
+        int box = sel.Position.Equals(pos) ? sel.SelectionBoxIndex : SocketBox;
+        var be = api.World.BlockAccessor.GetBlockEntity(pos) as BEImprinter;
+        // an empty cradle or stand says what belongs there and how to put it back
+        return box switch
+        {
+            CradleBox => be is { PlugHome: false } ? "plug-cradle" : "plug",
+            SocketBox => "socket",
+            StandBox => be is { ProbeHome: false } ? "probe-stand" : "probe",
+            _ => null
+        };
+    }
+
+    public override string GetPlacedBlockName(IWorldAccessor world, BlockPos pos) =>
+        PartKey(pos) is string key ? Lang.Get("signalstubes:part-" + key) : base.GetPlacedBlockName(world, pos);
+
     public override string GetPlacedBlockInfo(IWorldAccessor world, BlockPos pos, IPlayer forPlayer)
     {
-        string info = base.GetPlacedBlockInfo(world, pos, forPlayer);
-        if (world.BlockAccessor.GetBlockEntity(pos) is BEImprinter be && be.HasTube) info += ItemProgramTube.FullInfo(be.Tube, world);
+        string key = PartKey(pos);
+        if (key == null) return base.GetPlacedBlockInfo(world, pos, forPlayer);
+        string info = Lang.Get("signalstubes:part-" + key + "-desc");
+        if (key == "socket" && world.BlockAccessor.GetBlockEntity(pos) is BEImprinter { HasTube: true } be) info += "\n" + ItemProgramTube.FullInfo(be.Tube, world);
         return info;
     }
 

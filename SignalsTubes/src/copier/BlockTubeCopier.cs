@@ -1,6 +1,8 @@
 using signals.src.signalNetwork;
+using SignalsTubes.src.programtube;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
+using Vintagestory.API.Config;
 using Vintagestory.API.MathTools;
 using Vintagestory.GameContent;
 
@@ -72,6 +74,34 @@ public class BlockTubeCopier : BlockConnection, IMultiBlockColSelBoxes, IMultiBl
                 new WorldInteraction { ActionLangCode = "signalstubes:copier-start", MouseButton = EnumMouseButton.Right },
                 new WorldInteraction { ActionLangCode = "signalstubes:copier-charge", MouseButton = EnumMouseButton.Right, Itemstacks = gear == null ? null : new[] { new ItemStack(gear) } } }
         };
+    }
+
+    // Looking at a socket names it and says what it is for instead of the block's own tooltip.
+    private int PartSocket(BlockPos pos)
+    {
+        var sel = (api as ICoreClientAPI)?.World.Player?.CurrentBlockSelection;
+        if (sel == null) return -1;
+        if (!sel.Position.Equals(pos))
+            return api.World.BlockAccessor.GetBlockEntity(pos) is BETubeCopier be ? UpperSocket(be, sel.SelectionBoxIndex) : -1;
+        return sel.SelectionBoxIndex switch { 0 => PinStart, 1 => PinState, 2 => BETubeCopier.In, 3 => BETubeCopier.Out, _ => -1 };
+    }
+
+    private const int PinStart = 10, PinState = 11;   // part codes for the two Signals pins
+
+    private static string PartKey(int part) => part switch { BETubeCopier.In => "copier-in", BETubeCopier.Out => "copier-out", PinStart => "copier-start", _ => "copier-state" };
+
+    public override string GetPlacedBlockName(IWorldAccessor world, BlockPos pos) =>
+        PartSocket(pos) is int s and >= 0 ? Lang.Get("signalstubes:part-" + PartKey(s)) : base.GetPlacedBlockName(world, pos);
+
+    public override string GetPlacedBlockInfo(IWorldAccessor world, BlockPos pos, IPlayer forPlayer)
+    {
+        int s = PartSocket(pos);
+        if (s < 0) return base.GetPlacedBlockInfo(world, pos, forPlayer);
+        string info = Lang.Get("signalstubes:part-" + PartKey(s) + "-desc");
+        var be = world.BlockAccessor.GetBlockEntity(pos) as BETubeCopier;
+        var stack = s == BETubeCopier.In ? be?.Original : be?.Target;
+        if (stack != null) info += "\n" + ItemProgramTube.FullInfo(stack, world);
+        return info;
     }
 
     // ---- the block above: only the tubes live there. The proxy hands over the offset *to* the controller.

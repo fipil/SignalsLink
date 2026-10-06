@@ -29,6 +29,14 @@
     "cable": [
       16,
       16
+    ],
+    "porcelain": [
+      16,
+      16
+    ],
+    "leather": [
+      16,
+      16
     ]
   },
   "textures": {
@@ -37,7 +45,9 @@
     "socket-floor": "block/socket-floor",
     "terminal": "block/normal3",
     "pintop": "block/rustycolored",
-    "cable": "block/iron"
+    "cable": "block/iron",
+    "porcelain": "block/pin-porcelain",
+    "leather": "block/leather"
   },
   "elements": [
     {
@@ -2297,69 +2307,80 @@
       "renderPass": 0
     },
     {
-      "name": "plug_head",
+      "name": "plug_plate",
       "from": [
-        5.5,
+        5,
         2,
-        5.5
+        5
       ],
       "to": [
-        10.5,
-        5,
-        10.5
+        11,
+        3,
+        11
       ],
       "faces": {
         "north": {
-          "texture": "#terminal",
+          "texture": "#porcelain",
           "uv": [
-            0,
-            0,
-            5.0,
-            3
+            2,
+            2,
+            14,
+            4
           ],
           "autoUv": false,
           "enabled": true
         },
         "south": {
-          "texture": "#terminal",
+          "texture": "#porcelain",
           "uv": [
-            0,
-            0,
-            5.0,
-            3
+            2,
+            2,
+            14,
+            4
           ],
           "autoUv": false,
           "enabled": true
         },
         "east": {
-          "texture": "#terminal",
+          "texture": "#porcelain",
           "uv": [
-            0,
-            0,
-            5.0,
-            3
+            2,
+            2,
+            14,
+            4
           ],
           "autoUv": false,
           "enabled": true
         },
         "west": {
-          "texture": "#terminal",
+          "texture": "#porcelain",
           "uv": [
-            0,
-            0,
-            5.0,
-            3
+            2,
+            2,
+            14,
+            4
           ],
           "autoUv": false,
           "enabled": true
         },
         "up": {
-          "texture": "#terminal",
+          "texture": "#porcelain",
           "uv": [
-            0,
-            0,
-            5.0,
-            5.0
+            2,
+            2,
+            14,
+            14
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "down": {
+          "texture": "#porcelain",
+          "uv": [
+            2,
+            2,
+            14,
+            14
           ],
           "autoUv": false,
           "enabled": true
@@ -2368,16 +2389,180 @@
       "renderPass": 0
     },
     {
-      "name": "plug_lead",
+      "name": "plug_block",
+      "from": [
+        6.5,
+        3,
+        5
+      ],
+      "to": [
+        9.5,
+        5,
+        7
+      ],
+      "faces": {
+        "north": {
+          "texture": "#porcelain",
+          "uv": [
+            2,
+            2,
+            8.0,
+            6
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#porcelain",
+          "uv": [
+            2,
+            2,
+            8.0,
+            6
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#porcelain",
+          "uv": [
+            2,
+            2,
+            6,
+            6
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#porcelain",
+          "uv": [
+            2,
+            2,
+            6,
+            6
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#porcelain",
+          "uv": [
+            2,
+            2,
+            8.0,
+            6
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "down": {
+          "texture": "#porcelain",
+          "uv": [
+            2,
+            2,
+            8.0,
+            6
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      },
+      "renderPass": 0
+    },
+    {
+      "name": "plug_rod",
       "from": [
         7.5,
-        5,
-        7.5
+        4,
+        7
       ],
       "to": [
         8.5,
-        7,
-        8.5
+        5,
+        11
+      ],
+      "faces": {
+        "north": {
+          "texture": "#leather",
+          "uv": [
+            2,
+            2,
+            4.0,
+            4
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#leather",
+          "uv": [
+            2,
+            2,
+            4.0,
+            4
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#leather",
+          "uv": [
+            2,
+            2,
+            10,
+            4
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#leather",
+          "uv": [
+            2,
+            2,
+            10,
+            4
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#leather",
+          "uv": [
+            2,
+            2,
+            4.0,
+            10
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "down": {
+          "texture": "#leather",
+          "uv": [
+            2,
+            2,
+            4.0,
+            10
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      },
+      "renderPass": 0
+    },
+    {
+      "name": "plug_cable",
+      "from": [
+        7.65,
+        3.9,
+        3
+      ],
+      "to": [
+        8.35,
+        4.6,
+        5
       ],
       "faces": {
         "north": {
@@ -2385,8 +2570,8 @@
           "uv": [
             0,
             0,
-            1.0,
-            2
+            0.7,
+            0.7
           ],
           "autoUv": false,
           "enabled": true
@@ -2396,8 +2581,8 @@
           "uv": [
             0,
             0,
-            1.0,
-            2
+            0.7,
+            0.7
           ],
           "autoUv": false,
           "enabled": true
@@ -2407,8 +2592,8 @@
           "uv": [
             0,
             0,
-            1.0,
-            2
+            2,
+            0.7
           ],
           "autoUv": false,
           "enabled": true
@@ -2418,8 +2603,8 @@
           "uv": [
             0,
             0,
-            1.0,
-            2
+            2,
+            0.7
           ],
           "autoUv": false,
           "enabled": true
@@ -2429,8 +2614,8 @@
           "uv": [
             0,
             0,
-            1.0,
-            1.0
+            0.7,
+            2
           ],
           "autoUv": false,
           "enabled": true
@@ -2440,8 +2625,8 @@
           "uv": [
             0,
             0,
-            1.0,
-            1.0
+            0.7,
+            2
           ],
           "autoUv": false,
           "enabled": true
