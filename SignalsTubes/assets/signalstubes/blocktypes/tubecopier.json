@@ -23,6 +23,19 @@
   },
   "behaviors": [
     {
+      "name": "Multiblock",
+      "properties": {
+        "sizex": 1,
+        "sizey": 2,
+        "sizez": 1,
+        "cposition": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        }
+      }
+    },
+    {
       "name": "HorizontalOrientable",
       "properties": {
         "dropBlockFace": "north"
@@ -53,12 +66,12 @@
       {
         "index": 0,
         "name": "copier-start",
-        "x1": 0.125,
-        "y1": 0.0625,
-        "z1": 0.875,
-        "x2": 0.25,
-        "y2": 0.25,
-        "z2": 1.0,
+        "x1": 0.53125,
+        "y1": 0.71875,
+        "z1": 0.09375,
+        "x2": 0.65625,
+        "y2": 0.90625,
+        "z2": 0.21875,
         "rotateYbytype": {
           "*-east": 270,
           "*-south": 180,
@@ -69,11 +82,11 @@
         "index": 1,
         "name": "copier-state",
         "x1": 0.75,
-        "y1": 0.0625,
-        "z1": 0.875,
+        "y1": 0.71875,
+        "z1": 0.09375,
         "x2": 0.875,
-        "y2": 0.25,
-        "z2": 1.0,
+        "y2": 0.90625,
+        "z2": 0.21875,
         "rotateYbytype": {
           "*-east": 270,
           "*-south": 180,
@@ -102,7 +115,7 @@
   },
   "textures": {
     "oak": {
-      "base": "signalstubes:block/base-oak"
+      "base": "signalstubes:block/oak-board"
     },
     "castiron": {
       "base": "signalstubes:block/castironbrown"
@@ -115,9 +128,6 @@
     },
     "terminal": {
       "base": "signalstubes:block/normal3"
-    },
-    "pintop": {
-      "base": "signalstubes:block/rustycolored"
     },
     "arrow": {
       "base": "signalstubes:block/copy-arrow"
@@ -190,6 +200,21 @@
     },
     "tube-base-dyedpink": {
       "base": "signalstubes:block/tube-base-dyedpink"
+    },
+    "panel": {
+      "base": "signalstubes:block/oak-panel"
+    },
+    "porcelain": {
+      "base": "signalstubes:block/pin-porcelain"
+    },
+    "brass": {
+      "base": "signalstubes:block/pin-brass"
+    },
+    "brass-in": {
+      "base": "signalstubes:block/pin-brass-in"
+    },
+    "brass-out": {
+      "base": "signalstubes:block/pin-brass-out"
     }
   },
   "drawtype": "json",
@@ -210,7 +235,7 @@
     "y1": 0,
     "z1": 0.0625,
     "x2": 0.9375,
-    "y2": 0.725,
+    "y2": 0.7188,
     "z2": 0.9375,
     "rotateYbytype": {
       "*-east": 270,

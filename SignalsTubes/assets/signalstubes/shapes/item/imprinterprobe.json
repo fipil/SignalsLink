@@ -1,7 +1,6 @@
 {
   "editor": {
-    "allAngles": true,
-    "entityTextureMode": false
+    "allAngles": false
   },
   "textureWidth": 16,
   "textureHeight": 16,
@@ -39,7 +38,7 @@
             0,
             0,
             0.5,
-            10
+            10.0
           ],
           "autoUv": false,
           "enabled": true
@@ -50,7 +49,7 @@
             0,
             0,
             0.5,
-            10
+            10.0
           ],
           "autoUv": false,
           "enabled": true
@@ -61,7 +60,7 @@
             0,
             0,
             0.5,
-            10
+            10.0
           ],
           "autoUv": false,
           "enabled": true
@@ -72,7 +71,7 @@
             0,
             0,
             0.5,
-            10
+            10.0
           ],
           "autoUv": false,
           "enabled": true
@@ -121,7 +120,7 @@
             0,
             0,
             1.0,
-            5
+            5.0
           ],
           "autoUv": false,
           "enabled": true
@@ -132,7 +131,7 @@
             0,
             0,
             1.0,
-            5
+            5.0
           ],
           "autoUv": false,
           "enabled": true
@@ -143,7 +142,7 @@
             0,
             0,
             1.0,
-            5
+            5.0
           ],
           "autoUv": false,
           "enabled": true
@@ -154,7 +153,7 @@
             0,
             0,
             1.0,
-            5
+            5.0
           ],
           "autoUv": false,
           "enabled": true
@@ -203,7 +202,7 @@
             0,
             0,
             0.5,
-            2
+            2.0
           ],
           "autoUv": false,
           "enabled": true
@@ -214,7 +213,7 @@
             0,
             0,
             0.5,
-            2
+            2.0
           ],
           "autoUv": false,
           "enabled": true
@@ -225,7 +224,7 @@
             0,
             0,
             0.5,
-            2
+            2.0
           ],
           "autoUv": false,
           "enabled": true
@@ -236,7 +235,7 @@
             0,
             0,
             0.5,
-            2
+            2.0
           ],
           "autoUv": false,
           "enabled": true

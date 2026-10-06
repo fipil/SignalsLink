@@ -268,8 +268,8 @@ public class BETubeCopier : BlockEntityContainer
             if (meshCache.TryGetValue(key, out var cached)) return cached;
             if (meshCache.Count >= 64) meshCache.Clear();
             Shape shape = capi.Assets.Get(new AssetLocation("signalstubes", "shapes/block/tubecopier.json")).ToObject<Shape>().Clone();
-            if (Original?.Collectible is ItemProgramTube a) TubeVisuals.Append(shape, a.BuildShape(Original, false), .5f, new Vec3f(0, 10.6f, 4));
-            if (Target?.Collectible is ItemProgramTube b) TubeVisuals.Append(shape, b.BuildShape(Target, false), .5f, new Vec3f(8, 10.6f, 4));
+            if (Original?.Collectible is ItemProgramTube a) TubeVisuals.Append(shape, a.BuildShape(Original, false), .5f, new Vec3f(0.5f, 11.9f, 0.5f));
+            if (Target?.Collectible is ItemProgramTube b) TubeVisuals.Append(shape, b.BuildShape(Target, false), .5f, new Vec3f(7.5f, 11.9f, 7.5f));
             capi.Tesselator.TesselateShape(block, shape, out MeshData mesh, new Vec3f(0, block.Shape.rotateY, 0));
             meshCache[key] = mesh;
             return mesh;

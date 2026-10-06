@@ -1,7 +1,6 @@
 {
   "editor": {
-    "allAngles": true,
-    "entityTextureMode": false
+    "allAngles": false
   },
   "textureWidth": 16,
   "textureHeight": 16,
@@ -10,7 +9,31 @@
       16,
       16
     ],
+    "panel": [
+      16,
+      16
+    ],
     "castiron": [
+      16,
+      16
+    ],
+    "socket-floor": [
+      16,
+      16
+    ],
+    "terminal": [
+      16,
+      16
+    ],
+    "cable": [
+      16,
+      16
+    ],
+    "metal": [
+      16,
+      16
+    ],
+    "cable-red": [
       16,
       16
     ],
@@ -22,11 +45,19 @@
       16,
       16
     ],
-    "terminal": [
+    "porcelain": [
       16,
       16
     ],
-    "pintop": [
+    "brass": [
+      16,
+      16
+    ],
+    "brass-in": [
+      16,
+      16
+    ],
+    "brass-out": [
       16,
       16
     ],
@@ -36,12 +67,20 @@
     ]
   },
   "textures": {
-    "oak": "block/base-oak",
+    "oak": "block/oak-board",
+    "panel": "block/oak-panel",
     "castiron": "block/castironbrown",
+    "socket-floor": "block/socket-floor",
+    "terminal": "block/normal3",
+    "cable": "block/iron",
+    "metal": "block/axle-iron",
+    "cable-red": "block/cable-red",
     "socket-floor-green": "block/socket-floor-green",
     "socket-floor-red": "block/socket-floor-red",
-    "terminal": "block/normal3",
-    "pintop": "block/rustycolored",
+    "porcelain": "block/pin-porcelain",
+    "brass": "block/pin-brass",
+    "brass-in": "block/pin-brass-in",
+    "brass-out": "block/pin-brass-out",
     "arrow": "block/copy-arrow"
   },
   "elements": [
@@ -59,67 +98,67 @@
       ],
       "faces": {
         "north": {
-          "texture": "#oak",
+          "texture": "#castiron",
           "uv": [
             0,
             0,
-            14,
-            1
+            14.0,
+            1.0
           ],
           "autoUv": false,
           "enabled": true
         },
         "south": {
-          "texture": "#oak",
+          "texture": "#castiron",
           "uv": [
             0,
             0,
-            14,
-            1
+            14.0,
+            1.0
           ],
           "autoUv": false,
           "enabled": true
         },
         "east": {
-          "texture": "#oak",
+          "texture": "#castiron",
           "uv": [
             0,
             0,
-            14,
-            1
+            14.0,
+            1.0
           ],
           "autoUv": false,
           "enabled": true
         },
         "west": {
-          "texture": "#oak",
+          "texture": "#castiron",
           "uv": [
             0,
             0,
-            14,
-            1
+            14.0,
+            1.0
           ],
           "autoUv": false,
           "enabled": true
         },
         "up": {
-          "texture": "#oak",
+          "texture": "#castiron",
           "uv": [
             0,
             0,
-            14,
-            14
+            14.0,
+            14.0
           ],
           "autoUv": false,
           "enabled": true
         },
         "down": {
-          "texture": "#oak",
+          "texture": "#castiron",
           "uv": [
             0,
             0,
-            14,
-            14
+            14.0,
+            14.0
           ],
           "autoUv": false,
           "enabled": true
@@ -128,16 +167,415 @@
       "renderPass": 0
     },
     {
-      "name": "cabinet",
+      "name": "core",
+      "from": [
+        3,
+        1,
+        3
+      ],
+      "to": [
+        13,
+        10.5,
+        13
+      ],
+      "faces": {
+        "north": {
+          "texture": "#panel",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#panel",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#panel",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#panel",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            10.0,
+            10.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      },
+      "renderPass": 0
+    },
+    {
+      "name": "w_post_a",
       "from": [
         2,
         1,
         2
       ],
       "to": [
+        3,
+        10.5,
+        3.0
+      ],
+      "faces": {
+        "north": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            1.0,
+            9.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            1.0,
+            9.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            1.0,
+            9.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            1.0,
+            9.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            1.0,
+            1.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "down": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            1.0,
+            1.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      },
+      "renderPass": 0
+    },
+    {
+      "name": "w_post_b",
+      "from": [
+        2,
+        1,
+        13.0
+      ],
+      "to": [
+        3,
+        10.5,
+        14
+      ],
+      "faces": {
+        "north": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            1.0,
+            9.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            1.0,
+            9.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            1.0,
+            9.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            1.0,
+            9.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            1.0,
+            1.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "down": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            1.0,
+            1.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      },
+      "renderPass": 0
+    },
+    {
+      "name": "w_rail_lo",
+      "from": [
+        2.5,
+        1,
+        3.0
+      ],
+      "to": [
+        3,
+        2.0,
+        13.0
+      ],
+      "faces": {
+        "north": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            0.5,
+            1.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            0.5,
+            1.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            10.0,
+            1.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            10.0,
+            1.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            0.5,
+            10.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "down": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            0.5,
+            10.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      },
+      "renderPass": 0
+    },
+    {
+      "name": "w_rail_hi",
+      "from": [
+        2.5,
+        9.5,
+        3.0
+      ],
+      "to": [
+        3,
+        10.5,
+        13.0
+      ],
+      "faces": {
+        "north": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            0.5,
+            1.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            0.5,
+            1.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            10.0,
+            1.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            10.0,
+            1.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            0.5,
+            10.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "down": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            0.5,
+            10.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      },
+      "renderPass": 0
+    },
+    {
+      "name": "e_post_a",
+      "from": [
+        13,
+        1,
+        2
+      ],
+      "to": [
         14,
-        10,
-        14
+        10.5,
+        3.0
       ],
       "faces": {
         "north": {
@@ -145,8 +583,8 @@
           "uv": [
             0,
             0,
-            12,
-            9
+            1.0,
+            9.5
           ],
           "autoUv": false,
           "enabled": true
@@ -156,8 +594,8 @@
           "uv": [
             0,
             0,
-            12,
-            9
+            1.0,
+            9.5
           ],
           "autoUv": false,
           "enabled": true
@@ -167,8 +605,8 @@
           "uv": [
             0,
             0,
-            12,
-            9
+            1.0,
+            9.5
           ],
           "autoUv": false,
           "enabled": true
@@ -178,8 +616,8 @@
           "uv": [
             0,
             0,
-            12,
-            9
+            1.0,
+            9.5
           ],
           "autoUv": false,
           "enabled": true
@@ -189,8 +627,8 @@
           "uv": [
             0,
             0,
-            12,
-            12
+            1.0,
+            1.0
           ],
           "autoUv": false,
           "enabled": true
@@ -200,8 +638,8 @@
           "uv": [
             0,
             0,
-            12,
-            12
+            1.0,
+            1.0
           ],
           "autoUv": false,
           "enabled": true
@@ -210,16 +648,16 @@
       "renderPass": 0
     },
     {
-      "name": "lid",
+      "name": "e_post_b",
       "from": [
-        1.5,
-        10,
-        1.5
+        13,
+        1,
+        13.0
       ],
       "to": [
-        14.5,
-        10.6,
-        14.5
+        14,
+        10.5,
+        14
       ],
       "faces": {
         "north": {
@@ -227,8 +665,8 @@
           "uv": [
             0,
             0,
-            13.0,
-            0.6
+            1.0,
+            9.5
           ],
           "autoUv": false,
           "enabled": true
@@ -238,8 +676,8 @@
           "uv": [
             0,
             0,
-            13.0,
-            0.6
+            1.0,
+            9.5
           ],
           "autoUv": false,
           "enabled": true
@@ -249,8 +687,8 @@
           "uv": [
             0,
             0,
-            13.0,
-            0.6
+            1.0,
+            9.5
           ],
           "autoUv": false,
           "enabled": true
@@ -260,8 +698,8 @@
           "uv": [
             0,
             0,
-            13.0,
-            0.6
+            1.0,
+            9.5
           ],
           "autoUv": false,
           "enabled": true
@@ -271,8 +709,8 @@
           "uv": [
             0,
             0,
-            13.0,
-            13.0
+            1.0,
+            1.0
           ],
           "autoUv": false,
           "enabled": true
@@ -282,8 +720,8 @@
           "uv": [
             0,
             0,
-            13.0,
-            13.0
+            1.0,
+            1.0
           ],
           "autoUv": false,
           "enabled": true
@@ -292,25 +730,900 @@
       "renderPass": 0
     },
     {
-      "name": "arrow",
+      "name": "e_rail_lo",
       "from": [
-        5,
-        10.6,
-        11.5
+        13,
+        1,
+        3.0
       ],
       "to": [
-        11,
-        10.65,
-        14
+        13.5,
+        2.0,
+        13.0
       ],
       "faces": {
-        "up": {
-          "texture": "#arrow",
+        "north": {
+          "texture": "#castiron",
           "uv": [
             0,
             0,
-            6,
-            2.5
+            0.5,
+            1.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            0.5,
+            1.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            10.0,
+            1.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            10.0,
+            1.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            0.5,
+            10.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "down": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            0.5,
+            10.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      },
+      "renderPass": 0
+    },
+    {
+      "name": "e_rail_hi",
+      "from": [
+        13,
+        9.5,
+        3.0
+      ],
+      "to": [
+        13.5,
+        10.5,
+        13.0
+      ],
+      "faces": {
+        "north": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            0.5,
+            1.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            0.5,
+            1.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            10.0,
+            1.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            10.0,
+            1.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            0.5,
+            10.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "down": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            0.5,
+            10.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      },
+      "renderPass": 0
+    },
+    {
+      "name": "n_post_a",
+      "from": [
+        2,
+        1,
+        2
+      ],
+      "to": [
+        3.0,
+        10.5,
+        3
+      ],
+      "faces": {
+        "north": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            1.0,
+            9.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            1.0,
+            9.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            1.0,
+            9.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            1.0,
+            9.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            1.0,
+            1.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "down": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            1.0,
+            1.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      },
+      "renderPass": 0
+    },
+    {
+      "name": "n_post_b",
+      "from": [
+        13.0,
+        1,
+        2
+      ],
+      "to": [
+        14,
+        10.5,
+        3
+      ],
+      "faces": {
+        "north": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            1.0,
+            9.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            1.0,
+            9.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            1.0,
+            9.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            1.0,
+            9.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            1.0,
+            1.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "down": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            1.0,
+            1.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      },
+      "renderPass": 0
+    },
+    {
+      "name": "n_rail_lo",
+      "from": [
+        3.0,
+        1,
+        2.5
+      ],
+      "to": [
+        13.0,
+        2.0,
+        3
+      ],
+      "faces": {
+        "north": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            10.0,
+            1.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            10.0,
+            1.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            0.5,
+            1.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            0.5,
+            1.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            10.0,
+            0.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "down": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            10.0,
+            0.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      },
+      "renderPass": 0
+    },
+    {
+      "name": "n_rail_hi",
+      "from": [
+        3.0,
+        9.5,
+        2.5
+      ],
+      "to": [
+        13.0,
+        10.5,
+        3
+      ],
+      "faces": {
+        "north": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            10.0,
+            1.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            10.0,
+            1.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            0.5,
+            1.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            0.5,
+            1.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            10.0,
+            0.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "down": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            10.0,
+            0.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      },
+      "renderPass": 0
+    },
+    {
+      "name": "s_post_a",
+      "from": [
+        2,
+        1,
+        13
+      ],
+      "to": [
+        3.0,
+        10.5,
+        14
+      ],
+      "faces": {
+        "north": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            1.0,
+            9.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            1.0,
+            9.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            1.0,
+            9.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            1.0,
+            9.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            1.0,
+            1.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "down": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            1.0,
+            1.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      },
+      "renderPass": 0
+    },
+    {
+      "name": "s_post_b",
+      "from": [
+        13.0,
+        1,
+        13
+      ],
+      "to": [
+        14,
+        10.5,
+        14
+      ],
+      "faces": {
+        "north": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            1.0,
+            9.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            1.0,
+            9.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            1.0,
+            9.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            1.0,
+            9.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            1.0,
+            1.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "down": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            1.0,
+            1.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      },
+      "renderPass": 0
+    },
+    {
+      "name": "s_rail_lo",
+      "from": [
+        3.0,
+        1,
+        13
+      ],
+      "to": [
+        13.0,
+        2.0,
+        13.5
+      ],
+      "faces": {
+        "north": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            10.0,
+            1.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            10.0,
+            1.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            0.5,
+            1.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            0.5,
+            1.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            10.0,
+            0.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "down": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            10.0,
+            0.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      },
+      "renderPass": 0
+    },
+    {
+      "name": "s_rail_hi",
+      "from": [
+        3.0,
+        9.5,
+        13
+      ],
+      "to": [
+        13.0,
+        10.5,
+        13.5
+      ],
+      "faces": {
+        "north": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            10.0,
+            1.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            10.0,
+            1.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            0.5,
+            1.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            0.5,
+            1.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            10.0,
+            0.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "down": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            10.0,
+            0.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      },
+      "renderPass": 0
+    },
+    {
+      "name": "plate",
+      "from": [
+        1,
+        10.5,
+        1
+      ],
+      "to": [
+        15,
+        11.5,
+        15
+      ],
+      "faces": {
+        "north": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            14.0,
+            1.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            14.0,
+            1.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            14.0,
+            1.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            14.0,
+            1.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            14.0,
+            14.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "down": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            14.0,
+            14.0
           ],
           "autoUv": false,
           "enabled": true
@@ -321,14 +1634,14 @@
     {
       "name": "in_base",
       "from": [
-        1,
-        10.6,
-        5
+        1.5,
+        11.5,
+        1.5
       ],
       "to": [
-        7,
-        11,
-        11
+        7.5,
+        11.9,
+        7.5
       ],
       "faces": {
         "north": {
@@ -336,7 +1649,7 @@
           "uv": [
             0,
             0,
-            6,
+            6.0,
             0.4
           ],
           "autoUv": false,
@@ -347,7 +1660,7 @@
           "uv": [
             0,
             0,
-            6,
+            6.0,
             0.4
           ],
           "autoUv": false,
@@ -358,7 +1671,7 @@
           "uv": [
             0,
             0,
-            6,
+            6.0,
             0.4
           ],
           "autoUv": false,
@@ -369,7 +1682,7 @@
           "uv": [
             0,
             0,
-            6,
+            6.0,
             0.4
           ],
           "autoUv": false,
@@ -380,8 +1693,8 @@
           "uv": [
             0,
             0,
-            6,
-            6
+            6.0,
+            6.0
           ],
           "autoUv": false,
           "enabled": true
@@ -392,17 +1705,72 @@
     {
       "name": "in_floor",
       "from": [
-        1.75,
-        11,
-        5.75
+        2.25,
+        11.9,
+        2.25
       ],
       "to": [
-        6.25,
-        11.05,
-        10.25
+        6.75,
+        11.95,
+        6.75
       ],
       "faces": {
+        "north": {
+          "texture": "#socket-floor-green",
+          "uv": [
+            0,
+            0,
+            4.5,
+            0.05
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#socket-floor-green",
+          "uv": [
+            0,
+            0,
+            4.5,
+            0.05
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#socket-floor-green",
+          "uv": [
+            0,
+            0,
+            4.5,
+            0.05
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#socket-floor-green",
+          "uv": [
+            0,
+            0,
+            4.5,
+            0.05
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
         "up": {
+          "texture": "#socket-floor-green",
+          "uv": [
+            0,
+            0,
+            4.5,
+            4.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "down": {
           "texture": "#socket-floor-green",
           "uv": [
             0,
@@ -417,16 +1785,16 @@
       "renderPass": 0
     },
     {
-      "name": "in_rim_west",
+      "name": "in_rim_w",
       "from": [
-        1,
-        11,
-        5
+        1.5,
+        11.9,
+        1.5
       ],
       "to": [
-        1.75,
-        11.6,
-        11
+        2.25,
+        12.5,
+        7.5
       ],
       "faces": {
         "north": {
@@ -456,7 +1824,7 @@
           "uv": [
             0,
             0,
-            6,
+            6.0,
             0.6
           ],
           "autoUv": false,
@@ -467,7 +1835,7 @@
           "uv": [
             0,
             0,
-            6,
+            6.0,
             0.6
           ],
           "autoUv": false,
@@ -479,7 +1847,18 @@
             0,
             0,
             0.75,
-            6
+            6.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "down": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            0.75,
+            6.0
           ],
           "autoUv": false,
           "enabled": true
@@ -488,16 +1867,16 @@
       "renderPass": 0
     },
     {
-      "name": "in_rim_east",
+      "name": "in_rim_e",
       "from": [
-        6.25,
-        11,
-        5
+        6.75,
+        11.9,
+        1.5
       ],
       "to": [
-        7,
-        11.6,
-        11
+        7.5,
+        12.5,
+        7.5
       ],
       "faces": {
         "north": {
@@ -527,7 +1906,7 @@
           "uv": [
             0,
             0,
-            6,
+            6.0,
             0.6
           ],
           "autoUv": false,
@@ -538,7 +1917,7 @@
           "uv": [
             0,
             0,
-            6,
+            6.0,
             0.6
           ],
           "autoUv": false,
@@ -550,7 +1929,18 @@
             0,
             0,
             0.75,
-            6
+            6.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "down": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            0.75,
+            6.0
           ],
           "autoUv": false,
           "enabled": true
@@ -559,16 +1949,16 @@
       "renderPass": 0
     },
     {
-      "name": "in_rim_north",
+      "name": "in_rim_n",
       "from": [
-        1.75,
-        11,
-        5
+        2.25,
+        11.9,
+        1.5
       ],
       "to": [
-        6.25,
-        11.6,
-        5.75
+        6.75,
+        12.5,
+        2.25
       ],
       "faces": {
         "north": {
@@ -625,21 +2015,32 @@
           ],
           "autoUv": false,
           "enabled": true
+        },
+        "down": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            4.5,
+            0.75
+          ],
+          "autoUv": false,
+          "enabled": true
         }
       },
       "renderPass": 0
     },
     {
-      "name": "in_rim_south",
+      "name": "in_rim_s",
       "from": [
-        1.75,
-        11,
-        10.25
+        2.25,
+        11.9,
+        6.75
       ],
       "to": [
-        6.25,
-        11.6,
-        11
+        6.75,
+        12.5,
+        7.5
       ],
       "faces": {
         "north": {
@@ -687,6 +2088,17 @@
           "enabled": true
         },
         "up": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            4.5,
+            0.75
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "down": {
           "texture": "#castiron",
           "uv": [
             0,
@@ -703,14 +2115,14 @@
     {
       "name": "out_base",
       "from": [
-        9,
-        10.6,
-        5
+        8.5,
+        11.5,
+        8.5
       ],
       "to": [
-        15,
-        11,
-        11
+        14.5,
+        11.9,
+        14.5
       ],
       "faces": {
         "north": {
@@ -718,7 +2130,7 @@
           "uv": [
             0,
             0,
-            6,
+            6.0,
             0.4
           ],
           "autoUv": false,
@@ -729,7 +2141,7 @@
           "uv": [
             0,
             0,
-            6,
+            6.0,
             0.4
           ],
           "autoUv": false,
@@ -740,7 +2152,7 @@
           "uv": [
             0,
             0,
-            6,
+            6.0,
             0.4
           ],
           "autoUv": false,
@@ -751,7 +2163,7 @@
           "uv": [
             0,
             0,
-            6,
+            6.0,
             0.4
           ],
           "autoUv": false,
@@ -762,8 +2174,8 @@
           "uv": [
             0,
             0,
-            6,
-            6
+            6.0,
+            6.0
           ],
           "autoUv": false,
           "enabled": true
@@ -774,17 +2186,72 @@
     {
       "name": "out_floor",
       "from": [
-        9.75,
-        11,
-        5.75
+        9.25,
+        11.9,
+        9.25
       ],
       "to": [
-        14.25,
-        11.05,
-        10.25
+        13.75,
+        11.95,
+        13.75
       ],
       "faces": {
+        "north": {
+          "texture": "#socket-floor-red",
+          "uv": [
+            0,
+            0,
+            4.5,
+            0.05
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#socket-floor-red",
+          "uv": [
+            0,
+            0,
+            4.5,
+            0.05
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#socket-floor-red",
+          "uv": [
+            0,
+            0,
+            4.5,
+            0.05
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#socket-floor-red",
+          "uv": [
+            0,
+            0,
+            4.5,
+            0.05
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
         "up": {
+          "texture": "#socket-floor-red",
+          "uv": [
+            0,
+            0,
+            4.5,
+            4.5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "down": {
           "texture": "#socket-floor-red",
           "uv": [
             0,
@@ -799,16 +2266,16 @@
       "renderPass": 0
     },
     {
-      "name": "out_rim_west",
+      "name": "out_rim_w",
       "from": [
-        9,
-        11,
-        5
+        8.5,
+        11.9,
+        8.5
       ],
       "to": [
-        9.75,
-        11.6,
-        11
+        9.25,
+        12.5,
+        14.5
       ],
       "faces": {
         "north": {
@@ -838,7 +2305,7 @@
           "uv": [
             0,
             0,
-            6,
+            6.0,
             0.6
           ],
           "autoUv": false,
@@ -849,7 +2316,7 @@
           "uv": [
             0,
             0,
-            6,
+            6.0,
             0.6
           ],
           "autoUv": false,
@@ -861,7 +2328,18 @@
             0,
             0,
             0.75,
-            6
+            6.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "down": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            0.75,
+            6.0
           ],
           "autoUv": false,
           "enabled": true
@@ -870,16 +2348,16 @@
       "renderPass": 0
     },
     {
-      "name": "out_rim_east",
+      "name": "out_rim_e",
       "from": [
-        14.25,
-        11,
-        5
+        13.75,
+        11.9,
+        8.5
       ],
       "to": [
-        15,
-        11.6,
-        11
+        14.5,
+        12.5,
+        14.5
       ],
       "faces": {
         "north": {
@@ -909,7 +2387,7 @@
           "uv": [
             0,
             0,
-            6,
+            6.0,
             0.6
           ],
           "autoUv": false,
@@ -920,7 +2398,7 @@
           "uv": [
             0,
             0,
-            6,
+            6.0,
             0.6
           ],
           "autoUv": false,
@@ -932,7 +2410,18 @@
             0,
             0,
             0.75,
-            6
+            6.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "down": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            0.75,
+            6.0
           ],
           "autoUv": false,
           "enabled": true
@@ -941,16 +2430,16 @@
       "renderPass": 0
     },
     {
-      "name": "out_rim_north",
+      "name": "out_rim_n",
       "from": [
-        9.75,
-        11,
-        5
+        9.25,
+        11.9,
+        8.5
       ],
       "to": [
-        14.25,
-        11.6,
-        5.75
+        13.75,
+        12.5,
+        9.25
       ],
       "faces": {
         "north": {
@@ -1007,21 +2496,32 @@
           ],
           "autoUv": false,
           "enabled": true
+        },
+        "down": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            4.5,
+            0.75
+          ],
+          "autoUv": false,
+          "enabled": true
         }
       },
       "renderPass": 0
     },
     {
-      "name": "out_rim_south",
+      "name": "out_rim_s",
       "from": [
-        9.75,
-        11,
-        10.25
+        9.25,
+        11.9,
+        13.75
       ],
       "to": [
-        14.25,
-        11.6,
-        11
+        13.75,
+        12.5,
+        14.5
       ],
       "faces": {
         "north": {
@@ -1078,74 +2578,123 @@
           ],
           "autoUv": false,
           "enabled": true
+        },
+        "down": {
+          "texture": "#castiron",
+          "uv": [
+            0,
+            0,
+            4.5,
+            0.75
+          ],
+          "autoUv": false,
+          "enabled": true
         }
       },
       "renderPass": 0
+    },
+    {
+      "name": "arrow",
+      "from": [
+        1,
+        11.54,
+        8.5
+      ],
+      "to": [
+        8,
+        11.56,
+        15
+      ],
+      "faces": {
+        "up": {
+          "texture": "#arrow",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      },
+      "renderPass": 2
     },
     {
       "name": "pin_0",
       "from": [
-        2,
-        1,
-        14
+        8.5,
+        11.5,
+        1.5
       ],
       "to": [
-        4,
-        3,
-        16
+        10.5,
+        13.5,
+        3.5
       ],
       "faces": {
         "north": {
-          "texture": "#terminal",
+          "texture": "#porcelain",
           "uv": [
-            0,
-            0,
             2,
-            2
+            2,
+            8.0,
+            8.0
           ],
           "autoUv": false,
           "enabled": true
         },
         "south": {
-          "texture": "#terminal",
+          "texture": "#porcelain",
           "uv": [
-            0,
-            0,
             2,
-            2
+            2,
+            8.0,
+            8.0
           ],
           "autoUv": false,
           "enabled": true
         },
         "east": {
-          "texture": "#terminal",
+          "texture": "#porcelain",
           "uv": [
-            0,
-            0,
             2,
-            2
+            2,
+            8.0,
+            8.0
           ],
           "autoUv": false,
           "enabled": true
         },
         "west": {
-          "texture": "#terminal",
+          "texture": "#porcelain",
           "uv": [
-            0,
-            0,
             2,
-            2
+            2,
+            8.0,
+            8.0
           ],
           "autoUv": false,
           "enabled": true
         },
         "up": {
-          "texture": "#terminal",
+          "texture": "#porcelain",
           "uv": [
-            7,
-            7,
-            9,
-            9
+            2,
+            2,
+            8.0,
+            8.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "down": {
+          "texture": "#porcelain",
+          "uv": [
+            2,
+            2,
+            8.0,
+            8.0
           ],
           "autoUv": false,
           "enabled": true
@@ -1156,67 +2705,78 @@
     {
       "name": "pin_0_cap",
       "from": [
-        2.5,
-        3,
-        14.5
+        9.0,
+        13.5,
+        2.0
       ],
       "to": [
-        3.5,
-        4,
-        15.5
+        10.0,
+        14.5,
+        3.0
       ],
       "faces": {
         "north": {
-          "texture": "#terminal",
+          "texture": "#brass",
           "uv": [
-            0,
-            0,
-            1.0,
-            1
+            2,
+            2,
+            5.0,
+            5.0
           ],
           "autoUv": false,
           "enabled": true
         },
         "south": {
-          "texture": "#terminal",
+          "texture": "#brass",
           "uv": [
-            0,
-            0,
-            1.0,
-            1
+            2,
+            2,
+            5.0,
+            5.0
           ],
           "autoUv": false,
           "enabled": true
         },
         "east": {
-          "texture": "#terminal",
+          "texture": "#brass",
           "uv": [
-            0,
-            0,
-            1.0,
-            1
+            2,
+            2,
+            5.0,
+            5.0
           ],
           "autoUv": false,
           "enabled": true
         },
         "west": {
-          "texture": "#terminal",
+          "texture": "#brass",
           "uv": [
-            0,
-            0,
-            1.0,
-            1
+            2,
+            2,
+            5.0,
+            5.0
           ],
           "autoUv": false,
           "enabled": true
         },
         "up": {
-          "texture": "#pintop",
+          "texture": "#brass-in",
           "uv": [
             2,
-            10,
-            3.0,
-            11.0
+            2,
+            5,
+            5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "down": {
+          "texture": "#brass",
+          "uv": [
+            2,
+            2,
+            5.0,
+            5.0
           ],
           "autoUv": false,
           "enabled": true
@@ -1227,78 +2787,78 @@
     {
       "name": "pin_0_collar",
       "from": [
-        2,
-        3.2,
-        14
+        8.5,
+        13.7,
+        1.5
       ],
       "to": [
-        4,
-        3.7,
-        16
+        10.5,
+        14.2,
+        3.5
       ],
       "faces": {
         "north": {
-          "texture": "#terminal",
+          "texture": "#brass",
           "uv": [
-            0,
-            0,
             2,
-            0.5
+            2,
+            8.0,
+            3.5
           ],
           "autoUv": false,
           "enabled": true
         },
         "south": {
-          "texture": "#terminal",
+          "texture": "#brass",
           "uv": [
-            0,
-            0,
             2,
-            0.5
+            2,
+            8.0,
+            3.5
           ],
           "autoUv": false,
           "enabled": true
         },
         "east": {
-          "texture": "#terminal",
+          "texture": "#brass",
           "uv": [
-            0,
-            0,
             2,
-            0.5
+            2,
+            8.0,
+            3.5
           ],
           "autoUv": false,
           "enabled": true
         },
         "west": {
-          "texture": "#terminal",
+          "texture": "#brass",
           "uv": [
-            0,
-            0,
             2,
-            0.5
+            2,
+            8.0,
+            3.5
           ],
           "autoUv": false,
           "enabled": true
         },
         "up": {
-          "texture": "#terminal",
+          "texture": "#brass",
           "uv": [
             2,
             2,
-            4,
-            4
+            8.0,
+            8.0
           ],
           "autoUv": false,
           "enabled": true
         },
         "down": {
-          "texture": "#terminal",
+          "texture": "#brass",
           "uv": [
-            0,
-            0,
             2,
-            2
+            2,
+            8.0,
+            8.0
           ],
           "autoUv": false,
           "enabled": true
@@ -1310,66 +2870,77 @@
       "name": "pin_1",
       "from": [
         12,
-        1,
-        14
+        11.5,
+        1.5
       ],
       "to": [
         14,
-        3,
-        16
+        13.5,
+        3.5
       ],
       "faces": {
         "north": {
-          "texture": "#terminal",
+          "texture": "#porcelain",
           "uv": [
-            0,
-            0,
             2,
-            2
+            2,
+            8,
+            8.0
           ],
           "autoUv": false,
           "enabled": true
         },
         "south": {
-          "texture": "#terminal",
+          "texture": "#porcelain",
           "uv": [
-            0,
-            0,
             2,
-            2
+            2,
+            8,
+            8.0
           ],
           "autoUv": false,
           "enabled": true
         },
         "east": {
-          "texture": "#terminal",
+          "texture": "#porcelain",
           "uv": [
-            0,
-            0,
             2,
-            2
+            2,
+            8.0,
+            8.0
           ],
           "autoUv": false,
           "enabled": true
         },
         "west": {
-          "texture": "#terminal",
+          "texture": "#porcelain",
           "uv": [
-            0,
-            0,
             2,
-            2
+            2,
+            8.0,
+            8.0
           ],
           "autoUv": false,
           "enabled": true
         },
         "up": {
-          "texture": "#terminal",
+          "texture": "#porcelain",
           "uv": [
-            7,
-            7,
-            9,
-            9
+            2,
+            2,
+            8,
+            8.0
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "down": {
+          "texture": "#porcelain",
+          "uv": [
+            2,
+            2,
+            8,
+            8.0
           ],
           "autoUv": false,
           "enabled": true
@@ -1381,66 +2952,77 @@
       "name": "pin_1_cap",
       "from": [
         12.5,
-        3,
-        14.5
+        13.5,
+        2.0
       ],
       "to": [
         13.5,
-        4,
-        15.5
+        14.5,
+        3.0
       ],
       "faces": {
         "north": {
-          "texture": "#terminal",
+          "texture": "#brass",
           "uv": [
-            0,
-            0,
-            1.0,
-            1
+            2,
+            2,
+            5.0,
+            5.0
           ],
           "autoUv": false,
           "enabled": true
         },
         "south": {
-          "texture": "#terminal",
+          "texture": "#brass",
           "uv": [
-            0,
-            0,
-            1.0,
-            1
+            2,
+            2,
+            5.0,
+            5.0
           ],
           "autoUv": false,
           "enabled": true
         },
         "east": {
-          "texture": "#terminal",
+          "texture": "#brass",
           "uv": [
-            0,
-            0,
-            1.0,
-            1
+            2,
+            2,
+            5.0,
+            5.0
           ],
           "autoUv": false,
           "enabled": true
         },
         "west": {
-          "texture": "#terminal",
+          "texture": "#brass",
           "uv": [
-            0,
-            0,
-            1.0,
-            1
+            2,
+            2,
+            5.0,
+            5.0
           ],
           "autoUv": false,
           "enabled": true
         },
         "up": {
-          "texture": "#pintop",
+          "texture": "#brass-out",
           "uv": [
-            6,
             2,
-            7.0,
-            3.0
+            2,
+            5,
+            5
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "down": {
+          "texture": "#brass",
+          "uv": [
+            2,
+            2,
+            5.0,
+            5.0
           ],
           "autoUv": false,
           "enabled": true
@@ -1452,77 +3034,77 @@
       "name": "pin_1_collar",
       "from": [
         12,
-        3.2,
-        14
+        13.7,
+        1.5
       ],
       "to": [
         14,
-        3.7,
-        16
+        14.2,
+        3.5
       ],
       "faces": {
         "north": {
-          "texture": "#terminal",
+          "texture": "#brass",
           "uv": [
-            0,
-            0,
             2,
-            0.5
+            2,
+            8,
+            3.5
           ],
           "autoUv": false,
           "enabled": true
         },
         "south": {
-          "texture": "#terminal",
+          "texture": "#brass",
           "uv": [
-            0,
-            0,
             2,
-            0.5
+            2,
+            8,
+            3.5
           ],
           "autoUv": false,
           "enabled": true
         },
         "east": {
-          "texture": "#terminal",
+          "texture": "#brass",
           "uv": [
-            0,
-            0,
             2,
-            0.5
+            2,
+            8.0,
+            3.5
           ],
           "autoUv": false,
           "enabled": true
         },
         "west": {
-          "texture": "#terminal",
+          "texture": "#brass",
           "uv": [
-            0,
-            0,
             2,
-            0.5
+            2,
+            8.0,
+            3.5
           ],
           "autoUv": false,
           "enabled": true
         },
         "up": {
-          "texture": "#terminal",
+          "texture": "#brass",
           "uv": [
             2,
             2,
-            4,
-            4
+            8,
+            8.0
           ],
           "autoUv": false,
           "enabled": true
         },
         "down": {
-          "texture": "#terminal",
+          "texture": "#brass",
           "uv": [
-            0,
-            0,
             2,
-            2
+            2,
+            8,
+            8.0
           ],
           "autoUv": false,
           "enabled": true

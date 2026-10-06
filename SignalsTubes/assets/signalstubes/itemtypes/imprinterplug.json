@@ -32,15 +32,28 @@
   },
   "fpHandTransform": {
     "translation": {
-      "x": 0.1,
-      "y": 0.05,
+      "x": 0.05,
+      "y": 0,
       "z": 0
     },
     "rotation": {
-      "x": 0,
-      "y": -90,
+      "x": -20,
+      "y": -100,
       "z": 0
     },
     "scale": 1.2
+  },
+  "tpHandTransform": {
+    "translation": {
+      "x": -0.8,
+      "y": -0.2,
+      "z": -0.4
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": -90
+    },
+    "scale": 0.9
   }
 }

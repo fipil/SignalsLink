@@ -2,38 +2,37 @@ using signals.src.signalNetwork;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.MathTools;
+using Vintagestory.GameContent;
 
 namespace SignalsTubes.src.copier;
 
 /// <summary>
+/// A 1x2 multiblock: the cabinet below, the tubes sticking up into the block above (a vanilla proxy that asks here).
 /// Selection boxes: 0 start pin, 1 state pin (Signals anchors), 2 green socket, 3 red socket, 4 the cabinet.
 /// </summary>
-public class BlockTubeCopier : BlockConnection
+public class BlockTubeCopier : BlockConnection, IMultiBlockColSelBoxes, IMultiBlockInteract
 {
     private const int PinCount = 2;
-    private Cuboidf[] boxes;
+    private Cuboidf[] boxes, upperIn, upperOut, upperBoth;
     public int RotationDegrees => Variant["side"] switch { "east" => 270, "south" => 180, "west" => 90, _ => 0 };
+
+    private Cuboidf Rot(float x1, float y1, float z1, float x2, float y2, float z2) =>
+        new Cuboidf(x1 / 16, y1 / 16, z1 / 16, x2 / 16, y2 / 16, z2 / 16).RotatedCopy(0, RotationDegrees, 0, new Vec3d(.5, .5, .5));
 
     public override void OnLoaded(ICoreAPI api)
     {
         base.OnLoaded(api);
         boxes = new[] {
-            new Cuboidf(1/16f, 10.6f/16, 5/16f, 7/16f, 11.6f/16, 11/16f),
-            new Cuboidf(9/16f, 10.6f/16, 5/16f, 15/16f, 11.6f/16, 11/16f),
-            new Cuboidf(1/16f, 0, 1/16f, 15/16f, 10.6f/16, 15/16f)
-        }.Select(b => b.RotatedCopy(0, RotationDegrees, 0, new Vec3d(.5, .5, .5))).ToArray();
+            Rot(1.5f, 11.5f, 1.5f, 7.5f, 13, 7.5f),     // green socket, rear left of the plate
+            Rot(8.5f, 11.5f, 8.5f, 14.5f, 13, 14.5f),   // red socket, front right
+            Rot(1, 0, 1, 15, 11.5f, 15)       // the cabinet
+        };
+        var tubeIn = Rot(1.5f, 0, 1.5f, 7.5f, 3.5f, 7.5f); var tubeOut = Rot(8.5f, 0, 8.5f, 14.5f, 3.5f, 14.5f);
+        upperIn = new[] { tubeIn }; upperOut = new[] { tubeOut }; upperBoth = new[] { tubeIn, tubeOut };
     }
 
-    public override Cuboidf[] GetSelectionBoxes(IBlockAccessor accessor, BlockPos pos)
-    {
-        var anchors = base.GetSelectionBoxes(accessor, pos).Take(PinCount);
-        var be = accessor.GetBlockEntity(pos) as BETubeCopier;
-        var sockets = boxes.Select(b => b.Clone()).ToArray();
-        // a socket with a tube in it reaches up to the tube's top
-        if (be?.Original != null) sockets[0] = new Cuboidf(1/16f, 10.6f/16, 5/16f, 7/16f, 18/16f, 11/16f).RotatedCopy(0, RotationDegrees, 0, new Vec3d(.5, .5, .5));
-        if (be?.Target != null) sockets[1] = new Cuboidf(9/16f, 10.6f/16, 5/16f, 15/16f, 18/16f, 11/16f).RotatedCopy(0, RotationDegrees, 0, new Vec3d(.5, .5, .5));
-        return anchors.Concat(sockets).ToArray();
-    }
+    public override Cuboidf[] GetSelectionBoxes(IBlockAccessor accessor, BlockPos pos) =>
+        base.GetSelectionBoxes(accessor, pos).Take(PinCount).Concat(boxes).ToArray();
 
     public override bool DoPlaceBlock(IWorldAccessor world, IPlayer byPlayer, BlockSelection blockSel, ItemStack byItemStack)
     {
@@ -74,4 +73,34 @@ public class BlockTubeCopier : BlockConnection
                 new WorldInteraction { ActionLangCode = "signalstubes:copier-charge", MouseButton = EnumMouseButton.Right, Itemstacks = gear == null ? null : new[] { new ItemStack(gear) } } }
         };
     }
+
+    // ---- the block above: only the tubes live there. The proxy hands over the offset *to* the controller.
+
+    private BETubeCopier Controller(IBlockAccessor accessor, BlockPos pos, Vec3i offset) => accessor.GetBlockEntity(pos.AddCopy(offset)) as BETubeCopier;
+
+    public Cuboidf[] MBGetCollisionBoxes(IBlockAccessor accessor, BlockPos pos, Vec3i offset) => Array.Empty<Cuboidf>();
+    public Cuboidf[] MBGetSelectionBoxes(IBlockAccessor accessor, BlockPos pos, Vec3i offset)
+    {
+        var be = Controller(accessor, pos, offset);
+        bool a = be?.Original != null, b = be?.Target != null;
+        return a && b ? upperBoth : a ? upperIn : b ? upperOut : Array.Empty<Cuboidf>();
+    }
+    public bool MBDoPartialSelection(IWorldAccessor world, BlockPos pos, Vec3i offset) => true;
+
+    // which socket a box in the block above belongs to: with one tube only, the single box is that tube's
+    private static int UpperSocket(BETubeCopier be, int boxIndex) => be.Original != null && boxIndex == 0 ? BETubeCopier.In : BETubeCopier.Out;
+
+    public bool MBOnBlockInteractStart(IWorldAccessor world, IPlayer player, BlockSelection sel, Vec3i offset)
+    {
+        var at = sel.Position.AddCopy(offset);
+        if (!world.Claims.TryAccess(player, at, EnumBlockAccessFlags.Use)) return false;
+        return world.BlockAccessor.GetBlockEntity(at) is BETubeCopier be && be.Interact(UpperSocket(be, sel.SelectionBoxIndex), player);
+    }
+    public bool MBOnBlockInteractStep(float seconds, IWorldAccessor world, IPlayer player, BlockSelection sel, Vec3i offset) => false;
+    public void MBOnBlockInteractStop(float seconds, IWorldAccessor world, IPlayer player, BlockSelection sel, Vec3i offset) { }
+    public bool MBOnBlockInteractCancel(float seconds, IWorldAccessor world, IPlayer player, BlockSelection sel, EnumItemUseCancelReason reason, Vec3i offset) => true;
+    public ItemStack MBOnPickBlock(IWorldAccessor world, BlockPos pos, Vec3i offset) => OnPickBlock(world, pos.AddCopy(offset));
+    public WorldInteraction[] MBGetPlacedBlockInteractionHelp(IWorldAccessor world, BlockSelection sel, IPlayer player, Vec3i offset) =>
+        new[] { new WorldInteraction { ActionLangCode = "signalstubes:copier-remove", MouseButton = EnumMouseButton.Right } };
+    public BlockSounds MBGetSounds(IBlockAccessor accessor, BlockSelection sel, ItemStack stack, Vec3i offset) => Sounds;
 }

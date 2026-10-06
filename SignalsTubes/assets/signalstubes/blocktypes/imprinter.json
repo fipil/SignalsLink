@@ -23,6 +23,19 @@
   },
   "behaviors": [
     {
+      "name": "Multiblock",
+      "properties": {
+        "sizex": 1,
+        "sizey": 2,
+        "sizez": 1,
+        "cposition": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        }
+      }
+    },
+    {
       "name": "HorizontalOrientable",
       "properties": {
         "dropBlockFace": "north"
@@ -49,7 +62,7 @@
   },
   "textures": {
     "oak": {
-      "base": "signalstubes:block/base-oak"
+      "base": "signalstubes:block/oak-board"
     },
     "castiron": {
       "base": "signalstubes:block/castironbrown"
@@ -137,6 +150,9 @@
     },
     "cable-red": {
       "base": "signalstubes:block/cable-red"
+    },
+    "panel": {
+      "base": "signalstubes:block/oak-panel"
     }
   },
   "drawtype": "json",
@@ -157,7 +173,7 @@
     "y1": 0,
     "z1": 0.0625,
     "x2": 0.9375,
-    "y2": 0.725,
+    "y2": 0.9062,
     "z2": 0.9375
   },
   "sounds": {

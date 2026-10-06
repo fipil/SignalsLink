@@ -56,8 +56,9 @@ public class BEImprinter : BlockEntity
             .RotatedCopy(0, ((BlockImprinter)Block).RotationDegrees, 0, new Vec3d(.5, .5, .5));
         return Pos.ToVec3d().Add(local.MidX, local.MidY, local.MidZ);
     }
-    public Vec3d PlugAnchor() => Anchor(8, 5, 16.6f);
-    public Vec3d ProbeAnchor() => Anchor(14.75f, 11.8f, 8);
+    // the cables run into the gap under the overhanging top plate
+    public Vec3d PlugAnchor() => Anchor(6.5f, 13, 10.5f);
+    public Vec3d ProbeAnchor() => Anchor(11, 13, 10.5f);
 
     public override void Initialize(ICoreAPI api)
     {
@@ -127,12 +128,16 @@ public class BEImprinter : BlockEntity
         tool.Holder = null;
     }
 
+    // a tool goes only into the empty active hand, where it is seen and its cable has somewhere to lead
     private bool Give(Tool tool, IServerPlayer player)
     {
         if (tool.Out) return false;
         var item = Api.World.GetItem(new AssetLocation(tool.Code));
         if (item == null) return false;
-        if (!player.InventoryManager.TryGiveItemstack(ItemImprinterTool.Create(item, Pos), true)) return false;
+        var hand = player.InventoryManager.ActiveHotbarSlot;
+        if (hand == null || !hand.Empty) return false;
+        hand.Itemstack = ItemImprinterTool.Create(item, Pos);
+        hand.MarkDirty();
         tool.Out = true;
         tool.Holder = player.PlayerUID;
         operatorUid = player.PlayerUID;
@@ -527,7 +532,7 @@ public class BEImprinter : BlockEntity
             Shape shape = capi.Assets.Get(new AssetLocation("signalstubes", "shapes/block/imprinter.json")).ToObject<Shape>().Clone();
             shape.Elements = shape.Elements.Where(e => (PlugHome || !e.Name.StartsWith("plug_")) && (ProbeHome || !e.Name.StartsWith("probe_"))).ToArray();
             if (tube?.Collectible is ItemProgramTube item)
-                TubeVisuals.Append(shape, item.BuildShape(tube, false), .5f, new Vec3f(4, 10.6f, 4));
+                TubeVisuals.Append(shape, item.BuildShape(tube, false), .5f, new Vec3f(4, 14.9f, 4));
             capi.Tesselator.TesselateShape(block, shape, out MeshData mesh, new Vec3f(0, block.Shape.rotateY, 0));
             meshCache[key] = mesh;
             return mesh;
