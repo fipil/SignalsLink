@@ -379,7 +379,7 @@ public class BETubeSocket : BlockEntity, ITubeSocket
         preview ??= new SocketPreviewRenderer(capi, Pos);
         var variant = capi.World.GetBlock(Block.CodeWithVariant("orientation", orientation.Code)) as BlockTubeSocket ?? (BlockTubeSocket)Block;
         preview.SetMesh(PreviewMesh(capi, held, variant, tubeOnly));
-        preview.SetLabels(PinLabels(held, variant));
+        preview.SetLabels(variant.ShapeRotation, PinLabels(held));
         // on the bed the real pins show the held tube's pins, solid and coloured; while turning they are all gone
         int pins = tubeOnly ? TubeVisuals.PinMask(held) : 0;
         previewHidesPins = !tubeOnly;
@@ -387,28 +387,11 @@ public class BETubeSocket : BlockEntity, ITubeSocket
         else MarkDirty(true);   // the roles may differ between tubes with the same mask
     }
 
-    // Which way a pin's name tag leaves the socket, in the unrotated shape: the three pins along each side go out
-    // sideways (west: 0, 7, 6; east: 2, 3, 4), the middle pins of the front and back rows (1, 5) out that way.
-    private static readonly BlockFacing[] TagSide =
+    // A name tag per pin of the held tube: its author's name, or the role.
+    private IEnumerable<(int pin, string text)> PinLabels(ItemStack held)
     {
-        BlockFacing.WEST, BlockFacing.NORTH, BlockFacing.EAST, BlockFacing.EAST,
-        BlockFacing.EAST, BlockFacing.SOUTH, BlockFacing.WEST, BlockFacing.WEST
-    };
-
-    // A name tag per pin of the held tube, hung right next to where that pin would be, on its outer side.
-    private IEnumerable<(Vec3d at, Vec3d outward, bool sideways, string text)> PinLabels(ItemStack held, BlockTubeSocket variant)
-    {
-        const float outside = .1f;   // from a pin's middle just past its outer face (pins are 2/16 wide)
         foreach (var pin in TubeProgram.Pins(held).OrderBy(p => p.Index))
-        {
-            var anchor = variant.GetAnchorPosInBlock(new NodePos(Pos, pin.Index));
-            var local = TagSide[pin.Index];
-            var d = SocketOrientation.WorldSide(variant, local).Normalf;
-            var outward = new Vec3d(d.X, d.Y, d.Z);
-            var at = Pos.ToVec3d().Add(anchor.X + d.X * outside, anchor.Y + d.Y * outside, anchor.Z + d.Z * outside);
-            string text = string.IsNullOrEmpty(pin.Name) ? Lang.Get("signalstubes:pin-" + RoleOf(held, pin.Index), pin.Index + 1) : pin.Name;
-            yield return (at, outward, local == BlockFacing.WEST || local == BlockFacing.EAST, text);
-        }
+            yield return (pin.Index, string.IsNullOrEmpty(pin.Name) ? Lang.Get("signalstubes:pin-" + RoleOf(held, pin.Index), pin.Index + 1) : pin.Name);
     }
 
     private MeshData PreviewMesh(ICoreClientAPI capi, ItemStack held, BlockTubeSocket variant, bool tubeOnly)

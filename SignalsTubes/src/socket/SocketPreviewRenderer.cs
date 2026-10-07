@@ -6,24 +6,30 @@ namespace SignalsTubes.src.socket;
 
 /// <summary>
 /// Translucent picture of what a click would put into the socket: its pins and the tube, already turned, and a
-/// name tag over each pin (drawn as the game draws player name tags: projected to the screen in the ortho stage).
+/// name tag per pin lying flat on the plate's plane right outside its pin, pointing away from the socket. The tags
+/// are part of the world (perspective, distance), so which pin a tag belongs to is never in doubt.
 /// </summary>
 public sealed class SocketPreviewRenderer : IRenderer
 {
     public double RenderOrder => .5;
     public int RenderRange => 32;
 
+    private const float TagWidth = .14f;      // across the strip, in blocks (a pin is 2/16 wide)
+    private const float TagGap = .125f / 16;  // between the socket's edge and its tags
+    private const float TagLift = 1 / 16f + .003f;   // just above the plate
+
     private readonly ICoreClientAPI capi;
     private readonly BlockPos pos;
-    private readonly Matrixf model = new();
+    private readonly Matrixf model = new(), turn = new();
     private MultiTextureMeshRef mesh;   // block textures may sit on several atlas pages; a plain mesh ref binds only the first
-    private readonly List<(Vec3d at, Vec3d outward, bool sideways, LoadedTexture tex)> labels = new();
+    private MeshRef quad;               // a unit square in the XZ plane, text running +x, text top at -z
+    private Vec3f rotation = new();     // the previewed variant's shape rotation
+    private readonly List<(int pin, LoadedTexture tex)> labels = new();
 
     public SocketPreviewRenderer(ICoreClientAPI capi, BlockPos pos)
     {
         this.capi = capi; this.pos = pos;
         capi.Event.RegisterRenderer(this, EnumRenderStage.Opaque, "signalstubes-socket-preview");
-        capi.Event.RegisterRenderer(this, EnumRenderStage.Ortho, "signalstubes-socket-labels");
     }
 
     public void SetMesh(MeshData data)
@@ -32,31 +38,38 @@ public sealed class SocketPreviewRenderer : IRenderer
         mesh = data == null ? null : capi.Render.UploadMultiTextureMesh(data);
     }
 
-    /// <summary>
-    /// Tags beside the pins. `at` is the point just outside a pin, `outward` the world direction away from the socket
-    /// there; a `sideways` tag hangs off that point by its inner edge, the others stand above or below it.
-    /// </summary>
-    public void SetLabels(IEnumerable<(Vec3d at, Vec3d outward, bool sideways, string text)> items)
+    /// <summary>The pins' name tags, for the socket variant with this shape rotation.</summary>
+    public void SetLabels(Vec3f variantRotation, IEnumerable<(int pin, string text)> items)
     {
         ClearLabels();
+        rotation = variantRotation;
         var font = new CairoFont(18, GuiStyle.StandardFontName, ColorUtil.WhiteArgbDouble);
-        foreach (var (at, outward, sideways, text) in items)
+        foreach (var (pin, text) in items)
         {
             var bg = new TextBackground { FillColor = GuiStyle.DialogLightBgColor, Padding = 3, Radius = GuiStyle.ElementBGRadius };
-            labels.Add((at, outward, sideways, capi.Gui.TextTexture.GenUnscaledTextTexture(text, font, bg)));
+            labels.Add((pin, capi.Gui.TextTexture.GenUnscaledTextTexture(text, font, bg)));
         }
+        quad ??= capi.Render.UploadMesh(UnitQuad());
+    }
+
+    private static MeshData UnitQuad()
+    {
+        var m = new MeshData(4, 12);
+        m.AddVertex(0, 0, 0, 0, 0, -1); m.AddVertex(1, 0, 0, 1, 0, -1); m.AddVertex(1, 0, 1, 1, 1, -1); m.AddVertex(0, 0, 1, 0, 1, -1);
+        foreach (int i in new[] { 0, 1, 2, 0, 2, 3 }) m.AddIndex(i);
+        foreach (int i in new[] { 0, 2, 1, 0, 3, 2 }) m.AddIndex(i);   // both faces: a wall socket's plate may be seen from either side
+        return m;
     }
 
     private void ClearLabels()
     {
-        foreach (var (_, _, _, tex) in labels) tex.Dispose();
+        foreach (var (_, tex) in labels) tex.Dispose();
         labels.Clear();
     }
 
     public void OnRenderFrame(float dt, EnumRenderStage stage)
     {
-        if (stage == EnumRenderStage.Ortho) { RenderLabels(); return; }
-        if (mesh == null) return;
+        if (mesh == null && labels.Count == 0) return;
         var render = capi.Render;
         var camera = capi.World.Player.Entity.CameraPos;
         render.GlDisableCullFace();
@@ -64,54 +77,59 @@ public sealed class SocketPreviewRenderer : IRenderer
         var prog = render.PreparedStandardShader(pos.X, pos.Y, pos.Z);
         prog.ViewMatrix = render.CameraMatrixOriginf;
         prog.ProjectionMatrix = render.CurrentProjectionMatrix;
-        prog.ModelMatrix = model.Identity().Translate(pos.X - camera.X, pos.Y - camera.Y, pos.Z - camera.Z).Values;
-        prog.RgbaTint = new Vec4f(1, 1, 1, .75f);   // dense enough for the cap colours to read
-        // depth writes stay on: without them the pins' sides blend over their own cap tops and the colours drown
-        render.RenderMultiTextureMesh(mesh, "tex");
-        prog.RgbaTint = new Vec4f(1, 1, 1, 1);
+        if (mesh != null)
+        {
+            prog.ModelMatrix = model.Identity().Translate(pos.X - camera.X, pos.Y - camera.Y, pos.Z - camera.Z).Values;
+            prog.RgbaTint = new Vec4f(1, 1, 1, .6f);    // see-through; depth writes keep the cap colours readable
+            // depth writes stay on: without them the pins' sides blend over their own cap tops and the colours drown
+            render.RenderMultiTextureMesh(mesh, "tex");
+            prog.RgbaTint = new Vec4f(1, 1, 1, 1);
+        }
+        RenderLabels(prog, camera);
         prog.Stop();
     }
 
-    // The tags shrink with distance as the game's name tags do. Each hangs just outside the socket at its pin and
-    // grows the way the socket's side points there: the outward direction is projected onto the screen, and a
-    // sideways tag puts its inner edge on the point and extends the way that direction goes (left or right); a
-    // front/back tag stands above the point when the direction goes up on screen, else below. Far tags draw first.
-    private void RenderLabels()
+    // Each tag is a strip on the plate from its pin's outer face outwards, as long as its text needs. Its text reads
+    // along the strip; of the two ways it can lie, the one whose top points away from the camera is used, like a
+    // sheet on a table seen from this side. Everything is built in the socket's own frame and turned like its shape.
+    private void RenderLabels(IStandardShaderProgram prog, Vec3d camera)
     {
         if (labels.Count == 0) return;
-        var render = capi.Render;
-        const float gap = 3;
-        var placed = new List<(double depth, float x, float y, float w, float h, int tex)>();
-        foreach (var (at, outward, sideways, tex) in labels)
+        prog.NormalShaded = 0;
+        // the tags are a reading aid, not scenery: they show through whatever stands next to the socket
+        capi.Render.GLDisableDepthTest();
+        turn.Identity().Translate(.5f, .5f, .5f).RotateXDeg(rotation.X).RotateYDeg(rotation.Y).RotateZDeg(rotation.Z).Translate(-.5f, -.5f, -.5f);
+        foreach (var (pin, tex) in labels)
         {
-            var screen = MatrixToolsd.Project(at, render.PerspectiveProjectionMat, render.PerspectiveViewMat, render.FrameWidth, render.FrameHeight);
-            var tip = MatrixToolsd.Project(at.AddCopy(outward.X * .1, outward.Y * .1, outward.Z * .1), render.PerspectiveProjectionMat, render.PerspectiveViewMat, render.FrameWidth, render.FrameHeight);
-            if (screen.Z < 0 || tip.Z < 0) continue;   // behind the camera
-            float scale = Math.Min(1f, 4f / Math.Max(1f, (float)screen.Z));
-            float w = scale * tex.Width, h = scale * tex.Height;
-            double dx = tip.X - screen.X, dy = tip.Y - screen.Y;   // y up on screen
-            float x, y;   // top left, screen y downwards
-            if (sideways)
-            {
-                x = dx < 0 ? (float)screen.X - w - gap : (float)screen.X + gap;
-                y = render.FrameHeight - (float)screen.Y - h / 2;
-            }
-            else
-            {
-                x = (float)screen.X - w / 2;
-                y = dy > 0 ? render.FrameHeight - (float)screen.Y - h - gap : render.FrameHeight - (float)screen.Y + gap;
-            }
-            placed.Add((screen.Z, x, y, w, h, tex.TextureId));
+            float aspect = (float)tex.Width / tex.Height;
+            // first lay it one way, see whether its top points at the camera, and if so turn it round
+            var (origin, right, up, length) = SocketOrientation.TagStrip(pin, aspect, false, TagWidth, TagGap, TagLift);
+            var upWorld = turn.TransformVector(new Vec4f(up.X, up.Y, up.Z, 0));
+            var mid = turn.TransformVector(new Vec4f(origin.X + right.X * length / 2, origin.Y, origin.Z + right.Z * length / 2, 1));
+            var toCamera = new Vec3f((float)(camera.X - pos.X) - mid.X, (float)(camera.Y - pos.Y) - mid.Y, (float)(camera.Z - pos.Z) - mid.Z);
+            if (upWorld.X * toCamera.X + upWorld.Y * toCamera.Y + upWorld.Z * toCamera.Z > 0)
+                (origin, right, up, length) = SocketOrientation.TagStrip(pin, aspect, true, TagWidth, TagGap, TagLift);
+            // columns: the quad's x -> right * length, y -> normal, z -> -up * width
+            var local = new float[16];
+            local[0] = right.X * length; local[1] = 0; local[2] = right.Z * length; local[3] = 0;
+            local[4] = 0; local[5] = 1; local[6] = 0; local[7] = 0;
+            local[8] = -up.X * TagWidth; local[9] = 0; local[10] = -up.Z * TagWidth; local[11] = 0;
+            local[12] = origin.X; local[13] = origin.Y; local[14] = origin.Z; local[15] = 1;
+            prog.Tex2D = tex.TextureId;
+            prog.ModelMatrix = model.Identity().Translate(pos.X - camera.X, pos.Y - camera.Y, pos.Z - camera.Z).Mul(turn.Values).Mul(local).Values;
+            capi.Render.RenderMesh(quad);
         }
-        foreach (var l in placed.OrderByDescending(l => l.depth)) render.Render2DTexture(l.tex, l.x, l.y, l.w, l.h, 20);
+        capi.Render.GLEnableDepthTest();
+        prog.NormalShaded = 1;
     }
 
     public void Dispose()
     {
         capi.Event.UnregisterRenderer(this, EnumRenderStage.Opaque);
-        capi.Event.UnregisterRenderer(this, EnumRenderStage.Ortho);
         mesh?.Dispose();
         mesh = null;
+        quad?.Dispose();
+        quad = null;
         ClearLabels();
     }
 }

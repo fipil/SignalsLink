@@ -114,4 +114,34 @@ public class SocketOrientationTests
         Assert.Null(turnTo);
         Assert.Equal(2, rig.Wires.data.connections.Count);
     }
+
+    [Theory]
+    [InlineData(0)] [InlineData(1)] [InlineData(2)] [InlineData(3)] [InlineData(4)] [InlineData(5)] [InlineData(6)] [InlineData(7)]
+    public void ATagStripLiesOutsideItsPinAndReadsAlongItWhicheverWayUp(int pin)
+    {
+        const float width = .14f, gap = .5f / 16, lift = .07f;
+        var d = SocketOrientation.TagSide[pin].Normalf;
+        var c = SocketOrientation.PinCentre(pin);
+        foreach (bool flip in new[] { false, true })
+        {
+            var (origin, right, up, length) = SocketOrientation.TagStrip(pin, 4f, flip, width, gap, lift);
+            Assert.Equal(width * 4, length, 4);
+            // reading direction and top lie in the plate and are at right angles; the text reads up x normal
+            Assert.Equal(0, up.Y, 4); Assert.Equal(0, right.Y, 4);
+            Assert.Equal(0, right.X * up.X + right.Z * up.Z, 4);
+            Assert.Equal(-up.Z, right.X, 4); Assert.Equal(up.X, right.Z, 4);
+            // the strip's corners: it starts just past the pin's outer face and runs outwards, centred on the pin
+            var corners = new[] { origin, origin + right * length, origin - up * width, origin + right * length - up * width };
+            float along(Vec3f p) => (p.X - c.X) * d.X + (p.Z - c.Z) * d.Z;
+            float across(Vec3f p) => (p.X - c.X) * up.X + (p.Z - c.Z) * up.Z;
+            Assert.Equal(3 / 16f + gap, corners.Min(along), 3);   // from the pin's middle: past the socket's edge; float sums land a hair off at 4 places
+            Assert.Equal(3 / 16f + gap + length, corners.Max(along), 3);
+            Assert.Equal(-width / 2, corners.Min(across), 3);
+            Assert.Equal(width / 2, corners.Max(across), 3);
+        }
+        // flipping turns the text round, nothing else
+        var a = SocketOrientation.TagStrip(pin, 4f, false, width, gap, lift);
+        var b = SocketOrientation.TagStrip(pin, 4f, true, width, gap, lift);
+        Assert.Equal(-a.up.X, b.up.X, 4); Assert.Equal(-a.right.X, b.right.X, 4);
+    }
 }
