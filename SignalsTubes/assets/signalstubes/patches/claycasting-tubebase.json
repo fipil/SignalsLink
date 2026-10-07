@@ -1,0 +1,109 @@
+[
+  {
+    "op": "add",
+    "file": "claycasting:blocktypes/ccmold.json",
+    "path": "/variantgroups/0/states/-",
+    "value": "tubebase",
+    "dependsOn": [
+      {
+        "modid": "claycasting"
+      }
+    ]
+  },
+  {
+    "op": "add",
+    "file": "claycasting:blocktypes/ccmold.json",
+    "path": "/shapebytype/*-tubebase-*",
+    "value": {
+      "base": "2mold"
+    },
+    "dependsOn": [
+      {
+        "modid": "claycasting"
+      }
+    ]
+  },
+  {
+    "op": "add",
+    "file": "claycasting:recipes/grid/mold/2out.json",
+    "path": "/-",
+    "value": {
+      "ingredientPattern": "RMC",
+      "ingredients": {
+        "R": {
+          "type": "item",
+          "code": "game:rope",
+          "quantity": 1
+        },
+        "M": {
+          "type": "item",
+          "code": "game:mortar",
+          "quantity": 4
+        },
+        "C": {
+          "type": "item",
+          "code": "signalstubes:tubebase-*",
+          "quantity": 1
+        }
+      },
+      "width": 3,
+      "height": 1,
+      "output": {
+        "type": "block",
+        "code": "claycasting:ccmold-tubebase-empty",
+        "quantity": 1
+      }
+    },
+    "dependsOn": [
+      {
+        "modid": "claycasting"
+      }
+    ]
+  },
+  {
+    "op": "add",
+    "file": "claycasting:recipes/barrel/fill.json",
+    "path": "/0/ingredients/1/allowedVariants/-",
+    "value": "tubebase",
+    "dependsOn": [
+      {
+        "modid": "claycasting"
+      }
+    ]
+  },
+  {
+    "op": "add",
+    "file": "claycasting:recipes/grid/emptying/2out.json",
+    "path": "/-",
+    "value": {
+      "ingredientPattern": "F",
+      "ingredients": {
+        "F": {
+          "type": "block",
+          "code": "claycasting:ccmold-tubebase-*",
+          "name": "claytype",
+          "skipVariants": [
+            "empty"
+          ],
+          "quantity": 1,
+          "returnedStack": {
+            "type": "block",
+            "code": "claycasting:ccmold-tubebase-empty"
+          }
+        }
+      },
+      "width": 1,
+      "height": 1,
+      "output": {
+        "type": "item",
+        "code": "signalstubes:tubebase-raw-{claytype}",
+        "quantity": 2
+      }
+    },
+    "dependsOn": [
+      {
+        "modid": "claycasting"
+      }
+    ]
+  }
+]

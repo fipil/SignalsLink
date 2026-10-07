@@ -16,7 +16,7 @@ public sealed class CableRenderer : IRenderer
     private readonly ICoreClientAPI capi;
     private readonly Vec3d anchor;
     private readonly Func<Vec3d> farEnd;
-    private readonly float thickness;
+    private readonly float thickness, sag;
     private readonly AssetLocation texture;
     private readonly Matrixf modelMat = new();
     private MeshRef mesh;
@@ -25,9 +25,9 @@ public sealed class CableRenderer : IRenderer
     public static readonly AssetLocation RedTexture = new("signalstubes:block/cable-red.png");
     private static readonly AssetLocation Fallback = new("game:block/metal/plate/lead.png");
 
-    public CableRenderer(ICoreClientAPI capi, Vec3d anchor, Func<Vec3d> farEnd, float thickness, AssetLocation texture)
+    public CableRenderer(ICoreClientAPI capi, Vec3d anchor, Func<Vec3d> farEnd, float thickness, AssetLocation texture, float sag = 1f)
     {
-        this.capi = capi; this.anchor = anchor; this.farEnd = farEnd; this.thickness = thickness; this.texture = texture;
+        this.capi = capi; this.anchor = anchor; this.farEnd = farEnd; this.thickness = thickness; this.texture = texture; this.sag = sag;
         capi.Event.RegisterRenderer(this, EnumRenderStage.Opaque, "signalstubes-cable");
     }
 
@@ -38,7 +38,7 @@ public sealed class CableRenderer : IRenderer
         if (mesh == null || lastEnd == null || end.SquareDistanceTo(lastEnd) > .0001)
         {
             mesh?.Dispose();
-            mesh = capi.Render.UploadMesh(CableMesh.Make(new Vec3f(), end.SubCopy(anchor).ToVec3f(), thickness));
+            mesh = capi.Render.UploadMesh(CableMesh.Make(new Vec3f(), end.SubCopy(anchor).ToVec3f(), thickness, sag));
             lastEnd = end.Clone();
         }
         var rpi = capi.Render;

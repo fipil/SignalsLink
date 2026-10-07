@@ -1,4 +1,9 @@
 {
+  "claycasting:block-ccmold-tubebase-empty": "Prázdná sádrová forma na dvě základny elektronek",
+  "claycasting:blockdesc-ccmold-tubebase-empty": "Spotřebuje 5 l břečky",
+  "claycasting:block-ccmold-tubebase-blue": "Plná sádrová forma na dvě základny elektronek (M)",
+  "claycasting:block-ccmold-tubebase-fire": "Plná sádrová forma na dvě základny elektronek (Š)",
+  "claycasting:block-ccmold-tubebase-red": "Plná sádrová forma na dvě základny elektronek (Č)",
   "part-copier-start": "Start (vstup)",
   "part-copier-start-desc": "Signál spustí kopírování.",
   "part-copier-state": "Stav (výstup)",

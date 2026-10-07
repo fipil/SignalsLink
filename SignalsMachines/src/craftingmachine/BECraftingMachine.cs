@@ -636,13 +636,12 @@ public class BECraftingMachine : BlockEntityContainer, ISidedAutomation, Signals
         else if (imprinter != null) tubeMesh = PlugMesh(capi, block);
     }
 
-    // The imprinter's plug head, borrowed from the socket block's shape and moved onto this socket.
+    // The imprinter's plug, the socket's own picture of it moved onto this socket.
     private static MeshData PlugMesh(ICoreClientAPI capi, BlockCraftingMachine block)
     {
         var socketBlock = capi.World.GetBlock(new AssetLocation("signalstubes:tubesocket-north-down"));
         if (socketBlock == null) return null;
-        var shape = capi.Assets.Get(new AssetLocation("signalstubes", "shapes/block/tubesocket.json")).ToObject<Shape>().Clone();
-        shape.Elements = shape.Elements.Where(e => e.Name.StartsWith("plug_")).ToArray();
+        var shape = capi.Assets.Get(new AssetLocation("signalstubes", "shapes/block/tubesocket-plug.json")).ToObject<Shape>().Clone();
         capi.Tesselator.TesselateShape(socketBlock, shape, out MeshData mesh);
         mesh.Translate(SocketShift.X / 16, SocketShift.Y / 16, SocketShift.Z / 16);
         mesh.Rotate(new Vec3f(.5f, .5f, .5f), 0, block.RotationRadians, 0);

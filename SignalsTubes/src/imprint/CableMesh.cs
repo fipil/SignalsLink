@@ -10,7 +10,8 @@ public static class CableMesh
     public const float PlugCable = .05f, ProbeLead = .02f;
     private const float CatenaryA = 2f;   // over a normalised span, as the Signals wires: a slight sag whatever the length
 
-    public static MeshData Make(Vec3f from, Vec3f to, float Thickness)
+    /// <param name="sag">1 = the usual slight sag; less for a short lead that must clear what it lies over</param>
+    public static MeshData Make(Vec3f from, Vec3f to, float Thickness, float sag = 1f)
     {
         Vec3f d = to - from;
         float dist = Math.Max(d.Length(), .01f);
@@ -21,8 +22,8 @@ public static class CableMesh
         for (int j = 0; j <= sections; j++)
         {
             float f = (float)j / sections;
-            float sag = CatenaryA * ((float)Math.Cosh((f - .5f) / CatenaryA) - (float)Math.Cosh(.5f / CatenaryA));
-            points[j] = new Vec3f(from.X + d.X * f, from.Y + d.Y * f + sag, from.Z + d.Z * f);
+            float drop = sag * CatenaryA * ((float)Math.Cosh((f - .5f) / CatenaryA) - (float)Math.Cosh(.5f / CatenaryA));
+            points[j] = new Vec3f(from.X + d.X * f, from.Y + d.Y * f + drop, from.Z + d.Z * f);
         }
 
         var mesh = new MeshData(4 * (sections + 1) * 2, 4 * sections * 6);

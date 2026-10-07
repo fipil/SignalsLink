@@ -65,6 +65,14 @@
     "pintop": [
       16,
       16
+    ],
+    "porcelain": [
+      16,
+      16
+    ],
+    "brass": [
+      16,
+      16
     ]
   },
   "textures": {
@@ -82,7 +90,9 @@
     "back-frame": "block/back-frame",
     "leg-frame": "block/leg-frame",
     "socket-floor": "block/socket-floor",
-    "pintop": "block/rustycolored"
+    "pintop": "block/rustycolored",
+    "porcelain": "signalstubes:block/pin-porcelain",
+    "brass": "signalstubes:block/pin-brass"
   },
   "elements": [
     {

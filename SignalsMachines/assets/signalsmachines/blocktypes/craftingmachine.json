@@ -173,6 +173,12 @@
     },
     "pintop": {
       "base": "signalsmachines:block/rustycolored"
+    },
+    "porcelain": {
+      "base": "signalstubes:block/pin-porcelain"
+    },
+    "brass": {
+      "base": "signalstubes:block/pin-brass"
     }
   },
   "attributes": {

@@ -210,11 +210,11 @@
     "brass": {
       "base": "signalstubes:block/pin-brass"
     },
-    "brass-in": {
-      "base": "signalstubes:block/pin-brass-in"
+    "cap-in": {
+      "base": "signalstubes:block/pin-cap-in"
     },
-    "brass-out": {
-      "base": "signalstubes:block/pin-brass-out"
+    "cap-out": {
+      "base": "signalstubes:block/pin-cap-out"
     }
   },
   "drawtype": "json",

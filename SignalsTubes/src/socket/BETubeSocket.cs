@@ -222,7 +222,6 @@ public class BETubeSocket : BlockEntity, ITubeSocket
             var parts = new List<ShapeElement>();
             foreach (var e in shape.Elements)
             {
-                if (e.Name.StartsWith("plug_")) { if (imprinter != null) parts.Add(e); continue; }
                 if (e.Name.StartsWith("pin_"))
                 {
                     int i = e.Name[4] - '0';
@@ -231,6 +230,9 @@ public class BETubeSocket : BlockEntity, ITubeSocket
                 }
                 parts.Add(e);
             }
+            // an imprinter's plug sits in the socket: its own shape, so the socket's inventory picture stays empty
+            if (imprinter != null)
+                parts.AddRange(capi.Assets.Get(new AssetLocation("signalstubes", "shapes/block/tubesocket-plug.json")).ToObject<Shape>().Clone().Elements);
             shape.Elements = parts.ToArray();
             if (tube?.Collectible is ItemProgramTube item)
                 TubeVisuals.Append(shape, item.BuildShape(tube, lit), .5f, new Vec3f(4, 1, 4));

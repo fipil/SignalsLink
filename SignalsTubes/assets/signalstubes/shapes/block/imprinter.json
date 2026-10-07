@@ -2255,6 +2255,574 @@
           "renderPass": 0
         },
         {
+          "name": "cradle_hole_0",
+          "from": [
+            3.75,
+            11.8,
+            9.25
+          ],
+          "to": [
+            4.25,
+            11.81,
+            9.75
+          ],
+          "faces": {
+            "north": {
+              "texture": "#socket-floor",
+              "uv": [
+                0,
+                0,
+                0.5,
+                0.01
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "south": {
+              "texture": "#socket-floor",
+              "uv": [
+                0,
+                0,
+                0.5,
+                0.01
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "east": {
+              "texture": "#socket-floor",
+              "uv": [
+                0,
+                0,
+                0.5,
+                0.01
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "west": {
+              "texture": "#socket-floor",
+              "uv": [
+                0,
+                0,
+                0.5,
+                0.01
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "up": {
+              "texture": "#socket-floor",
+              "uv": [
+                1,
+                1,
+                1.5,
+                1.5
+              ],
+              "autoUv": false,
+              "enabled": true
+            }
+          },
+          "renderPass": 0
+        },
+        {
+          "name": "cradle_hole_1",
+          "from": [
+            4.75,
+            11.8,
+            9.25
+          ],
+          "to": [
+            5.25,
+            11.81,
+            9.75
+          ],
+          "faces": {
+            "north": {
+              "texture": "#socket-floor",
+              "uv": [
+                0,
+                0,
+                0.5,
+                0.01
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "south": {
+              "texture": "#socket-floor",
+              "uv": [
+                0,
+                0,
+                0.5,
+                0.01
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "east": {
+              "texture": "#socket-floor",
+              "uv": [
+                0,
+                0,
+                0.5,
+                0.01
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "west": {
+              "texture": "#socket-floor",
+              "uv": [
+                0,
+                0,
+                0.5,
+                0.01
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "up": {
+              "texture": "#socket-floor",
+              "uv": [
+                1,
+                1,
+                1.5,
+                1.5
+              ],
+              "autoUv": false,
+              "enabled": true
+            }
+          },
+          "renderPass": 0
+        },
+        {
+          "name": "cradle_hole_2",
+          "from": [
+            5.75,
+            11.8,
+            9.25
+          ],
+          "to": [
+            6.25,
+            11.81,
+            9.75
+          ],
+          "faces": {
+            "north": {
+              "texture": "#socket-floor",
+              "uv": [
+                0,
+                0,
+                0.5,
+                0.01
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "south": {
+              "texture": "#socket-floor",
+              "uv": [
+                0,
+                0,
+                0.5,
+                0.01
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "east": {
+              "texture": "#socket-floor",
+              "uv": [
+                0,
+                0,
+                0.5,
+                0.01
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "west": {
+              "texture": "#socket-floor",
+              "uv": [
+                0,
+                0,
+                0.5,
+                0.01
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "up": {
+              "texture": "#socket-floor",
+              "uv": [
+                1,
+                1,
+                1.5,
+                1.5
+              ],
+              "autoUv": false,
+              "enabled": true
+            }
+          },
+          "renderPass": 0
+        },
+        {
+          "name": "cradle_hole_3",
+          "from": [
+            5.75,
+            11.8,
+            10.25
+          ],
+          "to": [
+            6.25,
+            11.81,
+            10.75
+          ],
+          "faces": {
+            "north": {
+              "texture": "#socket-floor",
+              "uv": [
+                0,
+                0,
+                0.5,
+                0.01
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "south": {
+              "texture": "#socket-floor",
+              "uv": [
+                0,
+                0,
+                0.5,
+                0.01
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "east": {
+              "texture": "#socket-floor",
+              "uv": [
+                0,
+                0,
+                0.5,
+                0.01
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "west": {
+              "texture": "#socket-floor",
+              "uv": [
+                0,
+                0,
+                0.5,
+                0.01
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "up": {
+              "texture": "#socket-floor",
+              "uv": [
+                1,
+                1,
+                1.5,
+                1.5
+              ],
+              "autoUv": false,
+              "enabled": true
+            }
+          },
+          "renderPass": 0
+        },
+        {
+          "name": "cradle_hole_4",
+          "from": [
+            5.75,
+            11.8,
+            11.25
+          ],
+          "to": [
+            6.25,
+            11.81,
+            11.75
+          ],
+          "faces": {
+            "north": {
+              "texture": "#socket-floor",
+              "uv": [
+                0,
+                0,
+                0.5,
+                0.01
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "south": {
+              "texture": "#socket-floor",
+              "uv": [
+                0,
+                0,
+                0.5,
+                0.01
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "east": {
+              "texture": "#socket-floor",
+              "uv": [
+                0,
+                0,
+                0.5,
+                0.01
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "west": {
+              "texture": "#socket-floor",
+              "uv": [
+                0,
+                0,
+                0.5,
+                0.01
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "up": {
+              "texture": "#socket-floor",
+              "uv": [
+                1,
+                1,
+                1.5,
+                1.5
+              ],
+              "autoUv": false,
+              "enabled": true
+            }
+          },
+          "renderPass": 0
+        },
+        {
+          "name": "cradle_hole_5",
+          "from": [
+            4.75,
+            11.8,
+            11.25
+          ],
+          "to": [
+            5.25,
+            11.81,
+            11.75
+          ],
+          "faces": {
+            "north": {
+              "texture": "#socket-floor",
+              "uv": [
+                0,
+                0,
+                0.5,
+                0.01
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "south": {
+              "texture": "#socket-floor",
+              "uv": [
+                0,
+                0,
+                0.5,
+                0.01
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "east": {
+              "texture": "#socket-floor",
+              "uv": [
+                0,
+                0,
+                0.5,
+                0.01
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "west": {
+              "texture": "#socket-floor",
+              "uv": [
+                0,
+                0,
+                0.5,
+                0.01
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "up": {
+              "texture": "#socket-floor",
+              "uv": [
+                1,
+                1,
+                1.5,
+                1.5
+              ],
+              "autoUv": false,
+              "enabled": true
+            }
+          },
+          "renderPass": 0
+        },
+        {
+          "name": "cradle_hole_6",
+          "from": [
+            3.75,
+            11.8,
+            11.25
+          ],
+          "to": [
+            4.25,
+            11.81,
+            11.75
+          ],
+          "faces": {
+            "north": {
+              "texture": "#socket-floor",
+              "uv": [
+                0,
+                0,
+                0.5,
+                0.01
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "south": {
+              "texture": "#socket-floor",
+              "uv": [
+                0,
+                0,
+                0.5,
+                0.01
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "east": {
+              "texture": "#socket-floor",
+              "uv": [
+                0,
+                0,
+                0.5,
+                0.01
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "west": {
+              "texture": "#socket-floor",
+              "uv": [
+                0,
+                0,
+                0.5,
+                0.01
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "up": {
+              "texture": "#socket-floor",
+              "uv": [
+                1,
+                1,
+                1.5,
+                1.5
+              ],
+              "autoUv": false,
+              "enabled": true
+            }
+          },
+          "renderPass": 0
+        },
+        {
+          "name": "cradle_hole_7",
+          "from": [
+            3.75,
+            11.8,
+            10.25
+          ],
+          "to": [
+            4.25,
+            11.81,
+            10.75
+          ],
+          "faces": {
+            "north": {
+              "texture": "#socket-floor",
+              "uv": [
+                0,
+                0,
+                0.5,
+                0.01
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "south": {
+              "texture": "#socket-floor",
+              "uv": [
+                0,
+                0,
+                0.5,
+                0.01
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "east": {
+              "texture": "#socket-floor",
+              "uv": [
+                0,
+                0,
+                0.5,
+                0.01
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "west": {
+              "texture": "#socket-floor",
+              "uv": [
+                0,
+                0,
+                0.5,
+                0.01
+              ],
+              "autoUv": false,
+              "enabled": true
+            },
+            "up": {
+              "texture": "#socket-floor",
+              "uv": [
+                1,
+                1,
+                1.5,
+                1.5
+              ],
+              "autoUv": false,
+              "enabled": true
+            }
+          },
+          "renderPass": 0
+        },
+        {
           "name": "plug_plate",
           "from": [
             2,
@@ -2493,88 +3061,6 @@
                 2,
                 4.0,
                 10.0
-              ],
-              "autoUv": false,
-              "enabled": true
-            }
-          },
-          "renderPass": 0
-        },
-        {
-          "name": "plug_cable",
-          "from": [
-            4.65,
-            13.7,
-            7.3842
-          ],
-          "to": [
-            5.35,
-            14.4,
-            7.5
-          ],
-          "faces": {
-            "north": {
-              "texture": "#cable",
-              "uv": [
-                0,
-                0,
-                0.7,
-                0.7
-              ],
-              "autoUv": false,
-              "enabled": true
-            },
-            "south": {
-              "texture": "#cable",
-              "uv": [
-                0,
-                0,
-                0.7,
-                0.7
-              ],
-              "autoUv": false,
-              "enabled": true
-            },
-            "east": {
-              "texture": "#cable",
-              "uv": [
-                0,
-                0,
-                0.1158,
-                0.7
-              ],
-              "autoUv": false,
-              "enabled": true
-            },
-            "west": {
-              "texture": "#cable",
-              "uv": [
-                0,
-                0,
-                0.1158,
-                0.7
-              ],
-              "autoUv": false,
-              "enabled": true
-            },
-            "up": {
-              "texture": "#cable",
-              "uv": [
-                0,
-                0,
-                0.7,
-                0.1158
-              ],
-              "autoUv": false,
-              "enabled": true
-            },
-            "down": {
-              "texture": "#cable",
-              "uv": [
-                0,
-                0,
-                0.7,
-                0.1158
               ],
               "autoUv": false,
               "enabled": true
@@ -2985,88 +3471,6 @@
                 0,
                 0.8,
                 2.3
-              ],
-              "autoUv": false,
-              "enabled": true
-            }
-          },
-          "renderPass": 0
-        },
-        {
-          "name": "probe_lead",
-          "from": [
-            11.25,
-            11.85,
-            7.3842
-          ],
-          "to": [
-            11.75,
-            12.25,
-            8
-          ],
-          "faces": {
-            "north": {
-              "texture": "#cable-red",
-              "uv": [
-                0,
-                0,
-                0.5,
-                0.4
-              ],
-              "autoUv": false,
-              "enabled": true
-            },
-            "south": {
-              "texture": "#cable-red",
-              "uv": [
-                0,
-                0,
-                0.5,
-                0.4
-              ],
-              "autoUv": false,
-              "enabled": true
-            },
-            "east": {
-              "texture": "#cable-red",
-              "uv": [
-                0,
-                0,
-                0.6158,
-                0.4
-              ],
-              "autoUv": false,
-              "enabled": true
-            },
-            "west": {
-              "texture": "#cable-red",
-              "uv": [
-                0,
-                0,
-                0.6158,
-                0.4
-              ],
-              "autoUv": false,
-              "enabled": true
-            },
-            "up": {
-              "texture": "#cable-red",
-              "uv": [
-                0,
-                0,
-                0.5,
-                0.6158
-              ],
-              "autoUv": false,
-              "enabled": true
-            },
-            "down": {
-              "texture": "#cable-red",
-              "uv": [
-                0,
-                0,
-                0.5,
-                0.6158
               ],
               "autoUv": false,
               "enabled": true

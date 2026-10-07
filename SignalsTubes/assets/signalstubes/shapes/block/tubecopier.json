@@ -53,11 +53,11 @@
       16,
       16
     ],
-    "brass-in": [
+    "cap-in": [
       16,
       16
     ],
-    "brass-out": [
+    "cap-out": [
       16,
       16
     ],
@@ -79,8 +79,8 @@
     "socket-floor-red": "block/socket-floor-red",
     "porcelain": "block/pin-porcelain",
     "brass": "block/pin-brass",
-    "brass-in": "block/pin-brass-in",
-    "brass-out": "block/pin-brass-out",
+    "cap-in": "block/pin-cap-in",
+    "cap-out": "block/pin-cap-out",
     "arrow": "block/copy-arrow"
   },
   "elements": [
@@ -2760,7 +2760,7 @@
           "enabled": true
         },
         "up": {
-          "texture": "#brass-in",
+          "texture": "#cap-in",
           "uv": [
             2,
             2,
@@ -3006,7 +3006,7 @@
           "enabled": true
         },
         "up": {
-          "texture": "#brass-out",
+          "texture": "#cap-out",
           "uv": [
             2,
             2,

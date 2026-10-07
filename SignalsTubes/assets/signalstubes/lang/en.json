@@ -1,4 +1,9 @@
 {
+  "claycasting:block-ccmold-tubebase-empty": "Empty plaster mold of a couple tube bases",
+  "claycasting:blockdesc-ccmold-tubebase-empty": "Uses 5L of slip",
+  "claycasting:block-ccmold-tubebase-blue": "Full plaster mold of a couple tube bases (B)",
+  "claycasting:block-ccmold-tubebase-fire": "Full plaster mold of a couple tube bases (F)",
+  "claycasting:block-ccmold-tubebase-red": "Full plaster mold of a couple tube bases (R)",
   "part-copier-start": "Start (input)",
   "part-copier-start-desc": "The signal starts copying.",
   "part-copier-state": "State (output)",

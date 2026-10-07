@@ -60,6 +60,14 @@ public class BEImprinter : BlockEntity
     public Vec3d PlugAnchor() => Anchor(7, 15.5f, 6);
     public Vec3d ProbeAnchor() => Anchor(9, 15.5f, 6);
 
+    // A point on the slope the cradles lie on (23 degrees, from the front wall's top edge at y 11.5, z 15 up to z 8):
+    // `dy` above the slope, `dz` along it from the front. Where the cradled tools' cables start.
+    private static readonly double SlopeAngle = Math.Atan2(3, 7);
+    private Vec3d SlopePoint(float x, float dy, float dz) =>
+        Anchor(x, (float)(11.5 + dy * Math.Cos(SlopeAngle) + dz * Math.Sin(SlopeAngle)), (float)(15 + dy * Math.Sin(SlopeAngle) - dz * Math.Cos(SlopeAngle)));
+    private Vec3d PlugHomeCable() => SlopePoint(5, 2.3f, 7.5f);     // back of the plug's block
+    private Vec3d ProbeHomeCable() => SlopePoint(11.5f, .9f, 7);    // just above the probe's rear end
+
     public override void Initialize(ICoreAPI api)
     {
         base.Initialize(api);
@@ -502,8 +510,19 @@ public class BEImprinter : BlockEntity
         }
         else if (plug.Out && plug.Holder == capi.World.Player.PlayerUID)
             plugCable = new CableRenderer(capi, PlugAnchor(), HandOf(capi, PlugCode), CableMesh.PlugCable, CableRenderer.WireTexture);
+        else if (PlugHome)
+        {
+            // cradled: the cable still runs from the plug into the gap under the plate
+            var home = PlugHomeCable();
+            plugCable = new CableRenderer(capi, PlugAnchor(), () => home, CableMesh.PlugCable, CableRenderer.WireTexture, sag: .3f);   // short and taut, clear of the slope
+        }
         if (probe.Out && probe.Holder == capi.World.Player.PlayerUID)
             probeCable = new CableRenderer(capi, ProbeAnchor(), HandOf(capi, ProbeCode), CableMesh.ProbeLead, CableRenderer.RedTexture);
+        else if (ProbeHome)
+        {
+            var home = ProbeHomeCable();
+            probeCable = new CableRenderer(capi, ProbeAnchor(), () => home, CableMesh.ProbeLead, CableRenderer.RedTexture, sag: .3f);
+        }
     }
 
     // Where the tool's cable stub is in the world: the held item is placed exactly as the game places it
