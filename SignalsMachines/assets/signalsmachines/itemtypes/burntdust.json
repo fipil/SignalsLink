@@ -58,5 +58,15 @@
       "z": 0
     },
     "scale": 4.5
+  },
+  "attributes": {
+    "handbook": {
+      "extraSections": [
+        {
+          "title": "signalsmachines:block-handbooktitle-signalsmachines",
+          "text": "signalsmachines:item-handbooktext-burntdust"
+        }
+      ]
+    }
   }
 }

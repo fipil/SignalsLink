@@ -24,6 +24,7 @@ The API key is read from the OPENAI_API_KEY environment variable.
     python scripts/localizeSignalsLink.py --seed-only     # only step 1, then report
     python scripts/localizeSignalsLink.py --langs de,pl   # just these languages
     python scripts/localizeSignalsLink.py --force         # retranslate everything
+    python scripts/localizeSignalsLink.py --accept en     # English written by hand: record it as current
 
 BOM: the lang JSON files must be UTF-8 **without** a BOM, and no BOM may survive inside a
 string value either - the game misbehaves otherwise. Every read strips one, no write adds
@@ -338,7 +339,28 @@ def parse_args():
     parser.add_argument("--force", action="store_true", help="prelozit vsechno znovu, i hotove")
     parser.add_argument("--seed-only", action="store_true",
                         help="jen propsat html do cs.json a vypsat, co by se prekladalo")
+    parser.add_argument("--accept", metavar="LANG",
+                        help="prijmout rucne napsany preklad: vsem klicum, ktere tento jazyk ma, zapsat otisk "
+                             "dnesni cestiny do stavu a nic neprekladat (pouzij hned po rucnim psani)")
     return parser.parse_args()
+
+
+def accept_language(lang, cs_json, state):
+    """A translation written by hand (usually English) is recorded as current: every key the language
+    file has gets the fingerprint of today's Czech. From then on the script leaves those keys alone until
+    the Czech changes again - then they are stale like any other and get translated, or written by hand
+    and accepted once more. Run it right after the hand writing, never after the Czech moved on."""
+    lang_json = read_json(LANG_DIR / (lang + ".json"))
+    known = state.setdefault(lang, {})
+    accepted = [k for k in lang_json if k in cs_json and known.get(k) != fingerprint(cs_json[k])]
+    for k in accepted:
+        known[k] = fingerprint(cs_json[k])
+    save_state(state)
+    orphans = sorted(k for k in lang_json if k not in cs_json)
+    print("Prijato %d klicu pro %s (stav: %s)." % (len(accepted), lang, STATE_PATH.name))
+    if orphans:
+        print("Pozor, %s ma %d klicu, ktere cs.json nezna (neprekladaji se): %s" % (lang, len(orphans), ", ".join(orphans[:10])))
+    return 0
 
 
 def main():
@@ -353,6 +375,9 @@ def main():
     langs = [l for l in langs if l]
 
     state = load_state(cs_json, DEFAULT_LANGS)
+
+    if args.accept:
+        return accept_language(args.accept.strip(), cs_json, state)
 
     if args.seed_only:
         print("\nKrok 2 preskocen (--seed-only). Chybelo by prelozit:")

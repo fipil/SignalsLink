@@ -6,11 +6,11 @@
     "Fipil"
   ],
   "description": "Machines controlled by signals.",
-  "version": "0.1.0",
+  "version": "1.0.0-rc.1",
   "dependencies": {
     "game": "1.22.0",
     "signals": "0.3.3",
-    "signalstubes": "0.1.0",
+    "signalstubes": "1.0.0-rc.1",
     "signalslink": "1.0.7"
   }
 }

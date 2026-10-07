@@ -152,5 +152,15 @@
       "z": 0
     },
     "scale": 2.2
+  },
+  "attributes": {
+    "handbook": {
+      "extraSections": [
+        {
+          "title": "signalstubes:block-handbooktitle-signalstubes",
+          "text": "signalstubes:item-handbooktext-tubebase"
+        }
+      ]
+    }
   }
 }

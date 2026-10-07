@@ -1,8 +1,94 @@
-<!--
-Dlouhé texty nápovědy, jeden blok na klíč, stejně jako v signalslink.html:
+<translation key="signalsmachines:usageinfo-signalsmachines-text">
+    <font size="25"><strong>Signals Machines</strong></font>
+    <br>
+    Stroje, ovládané signály z modu <a href="handbook://signals:craftinginfo-signals">Signals</a>, které za vás dokážou automaticky vykonávat různé činnosti – ale ne zadarmo.
+    <br>
+    <br>
+    <strong>Co stroj neumí sám</strong>
+    <br>
+    Nestačí stroj vyrobit a čekat, že už všechno udělá za vás. Každý stroj je stavový automat: má vstupní piny, kterými se ovládá, a výstupní pin, kterým hlásí svůj stav. Chybí mu ovládání – a to si musíte postavit sám nebo sama, vhodným zapojením sítě Signals, která stroji ve správnou chvíli dává správné povely a reaguje na jeho hlášení. Musíte potrápit a namáhat svůj mozek a vymyslet to. Odměnou za tu námahu vám bude dobře fungující stroj.
+    <br>
+    Pro úplnou automatizaci se vám budou hodit další mody rodiny SignalsLink: <a href="handbook://signalslink:usageinfo-signalslink">SignalsLink</a> s <a href="handbook://block-signalslink:managedchute-north-down">řízenými trubkami</a>, <a href="handbook://block-signalslink:sleevedamper-north-down">klapkami</a> a hadicemi dopravuje položky do strojů a odebírá výrobky. Vyladěnou síť pak uložíte do <a href="handbook://item-signalstubes:programtube-fire">programové elektronky</a> modu <a href="handbook://signalstubes:usageinfo-signalstubes">Signals Tubes</a> a zasadíte ji do patice každé další kopie téhož stroje – řízení nemusíte stavět znovu.
+    <br>
+    <br>
+    <strong>Stroje</strong>
+    <br>
+    • <a href="handbook://block-signalsmachines:craftingmachine-north">Craftovací stroj</a> – vyrábí podle receptů pracovního stolu to, co mu položíte na desku. Potřebuje mechanický pohon, temporální krystal a váš bystrý mozek a důmysl při sestavování Signals obvodu, který ho řídí. Chyba v ovládání se projeví výbuchem: vsázka shoří na <a href="handbook://item-signalsmachines:burntdust">spálený prach</a> a do okolí uniká časová nestabilita.
+</translation>
 
-    translation key="signalsmachines:block-handbooktext-craftingmachine" ... /translation
+<translation key="signalsmachines:block-handbooktext-craftingmachine">
+    Craftovací stroj vyrábí podle receptů pracovního stolu bez hráče. Je dva bloky vysoký: dole podstavec s piny a paticí pro elektronku, nahoře komora s otočnou deskou 3×3, krystalem a dveřmi na dvou protilehlých stranách. Hřídel pohonu vede do zadní stěny podstavce.
+    <br>
+    <br>
+    <strong>Piny</strong> (čísla jako na patici <a href="handbook://block-signalstubes:tubesocket-north-down">Signals Tubes</a>, přední řada 1–4, zadní 5–8)
+    <br>
+    1 <strong>Stav</strong> (výstup) – hlásí, co stroj dělá; hodnoty níže.
+    <br>
+    2 <strong>Spojka</strong> (vstup) – signál spojí desku s pohonem; deska se roztáčí asi dvě sekundy a po rozpojení dojede do základní polohy.
+    <br>
+    3 <strong>Krystal dolů</strong> (vstup) – signál spustí krystal nad desku. Se silou větší než 0 vydává krystal temporální záření.
+    <br>
+    4 <strong>Síla</strong> (vstup) – kolik energie krystal dává. Při výrobě musí být přesně rovna počtu obsazených polí desky (1–9).
+    <br>
+    5 a 6 <strong>Dveře</strong> (vstup) – každý pin otevírá jednu z bočních stěn komory; která světová strana to je, závisí na otočení stroje a říká ji popisek pinu. Dveře se vysunou a sjedou (asi 2 s), zavírání trvá asi 3 s.
+    <br>
+    7 a 8 – rezerva; využijí je vypínače a zpoždění vyvedené z elektronky.
+    <br>
+    <br>
+    <strong>Elektronka místo drátů</strong>
+    <br>
+    Do patice v podstavci lze zasadit <a href="handbook://item-signalstubes:programtube-fire">programovou elektronku</a> (pravým tlačítkem myši; prázdnou rukou ji zase vyjmete). Pak řídí piny 2–6 ona a dráty na nich se ignorují; elektronka sama vidí pin Stav a rezervní piny. Zástrčku <a href="handbook://block-signalstubes:imprinter-north">vypalovače</a> lze zapojit přímo do patice stroje a vypálit tak síť, která stroj řídí – jména pinů stroje už budou v elektronce předvyplněná.
+    <br>
+    <strong>Signály zvenčí přes rezervní piny.</strong> Elektronka ve stroji vidí jen piny stroje. Má-li řídicí obvod reagovat na něco zvenku – třeba na senzor, který hlídá zásobu surovin, nebo na vypínač – nestačí drát od senzoru do obvodu: při vypalování by takový senzor zůstal za hranicí a obvod by o něj přišel. Veďte drát ze senzoru na rezervní pin stroje (7 nebo 8) a z téhož pinu další drát do řídicího obvodu. Rezervní pin se tak vypálí jako vstup elektronky a po jejím zasazení přivádí signál senzoru dovnitř; senzor zůstane zapojený na pinu. Stejně pošlete signál ven – výstup obvodu na rezervní pin a z něj drát k lampě nebo k dalšímu stroji.
+    <br>
+    <br>
+    <strong>Plnění a odběr</strong>
+    <br>
+    Do komory se dostanete jen dveřmi, které jsou úplně otevřené, a jen když deska stojí (spojka rozpojená, deska dojela). Rukou klepnete pravým tlačítkem myši na pole desky: s předmětem v ruce položíte jeden kus (s krčením celý stoh), prázdnou rukou pole vyberete; hotový výrobek visí uprostřed komory a bere se stejně. <a href="handbook://block-signalslink:managedchute-north-down">Řízené trubky</a> a <a href="handbook://block-signalslink:sleevedamper-north-down">klapky</a> modu SignalsLink mohou položky vkládat i vytahovat – míří na komoru ze strany dveří, cílí na jednotlivá pole i na výrobek, ale přístup mají jen při otevřených dveřích, za stejných podmínek jako ruka. Jakmile pin dveří klesne, přístup končí okamžitě.
+    <br>
+    <br>
+    <strong>Výroba</strong>
+    <br>
+    Stroj stále hledá v rozložení na desce recept pracovního stolu; nalezený recept ukazuje v popisku. Recepty vázané na povolání dělá podle povolání hráče, který stroj postavil. Výroba běží, když jsou zavřené dveře, výrobek odebrán, spojka sepnutá, deska v otáčkách, krystal dole a síla rovna počtu obsazených polí. Trvá 3 sekundy plus sekundu za každé obsazené pole. Jeden běh spotřebuje, co může: recept se opakuje, dokud stačí suroviny a výrobek se vejde do jednoho stohu; nástroje v receptu se opotřebují, vracené předměty (třeba prázdné nádoby) zůstanou na desce. Přerušený běh čeká 5 sekund, pak se postup ztratí.
+    <br>
+    <br>
+    <strong>Stavy na pinu 1</strong>
+    <br>
+    0 <strong>čeká</strong> – na desce není recept, nebo jsou otevřené dveře.
+    <br>
+    1 <strong>recept připraven</strong> – dveře zavřené, recept rozpoznán, výstup prázdný, žádný ovládací vstup aktivní.
+    <br>
+    2 <strong>příprava</strong> – některý vstup je aktivní, ale podmínky výroby ještě nejsou všechny splněné; také pauza rozběhlé výroby.
+    <br>
+    3 <strong>výroba</strong>.
+    <br>
+    4 <strong>hotovo</strong> – výrobek čeká na odběr a na desce není další recept.
+    <br>
+    10 <strong>přetížení</strong> – síla stoupla o 3 a více za jeden krok, nebo byla při krystalu dole větší než počet polí + 1. Krystal vybuchl a vsázka shořela na <a href="handbook://item-signalsmachines:burntdust">spálený prach</a>.
+    <br>
+    11 <strong>krystal dole, deska stojí</strong> – déle než 1 s.
+    <br>
+    12 <strong>dveře otevřeny během výroby</strong> – běh zrušen, vsázka zůstává.
+    <br>
+    13 <strong>chybná síla</strong> – síla větší než počet polí déle než 2 s při krystalu dole.
+    <br>
+    14 <strong>výstup plný</strong> – výrobek čeká a na desce už leží další recept.
+    <br>
+    15 <strong>chybí pohon</strong> – spojka sepnutá a síť pohonu stojí déle než 3 s.
+    <br>
+    Chyby 10–13 a 15 drží, dokud není síla 0, krystal nahoře a spojka rozpojená. Stav 14 zmizí odebráním výrobku. Sílu zvyšujte postupně, nejvýše o 2 za krok; po zasazení nebo vyjmutí elektronky stroj první změnu promine.
+    <br>
+    <br>
+    <strong>Pohon</strong>
+    <br>
+    Deska se točí jen s mechanickou sítí, která běží alespoň na 30 % své rychlosti; jeden velký větrný mlýn stačí. Stojící síť se sepnutou spojkou je po 3 s chyba 15.
+    <br>
+    <br>
+    <strong>Nestabilita</strong>
+    <br>
+    Spuštěný krystal pracuje s časovou nestabilitou. Při výrobě ji lehce zvyšuje v okruhu dvou bloků. Otevřete-li dveře, dokud krystal září, uniká z komory temporální smog: teče ze dveří po zemi jako těžký plyn, zabírá až osm bloků, silně zvyšuje nestabilitu každému, kdo v něm stojí, a po zavření dveří asi minutu doznívá. Přetížení uvolní smog nejsilnější. Dveře proto otevírejte jen se zhasnutým krystalem.
+</translation>
 
-Skript scripts/localizeSignalsMachines.py je přepíše do cs.json na jeden řádek a přeloží.
-Krátké texty (názvy bloků, tooltipy) se píší rovnou do cs.json.
--->
+<translation key="signalsmachines:item-handbooktext-burntdust">
+    Zbytek po přetížení <a href="handbook://block-signalsmachines:craftingmachine-north">craftovacího stroje</a>: z každého obsazeného pole desky zůstane hromádka prachu. Je k ničemu, ale připomene, že síla krystalu se zvyšuje po krocích a nikdy ne víc, než kolik polí leží na desce.
+</translation>

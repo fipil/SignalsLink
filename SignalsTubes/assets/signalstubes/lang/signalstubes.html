@@ -1,8 +1,128 @@
-<!--
-Dlouhé texty nápovědy, jeden blok na klíč, stejně jako v signalslink.html:
+<translation key="signalstubes:usageinfo-signalstubes-text">
+    <font size="25"><strong>Signals Tubes</strong></font>
+    <br>
+    Rozšiřuje mod <a href="handbook://signals:craftinginfo-signals">Signals</a> o programové elektronky. Hotovou síť ze součástek Signals vypálíte do elektronky a ta pak dělá totéž co celá síť, jen na osmi kolících jedné patice.
+    <br>
+    <br>
+    <strong>Co mod přináší</strong>
+    <br>
+    • <a href="handbook://item-signalstubes:programtube-fire">Programová elektronka</a> – nosič obvodu. Prázdnou vyrobíte z <a href="handbook://item-signalstubes:tubebase-fire">podstavce</a>, <a href="handbook://item-signalstubes:tubecore">jádra</a> a skleněné baňky.
+    <br>
+    • <a href="handbook://block-signalstubes:tubesocket-north-down">Patice elektronky</a> – blok s osmi kolíky, do kterého se elektronka zasune a ve kterém běží.
+    <br>
+    • <a href="handbook://block-signalstubes:imprinter-north">Vypalovač obvodů</a> – stroj, který přečte síť zapojenou do patice a zapíše ji do elektronky. Má <a href="handbook://item-signalstubes:imprinterplug">zástrčku</a> na kabelu a <a href="handbook://item-signalstubes:imprinterprobe">sondu</a>.
+    <br>
+    • <a href="handbook://block-signalstubes:tubecopier-north">Kopírka elektronek</a> – kopíruje program z jedné elektronky do prázdné, za temporální kolečka.
+    <br>
+    <br>
+    <strong>K čemu to je</strong>
+    <br>
+    Síť, která zabírá celou místnost, se vejde do jedné patice. Elektronku můžete zasadit do další patice a mít stejný obvod podruhé, nebo ji použít jako součástku ve větší síti a tu vypálit znovu – tak vznikají složitější součástky z jednodušších.
+    <br>
+    Stroje z modu <a href="handbook://signalsmachines:usageinfo-signalsmachines">Signals Machines</a> mají vlastní patici: elektronka v ní řídí stroj místo drátů, takže vyladěné ovládání přenesete na každou další kopii stroje jediným předmětem.
+    <br>
+    Elektronka nese jméno autora a autor ji může zamknout proti kopírování i proti nahlížení do obvodu. Kdo rád vymýšlí obvody, může hotové elektronky prodávat ostatním hráčům, kteří chtějí jen funkční stroj.
+</translation>
 
-    translation key="signalstubes:item-handbooktext-programtube" ... /translation
+<translation key="signalstubes:block-handbooktext-tubesocket">
+    Patice drží jednu <a href="handbook://item-signalstubes:programtube-fire">programovou elektronku</a> a nechává běžet její program. Pokládá se na podlahu, zeď i strop.
+    <br>
+    <br>
+    Prázdná patice má osm kolíků, číslovaných 1–8, a dráty se na ně napojují jako na kteroukoli součástku Signals. Se zasazenou elektronkou zůstanou jen kolíky, které elektronka používá; barva čepičky říká roli (zelená vstup, červená výstup, tmavá nastavení) a po namíření na kolík vidíte jeho jméno.
+    <br>
+    <br>
+    Elektronku zasadíte klepnutím pravým tlačítkem myši s elektronkou v ruce; patice se přitom otočí tak, jak ukazuje náhled – kolíky 1–3 ke straně, na kterou míříte. Vyjmete ji klepnutím pravým tlačítkem prázdnou rukou; patice zůstane otočená a dráty připojené.
+    <br>
+    Tutéž elektronku (nebo její kopii) vrátíte klepnutím na lůžko uprostřed – zasadí se, jak byla, dráty zůstanou. Jiná elektronka patici přepojí: všechny její dráty spadnou na zem a zapojíte je znovu podle nových kolíků. Hasákem patici otočíte i se zasazenou elektronkou; dráty přeskočí s kolíky.
+    <br>
+    <br>
+    Do prázdné patice lze zapojit <a href="handbook://item-signalstubes:imprinterplug">zástrčku vypalovače</a>: síť na jejích kolících se pak vypálí do elektronky.
+</translation>
 
-Skript scripts/localizeSignalsTubes.py je přepíše do cs.json na jeden řádek a přeloží.
-Krátké texty (názvy předmětů, tooltipy) se píší rovnou do cs.json.
--->
+<translation key="signalstubes:item-handbooktext-programtube">
+    Programová elektronka nese obvod vypálený ve <a href="handbook://block-signalstubes:imprinter-north">vypalovači</a>. V <a href="handbook://block-signalstubes:tubesocket-north-down">patici</a> nebo v patici stroje se chová jako ta síť, ze které vznikla.
+    <br>
+    <br>
+    Nová elektronka je prázdná a má všech osm kolíků bez významu. Vypálením dostane jméno, popis, až osm pojmenovaných kolíků (vstup, výstup nebo nastavení), jméno autora a znak nad podstavcem, který odpovídá obvodu – stejný obvod má stejný znak. To vše ukazuje popisek předmětu.
+    <br>
+    Barva elektronky je jen pro vás: určuje ji <a href="handbook://item-signalstubes:tubebase-fire">podstavec</a>, program ne. Hodí se k odlišení druhů elektronek.
+    <br>
+    <br>
+    <strong>Zámky a autorství</strong>
+    <br>
+    Autorem je ten, kdo elektronku vypálil, a jeho jméno elektronka nese napořád. Při vypalování může autor nastavit dva zámky. <strong>Zámek kopírování</strong> brání tomu, aby kdokoli jiný elektronku rozmnožil: <a href="handbook://block-signalstubes:tubecopier-north">kopírka</a> ji cizímu odmítne, a kdo ji použije uvnitř své větší sítě, o ni přijde – zapájí se do nové elektronky a ta zdědí zámek. <strong>Zámek schématu</strong> schová obvod: ostatní vidí jen jméno, popis a kolíky, ne to, jak je obvod uvnitř zapojený. Zamčenou cizí elektronku nelze přepsat ani vymazat.
+    <br>
+    Zámky chrání práci autora, a právě to umožňuje s elektronkami obchodovat: autor prodává hotové, funkční elektronky, kupující s nimi řídí své stroje, ale nemůže je kopírovat ani okoukat. Kopie z kopírky je totéž co originál.
+    <br>
+    Ve vypalovači lze vlastní elektronku vymazat zpět na prázdnou; elektronky zapájené uvnitř se při tom vrátí.
+</translation>
+
+<translation key="signalstubes:item-handbooktext-tubebase">
+    Keramický podstavec s osmi kolíky je základ <a href="handbook://item-signalstubes:programtube-fire">programové elektronky</a>.
+    <br>
+    Syrové podstavce se tvarují z hlíny po čtyřech a vypalují jako ostatní keramika. V jámové peci dostane podstavec barvu podle hlíny; v úlové peci dávají jednotlivé vrstvy další odstíny. Krémový podstavec lze v sudu obarvit barvivem.
+    <br>
+    Barva přechází na hotovou elektronku a nemá vliv na její funkci.
+    <br>
+    S modem Clay Casting lze podstavce také odlévat: sádrová forma na dva podstavce se plní břečkou jako ostatní formy toho modu.
+</translation>
+
+<translation key="signalstubes:item-handbooktext-tubecore">
+    Vnitřek <a href="handbook://item-signalstubes:programtube-fire">programové elektronky</a>: kovové díly, drát a křišťál spájené dohromady. Páječka se při výrobě opotřebuje. Jádro se s <a href="handbook://item-signalstubes:tubebase-fire">podstavcem</a> a skleněnou baňkou skládá na prázdnou elektronku.
+</translation>
+
+<translation key="signalstubes:block-handbooktext-imprinter">
+    Vypalovač přečte síť ze součástek <a href="handbook://signals:craftinginfo-signals">Signals</a> a zapíše ji do <a href="handbook://item-signalstubes:programtube-fire">programové elektronky</a>.
+    <br>
+    <br>
+    <strong>Postup</strong>
+    <br>
+    1. Do patice nahoře zasaďte elektronku (pravým tlačítkem myši) – prázdnou, nebo svou dřívější, kterou chcete přepsat.
+    <br>
+    2. Vezměte si z lože <a href="handbook://item-signalstubes:imprinterplug">zástrčku</a> (pravým tlačítkem prázdnou rukou) a zapojte ji pravým tlačítkem do prázdné <a href="handbook://block-signalstubes:tubesocket-north-down">patice</a> nebo do patice stroje. Tahle patice určuje hranici obvodu: co je zapojené na jejích kolících, to se vypálí, a čísla kolíků elektronky budou čísla kolíků patice. Kabel dosáhne 24 bloků.
+    <br>
+    3. Vypínače (nožové spínače) a bloky zpoždění, které chcete ovládat zvenčí, označte <a href="handbook://item-signalstubes:imprinterprobe">sondou</a> – klepnutím pravým tlačítkem na ně. Dostanou vlastní kolík „nastavení“: signál na něm zapíná vypínač, u zpoždění nastavuje jeho hodnotu (0 = hodnota z doby vypálení).
+    <br>
+    4. Klepněte pravým tlačítkem prázdnou rukou na skříň vypalovače. V okně dáte elektronce jméno a popis, pojmenujete kolíky, zaškrtnete součástky na kolíky, případně zámky (viz <a href="handbook://item-signalstubes:programtube-fire">programová elektronka</a>), a stisknete Vypálit. Co nelze vypálit, je ve světě zvýrazněno červeně a v okně je uveden důvod.
+    <br>
+    Zástrčku i sondu vrátíte klepnutím pravým tlačítkem na jejich lože, nebo na skříň s nástrojem v ruce; upuštěné se vrátí samy.
+    <br>
+    <br>
+    <strong>Co lze vypálit</strong>
+    <br>
+    Zdroje, odpory a spoje, triody a tetrody, zpoždění a vypínače Signals. Vypínač přepínaný aktivátorem se vypálí jako paměť. Součástky, které čtou svět nebo hráče (senzory, tlačítka, nášlapné desky, lampy), vypálit nelze – ty zůstanou venku a připojí se na kolíky. Zařízení jiných modů smí být zapojená jen přímo na kolících patice. Každý drát musí někam vést. Chcete-li, aby obvod uvnitř elektronky reagoval na něco, co se vypálit nedá, zapojte to na kolík patice a z téhož kolíku veďte drát do obvodu – kolík se vypálí jako vstup.
+    <br>
+    <br>
+    <strong>Elektronky uvnitř sítě</strong>
+    <br>
+    Patice s elektronkou uvnitř vypalované sítě se vypálí také. Vlastní nebo nezamčená elektronka se opíše do nové. Cizí elektronka s některým zámkem – a každá elektronka, která už sama obsahuje zapájené elektronky – se <strong>zapájí</strong>: její program běží uvnitř nové elektronky, ale sama se spotřebuje – zmizí z patice – a nová elektronka dostane zámek kopírování. Před takovým vypálením vás okno upozorní (upozornění lze vypnout a znovu zapnout příkazem /tubes warn on).
+    <br>
+    Vymazání elektronky zapájené kusy vrátí. Novou verzi obvodu vypálíte do stejné elektronky znovu; autor je ten, kdo stiskl Vypálit.
+</translation>
+
+<translation key="signalstubes:item-handbooktext-imprinterplug">
+    Zástrčka na kabelu <a href="handbook://block-signalstubes:imprinter-north">vypalovače</a>. Zapojuje se pravým tlačítkem myši do prázdné <a href="handbook://block-signalstubes:tubesocket-north-down">patice</a> nebo do patice stroje a určuje tak, která síť se vypálí a jak budou číslované kolíky. Patří ke svému vypalovači: nelze ji uložit ani darovat, při upuštění nebo vzdálení přes 24 bloků se vrátí do lože. Vytáhnete ji klepnutím pravým tlačítkem na patici prázdnou rukou.
+</translation>
+
+<translation key="signalstubes:item-handbooktext-imprinterprobe">
+    Sonda <a href="handbook://block-signalstubes:imprinter-north">vypalovače</a> na tenkém vodiči. Klepnutím pravým tlačítkem myši označí vypínač nebo blok zpoždění v síti zapojené do zástrčky; označená součástka dostane při vypálení kolík „nastavení“. Dalším klepnutím označení zrušíte. Totéž lze zaškrtnout v okně vypalovače. Patří ke svému vypalovači a při upuštění se vrátí.
+</translation>
+
+<translation key="signalstubes:block-handbooktext-tubecopier">
+    Kopírka přepíše program z jedné <a href="handbook://item-signalstubes:programtube-fire">elektronky</a> do prázdné.
+    <br>
+    <br>
+    Do <strong>zelené patice</strong> vložte elektronku s programem, do <strong>červené</strong> prázdnou (pravým tlačítkem myši; prázdnou rukou je zase vyjmete). Kopírku nabijte temporálním kolečkem (pravým tlačítkem s kolečkem v ruce; jedno kolečko 1000, nejvýše 5000). Kopie stojí 10 plus počet součástek obvodu a trvá 5 sekund. Hotová kopie má barvu prázdné elektronky a jinak je totožná s předlohou, včetně autora a zámků.
+    <br>
+    <br>
+    <strong>Ovládání</strong>
+    <br>
+    Kopírování spustíte klepnutím pravým tlačítkem prázdnou rukou na skříň, nebo signálem na kolíku <strong>Start</strong>. Kolík <strong>Stav</strong> hlásí: 0 klid, 1 kopíruje, 2 hotovo, 10 v zelené patici není co kopírovat, 11 v červené patici není prázdná elektronka, 12 elektronku nelze kopírovat, 13 vybito. Každá změna v paticích vrací stav na 0.
+    <br>
+    Elektronku se zámkem kopírování zkopíruje jen její autor; kopírka postavená autorem ji kopíruje i při automatickém spuštění. Elektronku se zapájenými cizími elektronkami nelze kopírovat nikdy.
+    <br>
+    <br>
+    <strong>Automatika</strong>
+    <br>
+    Patice jsou přístupné pro <a href="handbook://block-signalslink:managedchute-north-down">řízené trubky</a> a <a href="handbook://block-signalslink:sleevedamper-north-down">klapky</a> modu SignalsLink: předlohu lze vyměnit, kdykoli kopírka nekopíruje, hotovou kopii odebrat po dokončení. Postavit sérii kopií je tedy otázka vhodného zapojení.
+</translation>

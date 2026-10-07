@@ -44,5 +44,16 @@
       "z": 0.5
     },
     "scale": 0.76
+  },
+  "attributes": {
+    "handbook": {
+      "extraSections": [
+        {
+          "title": "signalstubes:block-handbooktitle-signalstubes",
+          "text": "signalstubes:item-handbooktext-imprinterprobe"
+        }
+      ],
+      "include": true
+    }
   }
 }

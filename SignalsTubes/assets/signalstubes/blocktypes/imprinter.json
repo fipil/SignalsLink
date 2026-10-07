@@ -200,5 +200,15 @@
       "z": 0
     },
     "scale": 1.0
+  },
+  "attributes": {
+    "handbook": {
+      "extraSections": [
+        {
+          "title": "signalstubes:block-handbooktitle-signalstubes",
+          "text": "signalstubes:block-handbooktext-imprinter"
+        }
+      ]
+    }
   }
 }

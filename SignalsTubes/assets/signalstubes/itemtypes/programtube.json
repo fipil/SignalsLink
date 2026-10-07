@@ -176,5 +176,15 @@
   },
   "groundTransform": {
     "scale": 1
+  },
+  "attributes": {
+    "handbook": {
+      "extraSections": [
+        {
+          "title": "signalstubes:block-handbooktitle-signalstubes",
+          "text": "signalstubes:item-handbooktext-programtube"
+        }
+      ]
+    }
   }
 }

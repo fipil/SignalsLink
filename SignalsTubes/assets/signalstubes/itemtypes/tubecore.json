@@ -32,5 +32,15 @@
       "z": 0
     },
     "scale": 1.6
+  },
+  "attributes": {
+    "handbook": {
+      "extraSections": [
+        {
+          "title": "signalstubes:block-handbooktitle-signalstubes",
+          "text": "signalstubes:item-handbooktext-tubecore"
+        }
+      ]
+    }
   }
 }

@@ -93,7 +93,15 @@
           "*-west": 90
         }
       }
-    ]
+    ],
+    "handbook": {
+      "extraSections": [
+        {
+          "title": "signalstubes:block-handbooktitle-signalstubes",
+          "text": "signalstubes:block-handbooktext-tubecopier"
+        }
+      ]
+    }
   },
   "shapeByType": {
     "*-north": {

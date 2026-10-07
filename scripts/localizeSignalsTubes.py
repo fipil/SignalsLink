@@ -17,6 +17,7 @@ The API key is read from the OPENAI_API_KEY environment variable.
     python scripts/localizeSignalsTubes.py --seed-only     # only step 1, then report
     python scripts/localizeSignalsTubes.py --langs de,pl   # just these languages
     python scripts/localizeSignalsTubes.py --force         # retranslate everything
+    python scripts/localizeSignalsTubes.py --accept en     # English written by hand: record it as current
 
 BOM: see localizeSignalsLink.py - every read strips one, no write adds one.
 """

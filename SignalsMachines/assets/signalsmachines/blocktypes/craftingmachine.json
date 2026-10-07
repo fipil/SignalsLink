@@ -313,7 +313,15 @@
           "*-west": 90
         }
       }
-    ]
+    ],
+    "handbook": {
+      "extraSections": [
+        {
+          "title": "signalsmachines:block-handbooktitle-signalsmachines",
+          "text": "signalsmachines:block-handbooktext-craftingmachine"
+        }
+      ]
+    }
   },
   "drawtype": "json",
   "blockmaterial": "Metal",
