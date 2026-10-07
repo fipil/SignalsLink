@@ -1,4 +1,11 @@
 {
+  "preview-pin": "{0} – {1}",
+  "side-north": "north",
+  "side-east": "east",
+  "side-south": "south",
+  "side-west": "west",
+  "side-up": "up",
+  "side-down": "down",
   "claycasting:block-ccmold-tubebase-empty": "Empty plaster mold of a couple tube bases",
   "claycasting:blockdesc-ccmold-tubebase-empty": "Uses 5L of slip",
   "claycasting:block-ccmold-tubebase-blue": "Full plaster mold of a couple tube bases (B)",

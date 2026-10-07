@@ -2,27 +2,35 @@ using signals.src.signalNetwork;
 using SignalsTubes.src.programtube;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
+using Vintagestory.API.Common.Entities;
 using Vintagestory.API.MathTools;
 
 namespace SignalsTubes.src.socket;
 
 /// <summary>
 /// Eight-pin socket a tube runs in. Selection boxes 0-7 are the wire anchors (Signals convention:
-/// anchor index = box index), the box after them is the socket body used to insert and remove a tube.
+/// anchor index = box index), then the tube bed in the middle and the plate around it; both insert and
+/// remove a tube, but a tube going into the plate turns the socket towards the aimed side first.
 /// Pins the installed tube does not use are hidden and refuse wires.
 /// </summary>
-public class BlockTubeSocket : BlockConnection
+public class BlockTubeSocket : BlockConnection, Vintagestory.GameContent.IWrenchOrientable
 {
-    public const int PinCount = 8;
+    public const int PinCount = 8, BedBox = PinCount, PlateBox = PinCount + 1;
 
     public override Cuboidf[] GetSelectionBoxes(IBlockAccessor world, BlockPos pos)
     {
-        var boxes = base.GetSelectionBoxes(world, pos);
-        int mask = VisiblePins(world, pos);
-        for (int i = 0; i < PinCount && i < boxes.Length; i++)
-            if ((mask >> i & 1) == 0) boxes[i] = new Cuboidf();  // zero size: cannot be aimed at
-        return boxes;
+        var anchors = base.GetSelectionBoxes(world, pos).Take(PinCount).ToArray();
+        // while the insertion preview shows, only its solid pins can be aimed at; where a hidden one stood is plate
+        int mask = world.GetBlockEntity(pos) is BETubeSocket { PreviewPins: >= 0 } p ? p.PreviewPins : VisiblePins(world, pos);
+        for (int i = 0; i < PinCount && i < anchors.Length; i++)
+            if ((mask >> i & 1) == 0) anchors[i] = new Cuboidf();  // zero size: cannot be aimed at
+        bool hasTube = world.GetBlockEntity(pos) is BETubeSocket { HasTube: true };
+        var bed = new Cuboidf(5 / 16f, 1 / 16f, 5 / 16f, 11 / 16f, (hasTube ? 9.5f : 2.5f) / 16, 11 / 16f);
+        var plate = new Cuboidf(1 / 16f, 0, 1 / 16f, 15 / 16f, 1 / 16f, 15 / 16f);
+        return anchors.Append(Turned(bed)).Append(Turned(plate)).ToArray();
     }
+
+    private Cuboidf Turned(Cuboidf local) => local.RotatedCopy(Shape.rotateX, Shape.rotateY, Shape.rotateZ, new Vec3d(.5, .5, .5));
 
     public static int VisiblePins(IBlockAccessor world, BlockPos pos) =>
         world.GetBlockEntity(pos) is BETubeSocket { HasTube: true } be ? be.PinMask : (1 << PinCount) - 1;
@@ -53,7 +61,7 @@ public class BlockTubeSocket : BlockConnection
                 imprinter.UnplugToHand((Vintagestory.API.Server.IServerPlayer)byPlayer);
             return true;
         }
-        return be != null && be.Interact(byPlayer);
+        return be != null && be.Interact(byPlayer, blockSel);
     }
 
     public override WorldInteraction[] GetPlacedBlockInteractionHelp(IWorldAccessor world, BlockSelection selection, IPlayer forPlayer)
@@ -86,6 +94,16 @@ public class BlockTubeSocket : BlockConnection
             string role = Vintagestory.API.Config.Lang.Get("signalstubes:pin-" + (be?.RoleOf(sel.SelectionBoxIndex) ?? "free"), sel.SelectionBoxIndex + 1);
             info += (TubeProgram.Vtml(be?.NameOf(sel.SelectionBoxIndex)) ?? role) + "\n";
         }
+        if (be is { PreviewOrientation: not null, PreviewTube: not null })
+        {
+            var variant = world.GetBlock(CodeWithVariant("orientation", be.PreviewOrientation.Code)) ?? this;
+            foreach (var pin in TubeProgram.Pins(be.PreviewTube).OrderBy(p => p.Index))
+            {
+                string name = TubeProgram.Vtml(pin.Name) ?? Vintagestory.API.Config.Lang.Get("signalstubes:pin-" + BETubeSocket.RoleOf(be.PreviewTube, pin.Index), pin.Index + 1);
+                var side = SocketOrientation.WorldSide(variant, SocketOrientation.LocalSide[pin.Index]);
+                info += Vintagestory.API.Config.Lang.Get("signalstubes:preview-pin", name, Vintagestory.API.Config.Lang.Get("signalstubes:side-" + side.Code)) + "\n";
+            }
+        }
         // A tube in a socket shows just its description; the full tooltip belongs to the item and to machines.
         // Aiming at one of its pins shows nothing but that pin (its name is the title then).
         if (anchor != null && be is { HasTube: true }) return "";
@@ -104,6 +122,19 @@ public class BlockTubeSocket : BlockConnection
     }
 
     public Vec3f ShapeRotation => new(Shape.rotateX, Shape.rotateY, Shape.rotateZ);
+
+    /// <summary>The game's wrench: a quarter turn in the plate, tube and all; the wires jump to the pins' new places.</summary>
+    public void Rotate(EntityAgent byEntity, BlockSelection blockSel, int dir)
+    {
+        if (api.World.BlockAccessor.GetBlockEntity(blockSel.Position) is not BETubeSocket be) return;
+        var n = SocketOrientation.SideOf(this).Normali;
+        var o = SocketOrientation.OrientationOf(this).Normali;
+        // the next direction around the surface normal: n x o one way, o x n the other
+        var next = dir >= 0
+            ? BlockFacing.FromVector(n.Y * o.Z - n.Z * o.Y, n.Z * o.X - n.X * o.Z, n.X * o.Y - n.Y * o.X)
+            : BlockFacing.FromVector(o.Y * n.Z - o.Z * n.Y, o.Z * n.X - o.X * n.Z, o.X * n.Y - o.Y * n.X);
+        be.TurnTo(next);
+    }
 
     /// <summary>World point where the imprinter cable meets the plug head, whatever way the socket faces.</summary>
     public static Vec3d PlugCableEnd(IBlockAccessor accessor, BlockPos pos)

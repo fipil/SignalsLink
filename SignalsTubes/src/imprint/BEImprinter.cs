@@ -502,10 +502,10 @@ public class BEImprinter : BlockEntity
         DisposeCables();
         if (socket != null)
         {
-            // the socket says where its plug head is; its entity may not be loaded here yet, so ask until it answers
-            Vec3d end = null;
+            // the socket says where its plug is - asked every frame: its entity may not be loaded here yet,
+            // and a socket turned with the wrench moves the plug with it
             var at = socket.Copy();
-            plugCable = new CableRenderer(capi, PlugAnchor(), () => end ??= (capi.World.BlockAccessor.GetBlockEntity(at) as ITubeSocket)?.PlugCableEnd(),
+            plugCable = new CableRenderer(capi, PlugAnchor(), () => (capi.World.BlockAccessor.GetBlockEntity(at) as ITubeSocket)?.PlugCableEnd(),
                 CableMesh.PlugCable, CableRenderer.WireTexture);
         }
         else if (plug.Out && plug.Holder == capi.World.Player.PlayerUID)

@@ -160,7 +160,7 @@ public sealed class SignalsRig
             tree.SetItemstack("programTube", tube);
             be.FromTreeAttributes(tree, world);
         }
-        return Place(pos, block, "signalstubes:tubesocket-north-down", be, e => new BEBehaviorSignalConnector(e), SourceNodes(8));
+        return Place(pos, block, "signalstubes:tubesocket-north-down", be, e => new BEBehaviorSignalConnector(e), SourceNodes(8), ("orientation", "north"), ("side", "down"));
     }
 
     public BlockPos SourceBlock(BlockPos pos, int output = 15) =>

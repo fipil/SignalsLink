@@ -1,4 +1,11 @@
 {
+  "preview-pin": "{0} – {1}",
+  "side-north": "sever",
+  "side-east": "východ",
+  "side-south": "jih",
+  "side-west": "západ",
+  "side-up": "nahoru",
+  "side-down": "dolů",
   "claycasting:block-ccmold-tubebase-empty": "Prázdná sádrová forma na dvě základny elektronek",
   "claycasting:blockdesc-ccmold-tubebase-empty": "Spotřebuje 5 l břečky",
   "claycasting:block-ccmold-tubebase-blue": "Plná sádrová forma na dvě základny elektronek (M)",
