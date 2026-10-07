@@ -629,7 +629,7 @@ public class BECraftingMachine : BlockEntityContainer, ISidedAutomation, Signals
         {
             MeshData mesh = item.BuildMesh(capi, tube, capi.Tesselator.GetTextureSource(Block));
             mesh.Scale(new Vec3f(), .5f, .5f, .5f);
-            mesh.Translate(4f / 16, 1f / 16, 8f / 16);
+            mesh.Translate(4f / 16, .5f / 16, 8f / 16);   // seated: the base just clears the socket floor
             mesh.Rotate(new Vec3f(.5f, .5f, .5f), 0, block.RotationRadians, 0);
             tubeMesh = mesh;
         }

@@ -5,6 +5,7 @@ using SignalsTubes.src.circuit;
 using SignalsTubes.src.programtube;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
+using Vintagestory.API.Config;
 using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
 
@@ -329,7 +330,7 @@ public class BETubeSocket : BlockEntity, ITubeSocket
                 parts.AddRange(capi.Assets.Get(new AssetLocation("signalstubes", "shapes/block/tubesocket-plug.json")).ToObject<Shape>().Clone().Elements);
             shape.Elements = parts.ToArray();
             if (tube?.Collectible is ItemProgramTube item)
-                TubeVisuals.Append(shape, item.BuildShape(tube, lit), .5f, new Vec3f(4, 1, 4));
+                TubeVisuals.Append(shape, item.BuildShape(tube, lit), .5f, new Vec3f(4, .5f, 4));
             capi.Tesselator.TesselateShape(block, shape, out MeshData mesh, block.ShapeRotation);
             meshCache[key] = mesh;
             return mesh;
@@ -376,7 +377,9 @@ public class BETubeSocket : BlockEntity, ITubeSocket
         PreviewOrientation = tubeOnly ? null : orientation;
         PreviewTube = held;
         preview ??= new SocketPreviewRenderer(capi, Pos);
-        preview.SetMesh(PreviewMesh(capi, held, orientation, tubeOnly));
+        var variant = capi.World.GetBlock(Block.CodeWithVariant("orientation", orientation.Code)) as BlockTubeSocket ?? (BlockTubeSocket)Block;
+        preview.SetMesh(PreviewMesh(capi, held, variant, tubeOnly));
+        preview.SetLabels(PinLabels(held, variant));
         // on the bed the real pins show the held tube's pins, solid and coloured; while turning they are all gone
         int pins = tubeOnly ? TubeVisuals.PinMask(held) : 0;
         previewHidesPins = !tubeOnly;
@@ -384,13 +387,36 @@ public class BETubeSocket : BlockEntity, ITubeSocket
         else MarkDirty(true);   // the roles may differ between tubes with the same mask
     }
 
-    private MeshData PreviewMesh(ICoreClientAPI capi, ItemStack held, BlockFacing orientation, bool tubeOnly)
+    // Which way a pin's name tag leaves the socket, in the unrotated shape: the three pins along each side go out
+    // sideways (west: 0, 7, 6; east: 2, 3, 4), the middle pins of the front and back rows (1, 5) out that way.
+    private static readonly BlockFacing[] TagSide =
     {
-        var variant = capi.World.GetBlock(Block.CodeWithVariant("orientation", orientation.Code)) as BlockTubeSocket ?? (BlockTubeSocket)Block;
+        BlockFacing.WEST, BlockFacing.NORTH, BlockFacing.EAST, BlockFacing.EAST,
+        BlockFacing.EAST, BlockFacing.SOUTH, BlockFacing.WEST, BlockFacing.WEST
+    };
+
+    // A name tag per pin of the held tube, hung right next to where that pin would be, on its outer side.
+    private IEnumerable<(Vec3d at, Vec3d outward, bool sideways, string text)> PinLabels(ItemStack held, BlockTubeSocket variant)
+    {
+        const float outside = .1f;   // from a pin's middle just past its outer face (pins are 2/16 wide)
+        foreach (var pin in TubeProgram.Pins(held).OrderBy(p => p.Index))
+        {
+            var anchor = variant.GetAnchorPosInBlock(new NodePos(Pos, pin.Index));
+            var local = TagSide[pin.Index];
+            var d = SocketOrientation.WorldSide(variant, local).Normalf;
+            var outward = new Vec3d(d.X, d.Y, d.Z);
+            var at = Pos.ToVec3d().Add(anchor.X + d.X * outside, anchor.Y + d.Y * outside, anchor.Z + d.Z * outside);
+            string text = string.IsNullOrEmpty(pin.Name) ? Lang.Get("signalstubes:pin-" + RoleOf(held, pin.Index), pin.Index + 1) : pin.Name;
+            yield return (at, outward, local == BlockFacing.WEST || local == BlockFacing.EAST, text);
+        }
+    }
+
+    private MeshData PreviewMesh(ICoreClientAPI capi, ItemStack held, BlockTubeSocket variant, bool tubeOnly)
+    {
         Shape shape = capi.Assets.Get(new AssetLocation("signalstubes", "shapes/block/tubesocket.json")).ToObject<Shape>().Clone();
         // the turning preview shows the pins the tube would use; the "put it back" preview only the tube
         shape.Elements = tubeOnly ? Array.Empty<ShapeElement>() : SocketParts(shape, TubeVisuals.PinMask(held), held).Where(e => e.Name.StartsWith("pin_")).ToArray();
-        if (held.Collectible is ItemProgramTube item) TubeVisuals.Append(shape, item.BuildShape(held, false), .5f, new Vec3f(4, 1, 4));
+        if (held.Collectible is ItemProgramTube item) TubeVisuals.Append(shape, item.BuildShape(held, false), .5f, new Vec3f(4, .5f, 4));
         capi.Tesselator.TesselateShape(variant, shape, out MeshData mesh, variant.ShapeRotation);
         return mesh;
     }

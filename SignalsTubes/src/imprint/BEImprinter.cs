@@ -585,7 +585,7 @@ public class BEImprinter : BlockEntity
             // the tools sit in a rotated group on the slope, so the filter has to walk into children
             shape.Elements = WithoutTakenTools(shape.Elements);
             if (tube?.Collectible is ItemProgramTube item)
-                TubeVisuals.Append(shape, item.BuildShape(tube, false), .5f, new Vec3f(4, 17.9f, 0.5f));
+                TubeVisuals.Append(shape, item.BuildShape(tube, false), .5f, new Vec3f(4, 17, 0.5f));
             capi.Tesselator.TesselateShape(block, shape, out MeshData mesh, new Vec3f(0, block.Shape.rotateY, 0));
             meshCache[key] = mesh;
             return mesh;
