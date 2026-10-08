@@ -15,6 +15,46 @@ public class PaperConditionsEvaluator
     private CompiledConditions compiled;
     private readonly List<PaperConditionError> errors = new List<PaperConditionError>();
 
+    // The `when` gate. Views per Input value are cached; the parse itself is shared.
+    private byte gateInput;
+    private readonly Dictionary<byte, CompiledConditions> views = new Dictionary<byte, CompiledConditions>();
+
+    /// <summary>The Input pin as the device last saw it. Only a gated paper (<see cref="IsGated"/>) reads it.</summary>
+    public byte GateInput
+    {
+        get => gateInput;
+        set => gateInput = value;
+    }
+
+    /// <summary>True if the paper has <c>when</c> sections: the Input pin picks sections, credit and continuous mode do not apply.</summary>
+    public bool IsGated => Whole?.IsGated ?? false;
+
+    /// <summary>On a gated paper: does the current Input value open at least one section?</summary>
+    public bool GateOpen => IsGated && Current.Sections.Count > 0;
+
+    /// <summary>The whole parsed paper, compiled on demand; null without a paper.</summary>
+    private CompiledConditions Whole
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(conditionsText)) return null;
+            if (compiled == null || !string.Equals(lastParsedText, conditionsText, StringComparison.Ordinal)) ParseInternal(conditionsText);
+            return compiled;
+        }
+    }
+
+    /// <summary>What the device works on: the whole paper, or on a gated paper the sections open for the Input value.</summary>
+    private CompiledConditions Current
+    {
+        get
+        {
+            CompiledConditions whole = Whole;
+            if (whole == null || !whole.IsGated) return whole;
+            if (!views.TryGetValue(gateInput, out CompiledConditions view)) views[gateInput] = view = whole.ActiveFor(gateInput);
+            return view;
+        }
+    }
+
     /// <summary>Mistakes found in the current paper, with line numbers. Empty when it is clean.</summary>
     public IReadOnlyList<PaperConditionError> Errors
     {
@@ -62,7 +102,7 @@ public class PaperConditionsEvaluator
             {
                 ParseInternal(conditionsText);
             }
-            return compiled?.HasAnyOutput ?? false;
+            return Current?.HasAnyOutput ?? false;
         }
     }
 
@@ -85,7 +125,7 @@ public class PaperConditionsEvaluator
             ParseInternal(conditionsText);
         }
 
-        return compiled?.Blocks;
+        return Current?.Blocks;
     }
 
     /// <summary>
@@ -124,7 +164,7 @@ public class PaperConditionsEvaluator
             ParseInternal(conditionsText);
         }
 
-        return compiled?.Sections;
+        return Current?.Sections;
     }
 
     /// <summary>True if the player wrote a section header.</summary>
@@ -147,6 +187,7 @@ public class PaperConditionsEvaluator
     {
         lastParsedText = null;
         compiled = null;
+        views.Clear();
         errors.Clear();
     }
 
@@ -192,9 +233,9 @@ public class PaperConditionsEvaluator
             ParseInternal(conditionsText);
         }
 
-        if (compiled == null) return false;
+        if (Current == null) return false;
 
-        return compiled.Evaluate(stack, ctx, out matchedBlockIndex, out directives);
+        return Current.Evaluate(stack, ctx, out matchedBlockIndex, out directives);
     }
 
     public bool TryMatch(ItemStack stack, IDictionary<string, object> ctx, out PaperConditionMatchResult matchResult)
@@ -214,9 +255,9 @@ public class PaperConditionsEvaluator
             ParseInternal(conditionsText);
         }
 
-        if (compiled == null) return false;
+        if (Current == null) return false;
 
-        return compiled.TryMatch(stack, ctx, out matchResult);
+        return Current.TryMatch(stack, ctx, out matchResult);
     }
 
     public IReadOnlyList<IConditionAction> GetMatchingActions(ItemStack stack, IDictionary<string, object> ctx)
@@ -231,9 +272,9 @@ public class PaperConditionsEvaluator
             ParseInternal(conditionsText);
         }
 
-        if (compiled == null) return Array.Empty<IConditionAction>();
+        if (Current == null) return Array.Empty<IConditionAction>();
 
-        return compiled.GetMatchingActions(stack, ctx);
+        return Current.GetMatchingActions(stack, ctx);
     }
 
     /// <summary>
@@ -289,6 +330,7 @@ public class PaperConditionsEvaluator
     private void ParseInternal(string text)
     {
         errors.Clear();
+        views.Clear();
         lastParsedText = text;
         compiled = PaperConditionsParser.Parse(text, errors);
     }

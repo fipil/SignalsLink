@@ -47,6 +47,13 @@ namespace SignalsLink.src.signals.paperConditions
         bool RequiresSections => false;
 
         /// <summary>
+        /// True for a device with an Input pin: a <c>when</c> gate on a section then means "run
+        /// this section while the pin holds one of these values". A sensor has no such pin, so a
+        /// gate there is reported rather than ignored.
+        /// </summary>
+        bool SupportsGates => false;
+
+        /// <summary>
         /// Lets the device judge the part of a header only it can: which other party the words name.
         /// Whether `yard` or `train` means anything is known to the device's registry, not to the
         /// parser - and until this existed, a header naming nothing that exists was accepted in
@@ -188,6 +195,7 @@ namespace SignalsLink.src.signals.paperConditions
 
             AddBlocksWithNothingToSelect(compiled, host, errors);
             AddUnsupportedSections(compiled, host, errors);
+            AddGatesTheDeviceCannotRead(compiled, host, errors);
             AddMissingSections(compiled, host, errors);
             AddHeadersNamingNoEnd(compiled, host, errors);
             AddHeadersTheDeviceRejects(compiled, host, errors);
@@ -214,7 +222,20 @@ namespace SignalsLink.src.signals.paperConditions
             foreach (ConditionSection section in compiled.Sections)
             {
                 if (section.IsImplicit) continue;
+                // `when 3` on its own names no end: on a one-way device it is only a gate, and fine.
+                if (host.SupportsGates && section.IsGated && !section.NamesAnEnd) continue;
                 errors.Add(new PaperConditionError(section.FirstLine, section.Header, "sectionunsupported"));
+            }
+        }
+
+        /// <summary>A gate on a device without an Input pin has nothing to listen to.</summary>
+        private static void AddGatesTheDeviceCannotRead(CompiledConditions compiled, IPaperConditionsHost host, List<PaperConditionError> errors)
+        {
+            if (compiled == null || host == null || host.SupportsGates) return;
+
+            foreach (ConditionSection section in compiled.Sections)
+            {
+                if (section.IsGated) errors.Add(new PaperConditionError(section.FirstLine, section.Header, "sectionwhenunsupported"));
             }
         }
 

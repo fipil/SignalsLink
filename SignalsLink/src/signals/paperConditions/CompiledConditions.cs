@@ -26,6 +26,22 @@ namespace SignalsLink.src.signals.paperConditions
         /// sections report that as a mistake in the paper.</summary>
         public bool HasExplicitSections => sections.Count > 0 && !sections[0].IsImplicit;
 
+        /// <summary>True if any section carries a <c>when</c> gate: the Input pin then picks sections instead of crediting transfers.</summary>
+        public bool IsGated => sections.Exists(s => s.IsGated);
+
+        /// <summary>
+        /// The paper as the device sees it while the Input pin holds <paramref name="input"/>: only
+        /// the sections gated for that value, their blocks in paper order. Everything that reads
+        /// blocks or sections then works on this view and never learns about gates.
+        /// </summary>
+        public CompiledConditions ActiveFor(byte input)
+        {
+            if (!IsGated) return this;
+            var activeSections = sections.FindAll(s => s.ActiveFor(input));
+            var activeBlocks = new HashSet<ConditionBlock>(activeSections.SelectMany(s => s.Blocks));
+            return new CompiledConditions(blocks.FindAll(activeBlocks.Contains), activeSections);
+        }
+
         /// <summary>
         /// The blocks in the order they stand on the paper. This is what the unified
         /// <see cref="ConditionDriver"/> walks; everything else here is the older per-entry-point

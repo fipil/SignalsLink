@@ -60,6 +60,8 @@ namespace SignalsLink.src.signals.managedchute
 
         public int SignalInputsCount => 4; // Input, Target, Source, Output (selection boxes 0..3)
 
+        public bool SupportsGates => true;
+
         public string ConditionsText
         {
             get
@@ -141,7 +143,9 @@ namespace SignalsLink.src.signals.managedchute
             using var regexDiagnostics = RegexDiagnostics.Begin(Api, Pos, "ManagedChute");
             if (Api?.World == null || !(Api is ICoreServerAPI)) return;
 
-            bool hasCredit = unlimited || remaining > 0;
+            // A gated paper: the Input pin opens sections, nothing is credited or counted down.
+            bool gated = ConditionsEvaluator.IsGated;
+            bool hasCredit = gated ? ConditionsEvaluator.GateOpen : unlimited || remaining > 0;
 
             // Blocks with an `output` action are evaluated on EVERY tick, whatever the Input pin
             // says - that is what makes the pin a reading of the current state rather than a
@@ -169,7 +173,7 @@ namespace SignalsLink.src.signals.managedchute
             if (itemFlowAccum < 1f) return;
 
             int canByRate = (int)itemFlowAccum;
-            int allowedNow = unlimited ? canByRate : Math.Min(canByRate, remaining);
+            int allowedNow = unlimited || gated ? canByRate : Math.Min(canByRate, remaining);
             if (allowedNow <= 0) return;
 
             // Šablona pro operaci – 1 kus, direct merge
@@ -198,7 +202,7 @@ namespace SignalsLink.src.signals.managedchute
                 // so a batch costs at most one tick. Unbatched moves (1 piece) are unaffected.
                 itemFlowAccum -= System.Math.Min((float)moveResult.MovedAmount, System.Math.Max(1f, (float)canByRate));
 
-                if (!unlimited)
+                if (!unlimited && !gated)
                 {
                     remaining -= triggerCost;
                     if (remaining < 0) remaining = 0; // an atomic amount-op may overshoot the last bit
@@ -256,6 +260,15 @@ namespace SignalsLink.src.signals.managedchute
         {
             if (pos.index != 0) return;
             if (signalState == value) return;
+
+            // A gated paper (`when`): the pin picks sections; no batch, no continuous mode.
+            ConditionsEvaluator.GateInput = value;
+            if (ConditionsEvaluator.IsGated)
+            {
+                signalState = value;
+                MarkDirty();
+                return;
+            }
 
             if (value >= 1 && value <= 7)
             {
@@ -346,6 +359,7 @@ namespace SignalsLink.src.signals.managedchute
                 {
                     conditionsEvaluator = new PaperConditionsEvaluator();
                     conditionsEvaluator.SetConditionsText(ConditionsText);
+                    conditionsEvaluator.GateInput = signalState;
                 }
                 return conditionsEvaluator;
             }
@@ -431,6 +445,7 @@ namespace SignalsLink.src.signals.managedchute
             // the pin looks like it went 0 -> N after every load, which credits a phantom batch.
             signalState = (byte)tree.GetInt("signalState", 0);
             outputState = (byte)tree.GetInt("outputState", 0);
+            if (conditionsEvaluator != null) conditionsEvaluator.GateInput = signalState;
 
             int savedMode = tree.GetInt("retentionMode", link.RetentionMode.Cooling);
             retentionMode = savedMode >= 0 && savedMode < link.RetentionMode.Count ? savedMode : link.RetentionMode.Cooling;
@@ -461,7 +476,11 @@ namespace SignalsLink.src.signals.managedchute
                 return;
             }
 
-            if (unlimited)
+            if (ConditionsEvaluator.IsGated)
+            {
+                dsc.AppendLine(Lang.Get(ConditionsEvaluator.GateOpen ? "signalslink:managedchute-info-gate-open" : "signalslink:managedchute-info-gate-closed", signalState));
+            }
+            else if (unlimited)
             {
                 dsc.AppendLine(Lang.Get("signalslink:managedchute-info-unlimited"));
             }

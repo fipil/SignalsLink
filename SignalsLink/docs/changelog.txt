@@ -1,4 +1,5 @@
 1.0.7
+Tweak: Paper sections can be switched by the Input pin: end a header with `when 3` (or `when 1 2 4-6`; a bare `when 2` header means the device's own ends). While Input holds one of the values the section transports continuously, other sections are ignored, and Input stops meaning a batch or 15 on such a paper. One `when` means every section needs one. Works on chutes, dampers, valves and the dock; the handbook explains it under Paper Conditions.
 Tweak: A storage yard now needs only 2 tiles instead of 4.
 Tweak: Chutes and dampers now reach the inventory of a multiblock through any of its blocks, not only the main one; a damper hung on such a block loses its legs as on a chest.
 Tweak: A block can keep automation out through chosen faces (used by Signals Machines for machine doors).

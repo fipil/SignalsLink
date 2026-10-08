@@ -65,6 +65,11 @@ namespace SignalsLink.src.signals.manageddock
         public bool SupportsSections => true;
         public bool RequiresSections => true;
 
+        public bool SupportsGates => true;
+
+        /// <summary>Credit on the Input pin; on a gated paper (`when`) the pin opens sections instead.</summary>
+        private bool HasCredit => ConditionsEvaluator.IsGated ? ConditionsEvaluator.GateOpen : unlimited || remaining > 0;
+
         /// <summary>
         /// Judges both ends while the paper is being read, so an unknown holder is a reported
         /// mistake rather than a dock quietly doing nothing.
@@ -176,7 +181,7 @@ namespace SignalsLink.src.signals.manageddock
             }
 
             // An idle dock must not cost a flood fill of the yard five times a second.
-            if (!unlimited && remaining <= 0 && !ConditionsEvaluator.HasAnyOutput)
+            if (!HasCredit && !ConditionsEvaluator.HasAnyOutput)
             {
                 if (ConditionDebug.Enabled) ConditionDebug.Log("no credit on the Input pin and no output block, so nothing to do");
                 SetOutput(0);
@@ -260,7 +265,7 @@ namespace SignalsLink.src.signals.manageddock
             if (sources == null || targets == null) return null;
 
             PaperConditionsEvaluator evaluator = EvaluatorFor(section);
-            bool hasCredit = unlimited || remaining > 0;
+            bool hasCredit = HasCredit;
             IDictionary<string, object> outputContext = null;
             DriverResult result = ConditionDriver.Run(evaluator.GetBlocks(), actionsBlocked || !hasCredit,
                 block =>
@@ -462,7 +467,7 @@ namespace SignalsLink.src.signals.manageddock
                     if (!ConditionActions.RunOn(block, ctx)) return false;
                     if (ConditionDebug.Enabled) ConditionDebug.Log("  " + source.Code + " -> " + target.Code + ": actions ran");
                     source.MarkDirty(); target.MarkDirty();
-                    if (!unlimited) remaining = Math.Max(0, remaining - 1);
+                    if (!unlimited && !ConditionsEvaluator.IsGated) remaining = Math.Max(0, remaining - 1);
                     MarkDirty();
                     return true;
                 }
@@ -473,7 +478,7 @@ namespace SignalsLink.src.signals.manageddock
                 if (ConditionDebug.Enabled) ConditionDebug.Log("  " + source.Code + " -> " + target.Code + ": moved " + result.MovedAmount);
                 source.MarkDirty();
                 target.MarkDirty();
-                if (!unlimited) remaining = Math.Max(0, remaining - 1);
+                if (!unlimited && !ConditionsEvaluator.IsGated) remaining = Math.Max(0, remaining - 1);
                 MarkDirty();
                 return true;
             }, order);
@@ -620,6 +625,15 @@ namespace SignalsLink.src.signals.manageddock
             if (pos.index != InputPin) return;
             if (signalState == value) return;
 
+            // A gated paper (`when`): the pin picks sections; no batch, no continuous mode.
+            ConditionsEvaluator.GateInput = value;
+            if (ConditionsEvaluator.IsGated)
+            {
+                signalState = value;
+                MarkDirty();
+                return;
+            }
+
             if (value >= 1 && value <= 7) remaining += 1 << (value - 1);
 
             if (value == UnlimitedTransfer)
@@ -687,6 +701,7 @@ namespace SignalsLink.src.signals.manageddock
 
             // Saved with the credit, or the pin looks like it went 0 -> N after every load.
             signalState = (byte)tree.GetInt("signalState", 0);
+            ConditionsEvaluator.GateInput = signalState;
             outputState = (byte)tree.GetInt("outputState", 0);
 
             MeshAngle = tree.GetFloat("meshAngle", MeshAngle);
@@ -739,7 +754,11 @@ namespace SignalsLink.src.signals.manageddock
             // answered with everything in it.
             if (selection?.SelectionBoxIndex < SignalInputsCount) return;
 
-            if (unlimited)
+            if (ConditionsEvaluator.IsGated)
+            {
+                dsc.AppendLine(Lang.Get(ConditionsEvaluator.GateOpen ? "signalslink:managedchute-info-gate-open" : "signalslink:managedchute-info-gate-closed", signalState));
+            }
+            else if (unlimited)
             {
                 dsc.AppendLine(Lang.Get("signalslink:managedchute-info-unlimited"));
             }

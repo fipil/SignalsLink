@@ -25,6 +25,13 @@ namespace SignalsLink.src.signals.paperConditions
         public const string From = "from";
         public const string To = "to";
 
+        /// <summary>
+        /// The gate: <c>when 3</c>, <c>when 1 2 4-6</c>. A section with a gate runs only while the
+        /// Input pin holds one of its values; the pin's credit meaning is suspended on such a paper.
+        /// </summary>
+        public const string When = "when";
+        public const int MaxWhen = 15;
+
         /// <summary>The header line as written, or empty for the implicit section.</summary>
         public string Header { get; }
 
@@ -48,6 +55,16 @@ namespace SignalsLink.src.signals.paperConditions
         public IReadOnlyList<string> SourceTokens { get; }
 
         public IReadOnlyList<string> TargetTokens { get; }
+
+        /// <summary>Bit n set = active for Input value n (1..15); 0 = no gate written.</summary>
+        public ushort WhenMask { get; private set; }
+
+        public bool IsGated => WhenMask != 0;
+
+        /// <summary>The offending token when the gate could not be read (<c>when 0</c>, <c>when x</c>, <c>when</c>); null when fine.</summary>
+        public string WhenError { get; private set; }
+
+        public bool ActiveFor(byte input) => input >= 1 && input <= MaxWhen && (WhenMask & (1 << input)) != 0;
 
         public bool SourceIsDevice => SourceTokens.Count == 0;
         public bool TargetIsDevice => TargetTokens.Count == 0;
@@ -136,9 +153,26 @@ namespace SignalsLink.src.signals.paperConditions
             string[] tokens = line.Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
             if (tokens.Length == 0) return false;
 
+            // `... when 3`: the gate is cut off the end and read on its own; the rest is the header
+            // as before. A line that only has `when` is a header too: both ends are the device.
+            int whenAt = Array.FindIndex(tokens, t => t.Equals(When, StringComparison.OrdinalIgnoreCase));
+            string[] gate = null;
+            if (whenAt >= 0)
+            {
+                gate = tokens[(whenAt + 1)..];
+                tokens = tokens[..whenAt];
+                if (tokens.Length == 0)
+                {
+                    section = new ConditionSection(line, null, null, null, lineNumber);
+                    section.ReadGate(gate);
+                    return true;
+                }
+            }
+
             if (tokens[0].Equals(From, StringComparison.OrdinalIgnoreCase))
             {
                 section = ParseFromTo(line, tokens, lineNumber);
+                section.ReadGate(gate);
                 return true;
             }
 
@@ -168,8 +202,28 @@ namespace SignalsLink.src.signals.paperConditions
                 unload ? rest : (IReadOnlyList<string>)Array.Empty<string>(),
                 unload ? Array.Empty<string>() : (IReadOnlyList<string>)rest,
                 lineNumber);
+            section.ReadGate(gate);
 
             return true;
+        }
+
+        /// <summary>Values 1..15, single or as a range <c>a-b</c>. Nothing after <c>when</c> is a mistake too.</summary>
+        private void ReadGate(string[] gate)
+        {
+            if (gate == null) return;
+            if (gate.Length == 0) { WhenError = ""; return; }
+
+            foreach (string token in gate)
+            {
+                string[] bounds = token.Split('-');
+                if (bounds.Length > 2 || !int.TryParse(bounds[0], out int lo) || !int.TryParse(bounds[^1], out int hi)
+                    || lo < 1 || hi > MaxWhen || lo > hi)
+                {
+                    WhenError = token;
+                    continue;
+                }
+                for (int v = lo; v <= hi; v++) WhenMask |= (ushort)(1 << v);
+            }
         }
 
         /// <summary>

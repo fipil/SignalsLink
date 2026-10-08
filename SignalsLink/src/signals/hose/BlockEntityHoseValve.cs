@@ -38,11 +38,13 @@ namespace SignalsLink.src.signals.hose
         private bool unlimited;
 
         /// <summary>Does this valve currently have Input credit (a batch, or continuous)?</summary>
-        public bool HasInput => unlimited || remaining > 0;
+        public bool HasInput => conditionsEvaluator.IsGated ? conditionsEvaluator.GateOpen : unlimited || remaining > 0;
 
         // The far end of the hose IS the source, so there is no slot to pick and a block needs no
         // source-scoped condition to be a valid transfer.
         public bool RequiresTransferSelector => false;
+
+        public bool SupportsGates => true;
 
         // Output anchor (index 1) — holds its last value until paper conditions override it.
         public byte outputState;
@@ -326,10 +328,12 @@ namespace SignalsLink.src.signals.hose
             bool contested = IsFarActiveValve(far);
             if (contested && !linkMod.IsOnTurn(myAnchor, far)) return 2;
 
-            decimal litres = unlimited ? maxLitresPerTick : System.Math.Min((decimal)remaining, maxLitresPerTick);
+            // On a gated paper (`when`) the open section flows like 15: no credit to count down.
+            bool free = unlimited || conditionsEvaluator.IsGated;
+            decimal litres = free ? maxLitresPerTick : System.Math.Min((decimal)remaining, maxLitresPerTick);
             // Buffer model B: the remaining Input buffer is a hard cap on litres this move (an
             // `amount M` block never moves more than what's left). Unlimited → no cap.
-            decimal bufferCap = unlimited ? decimal.MaxValue : remaining;
+            decimal bufferCap = free ? decimal.MaxValue : remaining;
 
             var transfer = new HoseLiquidTransfer(Api, hostInv, hostPos, far, conditionsEvaluator, discard, bufferCap);
             HoseLiquidTransfer.Result result = transfer.TryMove(litres);
@@ -346,7 +350,7 @@ namespace SignalsLink.src.signals.hose
                 MarkDirty();
             }
 
-            if (moved && !unlimited)
+            if (moved && !free)
             {
                 remaining -= result.Transfer.CreditCost;
                 if (remaining < 0) remaining = 0;
@@ -368,7 +372,7 @@ namespace SignalsLink.src.signals.hose
             // in turns instead of both pulling at once.
             if (contested)
             {
-                bool finishedBatch = !unlimited && remaining <= 0;
+                bool finishedBatch = !free && remaining <= 0;
                 if (!moved || finishedBatch) linkMod.PassToken(myAnchor, far);
             }
 
@@ -506,6 +510,15 @@ namespace SignalsLink.src.signals.hose
         {
             if (signalState == value) return;
 
+            // A gated paper (`when`): the pin picks sections; no batch, no continuous mode.
+            conditionsEvaluator.GateInput = value;
+            if (conditionsEvaluator.IsGated)
+            {
+                signalState = value;
+                MarkDirty();
+                return;
+            }
+
             if (value >= 1 && value <= 7)
             {
                 remaining += 1 << (value - 1);
@@ -567,6 +580,7 @@ namespace SignalsLink.src.signals.hose
             unlimited = tree.GetBool("unlimited", false);
             remaining = LiquidCredit.Read(tree);
             signalState = (byte)tree.GetInt("signalState", 0);
+            conditionsEvaluator.GateInput = signalState;
             outputState = (byte)tree.GetInt("outputState", 0);
             drainPulse = tree.GetInt("drainPulse", 0);
             flowPulse = tree.GetInt("flowPulse", 0);
@@ -614,7 +628,8 @@ namespace SignalsLink.src.signals.hose
             base.GetBlockInfo(forPlayer, dsc);
 
             // Show the Input buffer only when targeting the valve body.
-            if (unlimited) dsc.AppendLine(Lang.Get("signalslink:managedchute-info-unlimited"));
+            if (conditionsEvaluator.IsGated) dsc.AppendLine(Lang.Get(conditionsEvaluator.GateOpen ? "signalslink:managedchute-info-gate-open" : "signalslink:managedchute-info-gate-closed", signalState));
+            else if (unlimited) dsc.AppendLine(Lang.Get("signalslink:managedchute-info-unlimited"));
             else if (remaining > 0) dsc.AppendLine(Lang.Get("signalslink:managedchute-info-remaining", remaining));
         }
 

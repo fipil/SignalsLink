@@ -37,6 +37,8 @@ namespace SignalsLink.src.signals.paperConditions
 
                 if (TryTakeSectionHeader(p, out ConditionSection header))
                 {
+                    if (header.WhenError != null) errors?.Add(new PaperConditionError(header.FirstLine, header.Header, "sectionwhenvalue"));
+
                     // Two sections written with the same header are one section; the second run of
                     // blocks simply continues the first.
                     ConditionSection existing = sections.Find(s =>
@@ -267,6 +269,14 @@ namespace SignalsLink.src.signals.paperConditions
                 // about what the player meant, so they are reported and left out.
                 errors?.Add(new PaperConditionError(firstOrphanLine, "", "sectionorphan"));
                 foreach (ConditionBlock block in orphans) blocks.Remove(block);
+            }
+
+            // One gate on the paper means every section needs one: with a gated and an ungated
+            // section side by side the Input pin would have to mean two things at once.
+            if (sections.Exists(s => s.IsGated))
+            {
+                ConditionSection ungated = sections.Find(s => !s.IsGated && !s.IsImplicit);
+                if (ungated != null) errors?.Add(new PaperConditionError(ungated.FirstLine, ungated.Header, "sectionwhenmixed"));
             }
 
             // `# debug` above the first header means every section.

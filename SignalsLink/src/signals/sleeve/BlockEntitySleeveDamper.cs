@@ -41,7 +41,7 @@ namespace SignalsLink.src.signals.sleeve
         private bool unlimited;
 
         /// <summary>Does this damper currently have Input credit (a batch, or continuous)?</summary>
-        public bool HasInput => unlimited || remaining > 0;
+        public bool HasInput => ConditionsEvaluator.IsGated ? ConditionsEvaluator.GateOpen : unlimited || remaining > 0;
 
         // Output anchor (index 1), driven by `output N` on paper (see IConditionOutputSink) and
         // pushed on the signal tick.
@@ -86,6 +86,8 @@ namespace SignalsLink.src.signals.sleeve
         private NodePos currentSource;
 
         public int SignalInputsCount => 3; // 2 Signals anchors + 1 sleeve anchor (selection boxes 0..2)
+
+        public bool SupportsGates => true;
 
         public string ConditionsText
         {
@@ -387,7 +389,9 @@ namespace SignalsLink.src.signals.sleeve
             BlockPos myCargoPos = GetCargoPos(Api.World, Pos);
             if (myCargoPos == null) return 1;
 
-            int budget = unlimited ? maxItemsPerTick : System.Math.Min(maxItemsPerTick, remaining);
+            // On a gated paper (`when`) the open section flows like 15: no credit to count down.
+            bool free = unlimited || ConditionsEvaluator.IsGated;
+            int budget = free ? maxItemsPerTick : System.Math.Min(maxItemsPerTick, remaining);
             if (budget <= 0) return 1;
 
             // Resume where the cursor left off. Stored as the far anchor rather than an index,
@@ -424,6 +428,7 @@ namespace SignalsLink.src.signals.sleeve
         private int TryPullFrom(LinkNetworkMod linkMod, NodePos myAnchor, LinkSource source, BlockPos myCargoPos, int budget)
         {
             NodePos far = source.Endpoint;
+            bool free = unlimited || ConditionsEvaluator.IsGated;   // a gated paper flows like 15
 
             // Contention only exists when the far end is ALSO an active damper; then the two must
             // take turns (arbitration), otherwise they fight and stall.
@@ -468,7 +473,7 @@ namespace SignalsLink.src.signals.sleeve
                     moved = true;
                     movedTotal += result.MovedAmount;
 
-                    if (!unlimited)
+                    if (!free)
                     {
                         remaining -= result.TriggerCost;
                         if (remaining < 0) remaining = 0; // an atomic amount-op may overshoot the last bit
@@ -493,7 +498,7 @@ namespace SignalsLink.src.signals.sleeve
             // batch, so two facing dampers feed each other in turns instead of both pulling at once.
             if (contested)
             {
-                bool finishedBatch = !unlimited && remaining <= 0;
+                bool finishedBatch = !free && remaining <= 0;
                 if (!moved || finishedBatch) linkMod.PassToken(myAnchor, far);
             }
 
@@ -553,6 +558,15 @@ namespace SignalsLink.src.signals.sleeve
         private void ProcessInput(byte value)
         {
             if (signalState == value) return;
+
+            // A gated paper (`when`): the pin picks sections; no batch, no continuous mode.
+            ConditionsEvaluator.GateInput = value;
+            if (ConditionsEvaluator.IsGated)
+            {
+                signalState = value;
+                MarkDirty();
+                return;
+            }
 
             if (value >= 1 && value <= 7)
             {
@@ -627,6 +641,7 @@ namespace SignalsLink.src.signals.sleeve
             unlimited = tree.GetBool("unlimited", false);
             remaining = tree.GetInt("remaining", 0);
             signalState = (byte)tree.GetInt("signalState", 0);
+            ConditionsEvaluator.GateInput = signalState;
             outputState = (byte)tree.GetInt("outputState", 0);
             flowPulse = tree.GetInt("flowPulse", 0);
             retentionMode = tree.GetInt("retentionMode", link.RetentionMode.Cooling);
@@ -667,7 +682,8 @@ namespace SignalsLink.src.signals.sleeve
             if (selection?.SelectionBoxIndex < SignalInputsCount) return;
 
             // Show the Input buffer only when targeting the damper body.
-            if (unlimited) dsc.AppendLine(Lang.Get("signalslink:managedchute-info-unlimited"));
+            if (ConditionsEvaluator.IsGated) dsc.AppendLine(Lang.Get(ConditionsEvaluator.GateOpen ? "signalslink:managedchute-info-gate-open" : "signalslink:managedchute-info-gate-closed", signalState));
+            else if (unlimited) dsc.AppendLine(Lang.Get("signalslink:managedchute-info-unlimited"));
             else if (remaining > 0) dsc.AppendLine(Lang.Get("signalslink:managedchute-info-remaining", remaining));
 
             if (SupportsRetentionMode)

@@ -61,6 +61,7 @@ Slovníček pro mody Signals Tubes (signalstubes) a Signals Machines (signalsmac
 * Stavy strojů (čísla 0–4 a 10–15) překládej krátce a jednotně, jak jsou v angličtině: „waiting“, „recipe ready“, „preparing“, „crafting“, „done, product waiting“, „overloaded“… Čísla a jejich pořadí zachovej.
 * „Zpevněný bronz“ (slitina mědi, olova, bismutu a stříbra pro stroje) = „hardened bronze“; „ingot zpevněného bronzu“ = „hardened bronze ingot“. Nikdy „tempered“, „reinforced“, „strengthened“.
 * Díly craftovacího stroje: „nohy stroje“ = „machine legs“, „rám komory“ = „chamber frame“, „mřížka desky“ = „plate grid“, „stěna komory“ = „chamber wall“, „pracovní deska“ = „crafting plate“, „převodovka“ = „gearbox“, „temporální kostka“ = „temporal cube“, „broušený temporální krystal“ = „ground temporal crystal“. „Forma na nohy stroje / rám komory / mřížku desky“ = „machine legs / chamber frame / plate grid mold“; „nevypálená forma“ = „raw mold“, názvy barev keramiky a jílu jako ve hře. „Odlitek“ = „casting“, „brusný kotouč“ = „grinding wheel“ (herní blok), „broušení“ = „grinding“.
+* Klíčová slova papíru (`unload`, `load`, `from`, `to`, `when`, `output`, `amount`, `keep`, `in source`, `in target`, `# debug`) zůstávají anglicky a nepřekládají se; „brána“ / „sekce zapínaná Vstupem“ = „gate“ / „section switched by Input“.
 * „Hasák“ je herní nástroj wrench: anglicky „wrench“, v ostatních jazycích název, kterým ho hra pojmenovává.
 
 Výstup:
