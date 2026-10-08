@@ -1,0 +1,86 @@
+{
+  "code": "castmold",
+  "class": "BlockToolMold",
+  "entityClass": "ToolMold",
+  "behaviors": [
+    { "name": "Lockable" },
+    { "name": "UnstableFalling" }
+  ],
+  "entityBehaviors": [{ "name": "TemperatureSensitive" }],
+  "variantgroups": [
+    { "code": "color", "states": ["blue", "fire", "black", "brown", "cream", "earthyorange", "gray", "orange", "red", "tan"] },
+    { "code": "materialtype", "states": ["fired"] },
+    { "code": "part", "states": ["legs", "frame", "grid"] }
+  ],
+  "shape": { "base": "signalsmachines:block/mold/{part}" },
+  "textures": {
+    "floor": { "base": "game:block/clay/hardened/{color}" },
+    "other": { "base": "game:block/clay/hardened/{color}" }
+  },
+  "attributes": {
+    "reinforcable": true,
+    "shatteredShape": { "base": "game:block/clay/mold/shattered-ingot" },
+    "requiredUnits": 100,
+    "fillHeight": 1,
+    "moldrackable": true,
+    "onmoldrackTransform": { "rotation": { "z": 90 } },
+    "onTongTransform": {
+      "translation": { "x": -1.7, "y": -1.3, "z": -0.57 },
+      "rotation": { "x": 98, "y": 16, "z": 3 },
+      "scale": 0.55
+    },
+    "onMetalTongTransform": {
+      "translation": { "x": -2.1, "y": -0.19, "z": -1 },
+      "rotation": { "x": 180, "y": 7, "z": 4 },
+      "origin": { "x": 0.5, "y": 0, "z": 0.5 },
+      "scale": 0.55
+    },
+    "handbook": {
+      "groupBy": ["castmold-*-{materialtype}-{part}"],
+      "extraSections": [
+        { "title": "signalsmachines:block-handbooktitle-signalsmachines", "text": "signalsmachines:block-handbooktext-castmold-{part}" }
+      ]
+    }
+  },
+  "attributesByType": {
+    "*-legs": {
+      "fillQuadsByLevel": [{ "x1": 3, "z1": 3, "x2": 13, "z2": 14 }],
+      "drop": { "type": "item", "code": "signalsmachines:machinelegs-{metal}" }
+    },
+    "*-frame": {
+      "fillQuadsByLevel": [{ "x1": 3, "z1": 2, "x2": 13, "z2": 14 }],
+      "drop": { "type": "item", "code": "signalsmachines:machineframe-{metal}" }
+    },
+    "*-grid": {
+      "fillQuadsByLevel": [{ "x1": 3, "z1": 3, "x2": 13, "z2": 13 }],
+      "drop": { "type": "item", "code": "signalsmachines:machinegrid-{metal}" }
+    }
+  },
+  "blockmaterial": "Ceramic",
+  "creativeinventory": { "general": ["*"], "signalsmachines": ["*"] },
+  "replaceable": 700,
+  "resistance": 1.5,
+  "maxStackSize": 8,
+  "lightAbsorption": 0,
+  "sounds": { "walk": "walk/stone" },
+  "collisionbox": { "x1": 0.0625, "y1": 0, "z1": 0.0625, "x2": 0.9375, "y2": 0.125, "z2": 0.9375 },
+  "selectionbox": { "x1": 0.0625, "y1": 0, "z1": 0.0625, "x2": 0.9375, "y2": 0.125, "z2": 0.9375 },
+  "sideopaque": { "all": false },
+  "sidesolid": { "all": false },
+  "guiTransform": {
+    "translation": { "x": 0, "y": 3, "z": 0 },
+    "origin": { "x": 0.5, "y": 0.0625, "z": 0.5 },
+    "scale": 1.33
+  },
+  "tpHandTransform": {
+    "translation": { "x": -1, "y": -0.6, "z": -1.05 },
+    "rotation": { "x": -87, "y": 9, "z": 4 },
+    "origin": { "x": 0.5, "y": 0.125, "z": 0.5 },
+    "scale": 0.5
+  },
+  "groundTransform": {
+    "rotation": { "x": 0, "y": -45, "z": 0 },
+    "origin": { "x": 0.5, "y": 0, "z": 0.5 },
+    "scale": 2.2
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "ingredientPattern": "AGA,CFC,SZS",
+  "width": 3,
+  "height": 3,
+  "name": "gearbox",
+  "ingredients": {
+    "A": {
+      "type": "block",
+      "code": "game:woodenaxle-ud"
+    },
+    "G": {
+      "type": "block",
+      "code": "game:angledgears-s"
+    },
+    "C": {
+      "type": "block",
+      "code": "game:metal-parts"
+    },
+    "F": {
+      "type": "item",
+      "code": "game:fat-rendered"
+    },
+    "S": {
+      "type": "item",
+      "code": "game:resin"
+    },
+    "Z": {
+      "type": "item",
+      "code": "game:metalplate-iron"
+    }
+  },
+  "output": {
+    "type": "item",
+    "code": "gearbox"
+  }
+}

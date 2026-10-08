@@ -1,0 +1,104 @@
+{
+  "editor": {
+    "allAngles": true
+  },
+  "textureWidth": 16,
+  "textureHeight": 16,
+  "textureSizes": {
+    "castiron": [
+      16,
+      16
+    ],
+    "crafting-grid": [
+      8,
+      8
+    ]
+  },
+  "textures": {
+    "castiron": "block/castironbrown",
+    "crafting-grid": "block/crafting-grid"
+  },
+  "elements": [
+    {
+      "name": "plate",
+      "from": [
+        4.25,
+        7.5,
+        4.25
+      ],
+      "to": [
+        11.75,
+        8.5,
+        11.75
+      ],
+      "faces": {
+        "north": {
+          "texture": "#castiron",
+          "uv": [
+            0.02,
+            0.02,
+            7.48,
+            0.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#castiron",
+          "uv": [
+            0.02,
+            0.02,
+            7.48,
+            0.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#castiron",
+          "uv": [
+            0.02,
+            0.02,
+            7.48,
+            0.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#castiron",
+          "uv": [
+            0.02,
+            0.02,
+            7.48,
+            0.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#crafting-grid",
+          "uv": [
+            0,
+            0,
+            8,
+            8
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "down": {
+          "texture": "#castiron",
+          "uv": [
+            0.02,
+            0.02,
+            7.48,
+            7.48
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      }
+    }
+  ]
+}

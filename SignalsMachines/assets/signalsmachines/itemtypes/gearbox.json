@@ -1,0 +1,62 @@
+{
+  "code": "gearbox",
+  "maxstacksize": 4,
+  "shape": {
+    "base": "signalsmachines:item/gearbox"
+  },
+  "creativeinventory": {
+    "general": [
+      "*"
+    ],
+    "signalsmachines": [
+      "*"
+    ]
+  },
+  "guiTransform": {
+    "rotation": {
+      "x": 157.4,
+      "y": -45.3,
+      "z": 0
+    },
+    "origin": {
+      "x": 0.5,
+      "y": 0.5,
+      "z": 0.5
+    },
+    "scale": 1.6,
+    "translation": {
+      "x": 2.7,
+      "y": -1.4,
+      "z": 0
+    }
+  },
+  "groundTransform": {
+    "origin": {
+      "x": 0.5,
+      "y": 0,
+      "z": 0.5
+    },
+    "scale": 1.6
+  },
+  "attributes": {
+    "handbook": {
+      "extraSections": [
+        {
+          "title": "signalsmachines:block-handbooktitle-signalsmachines",
+          "text": "signalsmachines:item-handbooktext-gearbox"
+        }
+      ]
+    }
+  },
+  "textures": {
+    "castiron": {
+      "base": "signalsmachines:block/castironbrown"
+    },
+    "cover": {
+      "base": "signalsmachines:block/gearbox-cover"
+    },
+    "axle": {
+      "base": "signalsmachines:block/axle-iron"
+    }
+  }
+}

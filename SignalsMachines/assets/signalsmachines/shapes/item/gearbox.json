@@ -1,0 +1,433 @@
+{
+  "editor": {
+    "allAngles": true
+  },
+  "textureWidth": 16,
+  "textureHeight": 16,
+  "textureSizes": {
+    "castiron": [
+      16,
+      16
+    ],
+    "cover": [
+      32,
+      16
+    ],
+    "axle": [
+      16,
+      16
+    ]
+  },
+  "textures": {
+    "castiron": "block/castironbrown",
+    "cover": "block/gearbox-cover",
+    "axle": "block/axle-iron"
+  },
+  "elements": [
+    {
+      "name": "body",
+      "from": [
+        3.0,
+        2.5,
+        4.5
+      ],
+      "to": [
+        13.0,
+        10.5,
+        14.5
+      ],
+      "faces": {
+        "north": {
+          "texture": "#cover",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#castiron",
+          "uv": [
+            0.02,
+            0.02,
+            9.98,
+            7.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#castiron",
+          "uv": [
+            0.02,
+            0.02,
+            9.98,
+            7.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#castiron",
+          "uv": [
+            0.02,
+            0.02,
+            9.98,
+            7.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#castiron",
+          "uv": [
+            0.02,
+            0.02,
+            9.98,
+            9.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "down": {
+          "texture": "#castiron",
+          "uv": [
+            0.02,
+            0.02,
+            9.98,
+            9.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      }
+    },
+    {
+      "name": "axle_in",
+      "from": [
+        6.5,
+        5.0,
+        1.5
+      ],
+      "to": [
+        9.5,
+        8.0,
+        4.5
+      ],
+      "faces": {
+        "north": {
+          "texture": "#axle",
+          "uv": [
+            0.02,
+            0.02,
+            2.98,
+            2.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#axle",
+          "uv": [
+            0.02,
+            0.02,
+            2.98,
+            2.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#axle",
+          "uv": [
+            0.02,
+            0.02,
+            2.98,
+            2.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#axle",
+          "uv": [
+            0.02,
+            0.02,
+            2.98,
+            2.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#axle",
+          "uv": [
+            0.02,
+            0.02,
+            2.98,
+            2.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "down": {
+          "texture": "#axle",
+          "uv": [
+            0.02,
+            0.02,
+            2.98,
+            2.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      }
+    },
+    {
+      "name": "axle_out",
+      "from": [
+        6.5,
+        10.5,
+        8.0
+      ],
+      "to": [
+        9.5,
+        13.5,
+        11.0
+      ],
+      "faces": {
+        "north": {
+          "texture": "#axle",
+          "uv": [
+            0.02,
+            0.02,
+            2.98,
+            2.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#axle",
+          "uv": [
+            0.02,
+            0.02,
+            2.98,
+            2.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#axle",
+          "uv": [
+            0.02,
+            0.02,
+            2.98,
+            2.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#axle",
+          "uv": [
+            0.02,
+            0.02,
+            2.98,
+            2.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#axle",
+          "uv": [
+            0.02,
+            0.02,
+            2.98,
+            2.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "down": {
+          "texture": "#axle",
+          "uv": [
+            0.02,
+            0.02,
+            2.98,
+            2.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      }
+    },
+    {
+      "name": "rivet_l",
+      "from": [
+        2.5,
+        3.5,
+        5.5
+      ],
+      "to": [
+        3.0,
+        9.5,
+        6.5
+      ],
+      "faces": {
+        "north": {
+          "texture": "#castiron",
+          "uv": [
+            0.02,
+            0.02,
+            0.48,
+            5.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#castiron",
+          "uv": [
+            0.02,
+            0.02,
+            0.48,
+            5.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#castiron",
+          "uv": [
+            0.02,
+            0.02,
+            0.98,
+            5.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#castiron",
+          "uv": [
+            0.02,
+            0.02,
+            0.98,
+            5.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#castiron",
+          "uv": [
+            0.02,
+            0.02,
+            0.48,
+            0.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "down": {
+          "texture": "#castiron",
+          "uv": [
+            0.02,
+            0.02,
+            0.48,
+            0.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      }
+    },
+    {
+      "name": "rivet_r",
+      "from": [
+        13.0,
+        3.5,
+        5.5
+      ],
+      "to": [
+        13.5,
+        9.5,
+        6.5
+      ],
+      "faces": {
+        "north": {
+          "texture": "#castiron",
+          "uv": [
+            0.02,
+            0.02,
+            0.48,
+            5.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#castiron",
+          "uv": [
+            0.02,
+            0.02,
+            0.48,
+            5.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#castiron",
+          "uv": [
+            0.02,
+            0.02,
+            0.98,
+            5.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#castiron",
+          "uv": [
+            0.02,
+            0.02,
+            0.98,
+            5.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#castiron",
+          "uv": [
+            0.02,
+            0.02,
+            0.48,
+            0.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "down": {
+          "texture": "#castiron",
+          "uv": [
+            0.02,
+            0.02,
+            0.48,
+            0.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      }
+    }
+  ]
+}

@@ -1,8 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using Vintagestory.API.Common.Entities;
+using Vintagestory.API.MathTools;
 using signals.src;
 using signals.src.signalNetwork;
 using SignalsMachines.src.craftingmachine;
+using SignalsMachines.src.parts;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Server;
@@ -32,6 +36,7 @@ namespace SignalsMachines.src
             api.RegisterBlockClass("CraftingMachine", typeof(BlockCraftingMachine));
             api.RegisterBlockEntityClass("CraftingMachine", typeof(BECraftingMachine));
             api.RegisterBlockEntityBehaviorClass("MPMachineAxle", typeof(BEBehaviorMPMachineAxle));
+            api.RegisterItemClass("ItemTemporalCube", typeof(ItemTemporalCube));
         }
 
         // Both sides: the server drains the player's stability from this field, the client turns the gear by it.
@@ -46,11 +51,29 @@ namespace SignalsMachines.src
             api.Logger.Notification("[signalsmachines] hooked into temporal stability ({0})", api.Side);
         }
 
+        /// <summary>Grinding wheels with a temporal cube on them right now (until when): an unstable field around the wheel, like a crafting machine at work.</summary>
+        private readonly Dictionary<BlockPos, long> grinders = new();
+        public const float GrindRange = 3f, GrindPull = BECraftingMachine.CraftPull;
+
+        public void Grinding(BlockPos wheel, long untilMs)
+        {
+            lock (grinders) grinders[wheel.Copy()] = untilMs;
+        }
+
         private float LowerNearMachines(float stability, double x, double y, double z)
         {
-            if (Machines.Count == 0) return stability;
+            if (Machines.Count == 0 && grinders.Count == 0) return stability;
             float pull = 0;
             lock (Machines) foreach (var machine in Machines) pull += machine.Instability(x, y, z);
+            if (grinders.Count > 0)
+            {
+                long now = api.World.ElapsedMilliseconds;
+                lock (grinders)
+                {
+                    foreach (var pos in grinders.Where(g => g.Value < now).Select(g => g.Key).ToList()) grinders.Remove(pos);
+                    foreach (var pos in grinders.Keys) if (pos.DistanceTo(x - .5, y - .5, z - .5) < GrindRange) pull += GrindPull;
+                }
+            }
             // pulled down to a level below 1 (never raised); the floor keeps the worst spot finite
             return pull == 0 ? stability : Math.Max(InstabilityFloor, Math.Min(stability, 1 - pull));
         }

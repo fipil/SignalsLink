@@ -1,0 +1,62 @@
+{
+  "code": "machinegrid",
+  "maxstacksize": 8,
+  "shape": {
+    "base": "signalsmachines:item/machinegrid"
+  },
+  "creativeinventory": {
+    "general": [
+      "*"
+    ],
+    "signalsmachines": [
+      "*"
+    ]
+  },
+  "guiTransform": {
+    "rotation": {
+      "x": 157.4,
+      "y": -45.3,
+      "z": 0
+    },
+    "origin": {
+      "x": 0.5,
+      "y": 0.5,
+      "z": 0.5
+    },
+    "scale": 1.6
+  },
+  "groundTransform": {
+    "origin": {
+      "x": 0.5,
+      "y": 0,
+      "z": 0.5
+    },
+    "scale": 1.6
+  },
+  "attributes": {
+    "handbook": {
+      "extraSections": [
+        {
+          "title": "signalsmachines:block-handbooktitle-signalsmachines",
+          "text": "signalsmachines:item-handbooktext-machinegrid"
+        }
+      ],
+      "groupBy": [
+        "machinegrid-*"
+      ]
+    }
+  },
+  "variantgroups": [
+    {
+      "code": "metal",
+      "states": [
+        "hardenedbronze"
+      ]
+    }
+  ],
+  "textures": {
+    "metal": {
+      "base": "game:block/metal/ingot/{metal}"
+    }
+  }
+}

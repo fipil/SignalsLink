@@ -1,0 +1,32 @@
+{
+  "ingredients": [
+    {
+      "type": "item",
+      "code": "game:ingot-copper",
+      "minratio": 0.55,
+      "maxratio": 0.65
+    },
+    {
+      "type": "item",
+      "code": "game:ingot-lead",
+      "minratio": 0.15,
+      "maxratio": 0.25
+    },
+    {
+      "type": "item",
+      "code": "game:ingot-bismuth",
+      "minratio": 0.1,
+      "maxratio": 0.15
+    },
+    {
+      "type": "item",
+      "code": "game:ingot-silver",
+      "minratio": 0.05,
+      "maxratio": 0.1
+    }
+  ],
+  "output": {
+    "type": "item",
+    "code": "game:ingot-hardenedbronze"
+  }
+}

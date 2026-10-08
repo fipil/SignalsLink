@@ -1,0 +1,32 @@
+{
+  "ingredientPattern": "HGC",
+  "width": 3,
+  "height": 1,
+  "name": "temporalcube",
+  "ingredients": {
+    "H": {
+      "type": "item",
+      "tags": [
+        "tool-hammer"
+      ],
+      "isTool": true,
+      "toolDurabilityCost": 20
+    },
+    "G": {
+      "type": "item",
+      "code": "game:gear-temporal"
+    },
+    "C": {
+      "type": "item",
+      "tags": [
+        "tool-chisel"
+      ],
+      "isTool": true,
+      "toolDurabilityCost": 20
+    }
+  },
+  "output": {
+    "type": "item",
+    "code": "temporalcube"
+  }
+}

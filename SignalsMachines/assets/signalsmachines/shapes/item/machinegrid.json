@@ -1,0 +1,666 @@
+{
+  "editor": {
+    "allAngles": true
+  },
+  "textureWidth": 16,
+  "textureHeight": 16,
+  "textureSizes": {
+    "metal": [
+      16,
+      16
+    ]
+  },
+  "textures": {
+    "metal": "game:block/metal/ingot/hardenedbronze"
+  },
+  "elements": [
+    {
+      "name": "bar_x0",
+      "from": [
+        4.0,
+        7.5,
+        4.0
+      ],
+      "to": [
+        12.0,
+        8.5,
+        4.5
+      ],
+      "faces": {
+        "north": {
+          "texture": "#metal",
+          "uv": [
+            0.02,
+            0.02,
+            7.98,
+            0.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#metal",
+          "uv": [
+            0.02,
+            0.02,
+            7.98,
+            0.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#metal",
+          "uv": [
+            0.02,
+            0.02,
+            0.48,
+            0.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#metal",
+          "uv": [
+            0.02,
+            0.02,
+            0.48,
+            0.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#metal",
+          "uv": [
+            0.02,
+            0.02,
+            7.98,
+            0.48
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "down": {
+          "texture": "#metal",
+          "uv": [
+            0.02,
+            0.02,
+            7.98,
+            0.48
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      }
+    },
+    {
+      "name": "bar_z0",
+      "from": [
+        4.0,
+        7.5,
+        4.0
+      ],
+      "to": [
+        4.5,
+        8.5,
+        12.0
+      ],
+      "faces": {
+        "north": {
+          "texture": "#metal",
+          "uv": [
+            0.02,
+            0.02,
+            0.48,
+            0.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#metal",
+          "uv": [
+            0.02,
+            0.02,
+            0.48,
+            0.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#metal",
+          "uv": [
+            0.02,
+            0.02,
+            7.98,
+            0.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#metal",
+          "uv": [
+            0.02,
+            0.02,
+            7.98,
+            0.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#metal",
+          "uv": [
+            0.02,
+            0.02,
+            0.48,
+            7.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "down": {
+          "texture": "#metal",
+          "uv": [
+            0.02,
+            0.02,
+            0.48,
+            7.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      }
+    },
+    {
+      "name": "bar_x1",
+      "from": [
+        4.0,
+        7.5,
+        6.5
+      ],
+      "to": [
+        12.0,
+        8.5,
+        7.0
+      ],
+      "faces": {
+        "north": {
+          "texture": "#metal",
+          "uv": [
+            0.02,
+            0.02,
+            7.98,
+            0.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#metal",
+          "uv": [
+            0.02,
+            0.02,
+            7.98,
+            0.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#metal",
+          "uv": [
+            0.02,
+            0.02,
+            0.48,
+            0.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#metal",
+          "uv": [
+            0.02,
+            0.02,
+            0.48,
+            0.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#metal",
+          "uv": [
+            0.02,
+            0.02,
+            7.98,
+            0.48
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "down": {
+          "texture": "#metal",
+          "uv": [
+            0.02,
+            0.02,
+            7.98,
+            0.48
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      }
+    },
+    {
+      "name": "bar_z1",
+      "from": [
+        6.5,
+        7.5,
+        4.0
+      ],
+      "to": [
+        7.0,
+        8.5,
+        12.0
+      ],
+      "faces": {
+        "north": {
+          "texture": "#metal",
+          "uv": [
+            0.02,
+            0.02,
+            0.48,
+            0.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#metal",
+          "uv": [
+            0.02,
+            0.02,
+            0.48,
+            0.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#metal",
+          "uv": [
+            0.02,
+            0.02,
+            7.98,
+            0.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#metal",
+          "uv": [
+            0.02,
+            0.02,
+            7.98,
+            0.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#metal",
+          "uv": [
+            0.02,
+            0.02,
+            0.48,
+            7.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "down": {
+          "texture": "#metal",
+          "uv": [
+            0.02,
+            0.02,
+            0.48,
+            7.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      }
+    },
+    {
+      "name": "bar_x2",
+      "from": [
+        4.0,
+        7.5,
+        9.0
+      ],
+      "to": [
+        12.0,
+        8.5,
+        9.5
+      ],
+      "faces": {
+        "north": {
+          "texture": "#metal",
+          "uv": [
+            0.02,
+            0.02,
+            7.98,
+            0.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#metal",
+          "uv": [
+            0.02,
+            0.02,
+            7.98,
+            0.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#metal",
+          "uv": [
+            0.02,
+            0.02,
+            0.48,
+            0.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#metal",
+          "uv": [
+            0.02,
+            0.02,
+            0.48,
+            0.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#metal",
+          "uv": [
+            0.02,
+            0.02,
+            7.98,
+            0.48
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "down": {
+          "texture": "#metal",
+          "uv": [
+            0.02,
+            0.02,
+            7.98,
+            0.48
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      }
+    },
+    {
+      "name": "bar_z2",
+      "from": [
+        9.0,
+        7.5,
+        4.0
+      ],
+      "to": [
+        9.5,
+        8.5,
+        12.0
+      ],
+      "faces": {
+        "north": {
+          "texture": "#metal",
+          "uv": [
+            0.02,
+            0.02,
+            0.48,
+            0.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#metal",
+          "uv": [
+            0.02,
+            0.02,
+            0.48,
+            0.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#metal",
+          "uv": [
+            0.02,
+            0.02,
+            7.98,
+            0.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#metal",
+          "uv": [
+            0.02,
+            0.02,
+            7.98,
+            0.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#metal",
+          "uv": [
+            0.02,
+            0.02,
+            0.48,
+            7.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "down": {
+          "texture": "#metal",
+          "uv": [
+            0.02,
+            0.02,
+            0.48,
+            7.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      }
+    },
+    {
+      "name": "bar_x3",
+      "from": [
+        4.0,
+        7.5,
+        11.5
+      ],
+      "to": [
+        12.0,
+        8.5,
+        12.0
+      ],
+      "faces": {
+        "north": {
+          "texture": "#metal",
+          "uv": [
+            0.02,
+            0.02,
+            7.98,
+            0.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#metal",
+          "uv": [
+            0.02,
+            0.02,
+            7.98,
+            0.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#metal",
+          "uv": [
+            0.02,
+            0.02,
+            0.48,
+            0.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#metal",
+          "uv": [
+            0.02,
+            0.02,
+            0.48,
+            0.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#metal",
+          "uv": [
+            0.02,
+            0.02,
+            7.98,
+            0.48
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "down": {
+          "texture": "#metal",
+          "uv": [
+            0.02,
+            0.02,
+            7.98,
+            0.48
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      }
+    },
+    {
+      "name": "bar_z3",
+      "from": [
+        11.5,
+        7.5,
+        4.0
+      ],
+      "to": [
+        12.0,
+        8.5,
+        12.0
+      ],
+      "faces": {
+        "north": {
+          "texture": "#metal",
+          "uv": [
+            0.02,
+            0.02,
+            0.48,
+            0.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#metal",
+          "uv": [
+            0.02,
+            0.02,
+            0.48,
+            0.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#metal",
+          "uv": [
+            0.02,
+            0.02,
+            7.98,
+            0.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#metal",
+          "uv": [
+            0.02,
+            0.02,
+            7.98,
+            0.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#metal",
+          "uv": [
+            0.02,
+            0.02,
+            0.48,
+            7.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "down": {
+          "texture": "#metal",
+          "uv": [
+            0.02,
+            0.02,
+            0.48,
+            7.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      }
+    }
+  ]
+}

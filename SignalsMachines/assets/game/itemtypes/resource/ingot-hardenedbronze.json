@@ -1,0 +1,172 @@
+{
+  "code": "ingot-hardenedbronze",
+  "class": "Item",
+  "maxstacksize": 16,
+  "behaviors": [
+    {
+      "name": "GroundStorable",
+      "properties": {
+        "layout": "Stacking",
+        "placeRemoveSound": "sounds/block/ingot",
+        "stackingModel": "block/metal/ingotpile",
+        "stackingTextures": {
+          "metal": "game:block/metal/ingot/hardenedbronze"
+        },
+        "modelItemsToStackSizeRatio": 1,
+        "upSolid": true,
+        "stackingCapacity": 64,
+        "transferQuantity": 1,
+        "bulkTransferQuantity": 4,
+        "collisionBox": {
+          "x1": 0,
+          "y1": 0,
+          "z1": 0,
+          "x2": 1,
+          "y2": 0.125,
+          "z2": 1
+        },
+        "cbScaleYByLayer": 0.125
+      }
+    }
+  ],
+  "attributes": {
+    "displaycaseable": true,
+    "shelvable": true,
+    "displayable": {
+      "shelf": {
+        "behavior": "Stacking",
+        "category": "ingot",
+        "size": {
+          "width": 3,
+          "height": 2,
+          "length": 7
+        },
+        "randYRotAngle": 5
+      }
+    },
+    "onshelfTransform": {
+      "rotation": {
+        "x": 0,
+        "y": 75,
+        "z": 0
+      }
+    },
+    "onTongTransform": {
+      "translation": {
+        "x": -0.48,
+        "y": -0.58,
+        "z": -0.45
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 76
+      },
+      "scale": 1.02
+    },
+    "tongOpening": "medium",
+    "onMetalTongTransform": {
+      "translation": {
+        "x": -1,
+        "y": -0.19,
+        "z": -0.6
+      },
+      "rotation": {
+        "x": 0,
+        "y": -1,
+        "z": -10
+      },
+      "origin": {
+        "x": 0.5,
+        "y": 0,
+        "z": 0.5
+      },
+      "scale": 1
+    },
+    "handbook": {
+      "groupBy": [
+        "ingot-*"
+      ],
+      "extraSections": [
+        {
+          "title": "signalsmachines:block-handbooktitle-signalsmachines",
+          "text": "signalsmachines:item-handbooktext-ingot-hardenedbronze"
+        }
+      ]
+    }
+  },
+  "storageFlags": 5,
+  "shape": {
+    "base": "item/ingot"
+  },
+  "textures": {
+    "metal": {
+      "base": "game:block/metal/ingot/hardenedbronze"
+    }
+  },
+  "creativeinventory": {
+    "general": [
+      "*"
+    ],
+    "items": [
+      "*"
+    ],
+    "signalsmachines": [
+      "*"
+    ]
+  },
+  "materialDensity": 8600,
+  "combustibleProps": {
+    "meltingPoint": 1150,
+    "meltingDuration": 30,
+    "smeltedRatio": 1,
+    "smeltedStack": {
+      "type": "item",
+      "code": "ingot-hardenedbronze"
+    }
+  },
+  "guiTransform": {
+    "translation": {
+      "x": 2,
+      "y": 0,
+      "z": 0
+    },
+    "rotation": {
+      "x": 149,
+      "y": -36,
+      "z": 0
+    },
+    "origin": {
+      "x": 0.5,
+      "y": 0.1,
+      "z": 0.5
+    },
+    "scale": 3.5
+  },
+  "tpHandTransform": {
+    "translation": {
+      "x": -0.77,
+      "y": -0.15,
+      "z": -0.64
+    },
+    "rotation": {
+      "x": 0,
+      "y": -71,
+      "z": 18
+    },
+    "origin": {
+      "x": 0.5,
+      "y": 0.1,
+      "z": 0.5
+    },
+    "scale": 0.75
+  },
+  "groundTransform": {
+    "origin": {
+      "x": 0.5,
+      "y": 0,
+      "z": 0.5
+    },
+    "scale": 4.8
+  }
+}

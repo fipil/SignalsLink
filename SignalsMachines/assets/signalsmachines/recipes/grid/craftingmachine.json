@@ -1,0 +1,37 @@
+{
+  "ingredientPattern": "WKW,TD_,NPN",
+  "width": 3,
+  "height": 3,
+  "name": "craftingmachine",
+  "ingredients": {
+    "W": {
+      "type": "item",
+      "code": "chamberwall",
+      "quantity": 3
+    },
+    "K": {
+      "type": "item",
+      "code": "groundcrystal"
+    },
+    "T": {
+      "type": "block",
+      "code": "signalstubes:tubesocket-*"
+    },
+    "D": {
+      "type": "item",
+      "code": "craftingplate"
+    },
+    "N": {
+      "type": "item",
+      "code": "machinelegs-*"
+    },
+    "P": {
+      "type": "item",
+      "code": "gearbox"
+    }
+  },
+  "output": {
+    "type": "block",
+    "code": "craftingmachine-north"
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "ingredientPattern": "FFF,GGG,_SI",
+  "width": 3,
+  "height": 3,
+  "name": "chamberwall",
+  "ingredients": {
+    "F": {
+      "type": "item",
+      "code": "machineframe-*"
+    },
+    "G": {
+      "type": "block",
+      "code": "game:glass-plain"
+    },
+    "S": {
+      "type": "item",
+      "code": "game:solderbar-tin"
+    },
+    "I": {
+      "type": "item",
+      "tags": [
+        "tool-solderingiron"
+      ],
+      "isTool": true,
+      "toolDurabilityCost": 10
+    }
+  },
+  "output": {
+    "type": "item",
+    "code": "chamberwall",
+    "quantity": 3
+  }
+}

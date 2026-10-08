@@ -1,0 +1,36 @@
+{
+  "ingredientPattern": "GM,SH",
+  "width": 2,
+  "height": 2,
+  "name": "craftingplate",
+  "ingredients": {
+    "G": {
+      "type": "item",
+      "code": "machinegrid-*"
+    },
+    "M": {
+      "type": "block",
+      "code": "game:rockpolished-whitemarble"
+    },
+    "S": {
+      "type": "item",
+      "tags": [
+        "tool-saw"
+      ],
+      "isTool": true,
+      "toolDurabilityCost": 10
+    },
+    "H": {
+      "type": "item",
+      "tags": [
+        "tool-hammer"
+      ],
+      "isTool": true,
+      "toolDurabilityCost": 10
+    }
+  },
+  "output": {
+    "type": "item",
+    "code": "craftingplate"
+  }
+}

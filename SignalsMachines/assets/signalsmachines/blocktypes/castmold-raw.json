@@ -1,0 +1,104 @@
+{
+  "code": "castmold",
+  "class": "Block",
+  "behaviors": [
+    { "name": "GroundStorable", "properties": { "layout": "SingleCenter" } },
+    { "name": "Unplaceable" },
+    { "name": "RightClickPickup" }
+  ],
+  "variantgroups": [
+    { "code": "color", "states": ["blue", "red", "fire"] },
+    { "code": "materialtype", "states": ["raw"] },
+    { "code": "part", "states": ["legs", "frame", "grid"] }
+  ],
+  "shape": { "base": "signalsmachines:block/mold/{part}" },
+  "textures": { "all": { "base": "game:block/clay/{color}clay" } },
+  "attributes": {
+    "reinforcable": true,
+    "shelvable": false,
+    "onTongTransform": {
+      "translation": { "x": -0.9, "y": -1.5, "z": -0.6 },
+      "rotation": { "x": 117, "y": 0, "z": 0 },
+      "scale": 0.74
+    },
+    "onMetalTongTransform": {
+      "translation": { "x": -2.1, "y": -0.19, "z": -1 },
+      "rotation": { "x": 180, "y": 7, "z": 4 },
+      "origin": { "x": 0.5, "y": 0, "z": 0.5 },
+      "scale": 0.55
+    },
+    "handbook": {
+      "groupBy": ["castmold-*-{materialtype}-{part}"],
+      "extraSections": [
+        { "title": "signalsmachines:block-handbooktitle-signalsmachines", "text": "signalsmachines:block-handbooktext-castmold-{part}" }
+      ]
+    }
+  },
+  "attributesByType": {
+    "castmold-red-raw-*": {
+      "beehivekiln": {
+        "0": { "type": "block", "code": "signalsmachines:castmold-tan-fired-{part}" },
+        "1": { "type": "block", "code": "signalsmachines:castmold-orange-fired-{part}" },
+        "2": { "type": "block", "code": "signalsmachines:castmold-red-fired-{part}" },
+        "3": { "type": "block", "code": "signalsmachines:castmold-brown-fired-{part}" }
+      }
+    },
+    "castmold-blue-raw-*": {
+      "beehivekiln": {
+        "0": { "type": "block", "code": "signalsmachines:castmold-cream-fired-{part}" },
+        "1": { "type": "block", "code": "signalsmachines:castmold-gray-fired-{part}" },
+        "2": { "type": "block", "code": "signalsmachines:castmold-black-fired-{part}" },
+        "3": { "type": "block", "code": "signalsmachines:castmold-black-fired-{part}" }
+      }
+    },
+    "castmold-fire-raw-*": {
+      "beehivekiln": {
+        "0": { "type": "block", "code": "signalsmachines:castmold-fire-fired-{part}" },
+        "1": { "type": "block", "code": "signalsmachines:castmold-fire-fired-{part}" },
+        "2": { "type": "block", "code": "signalsmachines:castmold-fire-fired-{part}" },
+        "3": { "type": "block", "code": "signalsmachines:castmold-fire-fired-{part}" }
+      }
+    }
+  },
+  "combustiblePropsByType": {
+    "castmold-fire-raw-*": {
+      "meltingPoint": 650, "meltingDuration": 45, "smeltedRatio": 1, "smeltingType": "fire",
+      "smeltedStack": { "type": "block", "code": "signalsmachines:castmold-fire-fired-{part}" }, "requiresContainer": false
+    },
+    "castmold-blue-raw-*": {
+      "meltingPoint": 650, "meltingDuration": 45, "smeltedRatio": 1, "smeltingType": "fire",
+      "smeltedStack": { "type": "block", "code": "signalsmachines:castmold-blue-fired-{part}" }, "requiresContainer": false
+    },
+    "castmold-red-raw-*": {
+      "meltingPoint": 650, "meltingDuration": 45, "smeltedRatio": 1, "smeltingType": "fire",
+      "smeltedStack": { "type": "block", "code": "signalsmachines:castmold-earthyorange-fired-{part}" }, "requiresContainer": false
+    }
+  },
+  "blockmaterial": "Ceramic",
+  "creativeinventory": { "general": ["*"], "signalsmachines": ["*"] },
+  "replaceable": 700,
+  "resistance": 1.5,
+  "maxStackSize": 8,
+  "lightAbsorption": 0,
+  "sounds": { "walk": "walk/stone" },
+  "collisionbox": { "x1": 0.0625, "y1": 0, "z1": 0.0625, "x2": 0.9375, "y2": 0.125, "z2": 0.9375 },
+  "selectionbox": { "x1": 0.0625, "y1": 0, "z1": 0.0625, "x2": 0.9375, "y2": 0.125, "z2": 0.9375 },
+  "sideopaque": { "all": false },
+  "sidesolid": { "all": false },
+  "guiTransform": {
+    "translation": { "x": 0, "y": 3, "z": 0 },
+    "origin": { "x": 0.5, "y": 0.0625, "z": 0.5 },
+    "scale": 1.33
+  },
+  "tpHandTransform": {
+    "translation": { "x": -1, "y": -0.6, "z": -1.05 },
+    "rotation": { "x": -87, "y": 9, "z": 4 },
+    "origin": { "x": 0.5, "y": 0.125, "z": 0.5 },
+    "scale": 0.5
+  },
+  "groundTransform": {
+    "rotation": { "x": 0, "y": -45, "z": 0 },
+    "origin": { "x": 0.5, "y": 0, "z": 0.5 },
+    "scale": 2.2
+  }
+}

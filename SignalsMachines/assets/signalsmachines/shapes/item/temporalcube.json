@@ -1,0 +1,99 @@
+{
+  "editor": {
+    "allAngles": true
+  },
+  "textureWidth": 16,
+  "textureHeight": 16,
+  "textureSizes": {
+    "gear": [
+      16,
+      16
+    ]
+  },
+  "textures": {
+    "gear": "game:item/resource/temporalgear"
+  },
+  "elements": [
+    {
+      "name": "cube",
+      "from": [
+        5.0,
+        5.0,
+        5.0
+      ],
+      "to": [
+        11.0,
+        11.0,
+        11.0
+      ],
+      "faces": {
+        "north": {
+          "texture": "#gear",
+          "uv": [
+            0.02,
+            0.02,
+            5.98,
+            5.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#gear",
+          "uv": [
+            0.02,
+            0.02,
+            5.98,
+            5.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#gear",
+          "uv": [
+            0.02,
+            0.02,
+            5.98,
+            5.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#gear",
+          "uv": [
+            0.02,
+            0.02,
+            5.98,
+            5.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#gear",
+          "uv": [
+            0.02,
+            0.02,
+            5.98,
+            5.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "down": {
+          "texture": "#gear",
+          "uv": [
+            0.02,
+            0.02,
+            5.98,
+            5.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      }
+    }
+  ]
+}

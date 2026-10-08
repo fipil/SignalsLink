@@ -1,0 +1,708 @@
+{
+  "editor": {
+    "allAngles": true
+  },
+  "textureWidth": 16,
+  "textureHeight": 16,
+  "textureSizes": {
+    "metal": [
+      16,
+      16
+    ],
+    "rivet": [
+      16,
+      16
+    ]
+  },
+  "textures": {
+    "metal": "game:block/metal/ingot/hardenedbronze",
+    "rivet": "block/foot-rivet-iron"
+  },
+  "elements": [
+    {
+      "name": "foot_l",
+      "from": [
+        0.0,
+        2.5,
+        5.5
+      ],
+      "to": [
+        3.0,
+        3.5,
+        10.5
+      ],
+      "faces": {
+        "north": {
+          "texture": "#metal",
+          "uv": [
+            0.02,
+            0.02,
+            2.98,
+            0.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#metal",
+          "uv": [
+            0.02,
+            0.02,
+            2.98,
+            0.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#metal",
+          "uv": [
+            0.02,
+            0.02,
+            4.98,
+            0.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#metal",
+          "uv": [
+            0.02,
+            0.02,
+            4.98,
+            0.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#metal",
+          "uv": [
+            0.02,
+            0.02,
+            2.98,
+            4.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "down": {
+          "texture": "#metal",
+          "uv": [
+            0.02,
+            0.02,
+            2.98,
+            4.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      }
+    },
+    {
+      "name": "post_l",
+      "from": [
+        2.0,
+        3.5,
+        6.0
+      ],
+      "to": [
+        3.0,
+        13.5,
+        10.0
+      ],
+      "faces": {
+        "north": {
+          "texture": "#metal",
+          "uv": [
+            0.02,
+            0.02,
+            0.98,
+            9.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#metal",
+          "uv": [
+            0.02,
+            0.02,
+            0.98,
+            9.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#metal",
+          "uv": [
+            0.02,
+            0.02,
+            3.98,
+            9.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#metal",
+          "uv": [
+            0.02,
+            0.02,
+            3.98,
+            9.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#metal",
+          "uv": [
+            0.02,
+            0.02,
+            0.98,
+            3.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "down": {
+          "texture": "#metal",
+          "uv": [
+            0.02,
+            0.02,
+            0.98,
+            3.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      }
+    },
+    {
+      "name": "rivet_l_0",
+      "from": [
+        0.45,
+        3.5,
+        6.15
+      ],
+      "to": [
+        1.15,
+        3.75,
+        6.85
+      ],
+      "faces": {
+        "north": {
+          "texture": "#rivet",
+          "uv": [
+            0.02,
+            0.02,
+            0.68,
+            0.23
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#rivet",
+          "uv": [
+            0.02,
+            0.02,
+            0.68,
+            0.23
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#rivet",
+          "uv": [
+            0.02,
+            0.02,
+            0.68,
+            0.23
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#rivet",
+          "uv": [
+            0.02,
+            0.02,
+            0.68,
+            0.23
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#rivet",
+          "uv": [
+            0.02,
+            0.02,
+            0.68,
+            0.68
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      }
+    },
+    {
+      "name": "rivet_l_1",
+      "from": [
+        0.45,
+        3.5,
+        9.15
+      ],
+      "to": [
+        1.15,
+        3.75,
+        9.85
+      ],
+      "faces": {
+        "north": {
+          "texture": "#rivet",
+          "uv": [
+            0.02,
+            0.02,
+            0.68,
+            0.23
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#rivet",
+          "uv": [
+            0.02,
+            0.02,
+            0.68,
+            0.23
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#rivet",
+          "uv": [
+            0.02,
+            0.02,
+            0.68,
+            0.23
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#rivet",
+          "uv": [
+            0.02,
+            0.02,
+            0.68,
+            0.23
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#rivet",
+          "uv": [
+            0.02,
+            0.02,
+            0.68,
+            0.68
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      }
+    },
+    {
+      "name": "foot_r",
+      "from": [
+        13.0,
+        2.5,
+        5.5
+      ],
+      "to": [
+        16.0,
+        3.5,
+        10.5
+      ],
+      "faces": {
+        "north": {
+          "texture": "#metal",
+          "uv": [
+            0.02,
+            0.02,
+            2.98,
+            0.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#metal",
+          "uv": [
+            0.02,
+            0.02,
+            2.98,
+            0.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#metal",
+          "uv": [
+            0.02,
+            0.02,
+            4.98,
+            0.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#metal",
+          "uv": [
+            0.02,
+            0.02,
+            4.98,
+            0.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#metal",
+          "uv": [
+            0.02,
+            0.02,
+            2.98,
+            4.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "down": {
+          "texture": "#metal",
+          "uv": [
+            0.02,
+            0.02,
+            2.98,
+            4.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      }
+    },
+    {
+      "name": "post_r",
+      "from": [
+        13.0,
+        3.5,
+        6.0
+      ],
+      "to": [
+        14.0,
+        13.5,
+        10.0
+      ],
+      "faces": {
+        "north": {
+          "texture": "#metal",
+          "uv": [
+            0.02,
+            0.02,
+            0.98,
+            9.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#metal",
+          "uv": [
+            0.02,
+            0.02,
+            0.98,
+            9.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#metal",
+          "uv": [
+            0.02,
+            0.02,
+            3.98,
+            9.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#metal",
+          "uv": [
+            0.02,
+            0.02,
+            3.98,
+            9.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#metal",
+          "uv": [
+            0.02,
+            0.02,
+            0.98,
+            3.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "down": {
+          "texture": "#metal",
+          "uv": [
+            0.02,
+            0.02,
+            0.98,
+            3.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      }
+    },
+    {
+      "name": "rivet_r_0",
+      "from": [
+        14.85,
+        3.5,
+        6.15
+      ],
+      "to": [
+        15.55,
+        3.75,
+        6.85
+      ],
+      "faces": {
+        "north": {
+          "texture": "#rivet",
+          "uv": [
+            0.02,
+            0.02,
+            0.68,
+            0.23
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#rivet",
+          "uv": [
+            0.02,
+            0.02,
+            0.68,
+            0.23
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#rivet",
+          "uv": [
+            0.02,
+            0.02,
+            0.68,
+            0.23
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#rivet",
+          "uv": [
+            0.02,
+            0.02,
+            0.68,
+            0.23
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#rivet",
+          "uv": [
+            0.02,
+            0.02,
+            0.68,
+            0.68
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      }
+    },
+    {
+      "name": "rivet_r_1",
+      "from": [
+        14.85,
+        3.5,
+        9.15
+      ],
+      "to": [
+        15.55,
+        3.75,
+        9.85
+      ],
+      "faces": {
+        "north": {
+          "texture": "#rivet",
+          "uv": [
+            0.02,
+            0.02,
+            0.68,
+            0.23
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#rivet",
+          "uv": [
+            0.02,
+            0.02,
+            0.68,
+            0.23
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#rivet",
+          "uv": [
+            0.02,
+            0.02,
+            0.68,
+            0.23
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#rivet",
+          "uv": [
+            0.02,
+            0.02,
+            0.68,
+            0.23
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#rivet",
+          "uv": [
+            0.02,
+            0.02,
+            0.68,
+            0.68
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      }
+    },
+    {
+      "name": "bar",
+      "from": [
+        3.0,
+        11.5,
+        6.0
+      ],
+      "to": [
+        13.0,
+        13.5,
+        10.0
+      ],
+      "faces": {
+        "north": {
+          "texture": "#metal",
+          "uv": [
+            0.02,
+            0.02,
+            9.98,
+            1.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "south": {
+          "texture": "#metal",
+          "uv": [
+            0.02,
+            0.02,
+            9.98,
+            1.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "east": {
+          "texture": "#metal",
+          "uv": [
+            0.02,
+            0.02,
+            3.98,
+            1.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "west": {
+          "texture": "#metal",
+          "uv": [
+            0.02,
+            0.02,
+            3.98,
+            1.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "up": {
+          "texture": "#metal",
+          "uv": [
+            0.02,
+            0.02,
+            9.98,
+            3.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        },
+        "down": {
+          "texture": "#metal",
+          "uv": [
+            0.02,
+            0.02,
+            9.98,
+            3.98
+          ],
+          "autoUv": false,
+          "enabled": true
+        }
+      }
+    }
+  ]
+}

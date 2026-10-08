@@ -1,0 +1,54 @@
+{
+  "code": "craftingplate",
+  "maxstacksize": 4,
+  "shape": {
+    "base": "signalsmachines:item/craftingplate"
+  },
+  "creativeinventory": {
+    "general": [
+      "*"
+    ],
+    "signalsmachines": [
+      "*"
+    ]
+  },
+  "guiTransform": {
+    "rotation": {
+      "x": 157.4,
+      "y": -45.3,
+      "z": 0
+    },
+    "origin": {
+      "x": 0.5,
+      "y": 0.5,
+      "z": 0.5
+    },
+    "scale": 1.6
+  },
+  "groundTransform": {
+    "origin": {
+      "x": 0.5,
+      "y": 0,
+      "z": 0.5
+    },
+    "scale": 1.6
+  },
+  "attributes": {
+    "handbook": {
+      "extraSections": [
+        {
+          "title": "signalsmachines:block-handbooktitle-signalsmachines",
+          "text": "signalsmachines:item-handbooktext-craftingplate"
+        }
+      ]
+    }
+  },
+  "textures": {
+    "castiron": {
+      "base": "signalsmachines:block/castironbrown"
+    },
+    "crafting-grid": {
+      "base": "signalsmachines:block/crafting-grid"
+    }
+  }
+}
