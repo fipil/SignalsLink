@@ -1,0 +1,33 @@
+{
+  "ingredientPattern": "WWW,IMI,_P_",
+  "width": 3,
+  "height": 3,
+  "name": "tubesocket",
+  "ingredients": {
+    "W": {
+      "type": "item",
+      "code": "signals:el_wire"
+    },
+    "I": {
+      "type": "item",
+      "code": "game:metalbit-iron"
+    },
+    "M": {
+      "type": "item",
+      "code": "game:stone-*",
+      "allowedVariants": [
+        "whitemarble",
+        "greenmarble",
+        "redmarble"
+      ]
+    },
+    "P": {
+      "type": "item",
+      "code": "game:plank-*"
+    }
+  },
+  "output": {
+    "type": "block",
+    "code": "signalstubes:tubesocket-north-down"
+  }
+}
