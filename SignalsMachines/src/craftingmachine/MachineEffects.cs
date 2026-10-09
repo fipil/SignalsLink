@@ -206,9 +206,10 @@ public sealed class MachineEffects : IPointLight
 
     private static bool Passable(IBlockAccessor accessor, int x, int y, int z)
     {
-        var block = accessor.GetBlock(x, y, z);
+        var pos = new BlockPos(x, y, z, 0);
+        var block = accessor.GetBlock(pos);
         if (block == null || block.Id == 0) return true;
-        var boxes = block.GetCollisionBoxes(accessor, new BlockPos(x, y, z, 0));
+        var boxes = block.GetCollisionBoxes(accessor, pos);
         return boxes == null || boxes.Length == 0;
     }
 

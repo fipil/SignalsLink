@@ -73,7 +73,7 @@ namespace SignalsLink.Tests
                 ....
                 """);
 
-            Assert.Equal(1, area.Tiles.Count);
+            Assert.Single(area.Tiles);
             Assert.False(area.IsValid);
         }
 

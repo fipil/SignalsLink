@@ -142,7 +142,7 @@ public static class ImprinterNetwork
                 var target = new BlockPos(packet.TargetX, packet.TargetY, packet.TargetZ);
                 if (packet.FromDialog ? !Reachable(player, imprinterPos)
                     : !ItemImprinterTool.BelongsTo(player.InventoryManager.ActiveHotbarSlot?.Itemstack, BEImprinter.ProbeCode, imprinterPos)
-                      || player.Entity.ServerPos.DistanceTo(target.ToVec3d().Add(.5, .5, .5)) > 8) return;
+                      || player.Entity.Pos.DistanceTo(target.ToVec3d().Add(.5, .5, .5)) > 8) return;
                 if (!ItemImprinterTool.IsMarkable(sapi.World.BlockAccessor.GetBlock(target))) return;
                 if (sapi.World.BlockAccessor.GetBlockEntity(imprinterPos) is not BEImprinter imprinter) return;
                 bool marked = imprinter.ToggleExposed(target);
@@ -217,7 +217,7 @@ public static class ImprinterNetwork
     }
 
     private static bool Reachable(IServerPlayer player, BlockPos pos) =>
-        player.Entity.ServerPos.DistanceTo(pos.ToVec3d().Add(.5, .5, .5)) < 8;
+        player.Entity.Pos.DistanceTo(pos.ToVec3d().Add(.5, .5, .5)) < 8;
 
     public static void SendState(ICoreServerAPI sapi, IServerPlayer player, BEImprinter imprinter, bool done, string path = "") =>
         sapi.Network.GetChannel(Channel).SendPacket(new ImprinterStatePacket {

@@ -120,7 +120,7 @@ public class BEImprinter : BlockEntity
     {
         if (tool.Holder == null) return null;
         var player = Api.World.PlayerByUid(tool.Holder) as IServerPlayer;
-        if (player?.Entity == null || player.Entity.ServerPos.XYZ.DistanceTo(Pos.ToVec3d()) > MaxCable + 1) return null;
+        if (player?.Entity == null || player.Entity.Pos.XYZ.DistanceTo(Pos.ToVec3d()) > MaxCable + 1) return null;
         return Carries(player.Entity, tool.Code, Pos) ? player : null;
     }
 
