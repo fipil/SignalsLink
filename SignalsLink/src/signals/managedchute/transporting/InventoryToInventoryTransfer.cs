@@ -30,6 +30,28 @@ namespace SignalsLink.src.signals.managedchute.transporting
 
         public override bool UsesAmountAsTriggerOnly => true;
 
+        /// <summary>The game's grid recipes; a test hands in its own.</summary>
+        public IGridRecipeBook RecipeBook
+        {
+            get => recipeBook ??= new WorldRecipeBook(api?.World);
+            set => recipeBook = value;
+        }
+        private IGridRecipeBook recipeBook;
+
+        protected override TransferOperationResult FillRecipe(ConditionBlock block)
+        {
+            if (TargetIsCrate) return TransferOperationResult.None;
+            RecipeFill.Plan plan = RecipeFill.Prepare(RecipeBook, api?.World, sourceInv, targetInv, block.Directives);
+            if (plan == null) return TransferOperationResult.None;
+
+            int moved = RecipeFill.Execute(plan, api?.World);
+            if (moved <= 0) return TransferOperationResult.None;
+
+            DisplayRefresh.After(api, sourceInv);
+            DisplayRefresh.After(api, targetInv);
+            return new TransferOperationResult(moved, moved, false);
+        }
+
         protected override IInventory TargetInventory => targetInv;
 
         protected override bool AllowsLiquidContainers => true;

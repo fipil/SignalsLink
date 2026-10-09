@@ -297,6 +297,7 @@ namespace SignalsLink.src.signals.paperConditions
             {
                 if (block.IsOutputBlock) continue;   // an output block carries nothing anyway
                 if (block.HasActions) continue;      // `do seal` is the work; nothing to carry
+                if (block.Directives.HasRecipe) continue;   // the recipe says what to carry
                 if (block.CanSelectSource) continue;
 
                 errors.Add(new PaperConditionError(block.FirstLine, "", "noselector"));

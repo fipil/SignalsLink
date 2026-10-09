@@ -82,6 +82,9 @@ namespace SignalsLink.src.signals.paperConditions
                 decimal? amount = null;
                 decimal? keep = null;
                 AmountMode amountMode = AmountMode.Exactly;
+                string recipeCode = null;
+                int recipeCount = 1;
+                AmountMode recipeMode = AmountMode.Exactly;
                 InventoryConditionScope currentScope = InventoryConditionScope.Source;
                 int explicitSourceLine = 0;
                 string explicitSourceText = null;
@@ -206,6 +209,19 @@ namespace SignalsLink.src.signals.paperConditions
                         continue;
                     }
 
+                    if (TryParseRecipeDirective(line, out string parsedRecipe, out int parsedRecipeCount, out AmountMode parsedRecipeMode))
+                    {
+                        recipeCode = parsedRecipe;
+                        recipeCount = parsedRecipeCount;
+                        recipeMode = parsedRecipeMode;
+                        continue;
+                    }
+                    if (line.StartsWith("recipe", StringComparison.OrdinalIgnoreCase)
+                        && (line.Length == 6 || line[6] == ' '))
+                    {
+                        sink?.Add(line, "recipe");
+                        continue;
+                    }
                     if (TryParseAction(line, out IConditionAction action))
                     {
                         actions.Add(action);
@@ -231,12 +247,23 @@ namespace SignalsLink.src.signals.paperConditions
                     conditions.Add(new ScopedCondition(FalseCondition.Instance, InventoryConditionScope.Target));
                 }
 
-                if (conditions.Count > 0 || actions.Count > 0)
+                // A recipe says what to carry and where; the other directives would contradict it.
+                if (recipeCode != null && (amount.HasValue || keep.HasValue || sourceSlot.HasValue || sourceLast
+                    || targetSlot.HasValue || targetLast || targetGround || targetFirepit || actions.Count > 0 || hasExplicitOutput))
+                {
+                    errors?.Add(new PaperConditionError(p[0].Number, "", "recipealone"));
+                    recipeCode = null;
+                }
+
+                // A paragraph of nothing but `output N` is a block too: no conditions means it always
+                // holds, so it is the fallback value at the bottom of a paper, or a blanket over the
+                // output blocks below it. Directives alone still make no block.
+                if (conditions.Count > 0 || actions.Count > 0 || hasExplicitOutput || recipeCode != null)
                 {
                     // OutputValue keeps the effective default 15 when `output` is not
                     // specified — for the BlockSensor (no behavior change). HasExplicitOutput
                     // records whether `output` was actually specified; ManagedHose reads it (see spec §6).
-                    ConditionBlock block = new ConditionBlock(conditions, outputValue ?? 15, hasExplicitOutput, new PaperConditionDirectives(sourceSlot, targetSlot, targetGround, amount, requireTargetEmpty, targetGroundHeight, targetFirepit, sourceLast, targetLast, amountMode, keep), actions, p[0].Number);
+                    ConditionBlock block = new ConditionBlock(conditions, outputValue ?? 15, hasExplicitOutput, new PaperConditionDirectives(sourceSlot, targetSlot, targetGround, amount, requireTargetEmpty, targetGroundHeight, targetFirepit, sourceLast, targetLast, amountMode, keep, recipeCode, recipeCount, recipeMode), actions, p[0].Number);
                     blocks.Add(block);
 
                     if (current != null)
@@ -524,6 +551,31 @@ namespace SignalsLink.src.signals.paperConditions
         /// The mark may be written against the number or after a space - somebody will write it
         /// either way, and refusing one of them would teach nobody anything.
         /// </summary>
+        /// <summary>`recipe game:paper-parchment`, `recipe game:paper-parchment 2`, `2-`, `2+`; a code without a domain is the game's.</summary>
+        private static bool TryParseRecipeDirective(string line, out string code, out int count, out AmountMode mode)
+        {
+            code = null;
+            count = 1;
+            mode = AmountMode.Exactly;
+
+            if (!line.StartsWith("recipe ", StringComparison.OrdinalIgnoreCase)) return false;
+
+            var parts = line.Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length < 2 || parts.Length > 3) return false;
+            if (parts[1].IndexOfAny(new[] { '*', '?', '@' }) >= 0) return false;   // one recipe output, not a pattern
+
+            if (parts.Length == 3)
+            {
+                string number = parts[2];
+                if (number.EndsWith("+")) { mode = AmountMode.AtLeast; number = number[..^1]; }
+                else if (number.EndsWith("-")) { mode = AmountMode.AtMost; number = number[..^1]; }
+                if (!int.TryParse(number, NumberStyles.None, CultureInfo.InvariantCulture, out count) || count < 1) return false;
+            }
+
+            code = parts[1];
+            return true;
+        }
+
         private static bool TryParseAmountDirective(string line, out decimal amount, out AmountMode mode)
         {
             amount = 0;

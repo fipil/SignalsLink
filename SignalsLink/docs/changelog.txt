@@ -1,4 +1,6 @@
-1.0.7
+1.1.0
+Tweak: New paper directive `recipe <product> [N][+|-]`: lays a crafting-grid recipe out in the first nine slots of the target (a crafting machine, any 9+ slot inventory) from the source, N multiples at once, topping up only what is missing and leaving a tool from the last craft in place. The handbook explains it under Paper Conditions.
+Tweak: A paper paragraph that is only `output N` is now a block that always holds: at the bottom it is the fallback value of the Output pin, higher up it overrides the output blocks below it. Before, such a paragraph was silently dropped.
 Tweak: Paper sections can be switched by the Input pin: end a header with `when 3` (or `when 1 2 4-6`; a bare `when 2` header means the device's own ends). While Input holds one of the values the section transports continuously, other sections are ignored, and Input stops meaning a batch or 15 on such a paper. One `when` means every section needs one. Works on chutes, dampers, valves and the dock; the handbook explains it under Paper Conditions.
 Tweak: A storage yard now needs only 2 tiles instead of 4.
 Tweak: Chutes and dampers now reach the inventory of a multiblock through any of its blocks, not only the main one; a damper hung on such a block loses its legs as on a chest.

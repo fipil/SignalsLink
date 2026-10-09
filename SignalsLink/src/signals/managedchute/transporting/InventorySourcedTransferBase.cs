@@ -58,6 +58,15 @@ namespace SignalsLink.src.signals.managedchute.transporting
                 {
                     var ctx = BuildDirectiveContext();
                     actingBlock = block;
+                    if (block.Directives.HasRecipe)
+                    {
+                        // The recipe says what goes where; its conditions are read with no stack in hand,
+                        // each in its own scope (`game:stick` in the source = the source holds sticks).
+                        // A block that cannot complete the layout did no work and falls through.
+                        if (!block.ConditionsHold(null, ctx)) return false;
+                        moved = FillRecipe(block);
+                        return moved.Success;
+                    }
                     if (block.CanSelectSource)
                     {
                         foreach (TransferSelection selection in SelectionsForBlock(block, ctx))
@@ -171,6 +180,9 @@ namespace SignalsLink.src.signals.managedchute.transporting
                 block =>
                 {
                     directiveCtx ??= BuildDirectiveContext();
+
+                    // A recipe block is carried out by the transfer pass, never by a slot selection.
+                    if (block.Directives.HasRecipe) return false;
 
                     // A block that says WHAT to carry gets to carry it. Its own actions are not
                     // run here but after the move (see RunActionsAfterTransfer), so that
@@ -368,6 +380,9 @@ namespace SignalsLink.src.signals.managedchute.transporting
         {
             return true;
         }
+
+        /// <summary>`recipe ...` on this transfer: only an inventory with a nine-slot grid can take it.</summary>
+        protected virtual TransferOperationResult FillRecipe(ConditionBlock block) => TransferOperationResult.None;
 
         protected bool TryGetMatchedDirectives(ItemStack stack, out PaperConditionDirectives directives)
         {

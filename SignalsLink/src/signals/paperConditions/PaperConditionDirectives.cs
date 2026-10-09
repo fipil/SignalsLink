@@ -114,12 +114,23 @@ namespace SignalsLink.src.signals.paperConditions
 
         public bool HasKeep => Keep.HasValue;
 
+        /// <summary>`recipe game:paper-parchment 2`: lay this recipe out in the target, times the count.</summary>
+        public Vintagestory.API.Common.AssetLocation RecipeCode { get; }
+        public int RecipeCount { get; }
+        /// <summary>`N` exactly, `N-` at most, `N+` as many as the source allows, at least N.</summary>
+        public AmountMode RecipeMode { get; }
+        public bool HasRecipe => RecipeCode != null;
+
         public bool HasTargetOverride => TargetSlot.HasValue || TargetLast || TargetGround || TargetFirepit;
         public bool HasAmountOverride => Amount.HasValue;
 
-        public PaperConditionDirectives(int? sourceSlot, int? targetSlot, bool targetGround, decimal? amount, bool requireTargetEmpty, int targetGroundHeight = 1, bool targetFirepit = false, bool sourceLast = false, bool targetLast = false, AmountMode amountMode = AmountMode.Exactly, decimal? keep = null)
+        public PaperConditionDirectives(int? sourceSlot, int? targetSlot, bool targetGround, decimal? amount, bool requireTargetEmpty, int targetGroundHeight = 1, bool targetFirepit = false, bool sourceLast = false, bool targetLast = false, AmountMode amountMode = AmountMode.Exactly, decimal? keep = null,
+            string recipeCode = null, int recipeCount = 1, AmountMode recipeMode = AmountMode.Exactly)
         {
             AmountMode = amountMode;
+            RecipeCode = recipeCode == null ? null : new Vintagestory.API.Common.AssetLocation(recipeCode);
+            RecipeCount = recipeCount < 1 ? 1 : recipeCount;
+            RecipeMode = recipeMode;
             SourceSlot = sourceSlot;
             TargetSlot = targetSlot;
             SourceLast = sourceLast;
