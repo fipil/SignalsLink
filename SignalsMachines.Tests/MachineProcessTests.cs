@@ -107,7 +107,7 @@ public class MachineProcessTests
         Run(p, S(15, 15, 5), 2.2f);   // one above the target for over 2 s
         Assert.Equal(MachineProcess.WrongStrength, p.State);
         p = new MachineProcess();
-        Run(p, S(clutch: 15, network: false, plate: false), 3.2f);
+        Run(p, S(clutch: 15, network: false, plate: false), 6.2f);   // 6 s grace, like state 11: a motor restarted through EP needs that long
         Assert.Equal(MachineProcess.NoDrive, p.State);
         Run(p, S(clutch: 15, network: true), 1f);
         Assert.Equal(MachineProcess.NoDrive, p.State);   // the wind came back, the clutch must still be opened once

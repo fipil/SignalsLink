@@ -15,7 +15,7 @@ public sealed class MachineProcess
 
     // tunables (contract: "lad.")
     public const float BaseSeconds = 3f, SecondsPerCell = 1f;
-    public const float PauseReset = 5f, WrongStrengthGrace = 2f, PlateStillGrace = 6f, NoDriveGrace = 3f;
+    public const float PauseReset = 5f, WrongStrengthGrace = 2f, PlateStillGrace = 6f, NoDriveGrace = 6f;
     public const int MaxStrengthStep = 2;
 
     public byte State { get; private set; }
