@@ -82,7 +82,7 @@ public class MachineProcessTests
         var p = new MachineProcess();
         Run(p, S(15, 15, 4), 3f);
         float progress = p.Progress;
-        Run(p, S(0, 15, 4, plate: false), 1.2f);   // clutch dropped and the plate stopped under a lowered crystal
+        Run(p, S(0, 15, 4, plate: false), 6.2f);   // clutch dropped and the plate stopped under a lowered crystal (6 s grace: a motor restarted through EP needs that long)
         Assert.Equal(MachineProcess.PlateStill, p.State);
         p = new MachineProcess();
         Run(p, S(15, 15, 4), 3f);

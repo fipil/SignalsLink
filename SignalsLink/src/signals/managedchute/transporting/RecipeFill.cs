@@ -75,6 +75,11 @@ namespace SignalsLink.src.signals.managedchute.transporting
                 CraftingRecipeIngredient[] cells = Cells(recipe);
                 if (cells == null) continue;
 
+                // A shapeless recipe has no cells of its own: whatever already lies in the grid keeps
+                // its place (the sieve left after the last sheet), the rest goes into the first free cells.
+                if (recipe.Shapeless) cells = Arrange(cells, target);
+                if (cells == null) continue;
+
                 foreach (int k in Multiples(directives, source))
                 {
                     List<Move> moves = TryPlan(world, source, target, cells, k);
@@ -134,6 +139,36 @@ namespace SignalsLink.src.signals.managedchute.transporting
                     cells[row * GridWidth + col] = resolved[row * recipe.Width + col];
 
             return cells;
+        }
+
+        /// <summary>
+        /// Shapeless: assign each occupied cell an ingredient it satisfies, then hand the remaining
+        /// ingredients the empty cells in order. Null when an occupied cell fits no ingredient.
+        /// </summary>
+        public static CraftingRecipeIngredient[] Arrange(CraftingRecipeIngredient[] ingredients, IInventory target)
+        {
+            var left = new List<CraftingRecipeIngredient>();
+            foreach (CraftingRecipeIngredient ingredient in ingredients) if (ingredient != null) left.Add(ingredient);
+
+            var cells = new CraftingRecipeIngredient[GridSlots];
+            for (int i = 0; i < GridSlots; i++)
+            {
+                ItemSlot cell = target[i];
+                if (cell == null || cell.Empty) continue;
+                int at = left.FindIndex(ingredient => ingredient.SatisfiesAsIngredient(cell.Itemstack, false));
+                if (at < 0) return null;
+                cells[i] = left[at];
+                left.RemoveAt(at);
+            }
+
+            for (int i = 0; i < GridSlots && left.Count > 0; i++)
+            {
+                if (cells[i] != null || !target[i].Empty) continue;
+                cells[i] = left[0];
+                left.RemoveAt(0);
+            }
+
+            return left.Count == 0 ? cells : null;
         }
 
         /// <summary>The multiples to try, best first: `N` just N, `N-` N down to one, `N+` as many as the source could hold down to N.</summary>

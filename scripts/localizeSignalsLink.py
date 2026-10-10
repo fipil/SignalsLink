@@ -25,6 +25,7 @@ The API key is read from the OPENAI_API_KEY environment variable.
     python scripts/localizeSignalsLink.py --langs de,pl   # just these languages
     python scripts/localizeSignalsLink.py --force         # retranslate everything
     python scripts/localizeSignalsLink.py --accept en     # English written by hand: record it as current
+    python scripts/localizeSignalsLink.py --accept en,de,sk   # several languages written by hand
 
 BOM: the lang JSON files must be UTF-8 **without** a BOM, and no BOM may survive inside a
 string value either - the game misbehaves otherwise. Every read strips one, no write adds
@@ -339,7 +340,7 @@ def parse_args():
     parser.add_argument("--force", action="store_true", help="prelozit vsechno znovu, i hotove")
     parser.add_argument("--seed-only", action="store_true",
                         help="jen propsat html do cs.json a vypsat, co by se prekladalo")
-    parser.add_argument("--accept", metavar="LANG",
+    parser.add_argument("--accept", metavar="LANG[,LANG...]",
                         help="prijmout rucne napsany preklad: vsem klicum, ktere tento jazyk ma, zapsat otisk "
                              "dnesni cestiny do stavu a nic neprekladat (pouzij hned po rucnim psani)")
     return parser.parse_args()
@@ -377,7 +378,14 @@ def main():
     state = load_state(cs_json, DEFAULT_LANGS)
 
     if args.accept:
-        return accept_language(args.accept.strip(), cs_json, state)
+        # one language or a comma-separated list: --accept en  /  --accept en,de,sk
+        langs_to_accept = [l.strip() for l in args.accept.split(",") if l.strip()]
+        unknown = [l for l in langs_to_accept if l not in DEFAULT_LANGS]
+        if unknown:
+            raise SystemExit("Neznamy jazyk pro --accept: %s (znam: %s)" % (", ".join(unknown), ", ".join(DEFAULT_LANGS)))
+        for lang in langs_to_accept:
+            accept_language(lang, cs_json, state)
+        return 0
 
     if args.seed_only:
         print("\nKrok 2 preskocen (--seed-only). Chybelo by prelozit:")

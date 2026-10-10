@@ -258,7 +258,6 @@ public class BEImprinter : BlockEntity
         Api.World.HighlightBlocks(player, RefusedSlot, refused.ToList(),
             refused.Select(_ => ColorUtil.ColorFromRgba(220, 40, 40, 96)).ToList(), EnumHighlightBlocksMode.Absolute, EnumHighlightShape.Arbitrary);
         var marked = socket == null ? new List<BlockPos>() : exposed.ToList();
-        Api.Logger.Debug("[signalstubes] imprinter {0}: highlights to {1}: {2} refused, {3} marked, socket {4}", Pos, player.PlayerName, refused.Count, marked.Count, socket);
         Api.World.HighlightBlocks(player, MarkedSlot, marked,
             marked.Select(_ => ColorUtil.ColorFromRgba(40, 200, 60, 96)).ToList(), EnumHighlightBlocksMode.Absolute, EnumHighlightShape.Arbitrary);
     }

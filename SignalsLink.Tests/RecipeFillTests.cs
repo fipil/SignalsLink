@@ -211,6 +211,29 @@ namespace SignalsLink.Tests
         }
 
         [Fact]
+        public void A_shapeless_recipe_keeps_what_already_lies_anywhere_in_the_grid()
+        {
+            // Parchment in the game: pulp x4 + a sieve (tool), shapeless. The sieve stays in cell 4
+            // where the last sheet left it; the pulp goes into the first free cell.
+            GridRecipe parchment = Recipe(1, 2, "parchment", Ing("pulp", 4), Ing("sieve", tool: true));
+            parchment.Shapeless = true;
+            var source = Quiet(4, Stack("pulp", 40));
+            var target = Quiet(10);
+            target[3].Itemstack = Stack("sieve", 1);
+
+            Assert.Equal(16, Fill("recipe parchment 4\n", source, target, parchment));
+            Assert.Equal(new[] { "pulp:16", "", "", "sieve:1", "", "", "", "", "", "" }, Picture(target));
+            Assert.Equal(24, source[0].StackSize);
+
+            // and once the sheet is made the pulp is topped up again, the sieve untouched
+            target[0].TakeOutWhole();
+            Assert.Equal(16, Fill("recipe parchment 4\n", source, target, parchment));
+
+            var dirty = Quiet(9); dirty[5].Itemstack = Stack("dirt", 1);
+            Assert.Equal(0, Fill("recipe parchment\n", Quiet(4, Stack("pulp", 30), Stack("sieve", 1)), dirty, parchment));
+        }
+
+        [Fact]
         public void The_blocks_conditions_gate_it_like_any_other_block()
         {
             var source = Quiet(4, Stack("stick", 10), Stack("plank", 10));
