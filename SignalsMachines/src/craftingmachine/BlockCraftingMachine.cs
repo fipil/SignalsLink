@@ -187,15 +187,20 @@ namespace SignalsMachines.src.craftingmachine
             return be.Interact(player);
         }
 
-        /// <summary>Block light while the crystal is down: temporal teal (VS hue 0-63, saturation 0-7, brightness 0-31),
-        /// as far as an oil lamp (brightness 11) reaches.</summary>
-        public static readonly byte[] CrystalLight = { 27, 7, 11 };
+        /// <summary>
+        /// Block light is a property of the block type, so the machine has two: `craftingmachine-{side}` dark and
+        /// `craftingmachinelit-{side}` with the crystal's fixed teal light (hsv 27/7/11, an oil lamp's reach). The
+        /// block entity swaps them as the crystal lights up or goes dark; the engine then adds and removes the
+        /// light itself, on both sides. (Reading the entity's state from GetLightHsv left stale light behind.)
+        /// </summary>
+        public bool IsLit => Code.Path.StartsWith("craftingmachinelit");
 
-        public override byte[] GetLightHsv(IBlockAccessor blockAccessor, BlockPos pos, ItemStack stack = null)
-        {
-            if (pos != null && blockAccessor.GetBlockEntity(pos) is BECraftingMachine { Lit: true }) return CrystalLight;
-            return base.GetLightHsv(blockAccessor, pos, stack);
-        }
+        public BlockCraftingMachine Counterpart(IWorldAccessor world, bool lit)
+            => world.GetBlock(new AssetLocation("signalsmachines", (lit ? "craftingmachinelit-" : "craftingmachine-") + Variant["side"])) as BlockCraftingMachine;
+
+        /// <summary>Picked or dropped, a machine is always the dark one.</summary>
+        public override ItemStack OnPickBlock(IWorldAccessor world, BlockPos pos)
+            => new ItemStack(IsLit ? Counterpart(world, false) ?? this : this);
 
         // Aiming at a pin: just that pin and its current level.
         public override string GetPlacedBlockInfo(IWorldAccessor world, BlockPos pos, IPlayer forPlayer)

@@ -150,7 +150,7 @@
       "base": "signalstubes:block/glass-plain"
     },
     "tube-glyph": {
-      "base": "signalstubes:block/details"
+      "base": "game:block/machine/statictranslocator/rustyglow"
     },
     "tube-base-blue": {
       "base": "signalstubes:block/tube-base-blue"

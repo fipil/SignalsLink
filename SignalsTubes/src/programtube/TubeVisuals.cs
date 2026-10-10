@@ -14,7 +14,7 @@ public static class TubeVisuals
     // 5 x 7 cells, mirrored about the middle column, so the rune reads the same from both sides.
     private const int Columns = 5, Rows = 7;
     private const float Cell = .6f, GlyphLeft = 6.5f, GlyphBottom = 6.4f, GlyphZ0 = 7.85f, GlyphZ1 = 8.15f;
-    private const float TexU = 24, TexV = 0;   // turquoise area of the glyph texture
+    private const float TexU = 0, TexV = 0;   // the glyph texture is the tetrode's filament glow (rustyglow), used whole
 
     /// <summary>Bit i = pin i present. From the program; blank tubes fall back to the pinCount attribute.</summary>
     public static int PinMask(ItemStack stack)

@@ -1,5 +1,6 @@
 {
   "block-craftingmachine-*": "Macchina di fabbricazione",
+  "block-craftingmachinelit-*": "Macchina di fabbricazione",
   "door-closed": "chiuse",
   "door-open": "aperte",
   "game:tabname-signalsmachines": "Signals Machines",

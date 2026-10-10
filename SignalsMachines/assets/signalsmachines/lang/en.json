@@ -61,6 +61,7 @@
   "signalsmachines:block-handbooktitle-signalsmachines": "Usage",
   "game:tabname-signalsmachines": "Signals Machines",
   "block-craftingmachine-*": "Crafting machine",
+  "block-craftingmachinelit-*": "Crafting machine",
   "socket-insert": "Insert tube",
   "socket-remove": "Remove tube with an empty hand",
   "signals:cm-state": "State (output)",

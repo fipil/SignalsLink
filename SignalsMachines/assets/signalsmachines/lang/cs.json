@@ -61,6 +61,7 @@
   "signalsmachines:block-handbooktitle-signalsmachines": "Použití",
   "game:tabname-signalsmachines": "Signals Machines",
   "block-craftingmachine-*": "Craftovací stroj",
+  "block-craftingmachinelit-*": "Craftovací stroj",
   "socket-insert": "Zasadit elektronku",
   "socket-remove": "Vyjmout elektronku prázdnou rukou",
   "signals:cm-state": "Stav (výstup)",

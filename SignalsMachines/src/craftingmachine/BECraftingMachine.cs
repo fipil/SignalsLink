@@ -67,13 +67,13 @@ public class BECraftingMachine : BlockEntityContainer, ISidedAutomation, Signals
     /// <summary>The crystal is down and powered: the machine casts block light (BlockCraftingMachine.GetLightHsv).</summary>
     public bool Lit => inputs.Crystal > 0 && inputs.Strength > 0;
 
-    // Lighting up: exchanging the block for itself makes the world place GetLightHsv anew (the lantern's way).
-    // Going dark the exchange sees no light on either side, so the light must be taken away by hand.
+    // The lit and the dark machine are two blocks; the server swaps them and the engine moves the light,
+    // here and on every client. The entity survives the exchange (OnExchanged).
     private void Relight()
     {
-        if (Api == null) return;
-        if (Lit) Api.World.BlockAccessor.ExchangeBlock(Block.Id, Pos);
-        else Api.World.BlockAccessor.RemoveBlockLight(BlockCraftingMachine.CrystalLight, Pos);
+        if (Api?.Side != EnumAppSide.Server || Block is not BlockCraftingMachine block) return;
+        var want = block.Counterpart(Api.World, Lit);
+        if (want != null && want.Id != Block.Id) Api.World.BlockAccessor.ExchangeBlock(want.Id, Pos);
     }
 
     // server: when pins 4/5 last went high / low; a door never seen closing counts as long shut
@@ -306,6 +306,7 @@ public class BECraftingMachine : BlockEntityContainer, ISidedAutomation, Signals
             signalMod = api.ModLoader?.GetModSystem<SignalNetworkMod>();
             signalMod?.RegisterSignalTickListener(OnSignalTick);
             RegisterGameTickListener(OnMechanicsTick, 100);
+            Relight();   // a saved state and the saved block variant may disagree (older saves had one block)
         }
         else if (api is ICoreClientAPI capi && Block is BlockCraftingMachine)   // not when the block is already gone
         {
@@ -329,7 +330,6 @@ public class BECraftingMachine : BlockEntityContainer, ISidedAutomation, Signals
         plateRenderer?.Dispose();
         effects?.Dispose();
         trace?.Dispose(); trace = null;
-        if (Lit) Api.World.BlockAccessor.RemoveBlockLight(BlockCraftingMachine.CrystalLight, Pos);
     }
 
     // ---- mechanics: clutch and plate
@@ -563,9 +563,7 @@ public class BECraftingMachine : BlockEntityContainer, ISidedAutomation, Signals
         imprinter = tree.HasAttribute("imprinter") ? Vintagestory.API.Util.SerializerUtil.Deserialize<BlockPos>(tree.GetBytes("imprinter")) : null;
         savedSimState = tree.GetBytes("simState");   // handed to the host once it exists (the tree may come before Initialize)
         var b = tree.GetBytes("inputs", new byte[5]);
-        bool wasLit = Lit;
         inputs = new MachineInputs(b[0], b[1], b[2], b[3], b[4]);
-        if (Api is ICoreClientAPI && Lit != wasLit) Relight();   // the client lights its own chunks
         state = (byte)tree.GetInt("state");
         doorsReady = tree.GetInt("doorsReady");   // the server recomputes its own from the clock next tick
         if (Api is ICoreClientAPI || Api == null) cloud.Deserialize(tree.GetBytes("cloud"), Pos);   // the server keeps its own, with ages and fades

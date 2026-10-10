@@ -1,5 +1,6 @@
 {
   "block-craftingmachine-*": "Maszyna rzemieślnicza",
+  "block-craftingmachinelit-*": "Maszyna rzemieślnicza",
   "door-closed": "zamknięte",
   "door-open": "otwarte",
   "game:tabname-signalsmachines": "Signals Machines",

@@ -1,5 +1,6 @@
 {
-  "code": "craftingmachine",
+  "_comment": "The crafting machine while its crystal is lit: identical to craftingmachine.json except the fixed block light. The block entity swaps the two with ExchangeBlock; keep this file in step with craftingmachine.json.",
+  "code": "craftingmachinelit",
   "class": "CraftingMachine",
   "variantgroups": [
     {
@@ -12,14 +13,6 @@
       ]
     }
   ],
-  "creativeinventory": {
-    "general": [
-      "*-north"
-    ],
-    "signalsmachines": [
-      "*-north"
-    ]
-  },
   "behaviors": [
     {
       "name": "Multiblock",
@@ -315,12 +308,7 @@
       }
     ],
     "handbook": {
-      "extraSections": [
-        {
-          "title": "signalsmachines:block-handbooktitle-signalsmachines",
-          "text": "signalsmachines:block-handbooktext-craftingmachine"
-        }
-      ]
+      "exclude": true
     }
   },
   "drawtype": "json",
@@ -427,6 +415,20 @@
         "mechPartShape": {
           "base": "signalsmachines:block/craftingmachine-axle"
         }
+      }
+    }
+  ],
+  "lightHsv": [
+    27,
+    7,
+    11
+  ],
+  "drops": [
+    {
+      "type": "block",
+      "code": "craftingmachine-{side}",
+      "quantity": {
+        "avg": 1
       }
     }
   ]

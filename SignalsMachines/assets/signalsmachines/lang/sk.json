@@ -1,5 +1,6 @@
 {
   "block-craftingmachine-*": "Craftovací stroj",
+  "block-craftingmachinelit-*": "Craftovací stroj",
   "door-closed": "zatvorené",
   "door-open": "otvorené",
   "game:tabname-signalsmachines": "Signals Machines",
