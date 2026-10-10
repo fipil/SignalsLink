@@ -47,7 +47,8 @@ public sealed class PlateRenderer : IRenderer
     public float Angle => angle;
     public bool Stopped => !braking && speed == 0;
 
-    public double RenderOrder => 0.5;
+    // after the particles (0.6) and the entities' late pass (0.7): the glass goes over all of them
+    public double RenderOrder => 0.8;
     public int RenderRange => 24;
 
     public PlateRenderer(ICoreClientAPI capi, BlockPos pos, MeshData plateMesh, MeshData crystalMesh, MeshData doorWestMesh, MeshData doorEastMesh,
@@ -65,6 +66,7 @@ public sealed class PlateRenderer : IRenderer
         glassWest = capi.Render.UploadMesh(glassWestMesh);
         glassEast = capi.Render.UploadMesh(glassEastMesh);
         capi.Event.RegisterRenderer(this, EnumRenderStage.Opaque, "craftingmachine-plate");
+        capi.Event.RegisterRenderer(this, EnumRenderStage.AfterOIT, "craftingmachine-glass");
     }
 
     /// <summary>Clutch closed: turn at this network speed (the mechanical renderer's scale).</summary>
@@ -157,6 +159,7 @@ public sealed class PlateRenderer : IRenderer
 
     public void OnRenderFrame(float dt, EnumRenderStage stage)
     {
+        if (stage == EnumRenderStage.AfterOIT) { RenderGlass(); return; }
         Advance(dt);
         var render = capi.Render;
         var camera = capi.World.Player.Entity.CameraPos;
@@ -248,12 +251,49 @@ public sealed class PlateRenderer : IRenderer
             }
         }
 
-        // the door glass last and without depth writes: what is behind it (the far door, the product) stays visible
+        prog.Stop();
+    }
+
+    /// <summary>
+    /// The door glass, in its own late pass (AfterOIT) without depth writes: by then the chamber, the particles
+    /// (sparks, smog, overload smoke), entities and other mods' renderers are all drawn, so every one of them shows
+    /// through the glass and none can paint over it. In the opaque pass the particles came after the glass and,
+    /// with no depth written, erased it (the multiplayer flicker); with depth written they vanished behind it.
+    /// Farther pane first, so the near pane does not hide the far one.
+    /// </summary>
+    private void RenderGlass()
+    {
+        var render = capi.Render;
+        var camera = capi.World.Player.Entity.CameraPos;
+        render.GlDisableCullFace();
+        render.GlToggleBlend(true);
         render.GLDepthMask(false);
-        DoorPlace(WestDoor, -1);
-        render.RenderMesh(glassWest);
-        DoorPlace(EastDoor, 1);
-        render.RenderMesh(glassEast);
+        // lit like the chamber (the upper block), as the wall panes in the block mesh are; the lower block is darker
+        var prog = render.PreparedStandardShader(pos.X, pos.Y + 1, pos.Z);
+        prog.ViewMatrix = render.CameraMatrixOriginf;
+        prog.ProjectionMatrix = render.CurrentProjectionMatrix;
+        prog.Tex2D = capi.BlockTextureAtlas.AtlasTextures[0].TextureId;
+
+        float Place(DoorMotion door, float nx)
+        {
+            var (outward, down) = door.Offsets;
+            model.Identity().Translate(pos.X - camera.X, pos.Y - camera.Y, pos.Z - camera.Z)
+                .Translate(.5f, 0, .5f).RotateY(blockRotation).Translate(-.5f, 0, -.5f)
+                .Translate(nx * outward, -down, 0);
+            prog.ModelMatrix = model.Values;
+            var centre = model.TransformVector(new Vec4f(.5f, .5f, .5f, 1));
+            return centre.X * centre.X + centre.Y * centre.Y + centre.Z * centre.Z;
+        }
+
+        bool westFirst = Place(WestDoor, -1) >= Place(EastDoor, 1);
+        foreach (var (door, mesh, nx) in westFirst
+            ? new[] { (WestDoor, glassWest, -1f), (EastDoor, glassEast, 1f) }
+            : new[] { (EastDoor, glassEast, 1f), (WestDoor, glassWest, -1f) })
+        {
+            Place(door, nx);
+            render.RenderMesh(mesh);
+        }
+
         render.GLDepthMask(true);
         prog.Stop();
     }
@@ -278,6 +318,7 @@ public sealed class PlateRenderer : IRenderer
     public void Dispose()
     {
         capi.Event.UnregisterRenderer(this, EnumRenderStage.Opaque);
+        capi.Event.UnregisterRenderer(this, EnumRenderStage.AfterOIT);
         plate.Dispose();
         crystal.Dispose();
         doorWest.Dispose();
