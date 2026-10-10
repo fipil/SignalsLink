@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
@@ -26,6 +26,10 @@
     </Reference>
     <Reference Include="VSSurvivalMod">
       <HintPath>..\..\..\..\..\VintageStory\1.22\Mods\VSSurvivalMod.dll</HintPath>
+    </Reference>
+    <Reference Include="OpenTK.Graphics">
+      <HintPath>..\..\..\..\..\VintageStory\1.22\Lib\OpenTK.Graphics.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="0Harmony">
       <HintPath>..\..\..\..\..\VintageStory\1.22\Lib\0Harmony.dll</HintPath>

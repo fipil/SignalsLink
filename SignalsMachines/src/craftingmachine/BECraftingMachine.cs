@@ -627,7 +627,8 @@ public class BECraftingMachine : BlockEntityContainer, ISidedAutomation, Signals
         if (Api is not ICoreClientAPI capi || Block is not BlockCraftingMachine block) return;
         if (tube?.Collectible is ItemProgramTube item)
         {
-            MeshData mesh = item.BuildMesh(capi, tube, capi.Tesselator.GetTextureSource(Block));
+            // lit: a tube in the machine always controls it, like one in a socket with a powered network
+            MeshData mesh = item.BuildMesh(capi, tube, capi.Tesselator.GetTextureSource(Block), lit: true);
             mesh.Scale(new Vec3f(), .5f, .5f, .5f);
             mesh.Translate(4f / 16, .5f / 16, 8f / 16);   // seated: the base just clears the socket floor
             mesh.Rotate(new Vec3f(.5f, .5f, .5f), 0, block.RotationRadians, 0);

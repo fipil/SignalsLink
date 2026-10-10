@@ -1,6 +1,7 @@
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.MathTools;
+using OpenTK.Graphics.OpenGL;
 
 namespace SignalsMachines.src.craftingmachine;
 
@@ -268,6 +269,11 @@ public sealed class PlateRenderer : IRenderer
         render.GlDisableCullFace();
         render.GlToggleBlend(true);
         render.GLDepthMask(false);
+        // The standard shader also writes the SSAO G-buffer (attachments 2 and 3: position, normal). Blended glass
+        // would leave half-mixed values there and the SSAO pass, run after us, darkens the pane to near black.
+        // The engine's own transparent pass never writes them; neither do we.
+        GL.ColorMask(2, false, false, false, false);
+        GL.ColorMask(3, false, false, false, false);
         // lit like the chamber (the upper block), as the wall panes in the block mesh are; the lower block is darker
         var prog = render.PreparedStandardShader(pos.X, pos.Y + 1, pos.Z);
         prog.ViewMatrix = render.CameraMatrixOriginf;
@@ -294,6 +300,8 @@ public sealed class PlateRenderer : IRenderer
             render.RenderMesh(mesh);
         }
 
+        GL.ColorMask(2, true, true, true, true);
+        GL.ColorMask(3, true, true, true, true);
         render.GLDepthMask(true);
         prog.Stop();
     }

@@ -28,9 +28,10 @@ public class ItemProgramTube : Item
     }
 
     // The installed mesh uses the block atlas; handheld and inventory meshes use the item atlas.
-    public MeshData BuildMesh(ICoreClientAPI capi, ItemStack stack, ITexPositionSource textures)
+    // `lit`: the glyph glows, as in a socket whose pins belong to a powered network.
+    public MeshData BuildMesh(ICoreClientAPI capi, ItemStack stack, ITexPositionSource textures, bool lit = false)
     {
-        capi.Tesselator.TesselateShape("signalstubes program tube", BuildShape(stack, false), out MeshData mesh, textures);
+        capi.Tesselator.TesselateShape("signalstubes program tube", BuildShape(stack, lit), out MeshData mesh, textures);
         return mesh;
     }
 
