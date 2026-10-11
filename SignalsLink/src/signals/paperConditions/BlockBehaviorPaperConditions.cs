@@ -174,7 +174,13 @@ namespace SignalsLink.src.signals.paperConditions
                 string text = ItemConditionContextUtil.BuildHintText(world, stack);
                 if (string.IsNullOrWhiteSpace(text)) return false;
 
-                be.ConditionsText = text;
+                // Never written straight away: Ctrl is also sprint, and a log in hand over a ceiling damper
+                // wiped a charcoal factory's orders this way. The same dialog as for a paper, on every device,
+                // orders or none; the server writes only what the dialog sends back.
+                if (world.Side == EnumAppSide.Client)
+                {
+                    world.Api.ModLoader.GetModSystem<PaperConfirmMod>()?.Ask(blockSel.Position, be.ConditionsText, text);
+                }
                 handling = EnumHandling.PreventDefault;
                 return true;
             }

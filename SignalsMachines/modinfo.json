@@ -11,6 +11,6 @@
     "game": "1.22.0",
     "signals": "0.3.3",
     "signalstubes": "1.0.0-rc.1",
-    "signalslink": "1.0.7"
+    "signalslink": "1.1.0"
   }
 }

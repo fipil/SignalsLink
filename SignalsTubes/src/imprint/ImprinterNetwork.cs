@@ -105,8 +105,15 @@ public static class ImprinterNetwork
     public static void OpenDialog(ICoreClientAPI capi, BlockPos pos, string path = "") =>
         capi.Network.GetChannel(Channel).SendPacket(new ImprinterOpenPacket { X = pos.X, Y = pos.Y, Z = pos.Z, Path = path });
 
+    /// <summary>
+    /// Export and import stay out of everyone's /help: they need this privilege, which no role gets by itself,
+    /// admins included. Whoever wants them: /player &lt;name&gt; privilege grant signalstubes-tools
+    /// </summary>
+    public const string ToolsPrivilege = "signalstubes-tools";
+
     public static void StartServer(ICoreServerAPI sapi)
     {
+        sapi.Permissions.RegisterPrivilege(ToolsPrivilege, "Signals Tubes: export and import tubes as files", adminAutoGrant: false);
         var parsers = sapi.ChatCommands.Parsers;
         sapi.ChatCommands.Create("tubes").WithDescription("Signals Tubes").RequiresPrivilege(Privilege.chat)
             .BeginSubCommand("warn").WithDescription("Warn before soldering tubes into a new one: on / off")
@@ -122,12 +129,12 @@ public static class ImprinterNetwork
             .HandleWith(args => TextCommandResult.Success(SocketDiagnostics(sapi, args.Caller.Player)))
             .EndSubCommand()
             // Admin: the tube in hand to a file on the server, and back into the hand of whoever imports it.
-            .BeginSubCommand("export").WithDescription("Write the tube in your hand to ModData/signalstubes/tubes/<name>.json (no name: the tube's own)")
-            .WithArgs(parsers.OptionalAll("name")).RequiresPlayer().RequiresPrivilege(Privilege.controlserver)
+            .BeginSubCommand("export").WithDescription("Write the tube in your hand to ModData/signalstubes/tubes/&lt;name&gt;.json (no name: the tube's own)")   // chat text is markup: a bare <name> swallows the rest of the chat
+            .WithArgs(parsers.OptionalAll("name")).RequiresPlayer().RequiresPrivilege(ToolsPrivilege)
             .HandleWith(args => ExportTube(sapi, (IServerPlayer)args.Caller.Player, (string)args[0]))
             .EndSubCommand()
-            .BeginSubCommand("import").WithDescription("Create the tube from ModData/signalstubes/tubes/<name>.json; you become its author")
-            .WithArgs(parsers.All("name")).RequiresPlayer().RequiresPrivilege(Privilege.controlserver)
+            .BeginSubCommand("import").WithDescription("Create the tube from ModData/signalstubes/tubes/&lt;name&gt;.json; you become its author")
+            .WithArgs(parsers.All("name")).RequiresPlayer().RequiresPrivilege(ToolsPrivilege)
             .HandleWith(args => ImportTube(sapi, (IServerPlayer)args.Caller.Player, (string)args[0]))
             .EndSubCommand();
 
