@@ -10,19 +10,27 @@ public class TubeProgramTests
     private static readonly string Root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "../../../../SignalsTubes"));
     private static readonly ItemProgramTube Tube = new() { Code = new AssetLocation("signalstubes:programtube"), MaxStackSize = 1 };
 
-    private static IEnumerable<(string name, string circuit)> CreativeSamples()
+    // The former creative samples, kept as fixtures; the mod itself offers no programmed tubes.
+    private static IEnumerable<(string name, string circuit)> Samples() => new[]
+    {
+        ("Inverter", "{\"v\":1,\"n\":3,\"links\":[],\"parts\":[{\"k\":\"source\",\"n\":[1],\"p\":15},{\"k\":\"valve\",\"n\":[0,1,2]}],\"pins\":[{\"i\":0,\"r\":\"in\",\"n\":0},{\"i\":1,\"r\":\"out\",\"n\":2}]}"),
+        ("Clock", "{\"v\":1,\"n\":2,\"links\":[],\"parts\":[{\"k\":\"source\",\"n\":[0],\"p\":15},{\"k\":\"valve\",\"n\":[1,0,1]}],\"pins\":[{\"i\":0,\"r\":\"out\",\"n\":1}]}"),
+        ("Delay line", "{\"v\":1,\"n\":2,\"links\":[],\"parts\":[{\"k\":\"delay\",\"n\":[0,1],\"p\":2}],\"pins\":[{\"i\":0,\"r\":\"in\",\"n\":0},{\"i\":1,\"r\":\"out\",\"n\":1},{\"i\":2,\"r\":\"delay\",\"c\":0}]}"),
+        ("Memory", "{\"v\":1,\"n\":3,\"links\":[],\"parts\":[{\"k\":\"source\",\"n\":[1],\"p\":15},{\"k\":\"toggle\",\"n\":[0,1,2]}],\"pins\":[{\"i\":0,\"r\":\"in\",\"n\":0},{\"i\":1,\"r\":\"out\",\"n\":2}]}")
+    };
+
+    [Fact]
+    public void CreativeInventoryOffersNoProgrammedTubes()
     {
         var item = JObject.Parse(File.ReadAllText(Path.Combine(Root, "assets/signalstubes/itemtypes/programtube.json")));
-        foreach (var stack in item["creativeinventoryStacksByType"]["*-fire"][0]["stacks"])
-            if (stack["attributes"] != null)
-                yield return ((string)stack["attributes"]["programName"], (string)stack["attributes"]["circuit"]);
+        Assert.All(item["creativeinventoryStacksByType"]["*-fire"][0]["stacks"], stack => Assert.Null(stack["attributes"]?["circuit"]));
     }
 
     [Fact]
-    public void CreativeSamplesAreValidProgramsWithDistinctFingerprints()
+    public void SamplesAreValidProgramsWithDistinctFingerprints()
     {
         var prints = new HashSet<string>();
-        foreach (var (name, circuit) in CreativeSamples())
+        foreach (var (name, circuit) in Samples())
         {
             var program = ProgramCodec.FromJson(circuit);
             Assert.True(prints.Add(CircuitFingerprint.Compute(program)), name);
@@ -33,7 +41,7 @@ public class TubeProgramTests
     [Fact]
     public void InverterSampleInvertsAndClockSampleTicks()
     {
-        var samples = CreativeSamples().ToDictionary(s => s.name, s => ProgramCodec.FromJson(s.circuit));
+        var samples = Samples().ToDictionary(s => s.name, s => ProgramCodec.FromJson(s.circuit));
         var inverter = new CircuitSimulator(samples["Inverter"]);
         inverter.SetInput(0, 15);
         inverter.Step(); inverter.Step();
@@ -51,7 +59,7 @@ public class TubeProgramTests
     [Fact]
     public void StackProgramIsParsedOnceAndSharedButSimulatorsDoNotInterfere()
     {
-        var (_, circuit) = CreativeSamples().First(s => s.name == "Memory");
+        var (_, circuit) = Samples().First(s => s.name == "Memory");
         var stack = new ItemStack(Tube);
         stack.Attributes.SetString(ProgramCodec.AttributeKey, circuit);
         var program = TubeProgram.Get(stack, null);
@@ -118,7 +126,7 @@ public class TubeProgramTests
     public void ProgrammedTubeShowsItsPinsAndAMirroredGlyphThatGlowsOnlyWhenLit()
     {
         var template = Newtonsoft.Json.JsonConvert.DeserializeObject<Shape>(File.ReadAllText(Path.Combine(Root, "assets/signalstubes/shapes/item/programtube.json")));
-        var (_, circuit) = CreativeSamples().First(s => s.name == "Delay line");
+        var (_, circuit) = Samples().First(s => s.name == "Delay line");
         var stack = new ItemStack(Tube);
         stack.Attributes.SetString(ProgramCodec.AttributeKey, circuit);
         var shape = TubeVisuals.Build(template, stack);
@@ -140,7 +148,7 @@ public class TubeProgramTests
     [Fact]
     public void ImprintedTubeCarriesOnlyThePublicPartAndTheStoreKeepsTheProgram()
     {
-        var (_, circuit) = CreativeSamples().First(s => s.name == "Delay line");
+        var (_, circuit) = Samples().First(s => s.name == "Delay line");
         var program = ProgramCodec.FromJson(circuit);
         program.Pins[0].Name = "Trigger";
         var store = new ProgramStore();

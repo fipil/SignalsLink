@@ -183,6 +183,7 @@ public class BECraftingMachine : BlockEntityContainer, ISidedAutomation, Signals
         // no class on record: the game lets such a player make every trait recipe, so does the machine
         System.Func<string, bool> hasTrait = placerTraits == null ? _ => true : placerTraits.Contains;
         Recipe = MachineRecipes.Find(Api.World, GridCells(), hasTrait);
+        recipeCount = Recipe?.Recipe.Output?.ResolvedItemStack is ItemStack output ? output.StackSize * MachineRecipes.Cycles(Recipe, GridCells(), GridSize) : 0;
         recipeText = Recipe == null ? "" : ProductText(Recipe);
     }
 
@@ -191,13 +192,14 @@ public class BECraftingMachine : BlockEntityContainer, ISidedAutomation, Signals
     {
         var output = match.Recipe.Output?.ResolvedItemStack;
         if (output == null) return match.Recipe.Name?.ToString() ?? "?";
-        int count = output.StackSize * MachineRecipes.Cycles(match, GridCells(), GridSize);
+        int count = recipeCount;
         string name;
         try { name = output.GetName(); } catch (ArgumentNullException) { name = output.Collectible.Code.ToShortString(); }   // no language tables outside the game
         return count + "x " + name;
     }
 
     private string recipeText = "";
+    private int recipeCount;   // items one run makes; clients name the product themselves, in their language
 
     private ItemStack tube;
     private TubeHost host;   // runs the tube's program (server)
@@ -486,7 +488,7 @@ public class BECraftingMachine : BlockEntityContainer, ISidedAutomation, Signals
     public string Diagnostics() => host == null ? null : host.Describe() + $"machine: inputs {inputs}, state {state}, tube controls {TubeControls}\n";
 
     /// <summary>The imprinter prefills pin names with these; reserve pins 6-7 stay unnamed.</summary>
-    public string PinName(int index) => index <= LastInput ? (Block as BlockCraftingMachine)?.PinName(index) : null;
+    public string PinName(int index) => index <= LastInput ? (Block as BlockCraftingMachine)?.PinRef(index) : null;
 
     public Vec3d PlugCableEnd()
     {
@@ -545,12 +547,14 @@ public class BECraftingMachine : BlockEntityContainer, ISidedAutomation, Signals
         if (placerName != null) tree.SetString("placerName", placerName);
         if (placerTraits != null) tree.SetString("placerTraits", string.Join(",", placerTraits));
         tree.SetString("recipe", recipeText);
+        tree.SetInt("recipeCount", recipeCount);
         var product = Recipe?.Recipe.Output?.ResolvedItemStack;
         if (product != null) tree.SetItemstack("product", product); else tree.RemoveAttribute("product");
     }
 
     private bool tubeControlsSynced;   // client copy of TubeControls
-    private string recipeNameSynced = "";   // client copy of the recipe name
+    private string recipeNameSynced = "";   // client copy of the recipe name, in the server's language
+    private int recipeCountSynced;
     private float progressSynced;
     private ItemStack productSynced;   // client copy of what the recipe makes, for the ghost
     private string ghostCode;          // what the renderer's ghost was built from
@@ -577,6 +581,7 @@ public class BECraftingMachine : BlockEntityContainer, ISidedAutomation, Signals
         placerName = tree.GetString("placerName");
         placerTraits = tree.HasAttribute("placerTraits") ? new HashSet<string>(tree.GetString("placerTraits").Split(',', StringSplitOptions.RemoveEmptyEntries)) : null;
         recipeNameSynced = tree.GetString("recipe", "");
+        recipeCountSynced = tree.GetInt("recipeCount");
         productSynced = tree.GetItemstack("product");
         productSynced?.ResolveBlockOrItem(worldForResolving);
         UpdatePlatePicture();
@@ -612,7 +617,8 @@ public class BECraftingMachine : BlockEntityContainer, ISidedAutomation, Signals
         dsc.AppendLine(Lang.Get("signalsmachines:machine-doors", DoorOpen(4) ? Lang.Get("signalsmachines:door-open") : Lang.Get("signalsmachines:door-closed"), DoorOpen(5) ? Lang.Get("signalsmachines:door-open") : Lang.Get("signalsmachines:door-closed")));
         int cells = OccupiedCells;
         if (cells > 0 || !inventory[ProductSlot].Empty) dsc.AppendLine(Lang.Get("signalsmachines:machine-cells", cells, inventory[ProductSlot].Empty ? "-" : inventory[ProductSlot].GetStackName()));
-        string recipeName = Api?.Side == EnumAppSide.Server ? recipeText : recipeNameSynced;
+        string recipeName = Api?.Side == EnumAppSide.Server ? recipeText
+            : recipeCountSynced > 0 && productSynced?.Collectible != null ? recipeCountSynced + "x " + productSynced.GetName() : recipeNameSynced;
         if (cells > 0) dsc.AppendLine(Lang.Get("signalsmachines:machine-recipe", recipeName.Length == 0 ? Lang.Get("signalsmachines:recipe-none") : recipeName));
         if (placerName != null) dsc.AppendLine(Lang.Get("signalsmachines:machine-placer", placerName));
     }

@@ -216,25 +216,25 @@ namespace SignalsMachines.src.craftingmachine
             // a reserve pin the tube uses carries the name imprinted into it
             string tubeName = pin > BECraftingMachine.LastInput && be?.Tube != null
                 ? TubeProgram.Pins(be.Tube).FirstOrDefault(p => p.Index == pin)?.Name : null;
-            string info = (string.IsNullOrEmpty(tubeName) ? PinName(pin, anchor) : TubeProgram.Vtml(tubeName)) + "\n";
+            string info = (string.IsNullOrEmpty(tubeName) ? PinName(pin, anchor) : TubeProgram.Vtml(TubeProgram.Resolve(tubeName))) + "\n";
             if (be != null && pin <= BECraftingMachine.LastInput)
                 info += Vintagestory.API.Config.Lang.Get("signalsmachines:machine-pin-level", pin == BECraftingMachine.StatePin ? be.State : be.Inputs[pin]) + "\n";
             return info;
         }
 
-        /// <summary>The pin's name without a selection: by its anchor index (for the imprinter's pin list).</summary>
-        public string PinName(int pin)
+        /// <summary>The pin's name as a lang ref, by its anchor index (for the imprinter's pin list).</summary>
+        public string PinRef(int pin)
         {
             var anchor = wireAnchors?.FirstOrDefault(a => a.Index == pin)?.Name;
-            return anchor == null ? null : PinName(pin, anchor);
+            return anchor == null ? null : PinRef(pin, anchor);
         }
 
         /// <summary>Door pins are named by the side the door faces in the world, the rest by their anchor name.</summary>
-        public string PinName(int pin, string anchor)
-        {
-            if (pin != 4 && pin != 5) return Vintagestory.API.Config.Lang.Get("signals:" + anchor);
-            return Vintagestory.API.Config.Lang.Get("signalsmachines:pin-door", Vintagestory.API.Config.Lang.Get("signalsmachines:side-" + DoorSide(pin).Code));
-        }
+        public string PinRef(int pin, string anchor) => pin != 4 && pin != 5
+            ? TubeProgram.LangRef("signals:" + anchor)
+            : TubeProgram.LangRef("signalsmachines:pin-door", "signalsmachines:side-" + DoorSide(pin).Code);
+
+        public string PinName(int pin, string anchor) => TubeProgram.Resolve(PinRef(pin, anchor));
 
         /// <summary>World side of a door: west/east in the model, turned with the block.</summary>
         public BlockFacing DoorSide(int pin) => SideOf(new Cuboidf(pin == 4 ? 0 : 15/16f, .5f, 7/16f, pin == 4 ? 1/16f : 1, .55f, 9/16f));

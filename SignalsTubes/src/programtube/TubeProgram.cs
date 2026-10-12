@@ -1,6 +1,7 @@
 using Newtonsoft.Json.Linq;
 using SignalsTubes.src.circuit;
 using Vintagestory.API.Common;
+using Vintagestory.API.Config;
 
 namespace SignalsTubes.src.programtube;
 
@@ -136,4 +137,23 @@ public static class TubeProgram
 
     /// <summary>Player text shown in VTML tooltips: '<' would otherwise start a tag.</summary>
     public static string Vtml(string text) => text?.Replace("&", "&amp;").Replace("<", "&lt;").Replace(">", "&gt;");
+
+    /// <summary>A pin name given by a machine, stored as lang keys so every viewer reads it in their own language.</summary>
+    public const string LangPrefix = "lang:";
+    public static string LangRef(string key, params string[] argKeys) => LangPrefix + string.Join("|", argKeys.Prepend(key));
+    public static bool IsLangRef(string name) => name != null && name.StartsWith(LangPrefix);
+
+    /// <summary>A stored name as text: lang refs translated (null langCode = this side's language), others as they are.</summary>
+    public static string Resolve(string name, string langCode = null)
+    {
+        if (!IsLangRef(name)) return name;
+        string Get(string key, object[] args) => langCode == null ? Lang.Get(key, args) : Lang.GetL(langCode, key, args);
+        var keys = name[LangPrefix.Length..].Split('|');
+        return Get(keys[0], keys.Skip(1).Select(k => (object)Get(k, Array.Empty<object>())).ToArray());
+    }
+
+    /// <summary>The name of a soldered tube left unnamed, in the given language.</summary>
+    public static string DefaultTubeName(string langCode = null) => langCode == null
+        ? Lang.GetMatching("signalstubes:item-programtube-fire")
+        : Lang.GetMatchingL(langCode, "signalstubes:item-programtube-fire");
 }

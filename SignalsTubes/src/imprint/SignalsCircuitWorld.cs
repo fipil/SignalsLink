@@ -56,7 +56,7 @@ public sealed class SignalsCircuitWorld : ICircuitWorld
         bool solder = id != null && (foreign && (TubeProgram.LockCopy(stack) || TubeProgram.LockView(stack)) || program.HasReferences);
         return new NestedTube
         {
-            Name = stack.Attributes.GetString(TubeProgram.NameKey, stack.GetName()),
+            Name = stack.Attributes.GetString(TubeProgram.NameKey),   // unnamed stays null: each viewer gets the default in their language
             Description = stack.Attributes.GetString(TubeProgram.DescriptionKey),
             ProgramId = id,
             Pins = TubeProgram.Pins(stack),

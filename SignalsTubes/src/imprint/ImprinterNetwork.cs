@@ -61,6 +61,7 @@ public static class ImprinterNetwork
 
     public static void StartClient(ICoreClientAPI capi)
     {
+        dialogs.Clear();   // a dialog open at the last disconnect belongs to the old session
         capi.Network.RegisterChannel(Channel)
             .RegisterMessageType<ProbeMarkPacket>()
             .RegisterMessageType<ImprinterOpenPacket>()
@@ -121,7 +122,7 @@ public static class ImprinterNetwork
             .HandleWith(args =>
             {
                 BEImprinter.SetSolderWarning((IServerPlayer)args.Caller.Player, (string)args[0] == "on");
-                return TextCommandResult.Success(Lang.Get("signalstubes:warn-" + (string)args[0]));
+                return TextCommandResult.Success(Lang.GetL(args.LanguageCode, "signalstubes:warn-" + (string)args[0]));
             })
             .EndSubCommand()
             // Diagnostics: the pins of the socket aimed at, as the Signals network sees them.
@@ -154,7 +155,7 @@ public static class ImprinterNetwork
                 if (sapi.World.BlockAccessor.GetBlockEntity(imprinterPos) is not BEImprinter imprinter) return;
                 bool marked = imprinter.ToggleExposed(target);
                 if (packet.FromDialog) return;
-                player.SendMessage(GlobalConstants.InfoLogChatGroup, Lang.Get(marked ? "signalstubes:imprint-marked" : "signalstubes:imprint-unmarked"), EnumChatType.Notification);
+                player.SendMessage(GlobalConstants.InfoLogChatGroup, Lang.GetL(player.LanguageCode, marked ? "signalstubes:imprint-marked" : "signalstubes:imprint-unmarked"), EnumChatType.Notification);
             })
             .SetMessageHandler<ImprinterOpenPacket>((player, packet) =>
             {

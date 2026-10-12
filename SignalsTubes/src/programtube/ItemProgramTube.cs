@@ -55,6 +55,15 @@ public class ItemProgramTube : Item
         return name.Length == 0 ? base.GetHeldItemName(stack) : TubeProgram.Vtml(name);
     }
 
+    /// <summary>The held name in the given language, for texts the server builds for one player.</summary>
+    public static string NameIn(ItemStack stack, string langCode)
+    {
+        string name = stack.Attributes.GetString(TubeProgram.NameKey, "");
+        if (name.Length > 0) return TubeProgram.Vtml(name);
+        var code = stack.Collectible.Code;
+        return Lang.GetMatchingL(langCode, code.Domain + ":" + stack.Class.Name() + "-" + code.Path);
+    }
+
     public override void GetHeldItemInfo(ItemSlot slot, StringBuilder dsc, IWorldAccessor world, bool withDebugInfo)
     {
         var stack = slot.Itemstack;
@@ -73,7 +82,7 @@ public class ItemProgramTube : Item
             var pins = TubeProgram.Pins(stack);
             dsc.AppendLine(Lang.Get("signalstubes:programtube-pins", pins.Count));
             foreach (var pin in pins)
-                dsc.AppendLine("  " + (TubeProgram.Vtml(pin.Name) ?? Lang.Get("signalstubes:pin-" + Role(pin.Role), pin.Index + 1)) + (pin.Name == null ? "" : $" ({Lang.Get("signalstubes:role-" + Role(pin.Role))})"));
+                dsc.AppendLine("  " + (TubeProgram.Vtml(TubeProgram.Resolve(pin.Name)) ?? Lang.Get("signalstubes:pin-" + Role(pin.Role), pin.Index + 1)) + (pin.Name == null ? "" : $" ({Lang.Get("signalstubes:role-" + Role(pin.Role))})"));
             string author = TubeProgram.AuthorName(stack);
             if (author != null) dsc.AppendLine(Lang.Get("signalstubes:programtube-author", TubeProgram.Vtml(author)));
             if (TubeProgram.LockCopy(stack)) dsc.AppendLine(Lang.Get("signalstubes:programtube-lockcopy"));

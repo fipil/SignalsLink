@@ -49,7 +49,7 @@ public class BETubeCopier : BlockEntityContainer
     private byte lastStart;
     private SignalNetworkMod signalMod;
     private ILoadedSound workSound;   // client: one 4.4 s clip at the start of a copy
-    private static readonly Dictionary<string, MeshData> meshCache = new();
+    private static readonly SessionMeshCache meshCache = new(64);
 
     public override InventoryBase Inventory => inventory;
     public override string InventoryClassName => "tubecopier";
@@ -181,7 +181,7 @@ public class BETubeCopier : BlockEntityContainer
     private void Say(IPlayer player, string key, params object[] args)
     {
         if (player is Vintagestory.API.Server.IServerPlayer sp)
-            sp.SendMessage(GlobalConstants.InfoLogChatGroup, Lang.Get("signalstubes:" + key, args), EnumChatType.Notification);
+            sp.SendMessage(GlobalConstants.InfoLogChatGroup, Lang.GetL(sp.LanguageCode, "signalstubes:" + key, args), EnumChatType.Notification);
     }
 
     // ---- pins: 0 start (read), 1 state (driven)
@@ -263,16 +263,13 @@ public class BETubeCopier : BlockEntityContainer
         var block = (BlockTubeCopier)Block;
         string Key(ItemStack s) => s == null ? "" : s.Collectible.Code + ":" + TubeVisuals.MeshKey(s, false);
         string key = $"{block.Code}|{Key(Original)}|{Key(Target)}";
-        lock (meshCache)
+        return meshCache.Get(capi, key, () =>
         {
-            if (meshCache.TryGetValue(key, out var cached)) return cached;
-            if (meshCache.Count >= 64) meshCache.Clear();
             Shape shape = capi.Assets.Get(new AssetLocation("signalstubes", "shapes/block/tubecopier.json")).ToObject<Shape>().Clone();
             if (Original?.Collectible is ItemProgramTube a) TubeVisuals.Append(shape, a.BuildShape(Original, false), .5f, new Vec3f(0.5f, 11, 0.5f));
             if (Target?.Collectible is ItemProgramTube b) TubeVisuals.Append(shape, b.BuildShape(Target, false), .5f, new Vec3f(7.5f, 11, 7.5f));
             capi.Tesselator.TesselateShape(block, shape, out MeshData mesh, new Vec3f(0, block.Shape.rotateY, 0));
-            meshCache[key] = mesh;
             return mesh;
-        }
+        });
     }
 }

@@ -29,7 +29,7 @@ public class BETubeSocket : BlockEntity, ITubeSocket
     private bool lit;   // some pin belongs to a powered network; drives the glyph glow
     private BlockPos imprinter;   // an imprinter's plug sits in the socket
     private string lastProgram;   // id of the program last run here: the same one goes back in without losing the wires
-    private static readonly Dictionary<string, MeshData> meshCache = new();
+    private static readonly SessionMeshCache meshCache = new(256);
 
     // client: the insertion preview (what a click would do) and the pins hidden while it shows
     private SocketPreviewRenderer preview;
@@ -69,7 +69,7 @@ public class BETubeSocket : BlockEntity, ITubeSocket
     public BlockFacing Side => SocketOrientation.SideOf(Block);
 
     /// <summary>Author-given pin name, null when none.</summary>
-    public string NameOf(int pin) => tube == null ? null : TubeProgram.Pins(tube).FirstOrDefault(x => x.Index == pin)?.Name;
+    public string NameOf(int pin) => tube == null ? null : TubeProgram.Pins(tube).FirstOrDefault(x => x.Index == pin)?.Name is string name ? TubeProgram.Resolve(name) : null;
 
     public override void Initialize(ICoreAPI api)
     {
@@ -317,10 +317,8 @@ public class BETubeSocket : BlockEntity, ITubeSocket
         var block = (BlockTubeSocket)Block;
         string roles = string.Concat(Enumerable.Range(0, BlockTubeSocket.PinCount).Select(i => RoleOf(i)[0]));
         string key = $"{block.Code}|{roles}|{imprinter != null}|{previewPins}|{(PreviewTube == null ? "" : TubeVisuals.MeshKey(PreviewTube, false))}|{tube?.Collectible.Code}|{(tube == null ? "" : TubeVisuals.MeshKey(tube, lit))}";
-        lock (meshCache)
+        return meshCache.Get(capi, key, () =>
         {
-            if (meshCache.TryGetValue(key, out var cached)) return cached;
-            if (meshCache.Count >= 256) meshCache.Clear();
             Shape shape = capi.Assets.Get(new AssetLocation("signalstubes", "shapes/block/tubesocket.json")).ToObject<Shape>().Clone();
             // while a preview shows, the solid pins are the held tube's (on the bed) or none (turning); else the installed tube's or all
             int visible = previewPins >= 0 ? previewPins : tube == null ? (1 << BlockTubeSocket.PinCount) - 1 : PinMask;
@@ -332,9 +330,8 @@ public class BETubeSocket : BlockEntity, ITubeSocket
             if (tube?.Collectible is ItemProgramTube item)
                 TubeVisuals.Append(shape, item.BuildShape(tube, lit), .5f, new Vec3f(4, .5f, 4));
             capi.Tesselator.TesselateShape(block, shape, out MeshData mesh, block.ShapeRotation);
-            meshCache[key] = mesh;
             return mesh;
-        }
+        });
     }
 
     // The socket's elements with only the given pins, their caps painted by the tube's roles.
@@ -391,7 +388,7 @@ public class BETubeSocket : BlockEntity, ITubeSocket
     private IEnumerable<(int pin, string text)> PinLabels(ItemStack held)
     {
         foreach (var pin in TubeProgram.Pins(held).OrderBy(p => p.Index))
-            yield return (pin.Index, string.IsNullOrEmpty(pin.Name) ? Lang.Get("signalstubes:pin-" + RoleOf(held, pin.Index), pin.Index + 1) : pin.Name);
+            yield return (pin.Index, string.IsNullOrEmpty(pin.Name) ? Lang.Get("signalstubes:pin-" + RoleOf(held, pin.Index), pin.Index + 1) : TubeProgram.Resolve(pin.Name));
     }
 
     private MeshData PreviewMesh(ICoreClientAPI capi, ItemStack held, BlockTubeSocket variant, bool tubeOnly)

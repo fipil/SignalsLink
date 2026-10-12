@@ -18,6 +18,9 @@ public static class SchematicLevel
         public Func<string, CircuitProgram> Resolve;          // program by id
         public Func<string, ReferenceInfo> References;        // soldered tube by program id
         public string ViewerUid;
+        public Func<string, string> PinText = name => name;   // stored pin name -> viewer's text (lang refs)
+        public string UnnamedTube = "";                       // shown for a tube soldered in without a name
+        public string GroupName(string name) => string.IsNullOrEmpty(name) ? UnnamedTube : name;
     }
 
     /// <summary>
@@ -34,7 +37,7 @@ public static class SchematicLevel
             if (step.StartsWith("g:") && int.TryParse(step[2..], out int g) && g >= 0 && g < program.Groups.Count && program.Groups[g].Ref == null)
             {
                 group = g;
-                crumbs.Add(program.Groups[g].Name ?? "");
+                crumbs.Add(ctx.GroupName(program.Groups[g].Name));
             }
             else if (step.StartsWith("r:"))
             {
@@ -84,9 +87,9 @@ public static class SchematicLevel
             bool openable = grp.Ref == null || ctx.References?.Invoke(grp.Ref) is not { } info || !info.LockView || info.AuthorUid == ctx.ViewerUid;
             boxes.Add(new JObject
             {
-                ["id"] = "g" + g, ["name"] = grp.Name ?? "", ["desc"] = grp.Description ?? "", ["soldered"] = grp.Ref != null, ["openable"] = openable,
+                ["id"] = "g" + g, ["name"] = ctx.GroupName(grp.Name), ["desc"] = grp.Description ?? "", ["soldered"] = grp.Ref != null, ["openable"] = openable,
                 ["step"] = grp.Ref == null ? "g:" + g : "r:" + grp.Ref,
-                ["pins"] = new JArray(grp.Pins.Select(gp => PinJson(gp.Index, gp.Role, gp.Name, gp.Node)))
+                ["pins"] = new JArray(grp.Pins.Select(gp => PinJson(gp.Index, gp.Role, ctx.PinText(gp.Name), gp.Node)))
             });
             foreach (var gp in grp.Pins) nodes.Add(gp.Node);
         }
@@ -94,7 +97,7 @@ public static class SchematicLevel
         if (group < 0)
             foreach (var pin in p.Pins.OrderBy(x => x.Index))
             {
-                var o = PinJson(pin.Index, pin.Role, pin.Name, pin.Node);
+                var o = PinJson(pin.Index, pin.Role, ctx.PinText(pin.Name), pin.Node);
                 if (pin.Component >= 0) o["part"] = "c" + pin.Component;
                 pins.Add(o);
                 if (pin.Node >= 0) nodes.Add(pin.Node);
@@ -102,7 +105,7 @@ public static class SchematicLevel
         else
             foreach (var gp in p.Groups[group].Pins.OrderBy(x => x.Index))
             {
-                pins.Add(PinJson(gp.Index, gp.Role, gp.Name, gp.Node));
+                pins.Add(PinJson(gp.Index, gp.Role, ctx.PinText(gp.Name), gp.Node));
                 nodes.Add(gp.Node);
             }
         return new JObject { ["locked"] = false, ["crumbs"] = crumbs, ["pins"] = pins, ["parts"] = parts, ["boxes"] = boxes, ["nodes"] = new JArray(nodes.OrderBy(n => n)) };

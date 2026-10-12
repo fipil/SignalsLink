@@ -41,7 +41,7 @@ public class BEImprinter : BlockEntity
     private Newtonsoft.Json.Linq.JObject draft;
     private string draftFingerprint;
     private CableRenderer plugCable, probeCable;
-    private static readonly Dictionary<string, MeshData> meshCache = new();
+    private static readonly SessionMeshCache meshCache = new(64);
 
     public bool HasTube => tube != null;
     public ItemStack Tube => tube;
@@ -267,10 +267,7 @@ public class BEImprinter : BlockEntity
     {
         operatorUid = player.PlayerUID;
         var result = socket == null ? null : Read(player.PlayerUID);
-        var existingPins = tube == null ? new List<PublicPin>() : TubeProgram.Pins(tube);
-        // a machine socket names its own pins; they come prefilled so the imprinted tube carries them
-        var target = socket == null ? null : Api.World.BlockAccessor.GetBlockEntity(socket) as ITubeSocket;
-        string PinName(int index) => (string)draft?["pinNames"]?[index.ToString()] ?? existingPins.FirstOrDefault(p => p.Index == index)?.Name ?? target?.PinName(index) ?? "";
+        string PinName(int index) => (string)draft?["pinNames"]?[index.ToString()] ?? TubeProgram.Resolve(DefaultPinName(index), player.LanguageCode) ?? "";
         bool foreignLocked = tube != null && !TubeProgram.IsAuthor(tube, player.PlayerUID) && (TubeProgram.LockCopy(tube) || TubeProgram.LockView(tube));
         var state = new Newtonsoft.Json.Linq.JObject
         {
@@ -283,7 +280,7 @@ public class BEImprinter : BlockEntity
             ["lockCopy"] = (bool?)draft?["lockCopy"] ?? (tube != null && TubeProgram.LockCopy(tube)),
             ["lockView"] = (bool?)draft?["lockView"] ?? (tube != null && TubeProgram.LockView(tube)),
             ["linked"] = socket != null,
-            ["solder"] = new Newtonsoft.Json.Linq.JArray((result?.Soldered ?? new List<CircuitReader.Soldered>()).Select(s => s.Name)),
+            ["solder"] = new Newtonsoft.Json.Linq.JArray((result?.Soldered ?? new List<CircuitReader.Soldered>()).Select(s => SocketTubeName(s, player.LanguageCode))),
             ["warn"] = WarnsAboutSoldering(player),
             ["name"] = (string)draft?["name"] ?? tube?.Attributes.GetString(TubeProgram.NameKey, "") ?? "",
             ["description"] = (string)draft?["description"] ?? tube?.Attributes.GetString(TubeProgram.DescriptionKey, "") ?? "",
@@ -300,6 +297,12 @@ public class BEImprinter : BlockEntity
         return Newtonsoft.Json.JsonConvert.SerializeObject(state, Newtonsoft.Json.Formatting.None);
     }
 
+    // The reader names unnamed tubes in the server's language; the dialog wants the viewer's.
+    private string SocketTubeName(CircuitReader.Soldered s, string langCode) =>
+        Api.World.BlockAccessor.GetBlockEntity(s.Pos) is ITubeSocket { HasTube: true } be
+            ? be.Tube.Attributes.GetString(TubeProgram.NameKey, ItemProgramTube.NameIn(be.Tube, langCode))
+            : s.Name ?? TubeProgram.DefaultTubeName(langCode);
+
     // The schematic shows the network being imprinted when a socket is plugged in, otherwise what the
     // inserted tube holds. The viewer sees inside soldered tubes only when their author or unlocked.
     private Newtonsoft.Json.Linq.JObject Schematic(IServerPlayer player, CircuitReader.Result result, string path)
@@ -311,7 +314,7 @@ public class BEImprinter : BlockEntity
             {
                 string id = item.Attributes.GetString(TubeProgram.IdKey);
                 if (id != null && !refs.ContainsKey(id))
-                    refs[id] = new SchematicLevel.ReferenceInfo(TubeProgram.Author(item), TubeProgram.LockView(item), item.Attributes.GetString(TubeProgram.NameKey, item.GetName()));
+                    refs[id] = new SchematicLevel.ReferenceInfo(TubeProgram.Author(item), TubeProgram.LockView(item), item.Attributes.GetString(TubeProgram.NameKey, ItemProgramTube.NameIn(item, player.LanguageCode)));
                 Gather(item);
             }
         }
@@ -319,21 +322,21 @@ public class BEImprinter : BlockEntity
         if (result != null)
         {
             root = CircuitSimplifier.Simplify(result.Program);
-            rootName = Lang.Get("signalstubes:schematic-network");
+            rootName = Lang.GetL(player.LanguageCode, "signalstubes:schematic-network");   // server side: viewer's language
             foreach (var s in result.Soldered)
                 if (Api.World.BlockAccessor.GetBlockEntity(s.Pos) is ITubeSocket { HasTube: true } be)
                 {
                     string id = be.Tube.Attributes.GetString(TubeProgram.IdKey);
-                    if (id != null) refs[id] = new SchematicLevel.ReferenceInfo(TubeProgram.Author(be.Tube), TubeProgram.LockView(be.Tube), s.Name);
+                    if (id != null) refs[id] = new SchematicLevel.ReferenceInfo(TubeProgram.Author(be.Tube), TubeProgram.LockView(be.Tube), SocketTubeName(s, player.LanguageCode));
                     Gather(be.Tube);
                 }
         }
         else if (tube != null && !TubeProgram.IsBlank(tube))
         {
             if (TubeProgram.LockView(tube) && !TubeProgram.IsAuthor(tube, player.PlayerUID))
-                return new Newtonsoft.Json.Linq.JObject { ["locked"] = true, ["name"] = tube.GetName() };
+                return new Newtonsoft.Json.Linq.JObject { ["locked"] = true, ["name"] = ItemProgramTube.NameIn(tube, player.LanguageCode) };
             root = TubeProgram.Get(tube, Api);
-            rootName = tube.GetName();
+            rootName = ItemProgramTube.NameIn(tube, player.LanguageCode);
             Gather(tube);
             if (root == null) return null;
         }
@@ -344,8 +347,25 @@ public class BEImprinter : BlockEntity
         {
             Resolve = id => store?.Get(id),
             References = id => refs.TryGetValue(id, out var info) ? info : null,
-            ViewerUid = player.PlayerUID
+            ViewerUid = player.PlayerUID,
+            PinText = name => TubeProgram.Resolve(name, player.LanguageCode),
+            UnnamedTube = TubeProgram.DefaultTubeName(player.LanguageCode)
         });
+    }
+
+    // The tube's own pin name, else the one a machine socket gives its pin; both may be lang refs.
+    private string DefaultPinName(int index)
+    {
+        var existing = tube == null ? null : TubeProgram.Pins(tube).FirstOrDefault(p => p.Index == index)?.Name;
+        var target = socket == null ? null : Api.World.BlockAccessor.GetBlockEntity(socket) as ITubeSocket;
+        return existing ?? target?.PinName(index);
+    }
+
+    // A prefilled name left as it was stays a lang ref, so other players read it in their language.
+    private string StoredPinName(int index, string typed, string langCode)
+    {
+        string fallback = DefaultPinName(index);
+        return TubeProgram.IsLangRef(fallback) && typed == TubeProgram.Resolve(fallback, langCode) ? fallback : typed;
     }
 
     /// <summary>Takes the dialog's edits (names, exposure) and imprints. True when the tube was written.</summary>
@@ -362,7 +382,7 @@ public class BEImprinter : BlockEntity
         if ((bool?)edits["noWarn"] == true) SetSolderWarning(player, false);
         if (Clip((string)edits["name"], GuiDialogImprinter.NameMax).Length == 0) { Say(player, "imprint-no-name"); SetDraft(json); return false; }
         bool written = Imprint(player, Clip((string)edits["name"], GuiDialogImprinter.NameMax), Clip((string)edits["description"], GuiDialogImprinter.DescriptionMax),
-            index => Clip((string)names?[index.ToString()], GuiDialogImprinter.PinNameMax),
+            index => StoredPinName(index, Clip((string)names?[index.ToString()], GuiDialogImprinter.PinNameMax), player.LanguageCode),
             (bool?)edits["lockCopy"] == true, (bool?)edits["lockView"] == true, (bool?)edits["confirmSolder"] == true);
         if (!written) SetDraft(json);   // a refused imprint must not throw away what was typed
         return written;
@@ -403,7 +423,7 @@ public class BEImprinter : BlockEntity
         ShowHighlights();
         if (!result.Ok)
         {
-            string reasons = string.Join(", ", result.Refusals.Select(r => Lang.Get("signalstubes:refuse-" + r.Reason)).Distinct().Take(3));
+            string reasons = string.Join(", ", result.Refusals.Select(r => Lang.GetL(player.LanguageCode, "signalstubes:refuse-" + r.Reason)).Distinct().Take(3));
             Say(player, "imprint-refused", reasons);
             return false;
         }
@@ -433,7 +453,7 @@ public class BEImprinter : BlockEntity
     }
 
     private static void Say(IServerPlayer player, string key, params object[] args) =>
-        player.SendMessage(GlobalConstants.InfoLogChatGroup, Lang.Get("signalstubes:" + key, args), EnumChatType.Notification);
+        player.SendMessage(GlobalConstants.InfoLogChatGroup, Lang.GetL(player.LanguageCode, "signalstubes:" + key, args), EnumChatType.Notification);
 
     public bool InteractTube(IPlayer player)
     {
@@ -576,18 +596,15 @@ public class BEImprinter : BlockEntity
     {
         var block = (BlockImprinter)Block;
         string key = $"{block.Code}|{PlugHome}|{ProbeHome}|{tube?.Collectible.Code}|{(tube == null ? "" : TubeVisuals.MeshKey(tube, false))}";
-        lock (meshCache)
+        return meshCache.Get(capi, key, () =>
         {
-            if (meshCache.TryGetValue(key, out var cached)) return cached;
-            if (meshCache.Count >= 64) meshCache.Clear();
             Shape shape = capi.Assets.Get(new AssetLocation("signalstubes", "shapes/block/imprinter.json")).ToObject<Shape>().Clone();
             // the tools sit in a rotated group on the slope, so the filter has to walk into children
             shape.Elements = WithoutTakenTools(shape.Elements);
             if (tube?.Collectible is ItemProgramTube item)
                 TubeVisuals.Append(shape, item.BuildShape(tube, false), .5f, new Vec3f(4, 17, 0.5f));
             capi.Tesselator.TesselateShape(block, shape, out MeshData mesh, new Vec3f(0, block.Shape.rotateY, 0));
-            meshCache[key] = mesh;
             return mesh;
-        }
+        });
     }
 }

@@ -99,7 +99,7 @@ public class BlockTubeSocket : BlockConnection, Vintagestory.GameContent.IWrench
             var variant = world.GetBlock(CodeWithVariant("orientation", be.PreviewOrientation.Code)) ?? this;
             foreach (var pin in TubeProgram.Pins(be.PreviewTube).OrderBy(p => p.Index))
             {
-                string name = TubeProgram.Vtml(pin.Name) ?? Vintagestory.API.Config.Lang.Get("signalstubes:pin-" + BETubeSocket.RoleOf(be.PreviewTube, pin.Index), pin.Index + 1);
+                string name = TubeProgram.Vtml(TubeProgram.Resolve(pin.Name)) ?? Vintagestory.API.Config.Lang.Get("signalstubes:pin-" + BETubeSocket.RoleOf(be.PreviewTube, pin.Index), pin.Index + 1);
                 var side = SocketOrientation.WorldSide(variant, SocketOrientation.LocalSide[pin.Index]);
                 info += Vintagestory.API.Config.Lang.Get("signalstubes:preview-pin", name, Vintagestory.API.Config.Lang.Get("signalstubes:side-" + side.Code)) + "\n";
             }
