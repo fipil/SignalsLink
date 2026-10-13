@@ -1,5 +1,8 @@
 {
-  "code": "metalbit-hardenedbronze",
+  "code": "metalbit",
+  "variantgroups": [
+    { "code": "metal", "states": ["hardenedbronze"] }
+  ],
   "class": "ItemNugget",
   "behaviors": [
     {

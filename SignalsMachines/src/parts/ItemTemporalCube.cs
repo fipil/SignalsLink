@@ -33,7 +33,21 @@ public class ItemTemporalCube : Item
         {
             var crystal = world.GetItem(Crystal);
             if (crystal == null) { world.Logger.Error("[signalsmachines] item {0} missing, the cube stays a cube", Crystal); return; }
-            itemSlot.Itemstack = new ItemStack(crystal);
+            // The wheel still reads Buffable from this slot after DamageItem returns.
+            // Keep the cube there until that tick has finished; the crystal is not buffable.
+            world.RegisterCallback(_ =>
+            {
+                if (!ReferenceEquals(itemSlot.Itemstack, stack)) return;
+                itemSlot.Itemstack = new ItemStack(crystal);
+                itemSlot.MarkDirty();
+                var player = (byEntity as EntityPlayer)?.Player;
+                var pos = player?.CurrentBlockSelection?.Position;
+                if (pos != null && world.BlockAccessor.GetBlockEntity(pos) is Vintagestory.GameContent.BlockEntityGrindingWheel wheel)
+                    wheel.PlayersGrinding.Remove(player.PlayerUID);
+                if (world.Side == EnumAppSide.Server && pos != null)
+                    Sparks(world, pos.ToVec3d().Add(.5, .6, .5), true);
+            }, 0);
+            return;
         }
         else stack.Attributes.SetInt(ProgressKey, done);
         itemSlot.MarkDirty();

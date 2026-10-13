@@ -92,6 +92,7 @@
   "block-castmold-tan-fired-frame": "Форма для рамы камеры из светло-коричневой керамики",
   "block-castmold-tan-fired-grid": "Форма для решётки пластины из светло-коричневой керамики",
   "block-castmold-tan-fired-legs": "Форма для ножек машины из светло-коричневой керамики",
+  "game:material-hardenedbronze": "Закалённая бронза",
   "game:item-ingot-hardenedbronze": "Слиток закалённой бронзы",
   "game:item-metalbit-hardenedbronze": "Кусочки закалённой бронзы",
   "grind-progress": "Шлифовка: {0} %",

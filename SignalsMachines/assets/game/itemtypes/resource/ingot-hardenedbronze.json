@@ -1,5 +1,8 @@
 {
-  "code": "ingot-hardenedbronze",
+  "code": "ingot",
+  "variantgroups": [
+    { "code": "metal", "states": ["hardenedbronze"] }
+  ],
   "class": "Item",
   "maxstacksize": 16,
   "behaviors": [

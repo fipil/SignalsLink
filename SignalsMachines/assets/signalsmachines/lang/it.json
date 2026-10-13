@@ -92,6 +92,7 @@
   "block-castmold-tan-fired-frame": "Stampo per telaio della camera in ceramica marrone chiaro",
   "block-castmold-tan-fired-grid": "Stampo per griglia della piastra in ceramica marrone chiaro",
   "block-castmold-tan-fired-legs": "Stampo per gambe della macchina in ceramica marrone chiaro",
+  "game:material-hardenedbronze": "Bronzo temprato",
   "game:item-ingot-hardenedbronze": "Lingotto di bronzo temprato",
   "game:item-metalbit-hardenedbronze": "Pezzi di bronzo temprato",
   "grind-progress": "Molatura: {0} %",

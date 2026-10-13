@@ -92,6 +92,7 @@
   "block-castmold-tan-fired-frame": "Forma na ramę komory z jasnobrązowej ceramiki",
   "block-castmold-tan-fired-grid": "Forma na siatkę płyty z jasnobrązowej ceramiki",
   "block-castmold-tan-fired-legs": "Forma na nogi maszyny z jasnobrązowej ceramiki",
+  "game:material-hardenedbronze": "Utwardzany brąz",
   "game:item-ingot-hardenedbronze": "Sztabka utwardzanego brązu",
   "game:item-metalbit-hardenedbronze": "Kawałki utwardzanego brązu",
   "grind-progress": "Szlifowanie: {0} %",

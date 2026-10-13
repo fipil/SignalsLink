@@ -92,6 +92,7 @@
   "block-castmold-tan-fired-frame": "Moule de cadre de chambre en céramique brun clair",
   "block-castmold-tan-fired-grid": "Moule de grille de plaque en céramique brun clair",
   "block-castmold-tan-fired-legs": "Moule de pieds de machine en céramique brun clair",
+  "game:material-hardenedbronze": "Bronze durci",
   "game:item-ingot-hardenedbronze": "Lingot de bronze durci",
   "game:item-metalbit-hardenedbronze": "Morceaux de bronze durci",
   "grind-progress": "Meulage : {0} %",

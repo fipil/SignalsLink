@@ -92,6 +92,7 @@
   "block-castmold-tan-fired-frame": "Molde de marco de cámara de cerámica marrón clara",
   "block-castmold-tan-fired-grid": "Molde de rejilla de placa de cerámica marrón clara",
   "block-castmold-tan-fired-legs": "Molde de patas de máquina de cerámica marrón clara",
+  "game:material-hardenedbronze": "Bronce endurecido",
   "game:item-ingot-hardenedbronze": "Lingote de bronce endurecido",
   "game:item-metalbit-hardenedbronze": "Fragmentos de bronce endurecido",
   "grind-progress": "Pulido: {0} %",

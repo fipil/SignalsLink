@@ -92,6 +92,7 @@
   "block-castmold-tan-fired-frame": "Form für Kammerrahmen aus hellbrauner Keramik",
   "block-castmold-tan-fired-grid": "Form für Plattengitter aus hellbrauner Keramik",
   "block-castmold-tan-fired-legs": "Form für Maschinenbeine aus hellbrauner Keramik",
+  "game:material-hardenedbronze": "Gehärtete Bronze",
   "game:item-ingot-hardenedbronze": "Barren aus gehärteter Bronze",
   "game:item-metalbit-hardenedbronze": "Stücke gehärteter Bronze",
   "grind-progress": "Schleifen: {0} %",

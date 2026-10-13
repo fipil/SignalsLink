@@ -92,6 +92,7 @@
   "block-castmold-tan-fired-frame": "Forma na rám komory zo svetlohnedej keramiky",
   "block-castmold-tan-fired-grid": "Forma na mriežku dosky zo svetlohnedej keramiky",
   "block-castmold-tan-fired-legs": "Forma na nohy stroja zo svetlohnedej keramiky",
+  "game:material-hardenedbronze": "Spevnený bronz",
   "game:item-ingot-hardenedbronze": "Ingot spevneného bronzu",
   "game:item-metalbit-hardenedbronze": "Kúsky spevneného bronzu",
   "grind-progress": "Brúsenie: {0} %",
