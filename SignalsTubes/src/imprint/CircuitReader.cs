@@ -6,8 +6,8 @@ namespace SignalsTubes.src.imprint;
 
 /// <summary>
 /// Turns the Signals network hanging on a socket into a program. The socket's pins are the boundary:
-/// everything reachable from them by wire is read, block by block. Blocks the tube cannot contain are
-/// refused with a reason and their position, so the imprinter can point at them.
+/// supported blocks reachable by wire are read. Unsupported or manually excluded blocks cut their
+/// branches without changing the world; conversion errors still prevent imprinting.
 /// </summary>
 public sealed class CircuitReader
 {
@@ -21,6 +21,7 @@ public sealed class CircuitReader
     {
         public CircuitProgram Program = new();
         public List<Refusal> Refusals = new();
+        public List<Refusal> Ignored = new();
         public List<Adjustable> Adjustables = new();
         public List<Soldered> Soldered = new();
         public bool Ok => Refusals.Count == 0;
@@ -32,6 +33,7 @@ public sealed class CircuitReader
     private readonly ICircuitWorld world;
     private readonly BlockPos socket;
     private readonly ISet<BlockPos> exposed;
+    private readonly ISet<BlockPos> excluded;
     private readonly ISet<int> reservedPins;   // pins the socket itself gives a meaning (a machine's); never handed to exposed parts
     private readonly string readerUid;
     private readonly Dictionary<int, int[]> tubeOutputs = new();   // Tube part index -> nodes it drives
@@ -43,16 +45,18 @@ public sealed class CircuitReader
     private readonly HashSet<(int, int)> wires = new();
     private readonly Queue<NodeRef> queue = new();
 
-    private CircuitReader(ICircuitWorld world, BlockPos socket, ISet<BlockPos> exposed, string readerUid, ISet<int> reservedPins)
+    private CircuitReader(ICircuitWorld world, BlockPos socket, ISet<BlockPos> exposed, string readerUid, ISet<int> reservedPins, ISet<BlockPos> excluded)
     {
         this.world = world; this.socket = socket; this.exposed = exposed; this.readerUid = readerUid; this.reservedPins = reservedPins;
+        this.excluded = excluded;
     }
 
     /// <param name="exposed">Positions of switches and delays the author wants on pins.</param>
     /// <param name="readerUid">Who imprints; decides whether nested tubes are inlined or soldered.</param>
     /// <param name="reservedPins">Pins with a fixed meaning on this socket (a machine's); exposed parts get only the others.</param>
-    public static Result Read(ICircuitWorld world, BlockPos socket, ISet<BlockPos> exposed = null, string readerUid = null, ISet<int> reservedPins = null) =>
-        new CircuitReader(world, socket, exposed ?? new HashSet<BlockPos>(), readerUid, reservedPins ?? new HashSet<int>()).Run();
+    /// <param name="excluded">Manually omitted blocks. None of their wires or internal connections are read.</param>
+    public static Result Read(ICircuitWorld world, BlockPos socket, ISet<BlockPos> exposed = null, string readerUid = null, ISet<int> reservedPins = null, ISet<BlockPos> excluded = null) =>
+        new CircuitReader(world, socket, exposed ?? new HashSet<BlockPos>(), readerUid, reservedPins ?? new HashSet<int>(), excluded ?? new HashSet<BlockPos>()).Run();
 
     private Result Run()
     {
@@ -62,7 +66,7 @@ public sealed class CircuitReader
         for (int i = 0; i < CircuitProgram.MaxPins; i++)
         {
             var pin = new NodeRef(socket, i);
-            pinNodes[i] = world.WiresFrom(pin).Any() ? Id(pin) : -1;
+            pinNodes[i] = world.WiresFrom(pin).Any(other => CanRead(other.Pos)) ? Id(pin) : -1;
         }
         while (queue.Count > 0)
         {
@@ -70,11 +74,12 @@ public sealed class CircuitReader
             foreach (var other in world.WiresFrom(node))
             {
                 if (Bridges(node, other)) continue;
+                if (!CanRead(other.Pos)) continue;
                 // Devices of other mods (chutes, dampers, machines) are never imprinted: hanging straight on a
                 // socket pin they stay outside and the pin is the tube's boundary; deeper inside they cannot be.
                 if (External(other.Pos))
                 {
-                    if (!node.Pos.Equals(socket)) Refuse(other.Pos, "external");
+                    if (!node.Pos.Equals(socket)) Ignore(other.Pos, "external");
                     continue;
                 }
                 int a = Id(node), b = Id(other);
@@ -137,6 +142,38 @@ public sealed class CircuitReader
         if (!result.Refusals.Any(r => r.Pos.Equals(pos) && r.Reason == reason)) result.Refusals.Add(new Refusal(pos.Copy(), reason));
     }
 
+    private void Ignore(BlockPos pos, string reason)
+    {
+        if (!result.Ignored.Any(r => r.Pos.Equals(pos))) result.Ignored.Add(new Refusal(pos.Copy(), reason));
+    }
+
+    // Filter before assigning nodes or following wires: an omitted block cannot bridge two branches.
+    private bool CanRead(BlockPos pos)
+    {
+        if (pos.Equals(socket)) return true;
+        if (excluded.Contains(pos)) return false;
+        var block = world.BlockAt(pos);
+        string reason = null;
+        if (block?.Code == null || world.NodesAt(pos).Count == 0) reason = "no-device";
+        else if (External(pos)) return true; // the caller distinguishes external socket connections
+        else if (block.Code.Domain == Signals)
+        {
+            reason = Kind(pos) switch
+            {
+                "connection" or "connection2" or "connection2v" or "blocklightbulb" or "blockbuzzer" or "blockmeter" or "blockscreen"
+                    or "pass_through_connector" or "blockresistor" or "blocksource" or "blockvalve" or "blocktetrode"
+                    or "blockdelay" or "knifeswitch" => null,
+                "blockactuator" => ActuatorTarget(pos) is { } target && !excluded.Contains(target) && Kind(target) == "knifeswitch" ? null : "actuator-target",
+                "buttonswitch" or "pressureplate" or "blocklightsensor" or "blockanemometer" => "world-driven",
+                _ => "unknown"
+            };
+        }
+        else if (block.Code.Domain != "signalstubes" || Kind(pos) != SocketPath) reason = "unknown";
+        if (reason == null) return true;
+        Ignore(pos, reason);
+        return false;
+    }
+
     // Node of the block's port; the port is wired into the program even if no wire touches it.
     private int Port(BlockPos pos, int index) => Id(new NodeRef(pos, index));
 
@@ -183,7 +220,7 @@ public sealed class CircuitReader
             case "knifeswitch":
             {
                 byte on = (byte)(Variant(block, "state") == "on" ? 1 : 0);
-                var actuators = BlockFacing.ALLFACES.Select(f => pos.AddCopy(f.Opposite)).Where(n => ActuatorTarget(n)?.Equals(pos) == true).ToList();
+                var actuators = BlockFacing.ALLFACES.Select(f => pos.AddCopy(f.Opposite)).Where(n => !excluded.Contains(n) && ActuatorTarget(n)?.Equals(pos) == true).ToList();
                 if (actuators.Count > 1) { Refuse(pos, "switch-many-actuators"); break; }
                 if (actuators.Count == 1)
                 {

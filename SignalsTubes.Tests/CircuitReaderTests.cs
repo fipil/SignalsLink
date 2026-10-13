@@ -27,6 +27,7 @@ public class CircuitReaderTests
             return pos;
         }
         public World Wire(BlockPos a, int ia, BlockPos b, int ib) { wires.Add((new NodeRef(a, ia), new NodeRef(b, ib))); return this; }
+        public void Unwire(BlockPos pos) => wires.RemoveAll(w => w.a.Pos.Equals(pos) || w.b.Pos.Equals(pos));
         public World Output(BlockPos pos, byte level) { outputs[new NodeRef(pos, 0)] = level; return this; }
         public World State(BlockPos pos, ITreeAttribute tree) { attributes[pos] = tree; return this; }
         public World Tube(BlockPos pos, NestedTube tube) { tubes[pos] = tube; return this; }
@@ -74,8 +75,8 @@ public class CircuitReaderTests
         var sensor = w2.Put("signalslink:blocksensor-off-fwd-north-down", 2, 2);
         w2.Wire(socket2, 0, valve, 1).Wire(sensor, 0, valve, 0).Wire(valve, 2, socket2, 1);
         var r2 = CircuitReader.Read(w2, socket2);
-        Assert.False(r2.Ok);
-        Assert.Equal("external", r2.Refusals.Single().Reason);
+        Assert.True(r2.Ok);
+        Assert.Equal("external", r2.Ignored.Single().Reason);
     }
 
     [Fact]
@@ -153,6 +154,7 @@ public class CircuitReaderTests
         r = CircuitReader.Read(w, socket, new HashSet<BlockPos> { sw }, null, new HashSet<int> { 0, 1, 2, 3, 4, 5 });
         Assert.Equal(6, Assert.Single(r.Program.Pins, x => x.Role == PinRole.Switch).Index);
         r = CircuitReader.Read(w, socket, new HashSet<BlockPos> { sw }, null, new HashSet<int> { 0, 1, 2, 3, 4, 5, 6, 7 });
+        Assert.False(r.Ok);
         Assert.Equal("no-free-pin", Assert.Single(r.Refusals).Reason);
     }
 
@@ -184,7 +186,9 @@ public class CircuitReaderTests
         w2.Put("signals:blocklightbulb-off-north-down", 2, 1);
         w2.Wire(socket2, 0, stray, 0);
         r = CircuitReader.Read(w2, socket2);
-        Assert.Equal("actuator-target", Assert.Single(r.Refusals).Reason);
+        Assert.True(r.Ok);
+        Assert.Equal("actuator-target", Assert.Single(r.Ignored).Reason);
+        Assert.Empty(r.Program.Pins);
     }
 
     [Fact]
@@ -198,8 +202,9 @@ public class CircuitReaderTests
 
         var r = CircuitReader.Read(w, socket);
         Assert.Equal(new[] { ("world-driven", 1), ("unknown", 2) },
-            r.Refusals.Select(x => (x.Reason, x.Pos.X)).OrderBy(x => x.Item2));
-        Assert.Equal(3, r.Program.Pins.Count);   // the lamp pin is a harmless input
+            r.Ignored.Select(x => (x.Reason, x.Pos.X)).OrderBy(x => x.Item2));
+        Assert.True(r.Ok);
+        Assert.Equal(3, Assert.Single(r.Program.Pins).Index); // only the harmless lamp remains
     }
 
     [Fact]
@@ -319,5 +324,120 @@ public class CircuitReaderTests
         Assert.True(r.Ok);
         Assert.Equal(PinRole.Input, r.Program.Pins.Single(x => x.Index == 0).Role);
         Assert.Equal(PinRole.Output, r.Program.Pins.Single(x => x.Index == 1).Role);
+    }
+
+    [Fact]
+    public void UnsupportedBlockCutsItsBranchButDoesNotHideOtherPaths()
+    {
+        var (w, socket) = Socket();
+        var button = w.Put("signals:buttonswitch-off", 1, 2);
+        var hiddenSource = w.Put("signals:blocksource", 2, 1);
+        var keptSource = w.Put("signals:blocksource", 3, 1);
+        w.Wire(socket, 0, button, 0).Wire(button, 1, hiddenSource, 0).Wire(socket, 1, keptSource, 0);
+        var read = CircuitReader.Read(w, socket);
+        Assert.True(read.Ok);
+        Assert.Single(read.Ignored);
+        Assert.Single(read.Program.Components);
+        Assert.Equal(1, Assert.Single(read.Program.Pins).Index);
+        // The same source becomes reachable by another path; the button itself is still absent.
+        w.Wire(socket, 2, hiddenSource, 0);
+        read = CircuitReader.Read(w, socket);
+        Assert.Equal(2, read.Program.Components.Count);
+        Assert.Equal(new[] { 1, 2 }, read.Program.Pins.Select(p => p.Index));
+    }
+
+    [Fact]
+    public void ExcludedDebugSourceCannotTurnAnInputIntoAnOutput()
+    {
+        var (w, socket) = Socket();
+        var valve = w.Put("signals:blockvalve", 1, 3);
+        var supply = w.Put("signals:blocksource", 2, 1);
+        var debug = w.Put("signals:blocksource", 3, 1);
+        w.Wire(socket, 0, valve, 0).Wire(debug, 0, valve, 0).Wire(supply, 0, valve, 1).Wire(valve, 2, socket, 1);
+        Assert.Equal(PinRole.Output, CircuitReader.Read(w, socket).Program.Pins[0].Role);
+        var read = CircuitReader.Read(w, socket, excluded: new HashSet<BlockPos> { debug });
+        Assert.True(read.Ok);
+        Assert.Empty(read.Ignored);
+        Assert.Equal(PinRole.Input, read.Program.Pins[0].Role);
+        var p = CircuitSimplifier.Simplify(read.Program);
+        Assert.Equal(2, p.Components.Count);
+        var sim = new CircuitSimulator(p);
+        sim.SetInput(0, 4); sim.Step(); sim.Step();
+        Assert.Equal(11, sim.GetOutput(1));
+    }
+
+    [Fact]
+    public void ExcludedSwitchCutsTheBranchAndCannotBeExposed()
+    {
+        var (w, socket) = Socket();
+        var sw = w.Put("signals:knifeswitch-on", 1, 2, ("state", "on"));
+        var supply = w.Put("signals:blocksource", 2, 1);
+        w.Wire(socket, 0, sw, 0).Wire(sw, 1, supply, 0);
+        var read = CircuitReader.Read(w, socket, new HashSet<BlockPos> { sw }, excluded: new HashSet<BlockPos> { sw });
+        Assert.True(read.Ok);
+        Assert.Empty(read.Program.Components);
+        Assert.Empty(read.Program.Pins);
+        Assert.Empty(read.Adjustables);
+    }
+
+    [Fact]
+    public void ExcludedNestedTubeIsNeitherInlinedNorConsumed()
+    {
+        var (w, socket) = Socket();
+        var inner = w.Put("signalstubes:tubesocket-north-down", 1, 8);
+        w.Tube(inner, Inverter(true));
+        w.Wire(socket, 0, inner, 0).Wire(inner, 1, socket, 1);
+        var read = CircuitReader.Read(w, socket, excluded: new HashSet<BlockPos> { inner });
+        Assert.True(read.Ok);
+        Assert.Empty(read.Soldered);
+        Assert.Empty(read.Program.Groups);
+        Assert.Empty(read.Program.Components);
+    }
+
+    [Fact]
+    public void ExcludingAnActuatorLeavesAManualSwitchAndExcludingItsSwitchCutsTheActuator()
+    {
+        var (w, socket) = Socket();
+        var actuator = w.Put("signals:blockactuator-off-east-down", 1, 1, ("orientation", "east"));
+        var sw = w.Put("signals:knifeswitch-on", 2, 2, ("state", "on"));
+        var supply = w.Put("signals:blocksource", 3, 1);
+        w.Wire(socket, 0, actuator, 0).Wire(socket, 1, sw, 1).Wire(sw, 0, supply, 0);
+        var read = CircuitReader.Read(w, socket, excluded: new HashSet<BlockPos> { actuator });
+        Assert.True(read.Ok);
+        Assert.Contains(read.Program.Components, c => c.Kind == ComponentKind.Switch);
+        Assert.DoesNotContain(read.Program.Components, c => c.Kind == ComponentKind.Toggle);
+        read = CircuitReader.Read(w, socket, excluded: new HashSet<BlockPos> { sw });
+        Assert.True(read.Ok);
+        Assert.Empty(read.Program.Components);
+        Assert.Equal("actuator-target", Assert.Single(read.Ignored).Reason);
+    }
+
+    [Fact]
+    public void ExclusionsSurviveSignalChangesAndChunkUnloadingButNotStructuralChanges()
+    {
+        var (w, socket) = Socket();
+        var imprinter = new BlockPos(30, 0, 0);
+        var sw = w.Put("signals:knifeswitch-off", 1, 2, ("state", "off"), ("orientation", "north"));
+        w.Wire(socket, 0, sw, 0);
+        var memory = new ImprintExclusions();
+        Assert.True(memory.Toggle(imprinter, sw, w));
+        w.Put("signals:knifeswitch-on", 1, 2, ("state", "on"), ("orientation", "north"));
+        Assert.Contains(sw, memory.Current(imprinter, w, _ => true));
+        w.Put("signals:knifeswitch-on", 1, 0, ("state", "on"), ("orientation", "north"));
+        Assert.Contains(sw, memory.Current(imprinter, w, _ => true)); // device still initializing
+        w.Put("signals:knifeswitch-on", 1, 2, ("state", "on"), ("orientation", "north"));
+        w.Unwire(sw);
+        Assert.Contains(sw, memory.Current(imprinter, w, _ => false)); // unloaded chunks cannot invalidate a selection
+        Assert.Empty(memory.Current(imprinter, w, _ => true));
+        memory.Toggle(imprinter, sw, w);
+        w.Put("signals:knifeswitch-on", 1, 2, ("state", "on"), ("orientation", "south"));
+        Assert.Empty(memory.Current(imprinter, w, _ => true));
+        memory.Toggle(imprinter, sw, w);
+        memory.Changed(sw); // remove and replace with an identical block between reads
+        Assert.Empty(memory.Current(imprinter, w, _ => true));
+        memory.Toggle(imprinter, sw, w);
+        Assert.Empty(new ImprintExclusions().Current(imprinter, w, _ => true)); // new server session
+        Assert.Empty(memory.Current(socket, w, _ => true)); // another imprinter
+        Assert.False(memory.Toggle(imprinter, sw, w));
     }
 }

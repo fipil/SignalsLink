@@ -134,6 +134,24 @@ public class GuiDialogImprinter : GuiDialogBlockEntity
         }
 
         var refused = state["refused"] as JArray ?? new JArray();
+        var ignored = state["ignored"] as JArray ?? new JArray();
+        if (ignored.Count > 0)
+        {
+            composer.AddStaticText(Lang.Get("signalstubes:dialog-ignored"), red, ElementBounds.Fixed(0, y + 4, w, row));
+            y += row;
+            foreach (var r in ignored.Take(6))
+            {
+                composer.AddStaticText(Where(r) + ": " + Lang.Get("signalstubes:refuse-" + (string)r["reason"]), red, ElementBounds.Fixed(10, y + 4, w - 10, row));
+                y += row;
+            }
+            y += pad;
+        }
+        if ((int?)state["excluded"] > 0)
+        {
+            var orange = CairoFont.WhiteSmallText().WithColor(new[] { 1, .6, .2, 1 });
+            composer.AddStaticText(Lang.Get("signalstubes:dialog-excluded", (int)state["excluded"]), orange, ElementBounds.Fixed(0, y + 4, w, row));
+            y += row + pad;
+        }
         if (refused.Count > 0)
         {
             composer.AddStaticText(Lang.Get("signalstubes:dialog-refused"), red, ElementBounds.Fixed(0, y + 4, w, row));

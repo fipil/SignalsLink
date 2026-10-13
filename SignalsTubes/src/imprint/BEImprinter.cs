@@ -20,7 +20,7 @@ namespace SignalsTubes.src.imprint;
 public class BEImprinter : BlockEntity
 {
     public const double MaxCable = 24;
-    private const int RefusedSlot = 7311, MarkedSlot = 7312;
+    private const int RefusedSlot = 7311, MarkedSlot = 7312, ExcludedSlot = 7313;
     public const string PlugCode = "signalstubes:imprinterplug", ProbeCode = "signalstubes:imprinterprobe";
 
     /// <summary>A tool that lives in the imprinter and may be carried by one player at a time.</summary>
@@ -37,6 +37,7 @@ public class BEImprinter : BlockEntity
     private string operatorUid;   // who sees the highlights: the last player to handle a tool
     private readonly HashSet<BlockPos> exposed = new();
     private readonly List<BlockPos> refused = new();
+    private HashSet<BlockPos> excluded = new();
     // What the dialog had typed when it was closed without imprinting; kept until the cable is pulled or the network changes.
     private Newtonsoft.Json.Linq.JObject draft;
     private string draftFingerprint;
@@ -82,7 +83,7 @@ public class BEImprinter : BlockEntity
     {
         base.OnBlockRemoved();
         DisposeCables();
-        if (Api.Side == EnumAppSide.Server) { Revoke(plug); Revoke(probe); Unlink(); ShowHighlights(); }
+        if (Api.Side == EnumAppSide.Server) { Api.ModLoader.GetModSystem<ImprintExclusions>()?.Changed(Pos); excluded.Clear(); Revoke(plug); Revoke(probe); Unlink(); ShowHighlights(); }
     }
 
     public override void OnBlockBroken(IPlayer byPlayer = null)
@@ -207,6 +208,8 @@ public class BEImprinter : BlockEntity
 
     public bool ToggleExposed(BlockPos pos)
     {
+        UpdateExclusions();
+        if (excluded.Contains(pos)) return false;
         bool marked = exposed.Add(pos.Copy());
         if (!marked) exposed.Remove(pos);
         Refresh();
@@ -214,9 +217,32 @@ public class BEImprinter : BlockEntity
         return marked;
     }
 
+    public bool ToggleExcluded(BlockPos pos, IServerPlayer player)
+    {
+        if (pos.Equals(socket) || pos.Equals(Pos)) return false;
+        operatorUid = player.PlayerUID;
+        bool marked = Api.ModLoader.GetModSystem<ImprintExclusions>().Toggle(Pos, pos, new SignalsCircuitWorld(Api));
+        exposed.Remove(pos);
+        draft = null;
+        Refresh();
+        MarkDirty(true);
+        return marked;
+    }
+
+    private void UpdateExclusions()
+    {
+        excluded = Api.ModLoader.GetModSystem<ImprintExclusions>()?.Current(Pos, new SignalsCircuitWorld(Api),
+            pos => Api.World.BlockAccessor.GetChunkAtBlockPos(pos) != null) ?? new();
+        exposed.ExceptWith(excluded);
+    }
+
     // ---- server: reading and imprinting
 
-    private CircuitReader.Result Read(string uid = null) => CircuitReader.Read(new SignalsCircuitWorld(Api), socket, exposed, uid ?? operatorUid, ReservedPins());
+    private CircuitReader.Result Read(string uid = null)
+    {
+        UpdateExclusions();
+        return CircuitReader.Read(new SignalsCircuitWorld(Api), socket, exposed, uid ?? operatorUid, ReservedPins(), excluded);
+    }
 
     // the pins a machine socket gives a meaning to; exposed switches and delays go to the others
     private ISet<int> ReservedPins()
@@ -243,7 +269,7 @@ public class BEImprinter : BlockEntity
         if (socket == null) return false;
         var result = Read();
         if (draft != null && CircuitFingerprint.Compute(result.Program) != draftFingerprint) draft = null;
-        var now = result.Refusals.Select(r => r.Pos).ToList();
+        var now = result.Refusals.Concat(result.Ignored).Select(r => r.Pos).Distinct().ToList();
         bool changed = now.Count != refused.Count || now.Zip(refused).Any(p => !p.First.Equals(p.Second));
         refused.Clear();
         refused.AddRange(now);
@@ -260,6 +286,9 @@ public class BEImprinter : BlockEntity
         var marked = socket == null ? new List<BlockPos>() : exposed.ToList();
         Api.World.HighlightBlocks(player, MarkedSlot, marked,
             marked.Select(_ => ColorUtil.ColorFromRgba(40, 200, 60, 96)).ToList(), EnumHighlightBlocksMode.Absolute, EnumHighlightShape.Arbitrary);
+        var omitted = socket == null ? new List<BlockPos>() : excluded.ToList();
+        Api.World.HighlightBlocks(player, ExcludedSlot, omitted,
+            omitted.Select(_ => ColorUtil.ColorFromRgba(240, 140, 30, 96)).ToList(), EnumHighlightBlocksMode.Absolute, EnumHighlightShape.Arbitrary);
     }
 
     /// <summary>Everything the dialog shows, as JSON. Pin and tube names come from the tube already inserted.</summary>
@@ -267,6 +296,12 @@ public class BEImprinter : BlockEntity
     {
         operatorUid = player.PlayerUID;
         var result = socket == null ? null : Read(player.PlayerUID);
+        if (result != null)
+        {
+            refused.Clear();
+            refused.AddRange(result.Refusals.Concat(result.Ignored).Select(r => r.Pos).Distinct());
+            ShowHighlights();
+        }
         string PinName(int index) => (string)draft?["pinNames"]?[index.ToString()] ?? TubeProgram.Resolve(DefaultPinName(index), player.LanguageCode) ?? "";
         bool foreignLocked = tube != null && !TubeProgram.IsAuthor(tube, player.PlayerUID) && (TubeProgram.LockCopy(tube) || TubeProgram.LockView(tube));
         var state = new Newtonsoft.Json.Linq.JObject
@@ -291,6 +326,9 @@ public class BEImprinter : BlockEntity
                 new Newtonsoft.Json.Linq.JObject { ["x"] = a.Pos.X, ["y"] = a.Pos.Y, ["z"] = a.Pos.Z, ["kind"] = a.Kind.ToString().ToLowerInvariant(), ["marked"] = exposed.Contains(a.Pos) })),
             ["refused"] = new Newtonsoft.Json.Linq.JArray((result?.Refusals ?? new List<CircuitReader.Refusal>()).Select(r =>
                 new Newtonsoft.Json.Linq.JObject { ["x"] = r.Pos.X, ["y"] = r.Pos.Y, ["z"] = r.Pos.Z, ["reason"] = r.Reason })),
+            ["ignored"] = new Newtonsoft.Json.Linq.JArray((result?.Ignored ?? new List<CircuitReader.Refusal>()).Select(r =>
+                new Newtonsoft.Json.Linq.JObject { ["x"] = r.Pos.X, ["y"] = r.Pos.Y, ["z"] = r.Pos.Z, ["reason"] = r.Reason })),
+            ["excluded"] = socket == null ? 0 : excluded.Count,
             ["path"] = path ?? "",
             ["schematic"] = Schematic(player, result, path)
         };
@@ -419,7 +457,7 @@ public class BEImprinter : BlockEntity
         operatorUid = player.PlayerUID;
         var result = Read(player.PlayerUID);
         refused.Clear();
-        refused.AddRange(result.Refusals.Select(r => r.Pos));
+        refused.AddRange(result.Refusals.Concat(result.Ignored).Select(r => r.Pos).Distinct());
         ShowHighlights();
         if (!result.Ok)
         {

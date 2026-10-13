@@ -38,9 +38,15 @@ public class ItemImprinterTool : Item
     public static bool IsMarkable(Block block) =>
         block?.Code.Domain == "signals" && block.Code.Path.Split('-')[0] is "knifeswitch" or "blockdelay";
 
+    public static bool CanExclude(IWorldAccessor world, BlockPos pos) =>
+        world.BlockAccessor.GetBlockEntity(pos)?.GetBehavior<signals.src.signalNetwork.BEBehaviorSignalNodeProvider>() != null;
+
     public override WorldInteraction[] GetHeldInteractionHelp(ItemSlot inSlot) =>
         IsProbe(inSlot.Itemstack)
-            ? new[] { new WorldInteraction { ActionLangCode = "signalstubes:plug-mark", MouseButton = EnumMouseButton.Right } }
+            ? new[] {
+                new WorldInteraction { ActionLangCode = "signalstubes:plug-mark", MouseButton = EnumMouseButton.Right },
+                new WorldInteraction { ActionLangCode = "signalstubes:plug-exclude", MouseButton = EnumMouseButton.Right, HotKeyCode = "sneak" }
+            }
             : base.GetHeldInteractionHelp(inSlot);
 
     // A tool on the ground is a lost tool; the imprinter notices it is gone and puts a new one on the stand.

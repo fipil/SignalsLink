@@ -17,6 +17,7 @@ public class ProbeMarkPacket
     [ProtoMember(5)] public int TargetY;
     [ProtoMember(6)] public int TargetZ;
     [ProtoMember(7)] public bool FromDialog;   // no probe in hand then; the open dialog is the authority
+    [ProtoMember(8)] public bool Exclude;
 }
 
 /// <summary>Client asks for the dialog state of the imprinter at X/Y/Z.</summary>
@@ -86,7 +87,9 @@ public static class ImprinterNetwork
             var stack = player.InventoryManager.ActiveHotbarSlot?.Itemstack;
             var sel = player.CurrentBlockSelection;
             if (!ItemImprinterTool.IsProbe(stack) || sel == null) return;
-            if (!ItemImprinterTool.IsMarkable(capi.World.BlockAccessor.GetBlock(sel.Position))) return;
+            bool exclude = player.Entity.Controls.Sneak;
+            if (exclude ? !ItemImprinterTool.CanExclude(capi.World, sel.Position)
+                : !ItemImprinterTool.IsMarkable(capi.World.BlockAccessor.GetBlock(sel.Position))) return;
             handled = EnumHandling.PreventDefault;
             long now = capi.World.ElapsedMilliseconds;   // the action repeats while the button is held
             if (now - lastClick < 400) return;
@@ -94,7 +97,7 @@ public static class ImprinterNetwork
             var imprinter = ItemImprinterTool.ImprinterOf(stack);
             capi.Network.GetChannel(Channel).SendPacket(new ProbeMarkPacket {
                 ImprinterX = imprinter.X, ImprinterY = imprinter.Y, ImprinterZ = imprinter.Z,
-                TargetX = sel.Position.X, TargetY = sel.Position.Y, TargetZ = sel.Position.Z });
+                TargetX = sel.Position.X, TargetY = sel.Position.Y, TargetZ = sel.Position.Z, Exclude = exclude });
         };
     }
 
@@ -151,8 +154,16 @@ public static class ImprinterNetwork
                 if (packet.FromDialog ? !Reachable(player, imprinterPos)
                     : !ItemImprinterTool.BelongsTo(player.InventoryManager.ActiveHotbarSlot?.Itemstack, BEImprinter.ProbeCode, imprinterPos)
                       || player.Entity.Pos.DistanceTo(target.ToVec3d().Add(.5, .5, .5)) > 8) return;
-                if (!ItemImprinterTool.IsMarkable(sapi.World.BlockAccessor.GetBlock(target))) return;
                 if (sapi.World.BlockAccessor.GetBlockEntity(imprinterPos) is not BEImprinter imprinter) return;
+                if (packet.Exclude)
+                {
+                    if (packet.FromDialog || !player.Entity.Controls.Sneak || imprinter.Socket == null
+                        || target.Equals(imprinter.Socket) || target.Equals(imprinterPos) || !ItemImprinterTool.CanExclude(sapi.World, target)) return;
+                    bool excluded = imprinter.ToggleExcluded(target, player);
+                    player.SendMessage(GlobalConstants.InfoLogChatGroup, Lang.GetL(player.LanguageCode, excluded ? "signalstubes:imprint-excluded" : "signalstubes:imprint-included"), EnumChatType.Notification);
+                    return;
+                }
+                if (!ItemImprinterTool.IsMarkable(sapi.World.BlockAccessor.GetBlock(target))) return;
                 bool marked = imprinter.ToggleExposed(target);
                 if (packet.FromDialog) return;
                 player.SendMessage(GlobalConstants.InfoLogChatGroup, Lang.GetL(player.LanguageCode, marked ? "signalstubes:imprint-marked" : "signalstubes:imprint-unmarked"), EnumChatType.Notification);
