@@ -1,4 +1,7 @@
 {
+  "tube-error-expandedsize": "Cannot run tube: expanded program exceeds the limit of {0} units.",
+  "tube-error-depth": "Cannot run tube: nesting exceeds the limit of {0} levels.",
+  "tube-error-cycle": "Cannot run tube: cyclic reference between programs.",
   "signalstubes:usageinfo-signalstubes-title": "Signals Tubes - program tubes",
   "signalstubes:usageinfo-signalstubes-text": "<font size=\"25\"><strong>Signals Tubes</strong></font><br> Extends the <a href=\"handbook://signals:craftinginfo-signals\">Signals</a> mod with program tubes. You imprint a finished network of Signals parts into a tube, and the tube then does the same work on the eight pins of one socket.<br><br> <strong>What the mod adds</strong><br> • <a href=\"handbook://item-signalstubes:programtube-fire\">Program tube</a> - carries a circuit. A blank one is made from a <a href=\"handbook://item-signalstubes:tubebase-fire\">tube base</a>, a <a href=\"handbook://item-signalstubes:tubecore\">tube core</a> and a glass bulb.<br> • <a href=\"handbook://block-signalstubes:tubesocket-north-down\">Tube socket</a> - a block with eight pins; the tube sits in it and runs there.<br> • <a href=\"handbook://block-signalstubes:imprinter-north\">Circuit imprinter</a> - reads the network connected to a socket and writes it into a tube. It has a <a href=\"handbook://item-signalstubes:imprinterplug\">plug</a> on a cable and a <a href=\"handbook://item-signalstubes:imprinterprobe\">probe</a>.<br> • <a href=\"handbook://block-signalstubes:tubecopier-north\">Tube copier</a> - copies the program of one tube into a blank one, paid for with temporal gears.<br><br> <strong>What it is for</strong><br> A network that fills a room fits into one socket. Put the tube into another socket and you have the same circuit twice, or use it as a part of a bigger network and imprint that again - this is how complex parts grow out of simple ones.<br> The machines of <a href=\"handbook://signalsmachines:usageinfo-signalsmachines\">Signals Machines</a> have a socket of their own: a tube in it controls the machine instead of wires, so a well-tuned control moves to every further copy of the machine as a single item.<br> A tube carries its author's name, and the author can lock it against copying and against looking at the circuit. Players who enjoy designing circuits can sell finished tubes to players who just want a working machine.",
   "signalstubes:block-handbooktitle-signalstubes": "Usage",
@@ -119,7 +122,7 @@
   "programtube-soldered": "Soldered-in tubes: {0}",
   "schematic-network": "Network",
   "schematic-locked": "{0}: the circuit is locked by its author.",
-  "schematic-open-hint": "Right click: look inside",
+  "schematic-open-hint": "Double-click: look inside",
   "schematic-locked-hint": "Locked by its author",
   "schematic-part-source": "Source, level {0}",
   "schematic-part-resistor": "Resistor, attenuation {0}",

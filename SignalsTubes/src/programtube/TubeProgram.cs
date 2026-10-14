@@ -5,6 +5,8 @@ using Vintagestory.API.Config;
 
 namespace SignalsTubes.src.programtube;
 
+public enum TubeProgramError { None = 0, Cycle = 1, ExpandedSize = 2, Depth = 3 }
+
 /// <summary>Public part of a tube's pin: what clients may know without the program.</summary>
 public sealed record PublicPin(int Index, PinRole Role, string Name);
 
@@ -15,10 +17,19 @@ public sealed record PublicPin(int Index, PinRole Role, string Name);
 public static class TubeProgram
 {
     public const string IdKey = "programId", NameKey = "programName", DescriptionKey = "programDescription";
+    public const string ErrorKey = "programError";
+    public static TubeProgramError Error(ItemStack stack) => (TubeProgramError)(stack?.Attributes.GetInt(ErrorKey) ?? 0);
+    public static bool HasError(ItemStack stack) => Error(stack) != TubeProgramError.None;
+    public static void SetError(ItemStack stack, TubeProgramError error)
+    {
+        if (stack == null) return;
+        if (error != TubeProgramError.None) stack.Attributes.SetInt(ErrorKey, (int)error);
+        else stack.Attributes.RemoveAttribute(ErrorKey);
+    }
     public const string AuthorKey = "author", AuthorNameKey = "authorName", LockCopyKey = "lockCopy", LockViewKey = "lockView";
     private const string PinsKey = "pins", FingerprintKey = "fingerprint", SolderedKey = "soldered";
 
-    private sealed record Embedded(CircuitProgram Program, string Fingerprint, List<PublicPin> Pins);
+    private sealed record Embedded(CircuitProgram Program, string Fingerprint, IReadOnlyList<PublicPin> Pins);
     private static readonly Dictionary<string, Embedded> embeddedCache = new();
     private static readonly string[] RoleNames = { "in", "out", "switch", "delay" };
 
@@ -34,17 +45,38 @@ public static class TubeProgram
         return LookupEmbedded(stack)?.Program;
     }
 
+    // TEMPORARY creative cycle test. Remove with the DEBUG CYCLE entry in programtube.json.
+    public static CircuitProgram ResolveReference(ItemStack stack, ICoreAPI api, string id) =>
+        stack?.Attributes.GetBool("debugCycle") == true && id == "signalstubes:debug-cycle"
+            ? Get(stack, api) : ProgramStore.Of(api)?.Get(id);
+
     public static string Fingerprint(ItemStack stack) =>
         stack?.Attributes.GetString(FingerprintKey) ?? LookupEmbedded(stack)?.Fingerprint;
 
-    public static List<PublicPin> Pins(ItemStack stack)
+    private const int PinCacheCapacity = 256;
+    private static readonly Dictionary<string, IReadOnlyList<PublicPin>> pinCache = new(StringComparer.Ordinal);
+    private static readonly Queue<string> pinCacheOrder = new();
+
+    // Raw JSON is the key: replacing synced attributes, renaming or erasing needs no invalidation hook.
+    // Only immutable raw data is shared, never ItemStacks, worlds or translated names.
+    public static IReadOnlyList<PublicPin> Pins(ItemStack stack)
     {
         string json = stack?.Attributes.GetString(PinsKey);
         if (json != null)
         {
-            try { return ParsePins(JArray.Parse(json)); } catch (Exception) { return new List<PublicPin>(); }
+            lock (pinCache)
+            {
+                if (pinCache.TryGetValue(json, out var cached)) return cached;
+                IReadOnlyList<PublicPin> pins;
+                try { pins = ParsePins(JArray.Parse(json)).AsReadOnly(); }
+                catch (Exception) { pins = Array.Empty<PublicPin>(); }
+                if (pinCache.Count >= PinCacheCapacity) pinCache.Remove(pinCacheOrder.Dequeue());
+                pinCache.Add(json, pins);
+                pinCacheOrder.Enqueue(json);
+                return pins;
+            }
         }
-        return LookupEmbedded(stack)?.Pins ?? new List<PublicPin>();
+        return LookupEmbedded(stack)?.Pins ?? Array.Empty<PublicPin>();
     }
 
     /// <summary>Bit i set = pin i present.</summary>
@@ -62,6 +94,8 @@ public static class TubeProgram
     public static void Set(ItemStack stack, CircuitProgram program, ProgramStore store, string authorUid, string authorName, bool lockCopy, bool lockView)
     {
         var a = stack.Attributes;
+        SetError(stack, TubeProgramError.None);
+        a.RemoveAttribute("debugCycle");
         a.RemoveAttribute(ProgramCodec.AttributeKey);
         a.SetString(IdKey, store.Put(program));
         a.SetString(FingerprintKey, CircuitFingerprint.Compute(program));
@@ -80,7 +114,8 @@ public static class TubeProgram
     /// <summary>Back to a blank tube. The stored program stays; copies may still point at it.</summary>
     public static void Clear(ItemStack stack)
     {
-        foreach (var key in new[] { IdKey, NameKey, DescriptionKey, AuthorKey, AuthorNameKey, LockCopyKey, LockViewKey, PinsKey, FingerprintKey, SolderedKey, ProgramCodec.AttributeKey })
+        SetError(stack, TubeProgramError.None);
+        foreach (var key in new[] { IdKey, NameKey, DescriptionKey, AuthorKey, AuthorNameKey, LockCopyKey, LockViewKey, PinsKey, FingerprintKey, SolderedKey, "debugCycle", ProgramCodec.AttributeKey })
             stack.Attributes.RemoveAttribute(key);
     }
 
@@ -124,7 +159,7 @@ public static class TubeProgram
             {
                 var program = ProgramCodec.FromJson(json);
                 entry = new Embedded(program, CircuitFingerprint.Compute(program),
-                    program.Pins.OrderBy(p => p.Index).Select(p => new PublicPin(p.Index, p.Role, p.Name)).ToList());
+                    program.Pins.OrderBy(p => p.Index).Select(p => new PublicPin(p.Index, p.Role, p.Name)).ToList().AsReadOnly());
             }
             catch (FormatException)
             {

@@ -1,4 +1,7 @@
 {
+  "tube-error-expandedsize": "No se puede ejecutar el tubo: el programa expandido supera el límite de {0} unidades.",
+  "tube-error-depth": "No se puede ejecutar el tubo: el anidamiento supera el límite de {0} niveles.",
+  "tube-error-cycle": "No se puede ejecutar el tubo: referencia cíclica entre programas.",
   "block-imprinter-*": "Grabador de circuitos",
   "block-tubecopier-*": "Copiadora de válvulas",
   "block-tubesocket-*": "Zócalo de válvula",
@@ -90,7 +93,7 @@
   "schematic-network": "Red",
   "schematic-off": "apagado",
   "schematic-on": "encendido",
-  "schematic-open-hint": "Clic derecho: mirar dentro",
+  "schematic-open-hint": "Doble clic: mirar dentro",
   "schematic-part-buffer": "Entrada de válvula: retraso de un paso",
   "schematic-part-delay": "Retardo, ajuste {0}",
   "schematic-part-resistor": "Resistor, atenuación {0}",

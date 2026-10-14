@@ -1,4 +1,7 @@
 {
+  "tube-error-expandedsize": "Elektronku nelze spustit: rozbalený program překračuje limit {0} jednotek.",
+  "tube-error-depth": "Elektronku nelze spustit: zanoření překračuje limit {0} úrovní.",
+  "tube-error-cycle": "Elektronku nelze spustit: cyklický odkaz mezi programy.",
   "signalstubes:usageinfo-signalstubes-title": "Signals Tubes – programové elektronky",
   "signalstubes:block-handbooktitle-signalstubes": "Použití",
   "preview-pin": "{0} – {1}",
@@ -110,7 +113,7 @@
   "programtube-soldered": "Zapájené elektronky: {0}",
   "schematic-network": "Síť",
   "schematic-locked": "{0}: obvod zamkl jeho autor.",
-  "schematic-open-hint": "Pravý klik: nahlédnout dovnitř",
+  "schematic-open-hint": "Dvojklik: nahlédnout dovnitř",
   "schematic-locked-hint": "Zamkl autor",
   "schematic-part-source": "Zdroj, úroveň {0}",
   "schematic-part-resistor": "Rezistor, útlum {0}",

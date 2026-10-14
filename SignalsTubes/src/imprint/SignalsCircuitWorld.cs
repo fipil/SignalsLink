@@ -59,7 +59,7 @@ public sealed class SignalsCircuitWorld : ICircuitWorld
             Name = stack.Attributes.GetString(TubeProgram.NameKey),   // unnamed stays null: each viewer gets the default in their language
             Description = stack.Attributes.GetString(TubeProgram.DescriptionKey),
             ProgramId = id,
-            Pins = TubeProgram.Pins(stack),
+            Pins = TubeProgram.Pins(stack).ToList(),
             Solder = solder,
             Program = solder ? null : program
         };

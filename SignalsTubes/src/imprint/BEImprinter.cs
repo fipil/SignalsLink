@@ -22,6 +22,8 @@ public class BEImprinter : BlockEntity
     public const double MaxCable = 24;
     private int? highlightSlot;
     private string highlightViewer;
+    private IServerPlayer highlightConnection;
+    private readonly HashSet<BlockPos>[] sentHighlights = new HashSet<BlockPos>[3];
     public const string PlugCode = "signalstubes:imprinterplug", ProbeCode = "signalstubes:imprinterprobe";
 
     /// <summary>A tool that lives in the imprinter and may be carried by one player at a time.</summary>
@@ -106,8 +108,17 @@ public class BEImprinter : BlockEntity
         foreach (var tool in new[] { plug, probe })
             if (tool.Out && Holder(tool) == null) { Revoke(tool); changed = true; }
         if (socket != null && (Api.World.BlockAccessor.GetBlockEntity(socket) is not ITubeSocket || TooFar(socket))) { Unlink(); changed = true; }
-        if (socket != null) changed |= Refresh();
+        if (socket != null && OperatorNearby()) changed |= Refresh();
+        else ClearHighlights();
         if (changed) MarkDirty(true);
+    }
+
+    // Idle connected imprinters need no circuit scan. Explicit dialog/tool/imprint actions still read fresh data.
+    private bool OperatorNearby()
+    {
+        var entity = operatorUid == null ? null : Api.World.PlayerByUid(operatorUid)?.Entity;
+        return entity != null && entity.Pos.Dimension == Pos.dimension
+            && entity.Pos.XYZ.DistanceTo(Pos.ToVec3d()) <= MaxCable + 1;
     }
 
     private bool TooFar(BlockPos pos) => pos.ToVec3d().Add(.5, .5, .5).DistanceTo(PlugAnchor()) > MaxCable;
@@ -272,7 +283,7 @@ public class BEImprinter : BlockEntity
         var result = Read();
         if (draft != null && CircuitFingerprint.Compute(result.Program) != draftFingerprint) draft = null;
         var now = result.Refusals.Concat(result.Ignored).Select(r => r.Pos).Distinct().ToList();
-        bool changed = now.Count != refused.Count || now.Zip(refused).Any(p => !p.First.Equals(p.Second));
+        bool changed = !new HashSet<BlockPos>(refused).SetEquals(now);
         refused.Clear();
         refused.AddRange(now);
         ShowHighlights();
@@ -282,29 +293,39 @@ public class BEImprinter : BlockEntity
     private void ShowHighlights()
     {
         if (Api?.Side != EnumAppSide.Server) return;
-        if (highlightViewer != operatorUid) ClearHighlights();
-        if (operatorUid == null || Api.World.PlayerByUid(operatorUid) is not IServerPlayer player) return;
+        var player = operatorUid == null ? null : Api.World.PlayerByUid(operatorUid) as IServerPlayer;
+        if (highlightViewer != operatorUid || !ReferenceEquals(highlightConnection, player)) ClearHighlights();
+        if (player == null) return;
         highlightSlot ??= Api.ModLoader.GetModSystem<ImprinterHighlights>().Allocate();
         highlightViewer = operatorUid;
-        int slot = highlightSlot.Value;
-        // Arbitrary = one highlight per listed block (Cube would read the list as two corners of a box)
-        Api.World.HighlightBlocks(player, slot, refused.ToList(),
-            refused.Select(_ => ColorUtil.ColorFromRgba(220, 40, 40, 96)).ToList(), EnumHighlightBlocksMode.Absolute, EnumHighlightShape.Arbitrary);
-        var marked = socket == null ? new List<BlockPos>() : exposed.ToList();
-        Api.World.HighlightBlocks(player, slot + 1, marked,
-            marked.Select(_ => ColorUtil.ColorFromRgba(40, 200, 60, 96)).ToList(), EnumHighlightBlocksMode.Absolute, EnumHighlightShape.Arbitrary);
-        var omitted = socket == null ? new List<BlockPos>() : excluded.ToList();
-        Api.World.HighlightBlocks(player, slot + 2, omitted,
-            omitted.Select(_ => ColorUtil.ColorFromRgba(240, 140, 30, 96)).ToList(), EnumHighlightBlocksMode.Absolute, EnumHighlightShape.Arbitrary);
+        highlightConnection = player;
+        SendHighlightLayer(player, 0, refused, ColorUtil.ColorFromRgba(220, 40, 40, 96));
+        SendHighlightLayer(player, 1, socket == null ? Array.Empty<BlockPos>() : exposed, ColorUtil.ColorFromRgba(40, 200, 60, 96));
+        SendHighlightLayer(player, 2, socket == null ? Array.Empty<BlockPos>() : excluded, ColorUtil.ColorFromRgba(240, 140, 30, 96));
+    }
+
+    private void SendHighlightLayer(IServerPlayer player, int layer, IEnumerable<BlockPos> positions, int color)
+    {
+        if (sentHighlights[layer]?.SetEquals(positions) == true) return;
+        var snapshot = positions.Select(p => p.Copy()).ToHashSet();
+        var marked = snapshot.ToList();
+        Api.World.HighlightBlocks(player, highlightSlot.Value + layer, marked,
+            marked.Select(_ => color).ToList(), EnumHighlightBlocksMode.Absolute, EnumHighlightShape.Arbitrary);
+        sentHighlights[layer] = snapshot;
     }
 
     private void ClearHighlights()
     {
-        if (Api?.Side != EnumAppSide.Server || highlightSlot == null) return;
-        if (highlightViewer != null && Api.World.PlayerByUid(highlightViewer) is IServerPlayer player)
+        if (Api?.Side != EnumAppSide.Server) return;
+        // Do not clear a new connection with the same UID; it has never received our old layers.
+        if (highlightSlot != null && highlightViewer != null
+            && ReferenceEquals(Api.World.PlayerByUid(highlightViewer), highlightConnection) && highlightConnection != null)
             for (int i = 0; i < 3; i++)
-                Api.World.HighlightBlocks(player, highlightSlot.Value + i, new List<BlockPos>());
+                if (sentHighlights[i]?.Count > 0)
+                    Api.World.HighlightBlocks(highlightConnection, highlightSlot.Value + i, new List<BlockPos>());
         highlightViewer = null;
+        highlightConnection = null;
+        Array.Clear(sentHighlights);
     }
 
     /// <summary>Everything the dialog shows, as JSON. Pin and tube names come from the tube already inserted.</summary>
@@ -314,6 +335,8 @@ public class BEImprinter : BlockEntity
         var result = socket == null ? null : Read(player.PlayerUID);
         if (result != null)
         {
+            // The network may have changed while periodic scanning was asleep.
+            if (draft != null && CircuitFingerprint.Compute(result.Program) != draftFingerprint) draft = null;
             refused.Clear();
             refused.AddRange(result.Refusals.Concat(result.Ignored).Select(r => r.Pos).Distinct());
             ShowHighlights();
@@ -482,8 +505,18 @@ public class BEImprinter : BlockEntity
             return false;
         }
         if (result.Soldered.Count > 0 && !confirmSolder && WarnsAboutSoldering(player)) return false;   // the dialog asks first
-        draft = null;
         var program = CircuitSimplifier.Simplify(result.Program);
+        // Use the same limits and reference checks as a running socket, before changing
+        // the destination or removing any soldered tubes from the world.
+        try { _ = new CircuitSimulator(program, id => ProgramStore.Of(Api)?.Get(id)); }
+        catch (CircuitProgramException e)
+        {
+            string reason = Lang.GetL(player.LanguageCode, "signalstubes:tube-error-" + e.Error.ToString().ToLowerInvariant(),
+                e.Error == TubeProgramError.Depth ? CircuitLimits.MaxDepth : CircuitLimits.MaxExpandedSize);
+            Say(player, "imprint-refused", reason);
+            return false;
+        }
+        draft = null;
         if (pinName != null)
             foreach (var pin in program.Pins) pin.Name = string.IsNullOrEmpty(pinName(pin.Index)) ? null : pinName(pin.Index);
         // Soldering: the referenced tubes leave their sockets and travel inside the new tube.

@@ -75,6 +75,7 @@ public class ItemProgramTube : Item
     /// <summary>Description, pins, author, locks: the part shared by the tooltip and machine info.</summary>
     public static void AppendDetails(ItemStack stack, StringBuilder dsc)
     {
+        dsc.Append(ErrorInfo(stack));
         string description = Description(stack);
         if (description != null) dsc.AppendLine(TubeProgram.Vtml(description));
         if (!TubeProgram.IsBlank(stack))
@@ -93,6 +94,10 @@ public class ItemProgramTube : Item
     }
 
     private static string Role(circuit.PinRole role) => role.ToString().ToLowerInvariant();
+
+    public static string ErrorInfo(ItemStack stack) => TubeProgram.HasError(stack)
+        ? "<font color=\"#ff4040\">" + Lang.Get("signalstubes:tube-error-" + TubeProgram.Error(stack).ToString().ToLowerInvariant(),
+            TubeProgram.Error(stack) == TubeProgramError.Depth ? circuit.CircuitLimits.MaxDepth : circuit.CircuitLimits.MaxExpandedSize) + "</font>\n" : "";
 
     /// <summary>Block info of a machine holding the tube: a blank line, "Tube: name", then the details.</summary>
     public static string FullInfo(ItemStack stack, IWorldAccessor world)

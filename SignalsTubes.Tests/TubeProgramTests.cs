@@ -23,7 +23,8 @@ public class TubeProgramTests
     public void CreativeInventoryOffersNoProgrammedTubes()
     {
         var item = JObject.Parse(File.ReadAllText(Path.Combine(Root, "assets/signalstubes/itemtypes/programtube.json")));
-        Assert.All(item["creativeinventoryStacksByType"]["*-fire"][0]["stacks"], stack => Assert.Null(stack["attributes"]?["circuit"]));
+        Assert.All(item["creativeinventoryStacksByType"]["*-fire"][0]["stacks"],
+            stack => Assert.Null(stack["attributes"]?["circuit"]));
     }
 
     [Fact]
@@ -143,6 +144,66 @@ public class TubeProgramTests
         var litShape = TubeVisuals.Build(template, stack, lit: true);
         Assert.All(litShape.Elements.Where(e => e.Name.StartsWith("glyph_")), e => Assert.All(e.FacesResolved, f => Assert.Equal(TubeVisuals.GlyphGlow, f.Glow)));
         Assert.NotEqual(TubeVisuals.MeshKey(stack, false), TubeVisuals.MeshKey(stack, true));
+    }
+
+    [Fact]
+    public void ErrorGlyphIsADiagonalXAndGlowsEvenWithoutPower()
+    {
+        var template = Newtonsoft.Json.JsonConvert.DeserializeObject<Shape>(File.ReadAllText(Path.Combine(Root, "assets/signalstubes/shapes/item/programtube.json")));
+        var stack = new ItemStack(Tube);
+        string normalKey = TubeVisuals.MeshKey(stack, false);
+        TubeProgram.SetError(stack, TubeProgramError.Cycle);
+        Assert.NotEqual(normalKey, TubeVisuals.MeshKey(stack, false));
+        var glyph = TubeVisuals.Build(template, stack, lit: false).Elements.Where(e => e.Name.StartsWith("glyph_")).ToArray();
+        Assert.Equal(9, glyph.Length);
+        Assert.All(glyph, e => Assert.False(e.Shade));
+        var cells = glyph.Select(e => ((int)Math.Round((e.From[0] - 6.5) / .6), (int)Math.Round((e.From[1] - 6.4) / .6))).ToHashSet();
+        var expected = Enumerable.Range(0, 5).SelectMany(i => new[] { (i, i + 1), (4 - i, i + 1) }).ToHashSet();
+        Assert.True(expected.SetEquals(cells));
+        Assert.All(glyph, e => Assert.All(e.FacesResolved, f => {
+            Assert.Equal(TubeVisuals.ErrorTexture, f.Texture);
+            Assert.Equal(200, f.Glow);
+        }));
+        foreach (var path in Directory.GetFiles(Path.Combine(Root, "assets/signalstubes/lang"), "*.json"))
+            Assert.False(string.IsNullOrWhiteSpace((string)JObject.Parse(File.ReadAllText(path))["tube-error-cycle"]));
+    }
+
+    [Fact]
+    public void GlassShellHasOnlyOneExteriorFacePerWall()
+    {
+        var template = Newtonsoft.Json.JsonConvert.DeserializeObject<Shape>(File.ReadAllText(Path.Combine(Root, "assets/signalstubes/shapes/item/programtube.json")));
+        var expected = new Dictionary<string, int> { ["bulb_north"] = 0, ["bulb_east"] = 1, ["bulb_south"] = 2, ["bulb_west"] = 3, ["bulb_cap"] = 4 };
+        foreach (var pair in expected)
+        {
+            var wall = template.Elements.Single(e => e.Name == pair.Key);
+            Assert.Single(wall.FacesResolved, f => f != null);
+            Assert.NotNull(wall.FacesResolved[pair.Value]);
+        }
+    }
+
+    private sealed class TestTextureSource : Vintagestory.API.Client.ITexPositionSource
+    {
+        public Vintagestory.API.MathTools.Size2i AtlasSize => new(256, 256);
+        public Vintagestory.API.Client.TextureAtlasPosition this[string code] => new() { x1 = 0, y1 = 0, x2 = .125f, y2 = .125f, atlasTextureId = 1 };
+    }
+
+    [Fact]
+    public void ErrorGlowSurvivesGameTessellationAndSocketEmbedding()
+    {
+        var template = Newtonsoft.Json.JsonConvert.DeserializeObject<Shape>(File.ReadAllText(Path.Combine(Root, "assets/signalstubes/shapes/item/programtube.json")));
+        var stack = new ItemStack(Tube);
+        TubeProgram.SetError(stack, TubeProgramError.Cycle);
+        var shape = TubeVisuals.Build(template, stack);
+        shape.Elements = shape.Elements.Where(e => e.Name.StartsWith("glyph_")).ToArray();
+        var tess = new Vintagestory.Client.NoObf.ShapeTesselator(null, null, null, null);
+        tess.TesselateShape("error tube", shape, out var mesh, new TestTextureSource());
+        Assert.Equal(9 * 24, mesh.VerticesCount);
+        Assert.All(mesh.Flags.Take(mesh.VerticesCount), flag => Assert.Equal(200, flag & 255));
+        var socket = new Shape { Elements = Array.Empty<ShapeElement>(), Textures = new(), TextureSizes = new() };
+        TubeVisuals.Append(socket, shape, .5f, new Vintagestory.API.MathTools.Vec3f(4, .5f, 4));
+        tess.TesselateShape("error socket", socket, out mesh, new TestTextureSource());
+        Assert.Equal(9 * 24, mesh.VerticesCount);
+        Assert.All(mesh.Flags.Take(mesh.VerticesCount), flag => Assert.Equal(200, flag & 255));
     }
 
     [Fact]

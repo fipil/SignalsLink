@@ -26,8 +26,17 @@ public sealed class TubeHost
     /// <summary>Loads the tube's program (null or a blank tube unloads).</summary>
     public void Load(ItemStack tube)
     {
+        if (api?.Side == EnumAppSide.Server) TubeProgram.SetError(tube, TubeProgramError.None);
         program = tube == null || api?.Side != EnumAppSide.Server ? null : TubeProgram.Get(tube, api);
-        sim = program == null ? null : new CircuitSimulator(program, id => ProgramStore.Of(api)?.Get(id));
+        sim = null;
+        Array.Clear(lastIn);
+        Array.Clear(lastOut);
+        try { sim = program == null ? null : new CircuitSimulator(program, id => TubeProgram.ResolveReference(tube, api, id)); }
+        catch (CircuitProgramException e)
+        {
+            api.Logger.Error("[signalstubes] Cannot run tube {0}: {1}", tube?.Attributes.GetString(TubeProgram.IdKey), e.Message);
+            TubeProgram.SetError(tube, e.Error); // keep control of the pins; invalid tubes must not fall back to wires
+        }
         if (sim != null && savedState != null) sim.LoadState(savedState);
         savedState = null;
     }
@@ -75,7 +84,7 @@ public sealed class TubeHost
     }
 
     /// <summary>The tube's level on one of its output pins after a step; 0 where it has none.</summary>
-    public byte Output(int index) => IsOutputPin(index) ? sim.GetOutput(index) : (byte)0;
+    public byte Output(int index) => sim != null && IsOutputPin(index) ? sim.GetOutput(index) : (byte)0;
 
     /// <summary>
     /// What a tube sees on a pin of its host: the network's value, but at least what the host itself drives

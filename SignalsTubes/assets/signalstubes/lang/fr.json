@@ -1,4 +1,7 @@
 {
+  "tube-error-expandedsize": "Impossible de démarrer le tube : le programme développé dépasse la limite de {0} unités.",
+  "tube-error-depth": "Impossible de démarrer le tube : l’imbrication dépasse la limite de {0} niveaux.",
+  "tube-error-cycle": "Impossible de démarrer le tube : référence cyclique entre les programmes.",
   "block-imprinter-*": "Graveur de circuits",
   "block-tubecopier-*": "Copieur de tubes",
   "block-tubesocket-*": "Support de tube",
@@ -90,7 +93,7 @@
   "schematic-network": "Réseau",
   "schematic-off": "désactivé",
   "schematic-on": "activé",
-  "schematic-open-hint": "Clic droit : regarder à l'intérieur",
+  "schematic-open-hint": "Double-clic : regarder à l'intérieur",
   "schematic-part-buffer": "Entrée du tube : délai d'une étape",
   "schematic-part-delay": "Délai, réglage {0}",
   "schematic-part-resistor": "Résistance, atténuation {0}",

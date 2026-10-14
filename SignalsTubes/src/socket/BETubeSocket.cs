@@ -135,8 +135,16 @@ public class BETubeSocket : BlockEntity, ITubeSocket
 
     private void LoadProgram()
     {
+        if (Api.Side == EnumAppSide.Server) TubeProgram.SetError(tube, TubeProgramError.None);
         program = tube == null || Api.Side != EnumAppSide.Server ? null : TubeProgram.Get(tube, Api);
-        sim = program == null ? null : new CircuitSimulator(program, id => ProgramStore.Of(Api)?.Get(id));
+        sim = null;
+        try { sim = program == null ? null : new CircuitSimulator(program, id => TubeProgram.ResolveReference(tube, Api, id)); }
+        catch (CircuitProgramException e)
+        {
+            TubeProgram.SetError(tube, e.Error);
+            Api.Logger.Error("[signalstubes] Cannot run tube at {0}: {1}", Pos, e.Message);
+            program = null;
+        }
         if (sim != null && savedSimState != null) sim.LoadState(savedSimState);
         savedSimState = null;
     }

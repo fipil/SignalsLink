@@ -43,14 +43,60 @@ public class ImprinterHighlightsTests
         Assert.All(layers.Values, p => Assert.Single(p));
     }
 
-    private static ICoreAPI Api(EnumAppSide side, ImprinterHighlights registry, Dictionary<int, List<BlockPos>> layers)
+    [Fact]
+    public void UnchangedLayersAreNotResentAndOnlyChangedLayerIsUpdated()
+    {
+        int sent = 0;
+        var layers = new Dictionary<int, List<BlockPos>>();
+        var be = Imprinter(Api(EnumAppSide.Server, new ImprinterHighlights(), layers, () => sent++), new BlockPos(1, 2, 3));
+        Show(be);
+        Assert.Equal(3, sent);
+        Show(be);
+        Assert.Equal(3, sent);
+        var refused = (List<BlockPos>)Field("refused").GetValue(be);
+        refused.Add(new BlockPos(9, 2, 3));
+        Show(be);
+        Assert.Equal(4, sent);
+        refused.Reverse();
+        Show(be);
+        Assert.Equal(4, sent);
+        refused.Clear();
+        Show(be);
+        Assert.Equal(5, sent);
+        Clear(be);
+        Assert.Equal(7, sent); // only two still-visible layers need clearing
+        Clear(be);
+        Assert.Equal(7, sent);
+        Show(be);
+        Assert.Equal(10, sent);
+    }
+
+    [Fact]
+    public void ReconnectingSameUidReceivesFreshHighlights()
+    {
+        int sent = 0;
+        var player = (ServerPlayer)RuntimeHelpers.GetUninitializedObject(typeof(ServerPlayer));
+        var be = Imprinter(Api(EnumAppSide.Server, new ImprinterHighlights(), new(), () => sent++, () => player), new BlockPos(1, 2, 3));
+        Show(be);
+        player = (ServerPlayer)RuntimeHelpers.GetUninitializedObject(typeof(ServerPlayer));
+        Show(be);
+        Assert.Equal(6, sent);
+        player = null;
+        Show(be);
+        Assert.Equal(6, sent);
+        player = (ServerPlayer)RuntimeHelpers.GetUninitializedObject(typeof(ServerPlayer));
+        Show(be);
+        Assert.Equal(9, sent);
+    }
+
+    private static ICoreAPI Api(EnumAppSide side, ImprinterHighlights registry, Dictionary<int, List<BlockPos>> layers, Action sent = null, Func<ServerPlayer> connected = null)
     {
         // Only the identity/type of this player is used; the fake world captures outgoing packets.
         var player = (ServerPlayer)RuntimeHelpers.GetUninitializedObject(typeof(ServerPlayer));
         var world = Fake.Of<IWorldAccessor>((m, a) =>
         {
-            if (m.Name == "PlayerByUid") return player;
-            if (m.Name == "HighlightBlocks") { layers[(int)a[1]] = new((List<BlockPos>)a[2]); return null; }
+            if (m.Name == "PlayerByUid") return connected == null ? player : connected();
+            if (m.Name == "HighlightBlocks") { sent?.Invoke(); layers[(int)a[1]] = new((List<BlockPos>)a[2]); return null; }
             return Fake.Unhandled;
         });
         var loader = Fake.Of<IModLoader>((m, a) => m.Name == "GetModSystem" ? registry : Fake.Unhandled);

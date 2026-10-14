@@ -10,6 +10,7 @@ namespace SignalsTubes.src.programtube;
 public static class TubeVisuals
 {
     public const string GlyphTexture = "tube-glyph";
+    public const string ErrorTexture = "tube-error";
     public const int GlyphGlow = 200;   // same as the Signals light bulb
     // 5 x 7 cells, mirrored about the middle column, so the rune reads the same from both sides.
     private const int Columns = 5, Rows = 7;
@@ -28,7 +29,7 @@ public static class TubeVisuals
     /// <summary>Empty for a blank tube.</summary>
     public static string Fingerprint(ItemStack stack) => TubeProgram.Fingerprint(stack) ?? "";
 
-    public static string MeshKey(ItemStack stack, bool lit) => $"{PinMask(stack)}:{Fingerprint(stack)}:{(lit ? 1 : 0)}";
+    public static string MeshKey(ItemStack stack, bool lit) => $"{PinMask(stack)}:{Fingerprint(stack)}:{(lit ? 1 : 0)}:{TubeProgram.HasError(stack)}";
 
     public static Shape Build(Shape template, ItemStack stack, bool lit = false)
     {
@@ -37,7 +38,13 @@ public static class TubeVisuals
         var parts = shape.Elements.Where(e => !e.Name.StartsWith("glyph_") && !e.Name.StartsWith("bulb_")
             && (!e.Name.StartsWith("tube_pin_") || (pins >> int.Parse(e.Name[9..]) & 1) != 0)).ToList();
         string fingerprint = Fingerprint(stack);
-        if (fingerprint.Length > 0) parts.AddRange(Glyph(GlyphCells(Convert.FromHexString(fingerprint)), lit));
+        if (TubeProgram.HasError(stack))
+        {
+            var cross = new bool[Rows, Columns];
+            for (int i = 0; i < Columns; i++) cross[i + 1, i] = cross[i + 1, Columns - 1 - i] = true;
+            parts.AddRange(Glyph(cross, true, ErrorTexture));
+        }
+        else if (fingerprint.Length > 0) parts.AddRange(Glyph(GlyphCells(Convert.FromHexString(fingerprint)), lit));
         parts.AddRange(shape.Elements.Where(e => e.Name.StartsWith("bulb_")));
         shape.Elements = parts.ToArray();
         return shape;
@@ -72,7 +79,7 @@ public static class TubeVisuals
     }
 
     // One cuboid per horizontal run of lit cells.
-    private static IEnumerable<ShapeElement> Glyph(bool[,] cells, bool lit)
+    private static IEnumerable<ShapeElement> Glyph(bool[,] cells, bool lit, string texture = GlyphTexture)
     {
         for (int row = 0; row < Rows; row++)
         {
@@ -83,7 +90,7 @@ public static class TubeVisuals
                 int end = col;
                 while (end < Columns && cells[row, end]) end++;
                 yield return Cuboid($"glyph_{row}_{col}", new double[] { GlyphLeft + col * Cell, y0, GlyphZ0 },
-                    new double[] { GlyphLeft + end * Cell, y0 + Cell, GlyphZ1 }, GlyphTexture, lit ? GlyphGlow : 0);
+                    new double[] { GlyphLeft + end * Cell, y0 + Cell, GlyphZ1 }, texture, lit ? GlyphGlow : 0);
                 col = end;
             }
         }
@@ -119,7 +126,7 @@ public static class TubeVisuals
 
     private static ShapeElement Cuboid(string name, double[] from, double[] to, string texture, int glow)
     {
-        var e = new ShapeElement { Name = name, From = from, To = to, RenderPass = 0 };
+        var e = new ShapeElement { Name = name, From = from, To = to, RenderPass = 0, Shade = glow == 0 };
         for (int side = 0; side < 6; side++)
         {
             double w = side == 1 || side == 3 ? to[2] - from[2] : to[0] - from[0];

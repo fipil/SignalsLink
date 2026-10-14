@@ -1,4 +1,7 @@
 {
+  "tube-error-expandedsize": "Nie można uruchomić lampy: rozwinięty program przekracza limit {0} jednostek.",
+  "tube-error-depth": "Nie można uruchomić lampy: zagnieżdżenie przekracza limit {0} poziomów.",
+  "tube-error-cycle": "Nie można uruchomić lampy: cykliczne odwołanie między programami.",
   "block-imprinter-*": "Wypalarka układów",
   "block-tubecopier-*": "Kopiarka lamp",
   "block-tubesocket-*": "Podstawka lampy",
@@ -90,7 +93,7 @@
   "schematic-network": "Sieć",
   "schematic-off": "wyłączony",
   "schematic-on": "włączony",
-  "schematic-open-hint": "Prawy przycisk myszy: zajrzyj do środka",
+  "schematic-open-hint": "Dwukrotne kliknięcie: zajrzyj do środka",
   "schematic-part-buffer": "Wejście lampy: opóźnienie o jeden krok",
   "schematic-part-delay": "Opóźnienie, ustawienie {0}",
   "schematic-part-resistor": "Rezystor, tłumienie {0}",

@@ -1,4 +1,7 @@
 {
+  "tube-error-expandedsize": "Elektrónku nemožno spustiť: rozbalený program prekračuje limit {0} jednotiek.",
+  "tube-error-depth": "Elektrónku nemožno spustiť: vnorenie prekračuje limit {0} úrovní.",
+  "tube-error-cycle": "Elektrónku nemožno spustiť: cyklický odkaz medzi programami.",
   "block-imprinter-*": "Vypaľovač obvodov",
   "block-tubecopier-*": "Kopírka elektrónok",
   "block-tubesocket-*": "Pätica elektrónky",
@@ -90,7 +93,7 @@
   "schematic-network": "Sieť",
   "schematic-off": "vypnutý",
   "schematic-on": "zapnutý",
-  "schematic-open-hint": "Pravý klik: nahliadnuť dovnútra",
+  "schematic-open-hint": "Dvojklik: nahliadnuť dovnútra",
   "schematic-part-buffer": "Vstup elektrónky: oneskorenie o jeden krok",
   "schematic-part-delay": "Oneskorenie, nastavenie {0}",
   "schematic-part-resistor": "Rezistor, útlm {0}",

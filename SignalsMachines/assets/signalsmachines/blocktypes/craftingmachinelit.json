@@ -104,6 +104,12 @@
     "tube-glass": {
       "base": "signalstubes:block/glass-plain"
     },
+    "tube-error": {
+      "base": "game:block/creative/col32",
+      "blendedOverlays": [
+        { "base": "game:block/creative/col32", "blendMode": "ColorDodge" }
+      ]
+    },
     "tube-glyph": {
       "base": "game:block/machine/statictranslocator/rustyglow"
     },

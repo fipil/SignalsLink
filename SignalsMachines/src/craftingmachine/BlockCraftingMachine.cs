@@ -219,7 +219,7 @@ namespace SignalsMachines.src.craftingmachine
             string info = (string.IsNullOrEmpty(tubeName) ? PinName(pin, anchor) : TubeProgram.Vtml(TubeProgram.Resolve(tubeName))) + "\n";
             if (be != null && pin <= BECraftingMachine.LastInput)
                 info += Vintagestory.API.Config.Lang.Get("signalsmachines:machine-pin-level", pin == BECraftingMachine.StatePin ? be.State : be.Inputs[pin]) + "\n";
-            return info;
+            return ItemProgramTube.ErrorInfo(be?.Tube) + info;
         }
 
         /// <summary>The pin's name as a lang ref, by its anchor index (for the imprinter's pin list).</summary>

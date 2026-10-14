@@ -99,7 +99,7 @@ public class GuiDialogImprinter : GuiDialogBlockEntity
         composer.AddTextInput(ElementBounds.Fixed(120, y, w - 120, row), null, font, "name");
         y += row + pad;
         composer.AddStaticText(Lang.Get("signalstubes:dialog-description"), label, ElementBounds.Fixed(0, y + 4, 110, row));
-        composer.AddTextArea(ElementBounds.Fixed(120, y, w - 120, row * 2), null, font, "description");
+        composer.AddInteractiveElement(new GuiElementImprinterDescription(capi, ElementBounds.Fixed(120, y, w - 120, row * 2), font), "description");
         y += row * 2 + pad;
 
         var pins = state["pins"] as JArray ?? new JArray();

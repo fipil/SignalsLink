@@ -106,7 +106,8 @@ public class BlockTubeSocket : BlockConnection, Vintagestory.GameContent.IWrench
         }
         // A tube in a socket shows just its description; the full tooltip belongs to the item and to machines.
         // Aiming at one of its pins shows nothing but that pin (its name is the title then).
-        if (anchor != null && be is { HasTube: true }) return "";
+        if (anchor != null && be is { HasTube: true }) return ItemProgramTube.ErrorInfo(be.Tube);
+        if (be is { HasTube: true }) info += ItemProgramTube.ErrorInfo(be.Tube);
         if (be is { HasTube: true } && ItemProgramTube.Description(be.Tube) is string description) info += TubeProgram.Vtml(description) + "\n";
         return info;
     }

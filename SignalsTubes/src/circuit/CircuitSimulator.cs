@@ -1,3 +1,4 @@
+using SignalsTubes.src.programtube;
 using System.IO;
 namespace SignalsTubes.src.circuit;
 
@@ -26,7 +27,15 @@ public sealed class CircuitSimulator
 
     /// <param name="resolve">Finds the program of a soldered tube by id; null when nothing is nested.</param>
     public CircuitSimulator(CircuitProgram program, Func<string, CircuitProgram> resolve = null)
+        : this(program, resolve, new HashSet<CircuitProgram>(), new HashSet<string>(StringComparer.Ordinal), new ExpansionBudget(), 1) { }
+
+    private CircuitSimulator(CircuitProgram program, Func<string, CircuitProgram> resolve,
+        HashSet<CircuitProgram> ancestors, HashSet<string> references, ExpansionBudget budget, int depth)
     {
+        if (!ancestors.Add(program)) throw new CircuitProgramException(TubeProgramError.Cycle, "Cyclic nested tube program reference.");
+        if (depth > CircuitLimits.MaxDepth)
+            throw new CircuitProgramException(TubeProgramError.Depth, $"Tube nesting exceeds {CircuitLimits.MaxDepth} levels.");
+        budget.Charge(program); // Before allocating this instance's arrays or visiting its children.
         this.program = program;
         nested = new CircuitSimulator[program.Components.Count];
         nestedProgram = new CircuitProgram[program.Components.Count];
@@ -56,13 +65,28 @@ public sealed class CircuitSimulator
             if (c.Kind == ComponentKind.Tube && resolve?.Invoke(c.Ref) is CircuitProgram sub && sub.Pins.Count == c.Nodes.Length)
             {
                 nestedProgram[i] = sub;
-                nested[i] = new CircuitSimulator(sub, resolve);
+                if (!references.Add(c.Ref)) throw new CircuitProgramException(TubeProgramError.Cycle, "Cyclic nested tube program reference: " + c.Ref);
+                nested[i] = new CircuitSimulator(sub, resolve, ancestors, references, budget, depth + 1);
+                references.Remove(c.Ref);
             }
         }
         foreach (var pin in program.Pins)
         {
             pinUsed[pin.Index] = true;
             if (pin.Component >= 0) paramPinOf[pin.Component] = pin.Index;
+        }
+        ancestors.Remove(program); // siblings may use the same program, with separate simulator state
+    }
+
+    private sealed class ExpansionBudget
+    {
+        private long used;
+        public void Charge(CircuitProgram program)
+        {
+            used += 1L + program.NodeCount + program.Links.Count + program.Components.Count;
+            if (used > CircuitLimits.MaxExpandedSize)
+                throw new CircuitProgramException(TubeProgramError.ExpandedSize,
+                    $"Expanded tube program exceeds {CircuitLimits.MaxExpandedSize} units.");
         }
     }
 

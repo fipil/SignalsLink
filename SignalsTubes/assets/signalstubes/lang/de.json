@@ -1,4 +1,7 @@
 {
+  "tube-error-expandedsize": "Elektronenröhre kann nicht starten: Das entfaltete Programm überschreitet das Limit von {0} Einheiten.",
+  "tube-error-depth": "Elektronenröhre kann nicht starten: Die Verschachtelung überschreitet das Limit von {0} Ebenen.",
+  "tube-error-cycle": "Elektronenröhre kann nicht starten: zyklischer Verweis zwischen Programmen.",
   "block-imprinter-*": "Schaltungsbrenner",
   "block-tubecopier-*": "Röhrenkopierer",
   "block-tubesocket-*": "Röhrenfassung",
@@ -90,7 +93,7 @@
   "schematic-network": "Netzwerk",
   "schematic-off": "ausgeschaltet",
   "schematic-on": "eingeschaltet",
-  "schematic-open-hint": "Rechtsklick: hineinschauen",
+  "schematic-open-hint": "Doppelklick: hineinschauen",
   "schematic-part-buffer": "Röhreneingang: Verzögerung um einen Schritt",
   "schematic-part-delay": "Verzögerung, Einstellung {0}",
   "schematic-part-resistor": "Widerstand, Dämpfung {0}",

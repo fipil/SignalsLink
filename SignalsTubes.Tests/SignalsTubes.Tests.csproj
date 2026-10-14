@@ -32,6 +32,12 @@
     <Reference Include="VintagestoryAPI">
       <HintPath>..\..\..\..\..\VintageStory\1.22\VintagestoryAPI.dll</HintPath>
     </Reference>
+    <Reference Include="OpenTK.Windowing.Common">
+      <HintPath>..\..\..\..\..\VintageStory\1.22\Lib\OpenTK.Windowing.Common.dll</HintPath>
+    </Reference>
+    <Reference Include="OpenTK.Windowing.GraphicsLibraryFramework">
+      <HintPath>..\..\..\..\..\VintageStory\1.22\Lib\OpenTK.Windowing.GraphicsLibraryFramework.dll</HintPath>
+    </Reference>
     <Reference Include="VintagestoryLib">
       <HintPath>..\..\..\..\..\VintageStory\1.22\VintagestoryLib.dll</HintPath>
     </Reference>

@@ -1,4 +1,7 @@
 {
+  "tube-error-expandedsize": "Impossibile avviare il tubo: il programma espanso supera il limite di {0} unità.",
+  "tube-error-depth": "Impossibile avviare il tubo: l’annidamento supera il limite di {0} livelli.",
+  "tube-error-cycle": "Impossibile avviare il tubo: riferimento ciclico tra programmi.",
   "block-imprinter-*": "Incisore di circuiti",
   "block-tubecopier-*": "Copiatrice di valvole",
   "block-tubesocket-*": "Zoccolo della valvola",
@@ -90,7 +93,7 @@
   "schematic-network": "Rete",
   "schematic-off": "spento",
   "schematic-on": "acceso",
-  "schematic-open-hint": "Clic destro: guarda all'interno",
+  "schematic-open-hint": "Doppio clic: guarda all'interno",
   "schematic-part-buffer": "Ingresso della valvola: ritardo di un passo",
   "schematic-part-delay": "Ritardo, impostazione {0}",
   "schematic-part-resistor": "Resistore, attenuazione {0}",
