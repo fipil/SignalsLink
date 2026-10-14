@@ -20,7 +20,8 @@ namespace SignalsTubes.src.imprint;
 public class BEImprinter : BlockEntity
 {
     public const double MaxCable = 24;
-    private const int RefusedSlot = 7311, MarkedSlot = 7312, ExcludedSlot = 7313;
+    private int? highlightSlot;
+    private string highlightViewer;
     public const string PlugCode = "signalstubes:imprinterplug", ProbeCode = "signalstubes:imprinterprobe";
 
     /// <summary>A tool that lives in the imprinter and may be carried by one player at a time.</summary>
@@ -77,13 +78,14 @@ public class BEImprinter : BlockEntity
         else UpdateCables();
     }
 
-    public override void OnBlockUnloaded() { base.OnBlockUnloaded(); DisposeCables(); }
+    public override void OnBlockUnloaded() { ClearHighlights(); base.OnBlockUnloaded(); DisposeCables(); }
 
     public override void OnBlockRemoved()
     {
         base.OnBlockRemoved();
         DisposeCables();
         if (Api.Side == EnumAppSide.Server) { Api.ModLoader.GetModSystem<ImprintExclusions>()?.Changed(Pos); excluded.Clear(); Revoke(plug); Revoke(probe); Unlink(); ShowHighlights(); }
+        ClearHighlights();
     }
 
     public override void OnBlockBroken(IPlayer byPlayer = null)
@@ -279,16 +281,30 @@ public class BEImprinter : BlockEntity
 
     private void ShowHighlights()
     {
+        if (Api?.Side != EnumAppSide.Server) return;
+        if (highlightViewer != operatorUid) ClearHighlights();
         if (operatorUid == null || Api.World.PlayerByUid(operatorUid) is not IServerPlayer player) return;
+        highlightSlot ??= Api.ModLoader.GetModSystem<ImprinterHighlights>().Allocate();
+        highlightViewer = operatorUid;
+        int slot = highlightSlot.Value;
         // Arbitrary = one highlight per listed block (Cube would read the list as two corners of a box)
-        Api.World.HighlightBlocks(player, RefusedSlot, refused.ToList(),
+        Api.World.HighlightBlocks(player, slot, refused.ToList(),
             refused.Select(_ => ColorUtil.ColorFromRgba(220, 40, 40, 96)).ToList(), EnumHighlightBlocksMode.Absolute, EnumHighlightShape.Arbitrary);
         var marked = socket == null ? new List<BlockPos>() : exposed.ToList();
-        Api.World.HighlightBlocks(player, MarkedSlot, marked,
+        Api.World.HighlightBlocks(player, slot + 1, marked,
             marked.Select(_ => ColorUtil.ColorFromRgba(40, 200, 60, 96)).ToList(), EnumHighlightBlocksMode.Absolute, EnumHighlightShape.Arbitrary);
         var omitted = socket == null ? new List<BlockPos>() : excluded.ToList();
-        Api.World.HighlightBlocks(player, ExcludedSlot, omitted,
+        Api.World.HighlightBlocks(player, slot + 2, omitted,
             omitted.Select(_ => ColorUtil.ColorFromRgba(240, 140, 30, 96)).ToList(), EnumHighlightBlocksMode.Absolute, EnumHighlightShape.Arbitrary);
+    }
+
+    private void ClearHighlights()
+    {
+        if (Api?.Side != EnumAppSide.Server || highlightSlot == null) return;
+        if (highlightViewer != null && Api.World.PlayerByUid(highlightViewer) is IServerPlayer player)
+            for (int i = 0; i < 3; i++)
+                Api.World.HighlightBlocks(player, highlightSlot.Value + i, new List<BlockPos>());
+        highlightViewer = null;
     }
 
     /// <summary>Everything the dialog shows, as JSON. Pin and tube names come from the tube already inserted.</summary>
