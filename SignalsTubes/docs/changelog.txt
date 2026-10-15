@@ -1,0 +1,5 @@
+1.0.0-rc.2 published 2026-10-15 19:17
+Fixed: Tube bases fired in a beehive kiln now take the kiln colour of their clay (blue clay gives cream, gray or black; red clay tan, orange, red or brown). Before, the kiln fell back to the plain fired colour.
+
+1.0.0-rc.1 - published 2026-10-14
+First release.

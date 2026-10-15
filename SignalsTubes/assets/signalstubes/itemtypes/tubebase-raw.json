@@ -1,5 +1,5 @@
 {
-  "code": "tubebase-raw",
+  "code": "signalstubes:tubebase-raw",
   "maxStackSize": 16,
   "variantgroups": [
     {
@@ -52,7 +52,7 @@
       "requiresContainer": false,
       "smeltedStack": {
         "type": "item",
-        "code": "tubebase-blue"
+        "code": "signalstubes:tubebase-blue"
       }
     },
     "*-fire": {
@@ -63,7 +63,7 @@
       "requiresContainer": false,
       "smeltedStack": {
         "type": "item",
-        "code": "tubebase-fire"
+        "code": "signalstubes:tubebase-fire"
       }
     },
     "*-red": {
@@ -74,7 +74,7 @@
       "requiresContainer": false,
       "smeltedStack": {
         "type": "item",
-        "code": "tubebase-earthyorange"
+        "code": "signalstubes:tubebase-earthyorange"
       }
     }
   },
@@ -83,19 +83,19 @@
       "beehivekiln": {
         "0": {
           "type": "item",
-          "code": "tubebase-tan"
+          "code": "signalstubes:tubebase-tan"
         },
         "1": {
           "type": "item",
-          "code": "tubebase-orange"
+          "code": "signalstubes:tubebase-orange"
         },
         "2": {
           "type": "item",
-          "code": "tubebase-red"
+          "code": "signalstubes:tubebase-red"
         },
         "3": {
           "type": "item",
-          "code": "tubebase-brown"
+          "code": "signalstubes:tubebase-brown"
         }
       }
     },
@@ -103,19 +103,19 @@
       "beehivekiln": {
         "0": {
           "type": "item",
-          "code": "tubebase-cream"
+          "code": "signalstubes:tubebase-cream"
         },
         "1": {
           "type": "item",
-          "code": "tubebase-gray"
+          "code": "signalstubes:tubebase-gray"
         },
         "2": {
           "type": "item",
-          "code": "tubebase-black"
+          "code": "signalstubes:tubebase-black"
         },
         "3": {
           "type": "item",
-          "code": "tubebase-black"
+          "code": "signalstubes:tubebase-black"
         }
       }
     },
@@ -123,19 +123,19 @@
       "beehivekiln": {
         "0": {
           "type": "item",
-          "code": "tubebase-fire"
+          "code": "signalstubes:tubebase-fire"
         },
         "1": {
           "type": "item",
-          "code": "tubebase-fire"
+          "code": "signalstubes:tubebase-fire"
         },
         "2": {
           "type": "item",
-          "code": "tubebase-fire"
+          "code": "signalstubes:tubebase-fire"
         },
         "3": {
           "type": "item",
-          "code": "tubebase-fire"
+          "code": "signalstubes:tubebase-fire"
         }
       }
     }

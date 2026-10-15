@@ -9,7 +9,7 @@ using Vintagestory.API.Server;
 [assembly: ModInfo("Signals Tubes", "signalstubes",
     Description = "Vacuum-tube logic for Signals.",
     Website = "",
-    Version = "1.0.0-rc.1",
+    Version = "1.0.0-rc.2",
     Authors = new[] { "fipil" }
 )]
 

@@ -31,7 +31,7 @@ public sealed class TubeHost
         sim = null;
         Array.Clear(lastIn);
         Array.Clear(lastOut);
-        try { sim = program == null ? null : new CircuitSimulator(program, id => TubeProgram.ResolveReference(tube, api, id)); }
+        try { sim = program == null ? null : new CircuitSimulator(program, id => ProgramStore.Of(api)?.Get(id)); }
         catch (CircuitProgramException e)
         {
             api.Logger.Error("[signalstubes] Cannot run tube {0}: {1}", tube?.Attributes.GetString(TubeProgram.IdKey), e.Message);

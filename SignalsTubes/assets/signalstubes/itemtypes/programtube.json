@@ -127,18 +127,6 @@
             "type": "item",
             "code": "signalstubes:programtube-fire"
           }
-          /* TEMPORARY DEBUG CYCLE disabled after in-game verification.
-          ,{
-            "type": "item",
-            "code": "signalstubes:programtube-fire",
-            "attributes": {
-              "programName": "DEBUG CYCLE",
-              "debugCycle": true,
-              "programError": 1,
-              "circuit": "{\"v\":1,\"n\":2,\"links\":[],\"parts\":[{\"k\":\"tube\",\"n\":[0,1],\"ref\":\"signalstubes:debug-cycle\"}],\"pins\":[{\"i\":0,\"r\":\"in\",\"n\":0},{\"i\":1,\"r\":\"out\",\"n\":1}]}"
-            }
-          }
-          */
           /* Sample tubes withdrawn: players imprint their own.
           ,{
             "type": "item",

@@ -138,7 +138,7 @@ public class BETubeSocket : BlockEntity, ITubeSocket
         if (Api.Side == EnumAppSide.Server) TubeProgram.SetError(tube, TubeProgramError.None);
         program = tube == null || Api.Side != EnumAppSide.Server ? null : TubeProgram.Get(tube, Api);
         sim = null;
-        try { sim = program == null ? null : new CircuitSimulator(program, id => TubeProgram.ResolveReference(tube, Api, id)); }
+        try { sim = program == null ? null : new CircuitSimulator(program, id => ProgramStore.Of(Api)?.Get(id)); }
         catch (CircuitProgramException e)
         {
             TubeProgram.SetError(tube, e.Error);

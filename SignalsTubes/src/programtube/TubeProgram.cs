@@ -45,11 +45,6 @@ public static class TubeProgram
         return LookupEmbedded(stack)?.Program;
     }
 
-    // TEMPORARY creative cycle test. Remove with the DEBUG CYCLE entry in programtube.json.
-    public static CircuitProgram ResolveReference(ItemStack stack, ICoreAPI api, string id) =>
-        stack?.Attributes.GetBool("debugCycle") == true && id == "signalstubes:debug-cycle"
-            ? Get(stack, api) : ProgramStore.Of(api)?.Get(id);
-
     public static string Fingerprint(ItemStack stack) =>
         stack?.Attributes.GetString(FingerprintKey) ?? LookupEmbedded(stack)?.Fingerprint;
 
@@ -95,7 +90,6 @@ public static class TubeProgram
     {
         var a = stack.Attributes;
         SetError(stack, TubeProgramError.None);
-        a.RemoveAttribute("debugCycle");
         a.RemoveAttribute(ProgramCodec.AttributeKey);
         a.SetString(IdKey, store.Put(program));
         a.SetString(FingerprintKey, CircuitFingerprint.Compute(program));
@@ -115,7 +109,7 @@ public static class TubeProgram
     public static void Clear(ItemStack stack)
     {
         SetError(stack, TubeProgramError.None);
-        foreach (var key in new[] { IdKey, NameKey, DescriptionKey, AuthorKey, AuthorNameKey, LockCopyKey, LockViewKey, PinsKey, FingerprintKey, SolderedKey, "debugCycle", ProgramCodec.AttributeKey })
+        foreach (var key in new[] { IdKey, NameKey, DescriptionKey, AuthorKey, AuthorNameKey, LockCopyKey, LockViewKey, PinsKey, FingerprintKey, SolderedKey, ProgramCodec.AttributeKey })
             stack.Attributes.RemoveAttribute(key);
     }
 

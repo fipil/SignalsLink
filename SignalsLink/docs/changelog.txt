@@ -1,4 +1,4 @@
-1.1.0
+1.1.0 - published 2026-10-14 20:00
 Fixed: Ctrl + right click with an item on a device no longer writes the item's hint (code and properties) over the paper conditions on the spot. It opens the same confirmation dialog as a paper, on every device, even one without conditions; Ctrl is also sprint, and a log in hand over a ceiling damper used to wipe the orders (Thanks to TodosGame).
 Tweak: New paper directive `recipe <product> [N][+|-]`: lays a crafting-grid recipe out in the first nine slots of the target (a crafting machine, any 9+ slot inventory) from the source, N multiples at once, topping up only what is missing and leaving a tool from the last craft in place. The handbook explains it under Paper Conditions.
 Tweak: A paper paragraph that is only `output N` is now a block that always holds: at the bottom it is the fallback value of the Output pin, higher up it overrides the output blocks below it. Before, such a paragraph was silently dropped.
