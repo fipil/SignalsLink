@@ -350,6 +350,7 @@ public class BEImprinter : BlockEntity
             ["hasTube"] = tube != null,
             ["blank"] = tube != null && TubeProgram.IsBlank(tube),
             ["foreignLocked"] = foreignLocked,
+            ["own"] = tube != null && TubeProgram.Author(tube) == player.PlayerUID,
             ["author"] = tube == null ? "" : TubeProgram.AuthorName(tube) ?? "",
             ["lockCopy"] = (bool?)draft?["lockCopy"] ?? (tube != null && TubeProgram.LockCopy(tube)),
             ["lockView"] = (bool?)draft?["lockView"] ?? (tube != null && TubeProgram.LockView(tube)),
@@ -454,8 +455,11 @@ public class BEImprinter : BlockEntity
         foreach (var e in edits["exposed"] as Newtonsoft.Json.Linq.JArray ?? new Newtonsoft.Json.Linq.JArray())
             exposed.Add(new BlockPos((int)e["x"], (int)e["y"], (int)e["z"]));
         var names = edits["pinNames"] as Newtonsoft.Json.Linq.JObject;
-        if ((bool?)edits["draft"] == true) { SetDraft(json); return false; }
+        if ((bool?)edits["draft"] == true) { if (socket != null) SetDraft(json); return false; }   // unlinked: closing discards
         if ((bool?)edits["erase"] == true) return Erase(player);
+        if ((bool?)edits["save"] == true)
+            return SaveDetails(player, Clip((string)edits["name"], GuiDialogImprinter.NameMax), Clip((string)edits["description"], GuiDialogImprinter.DescriptionMax),
+                (bool?)edits["lockCopy"] == true, (bool?)edits["lockView"] == true);
         if ((bool?)edits["noWarn"] == true) SetSolderWarning(player, false);
         if (Clip((string)edits["name"], GuiDialogImprinter.NameMax).Length == 0) { Say(player, "imprint-no-name"); SetDraft(json); return false; }
         bool written = Imprint(player, Clip((string)edits["name"], GuiDialogImprinter.NameMax), Clip((string)edits["description"], GuiDialogImprinter.DescriptionMax),
@@ -479,6 +483,26 @@ public class BEImprinter : BlockEntity
         TubeProgram.Clear(tube);
         MarkDirty(true);
         Say(player, "imprint-erased");
+        return true;
+    }
+
+    /// <summary>Name, description and (author only) locks of an imprinted tube, without a circuit; the program stays.</summary>
+    public bool SaveDetails(IServerPlayer player, string name, string description, bool lockCopy, bool lockView)
+    {
+        if (tube == null) { Say(player, "imprint-no-tube"); return false; }
+        if (socket != null || TubeProgram.IsBlank(tube)) return false;
+        if (ForeignLocked(player)) { Say(player, "imprint-locked"); return false; }
+        if (name.Length == 0) { Say(player, "imprint-no-name"); return false; }
+        SetOrRemove(TubeProgram.NameKey, name);
+        SetOrRemove(TubeProgram.DescriptionKey, description);
+        // Locks carry the author's name: only the author sets them.
+        if (TubeProgram.Author(tube) == player.PlayerUID)
+        {
+            tube.Attributes.SetBool(TubeProgram.LockCopyKey, lockCopy || TubeProgram.Get(tube, Api)?.HasReferences == true);
+            tube.Attributes.SetBool(TubeProgram.LockViewKey, lockView);
+        }
+        MarkDirty(true);
+        Say(player, "imprint-saved");
         return true;
     }
 

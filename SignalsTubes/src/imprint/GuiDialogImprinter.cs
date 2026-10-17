@@ -26,7 +26,7 @@ public class GuiDialogImprinter : GuiDialogBlockEntity
     {
         base.OnGuiClosed();
         typed.Clear();   // the draft below carries it to the server; a reopened dialog starts from what the server says
-        if (state == null || (bool?)state["done"] == true) return;
+        if (state == null || (bool?)state["done"] == true || (bool?)state["linked"] != true) return;   // without a circuit closing discards the edits
         var request = confirming ? edits : SingleComposer?.GetTextInput("name") == null ? null : Collect();
         if (request == null) return;
         request["draft"] = true;
@@ -96,10 +96,10 @@ public class GuiDialogImprinter : GuiDialogBlockEntity
         }
 
         composer.AddStaticText(Lang.Get("signalstubes:dialog-name"), label, ElementBounds.Fixed(0, y + 4, 110, row));
-        composer.AddTextInput(ElementBounds.Fixed(120, y, w - 120, row), null, font, "name");
+        composer.AddTextInput(ElementBounds.Fixed(120, y, w - 120, row), _ => UpdateSave(), font, "name");
         y += row + pad;
         composer.AddStaticText(Lang.Get("signalstubes:dialog-description"), label, ElementBounds.Fixed(0, y + 4, 110, row));
-        composer.AddInteractiveElement(new GuiElementImprinterDescription(capi, ElementBounds.Fixed(120, y, w - 120, row * 2), font), "description");
+        composer.AddInteractiveElement(new GuiElementImprinterDescription(capi, ElementBounds.Fixed(120, y, w - 120, row * 2), font) { OnTextChanged = _ => UpdateSave() }, "description");
         y += row * 2 + pad;
 
         var pins = state["pins"] as JArray ?? new JArray();
@@ -169,11 +169,11 @@ public class GuiDialogImprinter : GuiDialogBlockEntity
             composer.AddStaticText(Lang.Get("signalstubes:dialog-foreign-locked", (string)state["author"]), red, ElementBounds.Fixed(0, y + 4, w, row));
             y += row + pad;
         }
-        else if ((bool)state["hasTube"])
+        else if ((bool)state["hasTube"] && ((bool)state["linked"] || (bool?)state["own"] == true))   // without a circuit only the author sets locks
         {
-            composer.AddSwitch(null, ElementBounds.Fixed(0, y, 30, 30), "lockCopy", 24);
+            composer.AddSwitch(_ => UpdateSave(), ElementBounds.Fixed(0, y, 30, 30), "lockCopy", 24);
             composer.AddStaticText(Lang.Get("signalstubes:dialog-lock-copy"), font, ElementBounds.Fixed(40, y + 4, w / 2 - 40, row));
-            composer.AddSwitch(null, ElementBounds.Fixed(w / 2, y, 30, 30), "lockView", 24);
+            composer.AddSwitch(_ => UpdateSave(), ElementBounds.Fixed(w / 2, y, 30, 30), "lockView", 24);
             composer.AddStaticText(Lang.Get("signalstubes:dialog-lock-view"), font, ElementBounds.Fixed(w / 2 + 40, y + 4, w / 2 - 40, row));
             y += row + pad;
         }
@@ -182,7 +182,11 @@ public class GuiDialogImprinter : GuiDialogBlockEntity
         string info = (linked ? Lang.Get("signalstubes:dialog-parts", (int)state["parts"]) : "") + (author.Length > 0 ? "   " + Lang.Get("signalstubes:programtube-author", author) : "");
         if (info.Trim().Length > 0) { composer.AddStaticText(info.Trim(), label, ElementBounds.Fixed(0, y + 4, w, row)); y += row; }
         if ((bool)state["hasTube"] && !(bool)state["blank"] && !(bool)state["foreignLocked"])
-            composer.AddSmallButton(Lang.Get("signalstubes:dialog-erase"), OnErase, ElementBounds.Fixed(0, y, 100, row), EnumButtonStyle.Small);
+        {
+            composer.AddSmallButton(Lang.Get("signalstubes:dialog-erase"), OnErase, ElementBounds.Fixed(0, y, 100, row), EnumButtonStyle.Small, "erase");
+            // Without a circuit Erase turns into Save once something is edited (same place; a hidden button lets clicks through).
+            if (!linked) composer.AddSmallButton(Lang.Get("signalstubes:dialog-save"), OnSave, ElementBounds.Fixed(0, y, 100, row), EnumButtonStyle.Normal, "save");
+        }
         if (linked)
             composer.AddSmallButton(Lang.Get("signalstubes:dialog-imprint"), OnImprint, ElementBounds.Fixed(w - 260, y, 150, row), (bool)state["ok"] ? EnumButtonStyle.Normal : EnumButtonStyle.Small, "imprint");
         composer.AddSmallButton(Lang.Get("signalstubes:dialog-close"), () => TryClose(), ElementBounds.Fixed(w - 100, y, 100, row));
@@ -221,6 +225,32 @@ public class GuiDialogImprinter : GuiDialogBlockEntity
             SingleComposer.GetSwitch("lockCopy").On = (bool)state["lockCopy"];
             SingleComposer.GetSwitch("lockView").On = (bool)state["lockView"];
         }
+        UpdateSave();
+    }
+
+    private void UpdateSave()
+    {
+        var save = SingleComposer?.GetButton("save");
+        if (save == null || state == null) return;
+        bool changed = SingleComposer.GetTextInput("name").GetText() != (string)state["name"]
+            || SingleComposer.GetTextArea("description").GetText() != (string)state["description"]
+            || (SingleComposer.GetSwitch("lockCopy")?.On ?? (bool)state["lockCopy"]) != (bool)state["lockCopy"]
+            || (SingleComposer.GetSwitch("lockView")?.On ?? (bool)state["lockView"]) != (bool)state["lockView"];
+        save.Visible = changed;
+        SingleComposer.GetButton("erase").Visible = !changed;
+    }
+
+    private bool OnSave()
+    {
+        if (SingleComposer.GetTextInput("name").GetText().Trim().Length == 0)
+        {
+            capi.TriggerIngameError(this, "noname", Lang.Get("signalstubes:imprint-no-name"));
+            return true;
+        }
+        var request = Collect();
+        request["save"] = true;
+        capi.Network.GetChannel(ImprinterNetwork.Channel).SendPacket(new ImprintPacket { X = BlockEntityPosition.X, Y = BlockEntityPosition.Y, Z = BlockEntityPosition.Z, Json = Newtonsoft.Json.JsonConvert.SerializeObject(request, Newtonsoft.Json.Formatting.None) });
+        return true;
     }
 
     private bool OnErase()

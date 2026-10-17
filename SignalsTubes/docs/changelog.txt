@@ -1,5 +1,6 @@
 1.0.0-rc.3
 Fixed: The imprinter now marks a pin wired to a triode or tetrode anode as an output even when the circuit has no source inside, e.g. MIN built from two triodes fed only from its input pins.
+Tweak: With the plug not plugged in, the imprinter can change the name and description of an imprinted tube, and its author the locks too, without imprinting it again. The Erase button turns into Save after an edit; closing the window discards the changes.
 
 1.0.0-rc.2 published 2026-10-15 19:17
 Fixed: Tube bases fired in a beehive kiln now take the kiln colour of their clay (blue clay gives cream, gray or black; red clay tan, orange, red or brown). Before, the kiln fell back to the plain fired colour.
