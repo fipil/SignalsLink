@@ -91,5 +91,18 @@ namespace SignalsLink.Tests
             Assert.Equal(BlockFacing.NORTH, AutomationAccess.FaceTowards(pos, pos.NorthCopy()));
             Assert.Equal(BlockFacing.WEST, AutomationAccess.FaceTowards(pos, pos.WestCopy()));
         }
+
+        [Fact]
+        public void A_part_of_a_multiblock_crate_is_a_crate()
+        {
+            // Multiblock Crates: the filler block has no entity, so the one-kind rule must find the controller.
+            var control = new BlockPos(10, 5, 10);
+            var part = new BlockPos(11, 5, 10);
+            var ba = World(new() { [control] = new Vintagestory.GameContent.BlockEntityCrate() }, new() { [part] = new Part { Control = control } });
+
+            Assert.True(CrateRule.IsCrate(ba, part));
+            Assert.True(CrateRule.IsCrate(ba, control));
+            Assert.False(CrateRule.IsCrate(ba, new BlockPos(0, 0, 0)));
+        }
     }
 }

@@ -13,10 +13,10 @@ namespace SignalsLink.src.signals.managedchute.transporting
     /// </summary>
     public static class CrateRule
     {
-        public static bool IsCrate(ICoreAPI api, BlockPos pos)
-        {
-            return pos != null && api?.World?.BlockAccessor?.GetBlockEntity(pos) is BlockEntityCrate;
-        }
+        public static bool IsCrate(ICoreAPI api, BlockPos pos) => IsCrate(api?.World?.BlockAccessor, pos);
+
+        // A multiblock crate's part has no entity of its own; its controller is the crate.
+        public static bool IsCrate(IBlockAccessor ba, BlockPos pos) => AutomationAccess.EntityAt(ba, pos) is BlockEntityCrate;
 
         /// <summary>Whether the crate would let this stack in. A slot is only a permission; the caller keeps choosing where.</summary>
         public static bool Accepts(IInventory inventory, ItemStack stack)

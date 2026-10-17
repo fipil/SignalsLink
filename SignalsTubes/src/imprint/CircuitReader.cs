@@ -342,8 +342,8 @@ public sealed class CircuitReader
     private static int Variant(Block block, string code, int fallback) =>
         int.TryParse(Variant(block, code), out int v) ? v : fallback;
 
-    // Nodes that something inside the circuit can raise: sources and delay outputs, spread over links
-    // and through parts in the direction they conduct. A pin on such a node is an output.
+    // Nodes that something inside the circuit can raise: sources, delay outputs and anodes (fed by their
+    // cathode, whatever drives it), spread over links and through switches. A pin on such a node is an output.
     private HashSet<int> Driven()
     {
         var p = result.Program;
@@ -355,6 +355,7 @@ public sealed class CircuitReader
             var c = p.Components[i];
             if (c.Kind == ComponentKind.Source) Add(c.Nodes[0]);
             if (c.Kind is ComponentKind.Delay or ComponentKind.Buffer) Add(c.Nodes[1]);
+            if (c.Kind is ComponentKind.Valve or ComponentKind.Tetrode) Add(c.Nodes[2]);
             if (c.Kind == ComponentKind.Tube && tubeOutputs.TryGetValue(i, out var outs)) foreach (int o in outs) Add(o);
         }
         while (stack.Count > 0)
@@ -372,7 +373,6 @@ public sealed class CircuitReader
                     case ComponentKind.Switch when c.Nodes[1] == n: Add(c.Nodes[0]); break;
                     case ComponentKind.Toggle when c.Nodes[1] == n: Add(c.Nodes[2]); break;
                     case ComponentKind.Toggle when c.Nodes[2] == n: Add(c.Nodes[1]); break;
-                    case ComponentKind.Valve or ComponentKind.Tetrode when c.Nodes[1] == n: Add(c.Nodes[2]); break;
                 }
         }
         return driven;

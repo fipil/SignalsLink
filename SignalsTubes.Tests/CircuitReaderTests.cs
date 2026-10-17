@@ -326,6 +326,53 @@ public class CircuitReaderTests
         Assert.Equal(PinRole.Output, r.Program.Pins.Single(x => x.Index == 1).Role);
     }
 
+    // No source inside: the anode alone makes pin 6 an output, fed from the input pins.
+    [Fact]
+    public void MinFromTwoTriodesWithoutSourceHasAnOutputPin()
+    {
+        var (w, socket) = Socket();
+        var t1 = w.Put("signals:blockvalve-off-north-down", 1, 3);
+        var t2 = w.Put("signals:blockvalve-off-north-down", 2, 3);
+        w.Wire(socket, 0, t1, 1).Wire(socket, 0, t2, 1).Wire(socket, 2, t1, 0).Wire(t1, 2, t2, 0).Wire(t2, 2, socket, 5);
+        var r = CircuitReader.Read(w, socket);
+        Assert.True(r.Ok);
+        Assert.Equal(PinRole.Input, r.Program.Pins.Single(x => x.Index == 0).Role);
+        Assert.Equal(PinRole.Input, r.Program.Pins.Single(x => x.Index == 2).Role);
+        Assert.Equal(PinRole.Output, r.Program.Pins.Single(x => x.Index == 5).Role);
+
+        var sim = new CircuitSimulator(CircuitSimplifier.Simplify(r.Program));
+        foreach (var (a, b) in new[] { (9, 4), (4, 9), (15, 15), (0, 7), (7, 0) })
+        {
+            sim.SetInput(0, (byte)a); sim.SetInput(2, (byte)b);
+            for (int i = 0; i < 4; i++) sim.Step();
+            Assert.Equal(Math.Min(a, b), sim.GetOutput(5));
+        }
+    }
+
+    // Delay + triode loop holds a value. SET reaches the loop through a diode triode, so it stays an input.
+    [Fact]
+    public void MemoryLoopSetThroughDiodeStaysAnInput()
+    {
+        var (w, socket) = Socket();
+        var diode = w.Put("signals:blockvalve-off-north-down", 1, 3);
+        var delay = w.Put("signals:blockdelay-north-down-1", 2, 2, ("value", "1"));
+        var loop = w.Put("signals:blockvalve-off-north-down", 3, 3);
+        w.Wire(socket, 0, diode, 1).Wire(diode, 2, delay, 0).Wire(delay, 1, loop, 1).Wire(loop, 2, delay, 0)
+            .Wire(socket, 1, loop, 0).Wire(delay, 1, socket, 2);
+        var r = CircuitReader.Read(w, socket);
+        Assert.True(r.Ok);
+        Assert.Equal(PinRole.Input, r.Program.Pins.Single(x => x.Index == 0).Role);
+        Assert.Equal(PinRole.Input, r.Program.Pins.Single(x => x.Index == 1).Role);
+        Assert.Equal(PinRole.Output, r.Program.Pins.Single(x => x.Index == 2).Role);
+
+        var sim = new CircuitSimulator(CircuitSimplifier.Simplify(r.Program));
+        void Run(byte set, byte reset) { sim.SetInput(0, set); sim.SetInput(1, reset); for (int i = 0; i < 8; i++) sim.Step(); }
+        Run(9, 0); Run(0, 0);
+        Assert.Equal(9, sim.GetOutput(2));
+        Run(0, 15); Run(0, 0);
+        Assert.Equal(0, sim.GetOutput(2));
+    }
+
     [Fact]
     public void UnsupportedBlockCutsItsBranchButDoesNotHideOtherPaths()
     {
