@@ -11,10 +11,16 @@ public class MachineCloudTests
     private static readonly (BlockPos, float)[] None = Array.Empty<(BlockPos, float)>();
     private static bool Ground(BlockPos p) => p.Y >= 0;   // solid floor right under the source level
 
-    private static MachineCloud Run(float seconds, System.Func<BlockPos, bool> passable = null, (BlockPos, float)[] sources = null)
+    // Blocks that are either open on every side or tight on every side: the cloud flows into the open ones.
+    private static System.Func<BlockPos, BlockFacing, bool> Into(System.Func<BlockPos, bool> open) => (p, face) => open(p.AddCopy(face));
+
+    private static MachineCloud Run(float seconds, System.Func<BlockPos, bool> passable = null, (BlockPos, float)[] sources = null) =>
+        RunSides(seconds, Into(passable ?? Ground), sources);
+
+    private static MachineCloud RunSides(float seconds, System.Func<BlockPos, BlockFacing, bool> flows, (BlockPos, float)[] sources = null)
     {
         var cloud = new MachineCloud();
-        for (float t = 0; t < seconds - 1e-4f; t += 0.5f) cloud.Step(0.5f, sources ?? Source, passable ?? Ground);
+        for (float t = 0; t < seconds - 1e-4f; t += 0.5f) cloud.Step(0.5f, sources ?? Source, flows);
         return cloud;
     }
 
@@ -72,15 +78,27 @@ public class MachineCloudTests
         Assert.Equal(-1, c.Cells[P(3)].Flow.Y);                  // and falls over the hole
     }
 
+    // A block with one tight side (its west, towards the source) still takes the cloud through its open sides.
+    [Fact]
+    public void ATightSideStopsItButTheBlockFillsThroughItsOpenSides()
+    {
+        var east = BlockFacing.EAST;
+        bool Flows(BlockPos p, BlockFacing face) =>
+            Ground(p.AddCopy(face)) && !(p.Equals(P(0)) && face == east);   // the side between the source and x = 1 is tight
+        var c = RunSides(30f, Flows);
+        Assert.Equal(1 - 3f / MachineCloud.MaxSteps, c.At(1.5, 0.5, 0.5), 3);   // around: south, east, north
+        Assert.Equal(1 - 1f / MachineCloud.MaxSteps, c.At(-0.5, 0.5, 0.5), 3);  // the other sides as usual
+    }
+
     [Fact]
     public void FadesOutAMinuteAfterTheSourceStops()
     {
         var cloud = Run(4f);
         float before = cloud.At(1.5, 0.5, 0.5);
         Assert.True(before > 0);
-        for (int i = 0; i < 60; i++) cloud.Step(0.5f, None, Ground);   // 30 s
+        for (int i = 0; i < 60; i++) cloud.Step(0.5f, None, Into(Ground));   // 30 s
         Assert.Equal(before / 2, cloud.At(1.5, 0.5, 0.5), 2);
-        for (int i = 0; i < 62; i++) cloud.Step(0.5f, None, Ground);   // another 31 s
+        for (int i = 0; i < 62; i++) cloud.Step(0.5f, None, Into(Ground));   // another 31 s
         Assert.True(cloud.Empty);
     }
 
@@ -90,13 +108,13 @@ public class MachineCloudTests
     public void AFadingCloudIsRefilledOnlyAsTheFrontReachesItAgain()
     {
         var cloud = Run(6f);
-        for (int i = 0; i < 20; i++) cloud.Step(0.5f, None, Ground);   // 10 s of fading
+        for (int i = 0; i < 20; i++) cloud.Step(0.5f, None, Into(Ground));   // 10 s of fading
         float fadedFar = cloud.At(3.5, 0.5, 0.5);
         Assert.True(fadedFar > 0 && fadedFar < 1 - 3f / MachineCloud.MaxSteps);
-        cloud.Step(0.5f, Source, Ground);
+        cloud.Step(0.5f, Source, Into(Ground));
         Assert.Equal(1f, cloud.At(0.5, 0.5, 0.5));                      // the source is back
         Assert.True(cloud.At(3.5, 0.5, 0.5) < fadedFar);                // three blocks out it is still fading
-        for (int i = 0; i < 12; i++) cloud.Step(0.5f, Source, Ground);  // 6 s: the front gets there again
+        for (int i = 0; i < 12; i++) cloud.Step(0.5f, Source, Into(Ground));  // 6 s: the front gets there again
         Assert.Equal(1 - 3f / MachineCloud.MaxSteps, cloud.At(3.5, 0.5, 0.5), 3);
     }
 

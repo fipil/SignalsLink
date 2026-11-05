@@ -3,7 +3,7 @@ using Vintagestory.API.MathTools;
 namespace SignalsMachines.src.craftingmachine;
 
 /// <summary>
-/// The temporal leak as a heavy gas that behaves like the game's finite liquids. A set of passable blocks it has
+/// The temporal leak as a heavy gas that behaves like the game's finite liquids. A set of blocks it has
 /// reached, each with a level (its strength) and the way it flows. Fed from the block in front of an open door while
 /// the crystal is lit, it falls first (down only, while there is room below), then looks for a drop within
 /// <see cref="DrainSearch"/> blocks and flows only towards it, otherwise spreads evenly to the sides, losing one
@@ -40,10 +40,10 @@ public sealed class MachineCloud
 
     /// <summary>
     /// One step of <paramref name="dt"/> seconds. <paramref name="sources"/> are the blocks in front of open doors
-    /// with the source strength 0..1; <paramref name="passable"/> says where the cloud may flow. Returns true when
-    /// anything changed (for syncing).
+    /// with the source strength 0..1; <paramref name="flows"/> says whether the cloud may pass from a block through
+    /// one of its sides into the neighbour. Returns true when anything changed (for syncing).
     /// </summary>
-    public bool Step(float dt, IEnumerable<(BlockPos pos, float strength)> sources, System.Func<BlockPos, bool> passable)
+    public bool Step(float dt, IEnumerable<(BlockPos pos, float strength)> sources, System.Func<BlockPos, BlockFacing, bool> flows)
     {
         bool changed = false;
         foreach (var c in cells.Values) { c.Live = c.FedThisStep; c.FedThisStep = false; c.Since += dt; }
@@ -54,7 +54,7 @@ public sealed class MachineCloud
         var seen = new HashSet<BlockPos>();
         foreach (var (pos, strength) in sources)
         {
-            if (strength <= 0 || !passable(pos)) continue;
+            if (strength <= 0) continue;
             changed |= Feed(pos, 0, strength, dt);
             if (seen.Add(pos)) queue.Enqueue(pos.Copy());
         }
@@ -63,15 +63,14 @@ public sealed class MachineCloud
             var pos = queue.Dequeue();
             var cell = cells[pos];
             float source = cell.Strength / (1f - (float)cell.Steps / MaxSteps);
-            var below = pos.DownCopy();
-            if (passable(below))
+            if (flows(pos, BlockFacing.DOWN))
             {
                 // falling: the column fills before anything spreads
-                changed |= Pour(below, cell, cell.Steps, source, FallDelay, queue, seen);
+                changed |= Pour(pos.DownCopy(), cell, cell.Steps, source, FallDelay, queue, seen);
                 continue;
             }
             if (cell.Steps >= MaxSteps - 1) continue;
-            foreach (var step in SpreadDirections(pos, passable))
+            foreach (var step in SpreadDirections(pos, flows))
                 changed |= Pour(pos.AddCopy(step), cell, cell.Steps + 1, source, SpreadDelay, queue, seen);
         }
         // whatever was not fed this step thins out, and cells that are gone are dropped
@@ -82,7 +81,7 @@ public sealed class MachineCloud
             changed = true;
             if (cell.Fade <= 0) cells.Remove(pos);
         }
-        if (changed) UpdateFlows(passable);
+        if (changed) UpdateFlows(flows);
         return changed;
     }
 
@@ -99,26 +98,25 @@ public sealed class MachineCloud
     }
 
     // Where a grounded cell pours: towards the nearest drops within reach (the first step of each shortest path),
-    // or, with no drop around, to every passable side - the game's liquids do the same.
-    private List<BlockFacing> SpreadDirections(BlockPos pos, System.Func<BlockPos, bool> passable)
+    // or, with no drop around, to every open side - the game's liquids do the same.
+    private List<BlockFacing> SpreadDirections(BlockPos pos, System.Func<BlockPos, BlockFacing, bool> flows)
     {
         var towardsDrains = new List<BlockFacing>();
         int best = int.MaxValue;
         foreach (var face in BlockFacing.HORIZONTALS)
         {
-            var first = pos.AddCopy(face);
-            if (!passable(first)) continue;
-            int d = DistanceToDrop(first, passable, DrainSearch);
+            if (!flows(pos, face)) continue;
+            int d = DistanceToDrop(pos.AddCopy(face), flows, DrainSearch);
             if (d < 0 || d > best) continue;
             if (d < best) { best = d; towardsDrains.Clear(); }
             towardsDrains.Add(face);
         }
         if (towardsDrains.Count > 0) return towardsDrains;
-        return BlockFacing.HORIZONTALS.Where(f => passable(pos.AddCopy(f))).ToList();
+        return BlockFacing.HORIZONTALS.Where(f => flows(pos, f)).ToList();
     }
 
-    // Steps to the nearest block with room below it, searching outwards through passable blocks; -1 when none within reach.
-    private static int DistanceToDrop(BlockPos start, System.Func<BlockPos, bool> passable, int reach)
+    // Steps to the nearest block the cloud can fall out of, searching outwards through open sides; -1 when none within reach.
+    private static int DistanceToDrop(BlockPos start, System.Func<BlockPos, BlockFacing, bool> flows, int reach)
     {
         var frontier = new List<BlockPos> { start };
         var visited = new HashSet<BlockPos> { start };
@@ -127,11 +125,11 @@ public sealed class MachineCloud
             var next = new List<BlockPos>();
             foreach (var p in frontier)
             {
-                if (passable(p.DownCopy())) return d;
+                if (flows(p, BlockFacing.DOWN)) return d;
                 foreach (var face in BlockFacing.HORIZONTALS)
                 {
                     var n = p.AddCopy(face);
-                    if (passable(n) && visited.Add(n)) next.Add(n);
+                    if (flows(p, face) && visited.Add(n)) next.Add(n);
                 }
             }
             frontier = next;
@@ -139,17 +137,17 @@ public sealed class MachineCloud
         return -1;
     }
 
-    // The slope: down wherever there is room below, else from a cell towards its lower neighbours (an empty passable side counts as level zero).
-    private void UpdateFlows(System.Func<BlockPos, bool> passable)
+    // The slope: down wherever it can fall, else from a cell towards its lower neighbours (an empty open side counts as level zero).
+    private void UpdateFlows(System.Func<BlockPos, BlockFacing, bool> flows)
     {
         foreach (var (pos, cell) in cells)
         {
-            if (passable(pos.DownCopy())) { cell.Flow = new Vec3i(0, -1, 0); continue; }   // over room below (filled or not) it falls
+            if (flows(pos, BlockFacing.DOWN)) { cell.Flow = new Vec3i(0, -1, 0); continue; }   // over room below (filled or not) it falls
             double fx = 0, fz = 0;
             foreach (var face in BlockFacing.HORIZONTALS)
             {
+                if (!flows(pos, face)) continue;
                 var n = pos.AddCopy(face);
-                if (!passable(n)) continue;
                 float there = cells.TryGetValue(n, out var nc) ? nc.Intensity : 0;
                 float drop = cell.Intensity - there;
                 if (drop <= 0) continue;

@@ -246,14 +246,15 @@ public class BECraftingMachine : BlockEntityContainer, ISidedAutomation, Signals
             if (DoorOpen(pin)) yield return (Pos.UpCopy().Add(block.DoorSide(pin)), strength);
     }
 
-    /// <summary>Where the cloud may flow: anything a player could stand in.</summary>
-    private bool Passable(BlockPos pos)
+    // A block in front of a door whose side towards the chamber is tight takes nothing.
+    private bool OpenToChamber(BlockPos front)
     {
-        var block = Api.World.BlockAccessor.GetBlock(pos);
-        if (block == null || block.Id == 0) return true;
-        var boxes = block.GetCollisionBoxes(Api.World.BlockAccessor, pos);
-        return boxes == null || boxes.Length == 0;
+        var chamber = Pos.UpCopy();
+        var side = BlockFacing.FromNormal(new Vec3i(chamber.X - front.X, 0, chamber.Z - front.Z));
+        return side == null || CloudSides.Open(Api.World.BlockAccessor, front, side);
     }
+
+    private bool CloudFlows(BlockPos pos, BlockFacing face) => CloudSides.Flows(Api.World.BlockAccessor, pos, face);
 
     // server, twice a second: the cloud flows, fades, and goes to the clients when it changed
     private void StepCloud(float dt)
@@ -263,7 +264,7 @@ public class BECraftingMachine : BlockEntityContainer, ISidedAutomation, Signals
         float step = cloudClock;
         cloudClock = 0;
         if (cloud.Empty && !CloudSources().Any()) return;
-        if (cloud.Step(step, CloudSources(), Passable)) MarkDirty();
+        if (cloud.Step(step, CloudSources().Where(s => OpenToChamber(s.pos)), CloudFlows)) MarkDirty();
     }
 
     private BEBehaviorMPConsumer mpc;

@@ -180,9 +180,9 @@ public sealed class MachineEffects : IPointLight
             bool stacked = cells.ContainsKey(cell.DownCopy());
             double chance = (0.2 + intensity * 0.5) * (stacked ? 0.35 : 1);
             if (random.NextDouble() > chance) continue;
-            // the floor under this block: down through passable blocks, at most three
+            // the floor under this block: down as far as the cloud could fall, at most three
             int drop = 0;
-            while (drop < 3 && Passable(accessor, cell.X, cell.Y - 1 - drop, cell.Z)) drop++;
+            while (drop < 3 && CloudSides.Flows(accessor, cell.DownCopy(drop), BlockFacing.DOWN)) drop++;
             double startY = 0.55 + random.NextDouble() * 0.35;
             float height = (float)(drop + startY) - 0.08f;     // dies just above the floor, nothing piles up there
             float life = height / MoteSinkSpeed;
@@ -202,15 +202,6 @@ public sealed class MachineEffects : IPointLight
             p.SizeEvolve = EvolvingNatFloat.create(EnumTransformFunction.LINEAR, 0.7f);
             capi.World.SpawnParticles(p);
         }
-    }
-
-    private static bool Passable(IBlockAccessor accessor, int x, int y, int z)
-    {
-        var pos = new BlockPos(x, y, z, 0);
-        var block = accessor.GetBlock(pos);
-        if (block == null || block.Id == 0) return true;
-        var boxes = block.GetCollisionBoxes(accessor, pos);
-        return boxes == null || boxes.Length == 0;
     }
 
     // ---- smoke after an overload: the chamber fills with dense grey smoke that thins over a minute behind shut

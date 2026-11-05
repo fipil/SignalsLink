@@ -6,7 +6,7 @@
     "Fipil"
   ],
   "description": "Machines controlled by signals.",
-  "version": "1.0.0-rc.1",
+  "version": "1.0.0-rc.2",
   "dependencies": {
     "game": "1.22.0",
     "signals": "0.3.3",

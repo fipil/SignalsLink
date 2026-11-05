@@ -14,7 +14,7 @@ using Vintagestory.API.Server;
 [assembly: ModInfo("Signals Machines", "signalsmachines",
     Description = "Machines controlled by signals.",
     Website = "",
-    Version = "1.0.0-rc.1",
+    Version = "1.0.0-rc.2",
     Authors = new[] { "fipil" }
 )]
 

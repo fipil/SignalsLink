@@ -174,7 +174,7 @@ public class MachineSignalsTests
         // the cloud: fed from the block in front of the west door (pin 4), everything passable
         float PullAt(BECraftingMachine be, int seconds, double px, double py, double pz)
         {
-            for (int i = 0; i < seconds; i++) be.Cloud.Step(1, be.CloudSources(), p => p.Y >= 1);   // the ground is at the chamber's level
+            for (int i = 0; i < seconds; i++) be.Cloud.Step(1, be.CloudSources(), (p, face) => p.AddCopy(face).Y >= 1);   // the ground is at the chamber's level
             return be.Instability(px, py, pz);
         }
         var west = block.DoorSide(4);

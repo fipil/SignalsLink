@@ -1,0 +1,5 @@
+1.0.0-rc.2
+Fixed: The temporal leak from an open crafting machine door now flows through blocks that are not tight, such as a damper or hose coupling at the door, the way water does. Before, any block with a collision box stopped it.
+
+1.0.0-rc.1 - published 2026-10-14
+First release.
