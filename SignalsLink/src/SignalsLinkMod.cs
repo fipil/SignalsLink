@@ -1,4 +1,4 @@
-using signals.src;
+﻿using signals.src;
 using signals.src.signalNetwork;
 using SignalsLink.src.signals.behaviours;
 using SignalsLink.src.signals.blocksensor;
@@ -65,6 +65,8 @@ namespace SignalsLink.src
             api.RegisterBlockClass("ChunkAnchor", typeof(SignalsLink.src.signals.chunkanchor.BlockChunkAnchor));
             api.RegisterBlockClass("YardTile", typeof(SignalsLink.src.signals.yard.BlockYardTile));
             api.RegisterBlockClass("YardSign", typeof(SignalsLink.src.signals.yard.BlockYardSign));
+            api.RegisterBlockClass("Clock", typeof(SignalsLink.src.signals.clock.BlockClock));
+            api.RegisterBlockEntityClass("BlockEntityClock", typeof(SignalsLink.src.signals.clock.BEClock));
             api.RegisterBlockEntityClass("YardSign", typeof(SignalsLink.src.signals.yard.BEYardSign));
 
             api.RegisterBlockEntityClass("BlockEntitySleeveDamper", typeof(SignalsLink.src.signals.sleeve.BlockEntitySleeveDamper));

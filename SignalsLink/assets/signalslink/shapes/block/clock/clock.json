@@ -1,0 +1,1095 @@
+{
+ "editor": {
+  "allAngles": false,
+  "entityTextureMode": false
+ },
+ "textureWidth": 16,
+ "textureHeight": 16,
+ "textures": {
+  "plank": "game:block/wood/planks/ebony1",
+  "castiron": "block/castironbrown",
+  "vent": "block/steel4holes",
+  "bismuth": "game:block/metal/ingot/bismuth",
+  "glass": "game:block/glass/plain",
+  "porcelain": "block/pin-porcelain",
+  "brass": "block/pin-brass"
+ },
+ "elements": [
+  {
+   "name": "plate",
+   "from": [
+    1,
+    0,
+    1
+   ],
+   "to": [
+    15,
+    1,
+    15
+   ],
+   "faces": {
+    "north": {
+     "texture": "#plank",
+     "uv": [
+      0,
+      0,
+      14,
+      1
+     ],
+     "autoUv": false
+    },
+    "east": {
+     "texture": "#plank",
+     "uv": [
+      0,
+      0,
+      14,
+      1
+     ],
+     "autoUv": false
+    },
+    "south": {
+     "texture": "#plank",
+     "uv": [
+      0,
+      0,
+      14,
+      1
+     ],
+     "autoUv": false
+    },
+    "west": {
+     "texture": "#plank",
+     "uv": [
+      0,
+      0,
+      14,
+      1
+     ],
+     "autoUv": false
+    },
+    "up": {
+     "texture": "#plank",
+     "uv": [
+      0,
+      0,
+      14,
+      14
+     ],
+     "autoUv": false
+    },
+    "down": {
+     "texture": "#plank",
+     "uv": [
+      0,
+      0,
+      14,
+      14
+     ],
+     "autoUv": false
+    }
+   }
+  },
+  {
+   "name": "pedestal_low",
+   "from": [
+    4,
+    1,
+    4
+   ],
+   "to": [
+    12,
+    2,
+    12
+   ],
+   "faces": {
+    "north": {
+     "texture": "#castiron",
+     "uv": [
+      0,
+      0,
+      8,
+      1
+     ],
+     "autoUv": false
+    },
+    "east": {
+     "texture": "#castiron",
+     "uv": [
+      0,
+      0,
+      8,
+      1
+     ],
+     "autoUv": false
+    },
+    "south": {
+     "texture": "#castiron",
+     "uv": [
+      0,
+      0,
+      8,
+      1
+     ],
+     "autoUv": false
+    },
+    "west": {
+     "texture": "#castiron",
+     "uv": [
+      0,
+      0,
+      8,
+      1
+     ],
+     "autoUv": false
+    },
+    "up": {
+     "texture": "#castiron",
+     "uv": [
+      0,
+      0,
+      8,
+      8
+     ],
+     "autoUv": false
+    }
+   }
+  },
+  {
+   "name": "vent",
+   "from": [
+    4.25,
+    2,
+    4.25
+   ],
+   "to": [
+    11.75,
+    3.5,
+    11.75
+   ],
+   "faces": {
+    "north": {
+     "texture": "#vent",
+     "uv": [
+      0,
+      0,
+      7.5,
+      1.5
+     ],
+     "autoUv": false
+    },
+    "east": {
+     "texture": "#vent",
+     "uv": [
+      0,
+      0,
+      7.5,
+      1.5
+     ],
+     "autoUv": false
+    },
+    "south": {
+     "texture": "#vent",
+     "uv": [
+      0,
+      0,
+      7.5,
+      1.5
+     ],
+     "autoUv": false
+    },
+    "west": {
+     "texture": "#vent",
+     "uv": [
+      0,
+      0,
+      7.5,
+      1.5
+     ],
+     "autoUv": false
+    }
+   }
+  },
+  {
+   "name": "pedestal_top",
+   "from": [
+    4,
+    3.5,
+    4
+   ],
+   "to": [
+    12,
+    5,
+    12
+   ],
+   "faces": {
+    "north": {
+     "texture": "#castiron",
+     "uv": [
+      0,
+      0,
+      8,
+      1.5
+     ],
+     "autoUv": false
+    },
+    "east": {
+     "texture": "#castiron",
+     "uv": [
+      0,
+      0,
+      8,
+      1.5
+     ],
+     "autoUv": false
+    },
+    "south": {
+     "texture": "#castiron",
+     "uv": [
+      0,
+      0,
+      8,
+      1.5
+     ],
+     "autoUv": false
+    },
+    "west": {
+     "texture": "#castiron",
+     "uv": [
+      0,
+      0,
+      8,
+      1.5
+     ],
+     "autoUv": false
+    },
+    "up": {
+     "texture": "#castiron",
+     "uv": [
+      0,
+      0,
+      8,
+      8
+     ],
+     "autoUv": false
+    },
+    "down": {
+     "texture": "#castiron",
+     "uv": [
+      0,
+      0,
+      8,
+      8
+     ],
+     "autoUv": false
+    }
+   }
+  },
+  {
+   "name": "floor",
+   "from": [
+    5.45,
+    5,
+    5.45
+   ],
+   "to": [
+    10.55,
+    5.2,
+    10.55
+   ],
+   "faces": {
+    "north": {
+     "texture": "#bismuth",
+     "uv": [
+      0,
+      0,
+      5.1000000000000005,
+      0.20000000000000018
+     ],
+     "autoUv": false
+    },
+    "east": {
+     "texture": "#bismuth",
+     "uv": [
+      0,
+      0,
+      5.1000000000000005,
+      0.20000000000000018
+     ],
+     "autoUv": false
+    },
+    "south": {
+     "texture": "#bismuth",
+     "uv": [
+      0,
+      0,
+      5.1000000000000005,
+      0.20000000000000018
+     ],
+     "autoUv": false
+    },
+    "west": {
+     "texture": "#bismuth",
+     "uv": [
+      0,
+      0,
+      5.1000000000000005,
+      0.20000000000000018
+     ],
+     "autoUv": false
+    },
+    "up": {
+     "texture": "#bismuth",
+     "uv": [
+      0,
+      0,
+      5.1000000000000005,
+      5.1000000000000005
+     ],
+     "autoUv": false
+    }
+   }
+  },
+  {
+   "name": "glass",
+   "from": [
+    5.2,
+    5,
+    5.2
+   ],
+   "to": [
+    10.8,
+    10.6,
+    10.8
+   ],
+   "faces": {
+    "north": {
+     "texture": "#glass",
+     "uv": [
+      0,
+      0,
+      5.6000000000000005,
+      5.6
+     ],
+     "autoUv": false
+    },
+    "east": {
+     "texture": "#glass",
+     "uv": [
+      0,
+      0,
+      5.6000000000000005,
+      5.6
+     ],
+     "autoUv": false
+    },
+    "south": {
+     "texture": "#glass",
+     "uv": [
+      0,
+      0,
+      5.6000000000000005,
+      5.6
+     ],
+     "autoUv": false
+    },
+    "west": {
+     "texture": "#glass",
+     "uv": [
+      0,
+      0,
+      5.6000000000000005,
+      5.6
+     ],
+     "autoUv": false
+    },
+    "up": {
+     "texture": "#glass",
+     "uv": [
+      0,
+      0,
+      5.6000000000000005,
+      5.6000000000000005
+     ],
+     "autoUv": false
+    }
+   },
+   "renderPass": 3
+  },
+  {
+   "name": "pin_phase",
+   "from": [
+    11,
+    1,
+    1.75
+   ],
+   "to": [
+    13,
+    3,
+    3.75
+   ],
+   "faces": {
+    "north": {
+     "texture": "#porcelain",
+     "uv": [
+      2,
+      2,
+      8,
+      8
+     ],
+     "autoUv": false
+    },
+    "east": {
+     "texture": "#porcelain",
+     "uv": [
+      2,
+      2,
+      8,
+      8
+     ],
+     "autoUv": false
+    },
+    "south": {
+     "texture": "#porcelain",
+     "uv": [
+      2,
+      2,
+      8,
+      8
+     ],
+     "autoUv": false
+    },
+    "west": {
+     "texture": "#porcelain",
+     "uv": [
+      2,
+      2,
+      8,
+      8
+     ],
+     "autoUv": false
+    },
+    "up": {
+     "texture": "#porcelain",
+     "uv": [
+      2,
+      2,
+      8,
+      8
+     ],
+     "autoUv": false
+    },
+    "down": {
+     "texture": "#porcelain",
+     "uv": [
+      2,
+      2,
+      8,
+      8
+     ],
+     "autoUv": false
+    }
+   }
+  },
+  {
+   "name": "pin_phase_cap",
+   "from": [
+    11.5,
+    3,
+    2.25
+   ],
+   "to": [
+    12.5,
+    4,
+    3.25
+   ],
+   "faces": {
+    "north": {
+     "texture": "#brass",
+     "uv": [
+      2,
+      2,
+      5,
+      5
+     ],
+     "autoUv": false
+    },
+    "east": {
+     "texture": "#brass",
+     "uv": [
+      2,
+      2,
+      5,
+      5
+     ],
+     "autoUv": false
+    },
+    "south": {
+     "texture": "#brass",
+     "uv": [
+      2,
+      2,
+      5,
+      5
+     ],
+     "autoUv": false
+    },
+    "west": {
+     "texture": "#brass",
+     "uv": [
+      2,
+      2,
+      5,
+      5
+     ],
+     "autoUv": false
+    },
+    "up": {
+     "texture": "#brass",
+     "uv": [
+      2,
+      2,
+      5,
+      5
+     ],
+     "autoUv": false
+    },
+    "down": {
+     "texture": "#brass",
+     "uv": [
+      2,
+      2,
+      5,
+      5
+     ],
+     "autoUv": false
+    }
+   }
+  },
+  {
+   "name": "pin_phase_collar",
+   "from": [
+    11,
+    3.2,
+    1.75
+   ],
+   "to": [
+    13,
+    3.7,
+    3.75
+   ],
+   "faces": {
+    "north": {
+     "texture": "#brass",
+     "uv": [
+      2,
+      2,
+      8,
+      3.5
+     ],
+     "autoUv": false
+    },
+    "east": {
+     "texture": "#brass",
+     "uv": [
+      2,
+      2,
+      8,
+      3.5
+     ],
+     "autoUv": false
+    },
+    "south": {
+     "texture": "#brass",
+     "uv": [
+      2,
+      2,
+      8,
+      3.5
+     ],
+     "autoUv": false
+    },
+    "west": {
+     "texture": "#brass",
+     "uv": [
+      2,
+      2,
+      8,
+      3.5
+     ],
+     "autoUv": false
+    },
+    "up": {
+     "texture": "#brass",
+     "uv": [
+      2,
+      2,
+      8,
+      3.5
+     ],
+     "autoUv": false
+    },
+    "down": {
+     "texture": "#brass",
+     "uv": [
+      2,
+      2,
+      8,
+      3.5
+     ],
+     "autoUv": false
+    }
+   }
+  },
+  {
+   "name": "pin_turn",
+   "from": [
+    7,
+    1,
+    1.75
+   ],
+   "to": [
+    9,
+    3,
+    3.75
+   ],
+   "faces": {
+    "north": {
+     "texture": "#porcelain",
+     "uv": [
+      2,
+      2,
+      8,
+      8
+     ],
+     "autoUv": false
+    },
+    "east": {
+     "texture": "#porcelain",
+     "uv": [
+      2,
+      2,
+      8,
+      8
+     ],
+     "autoUv": false
+    },
+    "south": {
+     "texture": "#porcelain",
+     "uv": [
+      2,
+      2,
+      8,
+      8
+     ],
+     "autoUv": false
+    },
+    "west": {
+     "texture": "#porcelain",
+     "uv": [
+      2,
+      2,
+      8,
+      8
+     ],
+     "autoUv": false
+    },
+    "up": {
+     "texture": "#porcelain",
+     "uv": [
+      2,
+      2,
+      8,
+      8
+     ],
+     "autoUv": false
+    },
+    "down": {
+     "texture": "#porcelain",
+     "uv": [
+      2,
+      2,
+      8,
+      8
+     ],
+     "autoUv": false
+    }
+   }
+  },
+  {
+   "name": "pin_turn_cap",
+   "from": [
+    7.5,
+    3,
+    2.25
+   ],
+   "to": [
+    8.5,
+    4,
+    3.25
+   ],
+   "faces": {
+    "north": {
+     "texture": "#brass",
+     "uv": [
+      2,
+      2,
+      5,
+      5
+     ],
+     "autoUv": false
+    },
+    "east": {
+     "texture": "#brass",
+     "uv": [
+      2,
+      2,
+      5,
+      5
+     ],
+     "autoUv": false
+    },
+    "south": {
+     "texture": "#brass",
+     "uv": [
+      2,
+      2,
+      5,
+      5
+     ],
+     "autoUv": false
+    },
+    "west": {
+     "texture": "#brass",
+     "uv": [
+      2,
+      2,
+      5,
+      5
+     ],
+     "autoUv": false
+    },
+    "up": {
+     "texture": "#brass",
+     "uv": [
+      2,
+      2,
+      5,
+      5
+     ],
+     "autoUv": false
+    },
+    "down": {
+     "texture": "#brass",
+     "uv": [
+      2,
+      2,
+      5,
+      5
+     ],
+     "autoUv": false
+    }
+   }
+  },
+  {
+   "name": "pin_turn_collar",
+   "from": [
+    7,
+    3.2,
+    1.75
+   ],
+   "to": [
+    9,
+    3.7,
+    3.75
+   ],
+   "faces": {
+    "north": {
+     "texture": "#brass",
+     "uv": [
+      2,
+      2,
+      8,
+      3.5
+     ],
+     "autoUv": false
+    },
+    "east": {
+     "texture": "#brass",
+     "uv": [
+      2,
+      2,
+      8,
+      3.5
+     ],
+     "autoUv": false
+    },
+    "south": {
+     "texture": "#brass",
+     "uv": [
+      2,
+      2,
+      8,
+      3.5
+     ],
+     "autoUv": false
+    },
+    "west": {
+     "texture": "#brass",
+     "uv": [
+      2,
+      2,
+      8,
+      3.5
+     ],
+     "autoUv": false
+    },
+    "up": {
+     "texture": "#brass",
+     "uv": [
+      2,
+      2,
+      8,
+      3.5
+     ],
+     "autoUv": false
+    },
+    "down": {
+     "texture": "#brass",
+     "uv": [
+      2,
+      2,
+      8,
+      3.5
+     ],
+     "autoUv": false
+    }
+   }
+  },
+  {
+   "name": "pin_beat",
+   "from": [
+    3,
+    1,
+    1.75
+   ],
+   "to": [
+    5,
+    3,
+    3.75
+   ],
+   "faces": {
+    "north": {
+     "texture": "#porcelain",
+     "uv": [
+      2,
+      2,
+      8,
+      8
+     ],
+     "autoUv": false
+    },
+    "east": {
+     "texture": "#porcelain",
+     "uv": [
+      2,
+      2,
+      8,
+      8
+     ],
+     "autoUv": false
+    },
+    "south": {
+     "texture": "#porcelain",
+     "uv": [
+      2,
+      2,
+      8,
+      8
+     ],
+     "autoUv": false
+    },
+    "west": {
+     "texture": "#porcelain",
+     "uv": [
+      2,
+      2,
+      8,
+      8
+     ],
+     "autoUv": false
+    },
+    "up": {
+     "texture": "#porcelain",
+     "uv": [
+      2,
+      2,
+      8,
+      8
+     ],
+     "autoUv": false
+    },
+    "down": {
+     "texture": "#porcelain",
+     "uv": [
+      2,
+      2,
+      8,
+      8
+     ],
+     "autoUv": false
+    }
+   }
+  },
+  {
+   "name": "pin_beat_cap",
+   "from": [
+    3.5,
+    3,
+    2.25
+   ],
+   "to": [
+    4.5,
+    4,
+    3.25
+   ],
+   "faces": {
+    "north": {
+     "texture": "#brass",
+     "uv": [
+      2,
+      2,
+      5,
+      5
+     ],
+     "autoUv": false
+    },
+    "east": {
+     "texture": "#brass",
+     "uv": [
+      2,
+      2,
+      5,
+      5
+     ],
+     "autoUv": false
+    },
+    "south": {
+     "texture": "#brass",
+     "uv": [
+      2,
+      2,
+      5,
+      5
+     ],
+     "autoUv": false
+    },
+    "west": {
+     "texture": "#brass",
+     "uv": [
+      2,
+      2,
+      5,
+      5
+     ],
+     "autoUv": false
+    },
+    "up": {
+     "texture": "#brass",
+     "uv": [
+      2,
+      2,
+      5,
+      5
+     ],
+     "autoUv": false
+    },
+    "down": {
+     "texture": "#brass",
+     "uv": [
+      2,
+      2,
+      5,
+      5
+     ],
+     "autoUv": false
+    }
+   }
+  },
+  {
+   "name": "pin_beat_collar",
+   "from": [
+    3,
+    3.2,
+    1.75
+   ],
+   "to": [
+    5,
+    3.7,
+    3.75
+   ],
+   "faces": {
+    "north": {
+     "texture": "#brass",
+     "uv": [
+      2,
+      2,
+      8,
+      3.5
+     ],
+     "autoUv": false
+    },
+    "east": {
+     "texture": "#brass",
+     "uv": [
+      2,
+      2,
+      8,
+      3.5
+     ],
+     "autoUv": false
+    },
+    "south": {
+     "texture": "#brass",
+     "uv": [
+      2,
+      2,
+      8,
+      3.5
+     ],
+     "autoUv": false
+    },
+    "west": {
+     "texture": "#brass",
+     "uv": [
+      2,
+      2,
+      8,
+      3.5
+     ],
+     "autoUv": false
+    },
+    "up": {
+     "texture": "#brass",
+     "uv": [
+      2,
+      2,
+      8,
+      3.5
+     ],
+     "autoUv": false
+    },
+    "down": {
+     "texture": "#brass",
+     "uv": [
+      2,
+      2,
+      8,
+      3.5
+     ],
+     "autoUv": false
+    }
+   }
+  }
+ ]
+}

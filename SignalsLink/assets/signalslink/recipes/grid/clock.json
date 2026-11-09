@@ -1,0 +1,14 @@
+{
+	"ingredientPattern": "WQL,QTQ,EPE",
+	"ingredients": {
+		"W": { "type": "item", "code": "game:wrench-*", "isTool": true, "toolDurabilityCost": 2 },
+		"L": { "type": "item", "code": "game:solderingiron", "isTool": true, "toolDurabilityCost": 3 },
+		"Q": { "type": "block", "code": "game:glass-plain" },
+		"T": { "type": "item", "code": "game:gear-temporal" },
+		"E": { "type": "item", "code": "signals:el_wire" },
+		"P": { "type": "item", "code": "game:metalplate-copper" }
+	},
+	"width": 3,
+	"height": 3,
+	"output": { "type": "block", "code": "signalslink:clock-north-down", "quantity": 1 }
+}

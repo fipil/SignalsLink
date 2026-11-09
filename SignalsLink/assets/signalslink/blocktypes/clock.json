@@ -1,0 +1,262 @@
+{
+ "code": "clock",
+ "class": "Clock",
+ "entityclass": "BlockEntityClock",
+ "behaviors": [
+  {
+   "name": "BlockBehaviorCoverWithDirection"
+  }
+ ],
+ "entityBehaviors": [
+  {
+   "name": "BEBehaviorSignalConnector",
+   "properties": {
+    "signalNodes": [
+     {
+      "index": 0,
+      "isSource": true,
+      "output": 0
+     },
+     {
+      "index": 1,
+      "isSource": true,
+      "output": 0
+     },
+     {
+      "index": 2,
+      "isSource": true,
+      "output": 0
+     }
+    ]
+   }
+  }
+ ],
+ "variantgroups": [
+  {
+   "code": "orientation",
+   "states": [
+    "north",
+    "east",
+    "south",
+    "west",
+    "up",
+    "down"
+   ]
+  },
+  {
+   "code": "side",
+   "states": [
+    "north",
+    "east",
+    "south",
+    "west",
+    "up",
+    "down"
+   ]
+  }
+ ],
+ "attributes": {
+  "handbook": {
+   "extraSections": [
+    {
+     "title": "signalslink:block-handbooktitle-signalslink",
+     "text": "signalslink:block-handbooktext-clock"
+    }
+   ]
+  },
+  "signalNodes": [
+   {
+    "index": 0,
+    "name": "con-clock-phase",
+    "x1": 0.6875,
+    "y1": 0.0625,
+    "z1": 0.109375,
+    "x2": 0.8125,
+    "y2": 0.25,
+    "z2": 0.234375,
+    "rotateXbytype": {
+     "*-*-north": 90,
+     "*-*-south": 270,
+     "@*-up-(east|west)": 90,
+     "@*-down-(east|west)": 270,
+     "@*-south-(east|west)": 180
+    },
+    "rotateYbytype": {
+     "@*-east-(up|down|north|south)": 270,
+     "@*-south-(up|down)": 180,
+     "@*-west-(up|down|north|south)": 90,
+     "@*-(down-north|up-south)": 180
+    },
+    "rotateZbyType": {
+     "*-*-up": 180,
+     "*-*-east": 90,
+     "*-*-west": 270
+    }
+   },
+   {
+    "index": 1,
+    "name": "con-clock-turn",
+    "x1": 0.4375,
+    "y1": 0.0625,
+    "z1": 0.109375,
+    "x2": 0.5625,
+    "y2": 0.25,
+    "z2": 0.234375,
+    "rotateXbytype": {
+     "*-*-north": 90,
+     "*-*-south": 270,
+     "@*-up-(east|west)": 90,
+     "@*-down-(east|west)": 270,
+     "@*-south-(east|west)": 180
+    },
+    "rotateYbytype": {
+     "@*-east-(up|down|north|south)": 270,
+     "@*-south-(up|down)": 180,
+     "@*-west-(up|down|north|south)": 90,
+     "@*-(down-north|up-south)": 180
+    },
+    "rotateZbyType": {
+     "*-*-up": 180,
+     "*-*-east": 90,
+     "*-*-west": 270
+    }
+   },
+   {
+    "index": 2,
+    "name": "con-clock-beat",
+    "x1": 0.1875,
+    "y1": 0.0625,
+    "z1": 0.109375,
+    "x2": 0.3125,
+    "y2": 0.25,
+    "z2": 0.234375,
+    "rotateXbytype": {
+     "*-*-north": 90,
+     "*-*-south": 270,
+     "@*-up-(east|west)": 90,
+     "@*-down-(east|west)": 270,
+     "@*-south-(east|west)": 180
+    },
+    "rotateYbytype": {
+     "@*-east-(up|down|north|south)": 270,
+     "@*-south-(up|down)": 180,
+     "@*-west-(up|down|north|south)": 90,
+     "@*-(down-north|up-south)": 180
+    },
+    "rotateZbyType": {
+     "*-*-up": 180,
+     "*-*-east": 90,
+     "*-*-west": 270
+    }
+   }
+  ]
+ },
+ "shape": {
+  "base": "block/clock/clock",
+  "rotateXbytype": {
+   "*-*-north": 90,
+   "*-*-south": 270,
+   "@*-up-(east|west)": 90,
+   "@*-down-(east|west)": 270,
+   "@*-south-(east|west)": 180
+  },
+  "rotateYbytype": {
+   "@*-east-(up|down|north|south)": 270,
+   "@*-south-(up|down)": 180,
+   "@*-west-(up|down|north|south)": 90,
+   "@*-(down-north|up-south)": 180
+  },
+  "rotateZbyType": {
+   "*-*-up": 180,
+   "*-*-east": 90,
+   "*-*-west": 270
+  }
+ },
+ "textures": {
+  "light": {
+   "base": "block/clock-light"
+  }
+ },
+ "blockmaterial": "Metal",
+ "lightAbsorption": 0,
+ "drawtype": "json",
+ "renderpass": "OpaqueNoCull",
+ "replaceable": 500,
+ "resistance": 2,
+ "sidesolid": {
+  "all": false
+ },
+ "sideopaque": {
+  "all": false
+ },
+ "creativeinventory": {
+  "general": [
+   "*-north-down"
+  ],
+  "signalslink": [
+   "*-north-down"
+  ]
+ },
+ "selectionBoxes": [
+  {
+   "x1": 0.25,
+   "y1": 0.0625,
+   "z1": 0.25,
+   "x2": 0.75,
+   "y2": 0.6625,
+   "z2": 0.75,
+   "rotateXbytype": {
+    "*-*-north": 90,
+    "*-*-south": 270,
+    "@*-up-(east|west)": 90,
+    "@*-down-(east|west)": 270,
+    "@*-south-(east|west)": 180
+   },
+   "rotateYbytype": {
+    "@*-east-(up|down|north|south)": 270,
+    "@*-south-(up|down)": 180,
+    "@*-west-(up|down|north|south)": 90,
+    "@*-(down-north|up-south)": 180
+   },
+   "rotateZbyType": {
+    "*-*-up": 180,
+    "*-*-east": 90,
+    "*-*-west": 270
+   }
+  }
+ ],
+ "collisionBoxes": [
+  {
+   "x1": 0.25,
+   "y1": 0.0625,
+   "z1": 0.25,
+   "x2": 0.75,
+   "y2": 0.6625,
+   "z2": 0.75,
+   "rotateXbytype": {
+    "*-*-north": 90,
+    "*-*-south": 270,
+    "@*-up-(east|west)": 90,
+    "@*-down-(east|west)": 270,
+    "@*-south-(east|west)": 180
+   },
+   "rotateYbytype": {
+    "@*-east-(up|down|north|south)": 270,
+    "@*-south-(up|down)": 180,
+    "@*-west-(up|down|north|south)": 90,
+    "@*-(down-north|up-south)": 180
+   },
+   "rotateZbyType": {
+    "*-*-up": 180,
+    "*-*-east": 90,
+    "*-*-west": 270
+   }
+  }
+ ],
+ "sounds": {
+  "place": "game:block/anvil",
+  "break": "game:block/glass",
+  "hit": "game:block/glass",
+  "walk": "game:walk/stone"
+ }
+}

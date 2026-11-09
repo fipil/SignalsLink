@@ -1,0 +1,95 @@
+{
+ "editor": {
+  "allAngles": false,
+  "entityTextureMode": false
+ },
+ "textureWidth": 16,
+ "textureHeight": 16,
+ "textures": {
+  "light": "block/clock-light"
+ },
+ "elements": [
+  {
+   "name": "light",
+   "from": [
+    7.5,
+    7.5,
+    7.5
+   ],
+   "to": [
+    8.5,
+    8.5,
+    8.5
+   ],
+   "faces": {
+    "north": {
+     "texture": "#light",
+     "uv": [
+      0,
+      0,
+      1.0,
+      1.0
+     ],
+     "autoUv": false,
+     "glow": 255
+    },
+    "east": {
+     "texture": "#light",
+     "uv": [
+      0,
+      0,
+      1.0,
+      1.0
+     ],
+     "autoUv": false,
+     "glow": 255
+    },
+    "south": {
+     "texture": "#light",
+     "uv": [
+      0,
+      0,
+      1.0,
+      1.0
+     ],
+     "autoUv": false,
+     "glow": 255
+    },
+    "west": {
+     "texture": "#light",
+     "uv": [
+      0,
+      0,
+      1.0,
+      1.0
+     ],
+     "autoUv": false,
+     "glow": 255
+    },
+    "up": {
+     "texture": "#light",
+     "uv": [
+      0,
+      0,
+      1.0,
+      1.0
+     ],
+     "autoUv": false,
+     "glow": 255
+    },
+    "down": {
+     "texture": "#light",
+     "uv": [
+      0,
+      0,
+      1.0,
+      1.0
+     ],
+     "autoUv": false,
+     "glow": 255
+    }
+   },
+   "shade": false
+  }
+ ]
+}
