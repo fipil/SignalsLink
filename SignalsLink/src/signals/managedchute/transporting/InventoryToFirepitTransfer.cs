@@ -17,15 +17,22 @@ namespace SignalsLink.src.signals.managedchute.transporting
     {
         private readonly BlockPos targetPos;
 
-        public InventoryToFirepitTransfer(ICoreAPI api, IInventory sourceInv, BlockPos targetPos, byte inputSlotSignal, PaperConditionsEvaluator conditionsEvaluator)
+        // A boiler's own inventory, so `in target` can read what is in it. Null for a firepit block.
+        private readonly IInventory targetInventory;
+
+        public InventoryToFirepitTransfer(ICoreAPI api, IInventory sourceInv, BlockPos targetPos, byte inputSlotSignal, PaperConditionsEvaluator conditionsEvaluator, IInventory targetInventory = null)
             : base(api, sourceInv, inputSlotSignal, conditionsEvaluator)
         {
             this.targetPos = targetPos;
+            this.targetInventory = targetInventory;
         }
+
+        protected override IInventory TargetInventory => targetInventory;
 
         protected override void AddConditionContext(IDictionary<string, object> ctx)
         {
             if (targetPos != null) ctx["targetBlockPos"] = targetPos;
+            if (targetInventory != null) ctx["targetInventory"] = targetInventory;
         }
 
         /// <summary>Only a stack that the next stage actually calls for is worth selecting.</summary>
@@ -33,8 +40,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
         {
             if (!directives.TargetFirepit) return false;
 
-            Block target = api.World.BlockAccessor.GetBlock(targetPos);
-            return FirepitConstruction.Matches(target, slot?.Itemstack);
+            return FirepitConstruction.MatchesAt(api.World, targetPos, slot?.Itemstack);
         }
 
         public TransferOperationResult TryMove(ItemStackMoveOperation opTemplate)

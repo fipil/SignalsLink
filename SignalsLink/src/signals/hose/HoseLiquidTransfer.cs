@@ -328,6 +328,10 @@ namespace SignalsLink.src.signals.hose
             BlockFacing face = side != null ? BlockFacing.FromCode(side) : null;
             hostPos = valvePos.AddCopy(face ?? BlockFacing.DOWN);
 
+            // A bucket stand (condenser, fruit press) offers the bucket as the liquid in it.
+            IInventory stand = BucketSlotEnds.LiquidViewAt(api, hostPos);
+            if (stand != null) return stand;
+
             if (api.World.BlockAccessor.GetBlockEntity(hostPos) is IBlockEntityContainer c && c.Inventory != null)
                 return c.Inventory;
             hostPos = null;

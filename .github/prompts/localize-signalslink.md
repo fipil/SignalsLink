@@ -63,6 +63,7 @@ Slovníček pro mody Signals Tubes (signalstubes) a Signals Machines (signalsmac
 * Díly craftovacího stroje: „nohy stroje“ = „machine legs“, „rám komory“ = „chamber frame“, „mřížka desky“ = „plate grid“, „stěna komory“ = „chamber wall“, „pracovní deska“ = „crafting plate“, „převodovka“ = „gearbox“, „temporální kostka“ = „temporal cube“, „broušený temporální krystal“ = „ground temporal crystal“. „Forma na nohy stroje / rám komory / mřížku desky“ = „machine legs / chamber frame / plate grid mold“; „nevypálená forma“ = „raw mold“, názvy barev keramiky a jílu jako ve hře. „Odlitek“ = „casting“, „brusný kotouč“ = „grinding wheel“ (herní blok), „broušení“ = „grinding“.
 * Klíčová slova papíru (`unload`, `load`, `from`, `to`, `when`, `recipe`, `output`, `amount`, `keep`, `in source`, `in target`, `# debug`) zůstávají anglicky a nepřekládají se; „brána“ / „sekce zapínaná Vstupem“ = „gate“ / „section switched by Input“.
 * „Hasák“ je herní nástroj wrench: anglicky „wrench“, v ostatních jazycích název, kterým ho hra pojmenovává.
+* Herní bloky, které zařízení obsluhují: „lis na ovoce“ = „fruit press“, jeho „náplň“ = „mash“, „šroub“ = „screw“; „kotel“ (na destilaci) = „boiler“; „kondenzátor“ = „condenser“, jeho „výpust“ = „spout“. V ostatních jazycích použij názvy, kterými tyto bloky pojmenovává hra. Akce `do press`, `do release` a podmínky `isPressing`, `firepitReady` jsou klíčová slova papíru a zůstávají anglicky; atribut `juiceableLitresLeft` se nepřekládá.
 
 Výstup:
 - Vrať JSON ve stejném tvaru jako items:

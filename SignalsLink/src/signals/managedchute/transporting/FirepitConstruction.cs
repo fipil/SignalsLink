@@ -45,6 +45,11 @@ namespace SignalsLink.src.signals.managedchute.transporting
         {
             if (world?.BlockAccessor == null || pos == null) return false;
 
+            if (BoilerAt(world, pos) is BlockEntityBoiler boiler)
+            {
+                return BoilerFirepit.WantsSomething(boiler.firepitStage, boiler.fuelHours);
+            }
+
             Block block = world.BlockAccessor.GetBlock(pos);
             if (block == null) return false;
 
@@ -57,6 +62,29 @@ namespace SignalsLink.src.signals.managedchute.transporting
         public static bool IsUnderConstruction(Block block)
         {
             return StageIndex(block) >= 0 && StageIndex(block) < Stages.Length - 1;
+        }
+
+        /// <summary>
+        /// Is the firepit here ready - lit, or cold and able to take fire (`firepitReady`)? A
+        /// boiler's when cold or lit, a firepit block's when burning or holding fuel. A burnt-out
+        /// one is not ready: it wants a log first, and an igniter would spark at it for nothing.
+        /// With `!isBurning` this is the edge that tells the igniter "now".
+        /// </summary>
+        public static bool IsReadyAt(IWorldAccessor world, BlockPos pos)
+        {
+            if (world?.BlockAccessor == null || pos == null) return false;
+
+            if (BoilerAt(world, pos) is BlockEntityBoiler boiler)
+            {
+                return boiler.firepitStage == BoilerFirepit.Cold || boiler.firepitStage == BoilerFirepit.Lit;
+            }
+
+            if (world.BlockAccessor.GetBlockEntity(pos) is BlockEntityFirepit firepit)
+            {
+                return firepit.IsBurning || firepit.GetIgnitableState(5f) == EnumIgniteState.IgniteNow;
+            }
+
+            return false;
         }
 
         /// <summary>Index into <see cref="Stages"/>, or -1 when this is not a firepit being built.</summary>
@@ -95,12 +123,33 @@ namespace SignalsLink.src.signals.managedchute.transporting
             return needed != null && code != null && code == needed;
         }
 
+        /// <summary>Same question, asked of the position: a boiler keeps its firepit in the block entity.</summary>
+        public static bool MatchesAt(IWorldAccessor world, BlockPos pos, ItemStack stack)
+        {
+            if (world?.BlockAccessor == null || pos == null) return false;
+
+            if (BoilerAt(world, pos) is BlockEntityBoiler boiler)
+            {
+                return BoilerFirepit.Matches(boiler.firepitStage, boiler.fuelHours, stack);
+            }
+
+            return Matches(world.BlockAccessor.GetBlock(pos), stack);
+        }
+
+        private static BlockEntityBoiler BoilerAt(IWorldAccessor world, BlockPos pos)
+            => AutomationAccess.EntityAt(world.BlockAccessor, pos) as BlockEntityBoiler;
+
         /// <summary>
         /// Lays the tinder, or moves the firepit on by one stage. Returns false when nothing at
         /// this position is waiting for that item.
         /// </summary>
         public static bool Advance(IWorldAccessor world, BlockPos pos, ItemStack stack)
         {
+            if (BoilerAt(world, pos) is BlockEntityBoiler boiler)
+            {
+                return BoilerFirepit.Advance(world, boiler, stack);
+            }
+
             Block current = world.BlockAccessor.GetBlock(pos);
             if (!Matches(current, stack)) return false;
 

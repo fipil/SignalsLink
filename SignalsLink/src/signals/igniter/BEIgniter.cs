@@ -279,6 +279,7 @@ namespace SignalsLink.src.signals.igniter
             {
                 return !firepit.IsBurning && firepit.GetIgnitableState(5f) == EnumIgniteState.IgniteNow;
             }
+            if (be is BlockEntityBoiler boiler) return boiler.CanIgnite();
 
             return false;
         }
@@ -343,6 +344,14 @@ namespace SignalsLink.src.signals.igniter
                 firepit.extinguishedTotalHours = Api.World.Calendar.TotalHours;
                 firepit.igniteFuel();
                 return firepit.IsBurning;
+            }
+
+            // The boiler's firepit: built cold (stage 5) is the only state it lights from.
+            if (be is BlockEntityBoiler boiler)
+            {
+                if (!boiler.CanIgnite()) return false;
+                boiler.TryIgnite();
+                return boiler.IsBurning;
             }
 
             return false;

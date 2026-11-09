@@ -26,6 +26,10 @@ namespace SignalsLink.src.signals.managedchute.transporting
         {
             if (ba == null || pos == null) return pos;
             if (ba.GetBlockEntity(pos) != null) return pos;
+
+            // The fruit press top is a plain block without an offset; its entity is the press below.
+            if (ba.GetBlock(pos) is Vintagestory.GameContent.BlockFruitPressTop) return pos.DownCopy();
+
             return ba.GetBlock(pos) is IMultiblockOffset part ? part.GetControlBlockPos(pos) ?? pos : pos;
         }
 

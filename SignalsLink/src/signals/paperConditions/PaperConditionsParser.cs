@@ -425,6 +425,16 @@ namespace SignalsLink.src.signals.paperConditions
                 action = new SealConditionAction();
                 return true;
             }
+            if (value.Equals("press", StringComparison.OrdinalIgnoreCase))
+            {
+                action = new PressConditionAction();
+                return true;
+            }
+            if (value.Equals("release", StringComparison.OrdinalIgnoreCase))
+            {
+                action = new ReleaseConditionAction();
+                return true;
+            }
 
             return false;
         }
@@ -655,6 +665,14 @@ namespace SignalsLink.src.signals.paperConditions
                 {
                     return new BlockBurningCondition(false);
                 }
+                if (string.Equals(negated, "isPressing", StringComparison.OrdinalIgnoreCase))
+                {
+                    return new PressingCondition(false);
+                }
+                if (string.Equals(negated, "firepitReady", StringComparison.OrdinalIgnoreCase))
+                {
+                    return new FirepitReadyCondition(false);
+                }
 
                 if (TryParseBlockTemperature(negated, true, sink, out ICondition negatedTemperature))
                 {
@@ -678,6 +696,14 @@ namespace SignalsLink.src.signals.paperConditions
             if (string.Equals(line, "isBurning", StringComparison.OrdinalIgnoreCase))
             {
                 return new BlockBurningCondition(true);
+            }
+            if (string.Equals(line, "isPressing", StringComparison.OrdinalIgnoreCase))
+            {
+                return new PressingCondition(true);
+            }
+            if (string.Equals(line, "firepitReady", StringComparison.OrdinalIgnoreCase))
+            {
+                return new FirepitReadyCondition(true);
             }
 
             if (TryParseBlockTemperature(line, false, sink, out ICondition blockTemperature))

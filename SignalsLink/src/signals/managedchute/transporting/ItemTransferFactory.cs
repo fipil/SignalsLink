@@ -6,7 +6,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
 {
     public static class ItemTransferFactory
     {
-        // Zjednodu�en� API: vytvo� p�enos podle toho, co je na input/output pozici.
+        // Zjednodušené API: vytvoř přenos podle toho, co je na input/output pozici.
         /// <summary>
         /// Builds the transfer for a pair of positions. <paramref name="outputSink"/> is the host's
         /// Output pin; pass it only from a host that has one (the Damper), and paper conditions may
@@ -17,7 +17,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
         {
             IItemTransfer transfer = CreateCore(api, inputPos, outputPos, inputSlotSignal, outputSlotSignal, conditionsEvaluator);
 
-            switch (transfer)
+            switch (transfer is EndRefreshTransfer wrapped ? wrapped.Inner : transfer)
             {
                 case InventorySourcedTransferBase inventorySourced: inventorySourced.OutputSink = outputSink; break;
                 case WorldToInventoryTransfer worldSourced: worldSourced.OutputSink = outputSink; break;
@@ -32,20 +32,67 @@ namespace SignalsLink.src.signals.managedchute.transporting
 
             var beIn = AutomationAccess.EntityAt(blockAccess, inputPos) as IBlockEntityContainer;
 
+            // The fruit press through its top block is its mash: fruit in, mash out. Its bottom
+            // block is a bucket stand, like the condenser. These ends are never written to or read
+            // from by the plain routes below - a bucket in the mash slot is a broken press.
+            if (FruitPressAccess.TopAt(blockAccess, inputPos) is BlockEntityFruitPress pressIn)
+            {
+                var mashTarget = AutomationAccess.EntityAt(blockAccess, outputPos) as IBlockEntityContainer;
+                if (mashTarget?.Inventory == null) return null;
+                return new PressMashToInventoryTransfer(api, pressIn, mashTarget.Inventory, outputPos, outputSlotSignal, conditionsEvaluator);
+            }
+
+            // A bucket stand on the input side is read as its bucket slot alone, through the usual
+            // routes; the wrapper redraws the stand after a move.
+            IBucketSlotEnd sourceEnd = BucketSlotEnds.At(blockAccess, inputPos);
+            IInventory inInv = sourceEnd?.View ?? beIn?.Inventory;
+
+            IBucketSlotEnd targetEnd = BucketSlotEnds.At(blockAccess, outputPos);
+            if (targetEnd != null)
+            {
+                return inInv == null ? null : Wrap(api, new InventoryToBucketSlotTransfer(api, inInv, targetEnd, inputSlotSignal, conditionsEvaluator), sourceEnd);
+            }
+
+            if (FruitPressAccess.TopAt(blockAccess, outputPos) is BlockEntityFruitPress pressOut)
+            {
+                return inInv == null ? null : Wrap(api, new InventoryToPressMashTransfer(api, inInv, pressOut, inputSlotSignal, conditionsEvaluator), sourceEnd);
+            }
+
+            // A boiler's firepit lives in its block entity, so the boiler is always built/fed this
+            // way. Its single slot is liquid and belongs to the hose; no item path leads into it.
+            if (AutomationAccess.EntityAt(blockAccess, outputPos) is BlockEntityBoiler boiler)
+            {
+                return inInv == null ? null : Wrap(api, new InventoryToFirepitTransfer(api, inInv, boiler.Pos, inputSlotSignal, conditionsEvaluator, boiler.Inventory), sourceEnd);
+            }
+
+            IItemTransfer transfer = CreateRouted(api, inputPos, outputPos, inputSlotSignal, outputSlotSignal, conditionsEvaluator, inInv, beIn != null);
+            return Wrap(api, transfer, sourceEnd);
+        }
+
+        private static IItemTransfer Wrap(ICoreAPI api, IItemTransfer transfer, IBucketSlotEnd sourceEnd)
+        {
+            if (transfer == null || sourceEnd == null) return transfer;
+            return new EndRefreshTransfer(api, transfer, sourceEnd);
+        }
+
+        private static IItemTransfer CreateRouted(ICoreAPI api, BlockPos inputPos, BlockPos outputPos, byte inputSlotSignal, byte outputSlotSignal, PaperConditionsEvaluator conditionsEvaluator, IInventory inInv, bool inIsContainer)
+        {
+            var blockAccess = api.World.BlockAccessor;
+
             // Special case: output points to an anvil -> use InventoryToAnvilTransfer
             var beAnvil = blockAccess.GetBlockEntity(outputPos) as BlockEntityAnvil;
-            if (beIn?.Inventory != null && beAnvil != null)
+            if (inInv != null && beAnvil != null)
             {
-                return new InventoryToAnvilTransfer(api, beIn.Inventory, beAnvil, inputSlotSignal, conditionsEvaluator);
+                return new InventoryToAnvilTransfer(api, inInv, beAnvil, inputSlotSignal, conditionsEvaluator);
             }
 
             // A firepit still under construction is built, not filled. Its block entity does have
             // an inventory, so without this it would fall into the plain inventory path and items
             // would be stuffed into a pit that has nowhere to put them yet. A FINISHED firepit is
             // deliberately left alone below - loading fuel into one is an ordinary transfer.
-            if (beIn?.Inventory != null && FirepitConstruction.IsUnderConstruction(blockAccess.GetBlock(outputPos)))
+            if (inInv != null && FirepitConstruction.IsUnderConstruction(blockAccess.GetBlock(outputPos)))
             {
-                return new InventoryToFirepitTransfer(api, beIn.Inventory, outputPos, inputSlotSignal, conditionsEvaluator);
+                return new InventoryToFirepitTransfer(api, inInv, outputPos, inputSlotSignal, conditionsEvaluator);
             }
 
             var beOut = AutomationAccess.EntityAt(blockAccess, outputPos) as IBlockEntityContainer;
@@ -60,9 +107,9 @@ namespace SignalsLink.src.signals.managedchute.transporting
             // A ground-storage pile on the output side is handled by the world transfer, not by the
             // plain inventory path: only the world transfer can create a new pile and grow the
             // column upward. (Picking up FROM a pile is unaffected - that is the beIn side.)
-            if (beIn?.Inventory != null && blockAccess.GetBlockEntity(outputPos) is BlockEntityGroundStorage)
+            if (inInv != null && blockAccess.GetBlockEntity(outputPos) is BlockEntityGroundStorage)
             {
-                return new InventoryToWorldTransfer(api, beIn.Inventory, inputSlotSignal, outputPos, outputSlotSignal, conditionsEvaluator);
+                return new InventoryToWorldTransfer(api, inInv, inputSlotSignal, outputPos, outputSlotSignal, conditionsEvaluator);
             }
 
             // Ground-storage pile on the INPUT side: take from the TOP of the column, not from the
@@ -72,15 +119,15 @@ namespace SignalsLink.src.signals.managedchute.transporting
                 return new WorldToInventoryTransfer(api, inputPos, beOut.Inventory, outputSlotSignal, conditionsEvaluator, outputPos);
             }
 
-            if (beIn?.Inventory != null && beOut?.Inventory != null)
+            if (inInv != null && beOut?.Inventory != null)
             {
-                // invent�� -> invent��
-                return new InventoryToInventoryTransfer(api, beIn.Inventory, beOut.Inventory, outputPos, inputSlotSignal, outputSlotSignal, conditionsEvaluator);
+                // inventář -> inventář
+                return new InventoryToInventoryTransfer(api, inInv, beOut.Inventory, outputPos, inputSlotSignal, outputSlotSignal, conditionsEvaluator);
             }
 
-            if (beIn?.Inventory != null && beOut == null && beAnvil == null)
+            if (inInv != null && beOut == null && beAnvil == null)
             {
-                // invent�� -> sv�t
+                // inventář -> svět
                 Block blockAtTarget = blockAccess.GetBlock(outputPos);
                 bool canUseWorldTransfer =
                     blockAtTarget.Replaceable >= 6000 ||
@@ -88,15 +135,15 @@ namespace SignalsLink.src.signals.managedchute.transporting
 
                 if (canUseWorldTransfer)
                 {
-                    return new InventoryToWorldTransfer(api, beIn.Inventory, inputSlotSignal, outputPos, outputSlotSignal, conditionsEvaluator);
+                    return new InventoryToWorldTransfer(api, inInv, inputSlotSignal, outputPos, outputSlotSignal, conditionsEvaluator);
                 }
 
                 return null;
             }
 
-            if (beIn == null && beOut?.Inventory != null)
+            if (!inIsContainer && beOut?.Inventory != null)
             {
-                // sv�t -> invent�� (WorldToInventoryTransfer)
+                // svět -> inventář (WorldToInventoryTransfer)
                 return new WorldToInventoryTransfer(api, inputPos, beOut.Inventory, outputSlotSignal, conditionsEvaluator, outputPos);
             }
 

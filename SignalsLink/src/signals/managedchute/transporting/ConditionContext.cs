@@ -62,12 +62,23 @@ namespace SignalsLink.src.signals.managedchute.transporting
         /// </summary>
         public static void Complete(ICoreAPI api, IDictionary<string, object> ctx)
         {
-            if (ctx.ContainsKey("targetBlockEntity")) return;
-            if (!ctx.TryGetValue("targetBlockPos", out object posObj) || posObj is not BlockPos pos) return;
+            IBlockAccessor ba = api?.World?.BlockAccessor;
+            if (ba == null) return;
 
-            if (api?.World?.BlockAccessor?.GetBlockEntity(pos) is BlockEntityBarrel barrel)
+            if (!ctx.ContainsKey("targetBlockEntity")
+                && ctx.TryGetValue("targetBlockPos", out object posObj) && posObj is BlockPos pos)
             {
-                ctx["targetBlockEntity"] = barrel;
+                if (ba.GetBlockEntity(pos) is BlockEntityBarrel barrel) ctx["targetBlockEntity"] = barrel;
+                else if (FruitPressAccess.At(ba, pos) is BlockEntityFruitPress press) ctx["targetBlockEntity"] = press;
+            }
+
+            // The press is the one thing acted on from the source side too (`do release` on the
+            // device that empties it), so it is the only source entity derived here.
+            if (!ctx.ContainsKey("sourceBlockEntity")
+                && ctx.TryGetValue("sourceBlockPos", out object srcObj) && srcObj is BlockPos srcPos
+                && FruitPressAccess.At(ba, srcPos) is BlockEntityFruitPress sourcePress)
+            {
+                ctx["sourceBlockEntity"] = sourcePress;
             }
         }
     }

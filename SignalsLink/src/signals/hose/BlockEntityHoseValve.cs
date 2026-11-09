@@ -1,6 +1,7 @@
 using signals.src;
 using signals.src.signalNetwork;
 using SignalsLink.src.signals;
+using SignalsLink.src.signals.managedchute.transporting;
 using SignalsLink.src.signals.paperConditions;
 using System.Collections.Generic;
 using System.Text;
@@ -408,6 +409,11 @@ namespace SignalsLink.src.signals.hose
         private IInventory GetHostInventory(out BlockPos hostPos)
         {
             hostPos = Pos.AddCopy(GetSideFace());
+
+            // A bucket stand (condenser, fruit press) offers the bucket as the liquid in it.
+            IInventory stand = BucketSlotEnds.LiquidViewAt(Api, hostPos);
+            if (stand != null) return stand;
+
             if (Api.World.BlockAccessor.GetBlockEntity(hostPos) is IBlockEntityContainer c && c.Inventory != null)
             {
                 return c.Inventory;
