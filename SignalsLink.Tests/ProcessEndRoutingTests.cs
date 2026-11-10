@@ -97,15 +97,81 @@ namespace SignalsLink.Tests
             Assert.False(asSource.ContainsKey("targetBlockEntity"));
         }
 
+        [Fact]
+        public void Mash_goes_into_a_chest_and_never_into_a_stand_a_press_or_a_boiler()
+        {
+            Assert.IsType<PressMashToInventoryTransfer>(Route(PressTopPos, ChestPos));
+            Assert.Null(Route(PressTopPos, CondenserPos));
+            Assert.Null(Route(PressTopPos, BoilerPos));
+            Assert.Null(Route(PressTopPos, PressPos));
+            Assert.Null(Route(PressTopPos, PressTopPos));
+        }
+
+        // ---------------------------------------------------------------- with a registered end
+
+        [Fact]
+        public void A_registered_target_gets_the_mash_through_the_press_rules()
+        {
+            var wrapped = Assert.IsType<EndRefreshTransfer>(RouteRegistered(PressTopPos, RegisteredPos));
+            Assert.IsType<PressMashToInventoryTransfer>(wrapped.Inner);
+        }
+
+        [Fact]
+        public void A_registered_source_enters_a_stand_the_press_and_a_boiler_their_own_way()
+        {
+            Assert.IsType<InventoryToBucketSlotTransfer>(Inner(RouteRegistered(RegisteredPos, CondenserPos)));
+            Assert.IsType<InventoryToBucketSlotTransfer>(Inner(RouteRegistered(RegisteredPos, PressPos)));
+            Assert.IsType<InventoryToPressMashTransfer>(Inner(RouteRegistered(RegisteredPos, PressTopPos)));
+            Assert.IsType<InventoryToFirepitTransfer>(Inner(RouteRegistered(RegisteredPos, BoilerPos)));
+        }
+
+        [Fact]
+        public void A_registered_end_and_a_chest_keep_the_plain_transfer()
+        {
+            Assert.IsType<InventoryToInventoryTransfer>(Inner(RouteRegistered(RegisteredPos, ChestPos)));
+            Assert.IsType<InventoryToInventoryTransfer>(Inner(RouteRegistered(ChestPos, RegisteredPos)));
+            Assert.Null(RouteRegistered(AirPos, RegisteredPos));
+        }
+
         // ---------------------------------------------------------------- plumbing
+
+        static readonly BlockPos RegisteredPos = new BlockPos(7, 0, 0, 0);
 
         static IItemTransfer Route(BlockPos from, BlockPos to)
             => ItemTransferFactory.CreateTransfer(Api(), from, to, 0, 0, new PaperConditionsEvaluator());
 
-        static ICoreAPI Api()
+        static IItemTransfer RouteRegistered(BlockPos from, BlockPos to)
+        {
+            var registry = new TransferEndRegistry();
+            registry.Register(new OneEndProvider());
+            return ItemTransferFactory.CreateTransfer(Api(registry), from, to, 0, 0, new PaperConditionsEvaluator());
+        }
+
+        static IItemTransfer Inner(IItemTransfer transfer)
+        {
+            while (transfer is EndRefreshTransfer wrapped) transfer = wrapped.Inner;
+            return transfer;
+        }
+
+        static ICoreAPI Api(TransferEndRegistry registry = null)
         {
             IWorldAccessor world = World();
-            return Proxy.Make<ICoreAPI>((m, a) => m.Name == "get_World" ? world : Proxy.Unhandled);
+            var loader = Proxy.Make<IModLoader>((m, a) =>
+                registry != null && m.Name == "GetModSystem" && m.IsGenericMethod && m.GetGenericArguments()[0] == typeof(TransferEndRegistry) ? registry : Proxy.Unhandled);
+            return Proxy.Make<ICoreAPI>((m, a) => m.Name == "get_World" ? world : m.Name == "get_ModLoader" ? loader : Proxy.Unhandled);
+        }
+
+        sealed class OneEndProvider : ITransferEndProvider
+        {
+            public ITransferEnd At(ICoreAPI api, BlockPos pos, BlockPos devicePos)
+                => pos != null && pos.Equals(RegisteredPos) ? new OneEnd() : null;
+        }
+
+        sealed class OneEnd : ITransferEnd
+        {
+            public BlockPos Pos => RegisteredPos;
+            public IInventory View { get; } = new InventoryGeneric(2, "test-registered", null);
+            public void Changed(ICoreAPI api) { }
         }
 
         static IWorldAccessor World()

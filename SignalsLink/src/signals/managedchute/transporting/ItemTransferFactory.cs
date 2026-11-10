@@ -41,6 +41,12 @@ namespace SignalsLink.src.signals.managedchute.transporting
 
             if (registeredTarget != null)
             {
+                // The press top gives its mash by its own rules only, to a registered end too.
+                if (registeredSource == null && FruitPressAccess.TopAt(blockAccess, inputPos) is BlockEntityFruitPress mashSource)
+                {
+                    return Wrap(api, new PressMashToInventoryTransfer(api, mashSource, registeredTarget.View, outputPos, outputSlotSignal, conditionsEvaluator), registeredTarget);
+                }
+
                 IInventory from = registeredSource?.View ?? SourceInventory(blockAccess, inputPos);
                 if (from == null) return null; // never from the world
                 return Wrap(api, Wrap(api, new InventoryToInventoryTransfer(api, from, registeredTarget.View, outputPos, inputSlotSignal, outputSlotSignal, conditionsEvaluator), registeredTarget), registeredSource);
@@ -48,6 +54,10 @@ namespace SignalsLink.src.signals.managedchute.transporting
 
             if (registeredSource != null)
             {
+                // A stand, the press top and a boiler keep their own way in for a registered source.
+                IItemTransfer own = IntoOwnedTarget(api, blockAccess, registeredSource.View, outputPos, inputSlotSignal, conditionsEvaluator, out bool ownedTarget);
+                if (ownedTarget) return Wrap(api, own, registeredSource);
+
                 var into = AutomationAccess.EntityAt(blockAccess, outputPos) as IBlockEntityContainer;
                 if (into?.Inventory == null) return null;
                 return Wrap(api, new InventoryToInventoryTransfer(api, registeredSource.View, into.Inventory, outputPos, inputSlotSignal, outputSlotSignal, conditionsEvaluator), registeredSource);
@@ -60,6 +70,10 @@ namespace SignalsLink.src.signals.managedchute.transporting
             // from by the plain routes below - a bucket in the mash slot is a broken press.
             if (FruitPressAccess.TopAt(blockAccess, inputPos) is BlockEntityFruitPress pressIn)
             {
+                // Mash goes into a plain container only; a stand, a press or a boiler has no slot for it.
+                IntoOwnedTarget(api, blockAccess, null, outputPos, inputSlotSignal, conditionsEvaluator, out bool mashIntoOwned);
+                if (mashIntoOwned) return null;
+
                 var mashTarget = AutomationAccess.EntityAt(blockAccess, outputPos) as IBlockEntityContainer;
                 if (mashTarget?.Inventory == null) return null;
                 return new PressMashToInventoryTransfer(api, pressIn, mashTarget.Inventory, outputPos, outputSlotSignal, conditionsEvaluator);
@@ -70,26 +84,42 @@ namespace SignalsLink.src.signals.managedchute.transporting
             IBucketSlotEnd sourceEnd = BucketSlotEnds.At(blockAccess, inputPos);
             IInventory inInv = sourceEnd?.View ?? beIn?.Inventory;
 
+            IItemTransfer owned = IntoOwnedTarget(api, blockAccess, inInv, outputPos, inputSlotSignal, conditionsEvaluator, out bool isOwnedTarget);
+            if (isOwnedTarget) return Wrap(api, owned, sourceEnd);
+
+            IItemTransfer transfer = CreateRouted(api, inputPos, outputPos, inputSlotSignal, outputSlotSignal, conditionsEvaluator, inInv, beIn != null);
+            return Wrap(api, transfer, sourceEnd);
+        }
+
+        /// <summary>
+        /// The dedicated transfer into a bucket stand, the press top or a boiler - the targets no
+        /// plain route may write to. <paramref name="owned"/> says the target is one of them; the
+        /// result is then null when there is nothing to carry from.
+        /// </summary>
+        private static IItemTransfer IntoOwnedTarget(ICoreAPI api, IBlockAccessor blockAccess, IInventory from, BlockPos outputPos, byte inputSlotSignal, PaperConditionsEvaluator conditionsEvaluator, out bool owned)
+        {
+            owned = true;
+
             IBucketSlotEnd targetEnd = BucketSlotEnds.At(blockAccess, outputPos);
             if (targetEnd != null)
             {
-                return inInv == null ? null : Wrap(api, new InventoryToBucketSlotTransfer(api, inInv, targetEnd, inputSlotSignal, conditionsEvaluator), sourceEnd);
+                return from == null ? null : new InventoryToBucketSlotTransfer(api, from, targetEnd, inputSlotSignal, conditionsEvaluator);
             }
 
             if (FruitPressAccess.TopAt(blockAccess, outputPos) is BlockEntityFruitPress pressOut)
             {
-                return inInv == null ? null : Wrap(api, new InventoryToPressMashTransfer(api, inInv, pressOut, inputSlotSignal, conditionsEvaluator), sourceEnd);
+                return from == null ? null : new InventoryToPressMashTransfer(api, from, pressOut, inputSlotSignal, conditionsEvaluator);
             }
 
             // A boiler's firepit lives in its block entity, so the boiler is always built/fed this
             // way. Its single slot is liquid and belongs to the hose; no item path leads into it.
             if (AutomationAccess.EntityAt(blockAccess, outputPos) is BlockEntityBoiler boiler)
             {
-                return inInv == null ? null : Wrap(api, new InventoryToFirepitTransfer(api, inInv, boiler.Pos, inputSlotSignal, conditionsEvaluator, boiler.Inventory), sourceEnd);
+                return from == null ? null : new InventoryToFirepitTransfer(api, from, boiler.Pos, inputSlotSignal, conditionsEvaluator, boiler.Inventory);
             }
 
-            IItemTransfer transfer = CreateRouted(api, inputPos, outputPos, inputSlotSignal, outputSlotSignal, conditionsEvaluator, inInv, beIn != null);
-            return Wrap(api, transfer, sourceEnd);
+            owned = false;
+            return null;
         }
 
         private static IItemTransfer Wrap(ICoreAPI api, IItemTransfer transfer, ITransferEnd end)
