@@ -1,0 +1,214 @@
+{
+ "code": "signalman",
+ "class": "Signalman",
+ "entityclass": "BlockEntitySignalman",
+ "variantgroups": [
+  {
+   "code": "orientation",
+   "states": [
+    "north",
+    "east",
+    "south",
+    "west"
+   ]
+  },
+  {
+   "code": "side",
+   "states": [
+    "down"
+   ]
+  }
+ ],
+ "attributes": {
+  "signalPins": 2,
+  "reinforcable": true,
+  "signalNodes": [
+   {
+    "index": 0,
+    "name": "con-input",
+    "x1": 0.5625,
+    "y1": 0.078125,
+    "z1": 0.71875,
+    "x2": 0.6875,
+    "y2": 0.328125,
+    "z2": 0.84375,
+    "rotateYbytype": {
+     "*-east-down": 270,
+     "*-south-down": 180,
+     "*-west-down": 90
+    }
+   },
+   {
+    "index": 1,
+    "name": "con-output",
+    "x1": 0.3125,
+    "y1": 0.078125,
+    "z1": 0.71875,
+    "x2": 0.4375,
+    "y2": 0.328125,
+    "z2": 0.84375,
+    "rotateYbytype": {
+     "*-east-down": 270,
+     "*-south-down": 180,
+     "*-west-down": 90
+    }
+   }
+  ],
+  "handbook": {
+   "extraSections": [
+    {
+     "title": "signalslink:block-handbooktitle-signalslink",
+     "text": "signalslinkytt:block-handbooktext-signalman"
+    }
+   ]
+  }
+ },
+ "behaviors": [
+  {
+   "name": "BlockBehaviorCoverWithDirection",
+   "properties": {
+    "handleDrop": false
+   }
+  }
+ ],
+ "entityBehaviors": [
+  {
+   "name": "BEBehaviorSignalConnector",
+   "properties": {
+    "signalNodes": [
+     {
+      "index": 0,
+      "isSource": false
+     },
+     {
+      "index": 1,
+      "isSource": true,
+      "output": 0
+     }
+    ]
+   }
+  }
+ ],
+ "shapeByType": {
+  "*-north-down": {
+   "base": "block/signalman"
+  },
+  "*-east-down": {
+   "base": "block/signalman",
+   "rotateY": 270
+  },
+  "*-south-down": {
+   "base": "block/signalman",
+   "rotateY": 180
+  },
+  "*-west-down": {
+   "base": "block/signalman",
+   "rotateY": 90
+  }
+ },
+ "blockmaterial": "Metal",
+ "creativeinventory": {
+  "general": [
+   "*-north-down"
+  ],
+  "signalslink": [
+   "*-north-down"
+  ]
+ },
+ "drawtype": "json",
+ "lightAbsorption": 0,
+ "replaceable": 500,
+ "resistance": 3.5,
+ "sidesolid": {
+  "all": false
+ },
+ "sideopaque": {
+  "all": false
+ },
+ "collisionSelectionBoxesByType": {
+  "*-north-down": [
+   {
+    "x1": 0.0625,
+    "y1": 0.0,
+    "z1": 0.125,
+    "x2": 0.9375,
+    "y2": 0.265625,
+    "z2": 0.65625
+   },
+   {
+    "x1": 0.0625,
+    "y1": 0.0,
+    "z1": 0.65625,
+    "x2": 0.9375,
+    "y2": 0.078125,
+    "z2": 0.875
+   }
+  ],
+  "*-east-down": [
+   {
+    "x1": 0.0625,
+    "y1": 0.0,
+    "z1": 0.125,
+    "x2": 0.9375,
+    "y2": 0.265625,
+    "z2": 0.65625,
+    "rotateY": 270
+   },
+   {
+    "x1": 0.0625,
+    "y1": 0.0,
+    "z1": 0.65625,
+    "x2": 0.9375,
+    "y2": 0.078125,
+    "z2": 0.875,
+    "rotateY": 270
+   }
+  ],
+  "*-south-down": [
+   {
+    "x1": 0.0625,
+    "y1": 0.0,
+    "z1": 0.125,
+    "x2": 0.9375,
+    "y2": 0.265625,
+    "z2": 0.65625,
+    "rotateY": 180
+   },
+   {
+    "x1": 0.0625,
+    "y1": 0.0,
+    "z1": 0.65625,
+    "x2": 0.9375,
+    "y2": 0.078125,
+    "z2": 0.875,
+    "rotateY": 180
+   }
+  ],
+  "*-west-down": [
+   {
+    "x1": 0.0625,
+    "y1": 0.0,
+    "z1": 0.125,
+    "x2": 0.9375,
+    "y2": 0.265625,
+    "z2": 0.65625,
+    "rotateY": 90
+   },
+   {
+    "x1": 0.0625,
+    "y1": 0.0,
+    "z1": 0.65625,
+    "x2": 0.9375,
+    "y2": 0.078125,
+    "z2": 0.875,
+    "rotateY": 90
+   }
+  ]
+ },
+ "sounds": {
+  "place": "game:block/anvil",
+  "break": "game:block/anvil",
+  "hit": "game:block/anvil",
+  "walk": "game:walk/stone"
+ }
+}

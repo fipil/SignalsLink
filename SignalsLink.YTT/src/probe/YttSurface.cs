@@ -110,6 +110,37 @@ namespace SignalsLink.YTT.src.probe
 
         public bool CanResolveTarget => StationKeyZProperty != null;
 
+        // -------------------------------------------------------------- the stoker
+
+        /// <summary>
+        /// True when a locomotive's fire can be read and tended. Optional and kept out of the
+        /// fingerprint: the stoker is an extra, and cargo must not become suspect because of it.
+        /// Needs the engine, since the fire lives on its controller.
+        /// </summary>
+        public bool CanTendFire => CanReachEngine && Fire != null;
+
+        public FireMembers Fire { get; private set; }
+
+        // -------------------------------------------------------------- the signalman
+
+        /// <summary>True when a locomotive's power can be set. Optional, out of the fingerprint.</summary>
+        public bool CanSetThrottle => CanReachEngine && Throttle != null;
+
+        public ThrottleMembers Throttle { get; private set; }
+
+        /// <summary>True when a locomotive can be made to whistle. Optional, out of the fingerprint.</summary>
+        public bool CanWhistle => SteamBehaviorType != null && WhistleMethod != null;
+
+        public MethodInfo WhistleMethod { get; private set; }
+
+        /// <summary>The whistle, when the behavior still offers it: a bool, no arguments.</summary>
+        public static MethodInfo WhistleOn(Type behavior)
+        {
+            MethodInfo found = behavior?.GetMethod("ServerTryPlayWhistle", Anywhere, null, Type.EmptyTypes, null);
+
+            return found?.ReturnType == typeof(bool) ? found : null;
+        }
+
         /// <summary>Never throws: standing down beats taking the game down on startup.</summary>
         public static YttSurface Probe(ICoreAPI api)
         {
@@ -374,6 +405,11 @@ namespace SignalsLink.YTT.src.probe
             members.Add(Describe("RequestSync", RequestSyncMethod.ReturnType));
 
             CanReachEngine = true;
+
+            // Probed last and apart: no stoker or signalman is no reason to refuse to fill a firebox.
+            Fire = FireMembers.On(controller);
+            Throttle = ThrottleMembers.On(controller);
+            WhistleMethod = WhistleOn(SteamBehaviorType);
         }
 
         /// <summary>
@@ -427,6 +463,24 @@ namespace SignalsLink.YTT.src.probe
             {
                 api.Logger.Notification("[SignalsLink.YTT] the steam engine cannot be reached on this version;"
                     + " cargo still works, stoking and lighting do not.");
+            }
+
+            if (CanReachEngine && !CanTendFire)
+            {
+                api.Logger.Notification("[SignalsLink.YTT] a locomotive's fire cannot be tended on this version;"
+                    + " cargo and the firebox still work, the stoker does not.");
+            }
+
+            if (CanReachEngine && !CanSetThrottle)
+            {
+                api.Logger.Notification("[SignalsLink.YTT] a locomotive's power cannot be set on this version;"
+                    + " the signalman still senses trains, its power command does nothing.");
+            }
+
+            if (CanReachEngine && !CanWhistle)
+            {
+                api.Logger.Notification("[SignalsLink.YTT] a locomotive cannot be made to whistle on this version;"
+                    + " the signalman still senses trains, its whistle command does nothing.");
             }
 
             if (!CanReachRefrigerant)

@@ -416,7 +416,7 @@ namespace SignalsLink.YTT.src.train
         /// invisible and `load train engine` could never find one. Its holds still only appear when
         /// the header asks for them by name.
         /// </summary>
-        private static bool IsVehicle(Entity entity)
+        public static bool IsVehicle(Entity entity)
         {
             if (entity?.Code?.Domain != Domain) return false;
 

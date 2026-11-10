@@ -2,6 +2,8 @@ using SignalsLink.src.signals.cargo;
 using SignalsLink.src.signals.chunkanchor;
 using SignalsLink.YTT.src.dump;
 using SignalsLink.YTT.src.probe;
+using SignalsLink.YTT.src.signalman;
+using SignalsLink.YTT.src.stoker;
 using SignalsLink.YTT.src.train;
 using Vintagestory.API.Common;
 
@@ -35,6 +37,12 @@ namespace SignalsLink.YTT.src
 
         public YttSurface Surface { get; private set; }
 
+        /// <summary>A locomotive's fire, for the stoker. Null until the probe has passed; server only.</summary>
+        public YttFire Fire { get; private set; }
+
+        /// <summary>A locomotive's power and whistle, for the signalman. Null until the probe has passed; server only.</summary>
+        public YttCommands Commands { get; private set; }
+
         private TrainApproachWatch approach;
 
         /// <summary>
@@ -47,6 +55,13 @@ namespace SignalsLink.YTT.src
         public override void Start(ICoreAPI api)
         {
             base.Start(api);
+
+            // The block exists whether or not YTT does: its JSON is loaded regardless, and a
+            // class the game cannot instantiate is a crash on startup. Without YTT it just idles.
+            api.RegisterBlockClass("Stoker", typeof(BlockStoker));
+            api.RegisterBlockEntityClass("BlockEntityStoker", typeof(BEStoker));
+            api.RegisterBlockClass("Signalman", typeof(BlockSignalman));
+            api.RegisterBlockEntityClass("BlockEntitySignalman", typeof(BESignalman));
 
             if (!api.ModLoader.IsModEnabled(YttModId)) return;
 
@@ -76,6 +91,10 @@ namespace SignalsLink.YTT.src
             // "lose somebody's cargo".
             Surface = YttSurface.Probe(api);
             Surface.Report(api, VersionOf(api));
+
+            // Independent of cargo too: tending a fire needs the engine, not the wagons.
+            Fire = new YttFire(Surface, api.Logger);
+            Commands = new YttCommands(Surface, api.Logger);
 
             // Independent of cargo: seeing a train coming needs the simulation, not the wagons.
             ArrivalSourceRegistry arrivals = api.ModLoader.GetModSystem<ArrivalSourceRegistry>();

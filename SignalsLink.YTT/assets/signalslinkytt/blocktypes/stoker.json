@@ -1,0 +1,202 @@
+{
+ "code": "stoker",
+ "class": "Stoker",
+ "entityclass": "BlockEntityStoker",
+ "variantgroups": [
+  {
+   "code": "state",
+   "states": [
+    "off",
+    "on"
+   ]
+  },
+  {
+   "code": "orientation",
+   "states": [
+    "north",
+    "east",
+    "south",
+    "west"
+   ]
+  },
+  {
+   "code": "side",
+   "states": [
+    "down"
+   ]
+  }
+ ],
+ "attributes": {
+  "signalPins": 2,
+  "reachDefault": 2,
+  "reinforcable": true,
+  "signalNodes": [
+   {
+    "index": 0,
+    "name": "con-input",
+    "x1": 0.5625,
+    "y1": 0.59375,
+    "z1": 0.4375,
+    "x2": 0.6875,
+    "y2": 0.78125,
+    "z2": 0.5625,
+    "rotateYbytype": {
+     "*-east-down": 270,
+     "*-south-down": 180,
+     "*-west-down": 90
+    }
+   },
+   {
+    "index": 1,
+    "name": "con-output",
+    "x1": 0.3125,
+    "y1": 0.59375,
+    "z1": 0.4375,
+    "x2": 0.4375,
+    "y2": 0.78125,
+    "z2": 0.5625,
+    "rotateYbytype": {
+     "*-east-down": 270,
+     "*-south-down": 180,
+     "*-west-down": 90
+    }
+   }
+  ],
+  "handbook": {
+   "extraSections": [
+    {
+     "title": "signalslink:block-handbooktitle-signalslink",
+     "text": "signalslinkytt:block-handbooktext-stoker"
+    }
+   ]
+  }
+ },
+ "behaviors": [
+  {
+   "name": "BlockBehaviorCoverWithDirection",
+   "properties": {
+    "handleDrop": false
+   }
+  },
+  {
+   "name": "Lockable"
+  }
+ ],
+ "entityBehaviors": [
+  {
+   "name": "BEBehaviorSignalConnector",
+   "properties": {
+    "signalNodes": [
+     {
+      "index": 0,
+      "isSource": false
+     },
+     {
+      "index": 1,
+      "isSource": true,
+      "output": 0
+     }
+    ]
+   }
+  }
+ ],
+ "shapeByType": {
+  "*-on-north-down": {
+   "base": "block/stoker_lit"
+  },
+  "*-on-east-down": {
+   "base": "block/stoker_lit",
+   "rotateY": 270
+  },
+  "*-on-south-down": {
+   "base": "block/stoker_lit",
+   "rotateY": 180
+  },
+  "*-on-west-down": {
+   "base": "block/stoker_lit",
+   "rotateY": 90
+  },
+  "*-off-north-down": {
+   "base": "block/stoker"
+  },
+  "*-off-east-down": {
+   "base": "block/stoker",
+   "rotateY": 270
+  },
+  "*-off-south-down": {
+   "base": "block/stoker",
+   "rotateY": 180
+  },
+  "*-off-west-down": {
+   "base": "block/stoker",
+   "rotateY": 90
+  }
+ },
+ "blockmaterial": "Metal",
+ "creativeinventory": {
+  "general": [
+   "*-off-north-down"
+  ],
+  "signalslink": [
+   "*-off-north-down"
+  ]
+ },
+ "drawtype": "json",
+ "lightAbsorption": 0,
+ "replaceable": 500,
+ "resistance": 3.5,
+ "sidesolid": {
+  "all": false
+ },
+ "sideopaque": {
+  "all": false
+ },
+ "collisionSelectionBoxesByType": {
+  "*-north-down": [
+   {
+    "x1": 0.0625,
+    "y1": 0.0,
+    "z1": 0.1875,
+    "x2": 0.9375,
+    "y2": 0.59375,
+    "z2": 0.8125
+   }
+  ],
+  "*-south-down": [
+   {
+    "x1": 0.0625,
+    "y1": 0.0,
+    "z1": 0.1875,
+    "x2": 0.9375,
+    "y2": 0.59375,
+    "z2": 0.8125
+   }
+  ],
+  "*-east-down": [
+   {
+    "x1": 0.1875,
+    "y1": 0.0,
+    "z1": 0.0625,
+    "x2": 0.8125,
+    "y2": 0.59375,
+    "z2": 0.9375
+   }
+  ],
+  "*-west-down": [
+   {
+    "x1": 0.1875,
+    "y1": 0.0,
+    "z1": 0.0625,
+    "x2": 0.8125,
+    "y2": 0.59375,
+    "z2": 0.9375
+   }
+  ]
+ },
+ "sounds": {
+  "place": "game:block/anvil",
+  "break": "game:block/anvil",
+  "hit": "game:block/anvil",
+  "walk": "game:walk/stone"
+ }
+}

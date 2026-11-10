@@ -1,0 +1,12 @@
+{
+	"ingredientPattern": "_C_,RIR,_P_",
+	"ingredients": {
+		"C": { "type": "item", "code": "game:ingot-copper" },
+		"R": { "type": "item", "code": "signals:el_wire", "quantity": 2 },
+		"I": { "type": "item", "code": "game:ingot-iron" },
+		"P": { "type": "item", "code": "game:metalplate-iron" }
+	},
+	"width": 3,
+	"height": 3,
+	"output": { "type": "block", "code": "signalslinkytt:signalman-north-down", "quantity": 1 }
+}

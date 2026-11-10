@@ -1,0 +1,13 @@
+{
+	"ingredientPattern": "_C_,FQR,_P_",
+	"ingredients": {
+		"C": { "type": "item", "code": "game:ingot-copper" },
+		"F": { "type": "item", "code": "game:firestarter" },
+		"Q": { "type": "block", "code": "game:glass-quartz" },
+		"R": { "type": "item", "code": "signals:el_wire", "quantity": 3 },
+		"P": { "type": "item", "code": "game:metalplate-iron" }
+	},
+	"width": 3,
+	"height": 3,
+	"output": { "type": "block", "code": "signalslinkytt:stoker-off-north-down", "quantity": 1 }
+}

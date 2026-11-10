@@ -62,7 +62,8 @@ namespace SignalsLink.YTT.src.train
             }
         }
 
-        private object ControllerOf(Entity entity)
+        /// <summary>The other mod's engine controller, or null. Shared with the stoker.</summary>
+        public object ControllerOf(Entity entity)
         {
             EntityBehavior behavior = entity?.GetBehavior(YttSurface.SteamBehavior);
             if (behavior == null) return null;
