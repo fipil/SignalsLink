@@ -6,6 +6,7 @@ using SignalsLink.src.signals.managedchute.transporting;
 using SignalsLink.src.signals.paperConditions;
 using Vintagestory.API.Common;
 using Vintagestory.API.MathTools;
+using Vintagestory.GameContent;
 using Proxy = SignalsLink.Tests.AnchorLifecycleTests.Proxy;
 
 namespace SignalsLink.Tests;
@@ -25,6 +26,38 @@ public class TransferEndRegistryTests
 
     static PaperConditionsEvaluator Eval(string paper = "*") { var e = new PaperConditionsEvaluator(); e.SetConditionsText(paper); return e; }
     static ItemStackMoveOperation Op(int n = 1) => new(null, EnumMouseButton.Left, 0, EnumMergePriority.DirectMerge, n);
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void Removing_a_bucket_notifies_both_ends_only_after_a_move(bool blocked)
+    {
+        var condenser = new CountingCondenser();
+        var bucket = new BlockLiquidContainerTopOpened { Code = new AssetLocation("game:woodbucket") };
+        condenser.Inventory[1].Itemstack = new ItemStack(bucket);
+        var target = new FakeEnd(MachinePos);
+        if (blocked) target.Inventory[0].Itemstack = TestStacks.Item("game:stone");
+
+        var api = Api(Registry(new FakeProvider(target)), Chest(), condenser);
+        var transfer = ItemTransferFactory.CreateTransfer(api, ChestPos, MachinePos, 0, 1, Eval(""));
+        var result = transfer.TryMove(Op());
+
+        Assert.Equal(!blocked, result.Success);
+        Assert.Equal(!blocked, condenser.Inventory[1].Empty);
+        Assert.Equal(blocked ? 0 : 1, condenser.Redraws);
+        Assert.Equal(blocked ? 0 : 1, target.ChangedCount);
+        if (!blocked) Assert.Same(bucket, target.Inventory[0].Itemstack.Collectible);
+    }
+
+    sealed class CountingCondenser : BlockEntityCondenser
+    {
+        public override InventoryBase Inventory { get; } = new QuietInventory(2);
+        public int Redraws;
+        public override void MarkDirty(bool redrawOnClient = false, IPlayer skipPlayer = null)
+        {
+            if (redrawOnClient) Redraws++;
+        }
+    }
 
     [Fact]
     public void A_chest_hands_to_a_registered_end_through_its_view()
@@ -145,11 +178,11 @@ public class TransferEndRegistryTests
     }
 
     /// <summary>Two chests and an air block; the machine position holds no block entity of its own.</summary>
-    static ICoreAPI Api(TransferEndRegistry registry, QuietInventory chest)
+    static ICoreAPI Api(TransferEndRegistry registry, QuietInventory chest, BlockEntity source = null)
     {
         var entities = new Dictionary<BlockPos, BlockEntity>
         {
-            [ChestPos] = new ChestEntity(chest),
+            [ChestPos] = source ?? new ChestEntity(chest),
             [OtherChestPos] = new ChestEntity(new QuietInventory(4)),
         };
 

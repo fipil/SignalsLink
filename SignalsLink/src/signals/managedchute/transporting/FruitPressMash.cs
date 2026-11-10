@@ -1,6 +1,5 @@
 using System;
 using System.Reflection;
-using System.Runtime.CompilerServices;
 using Vintagestory.API.Common;
 using Vintagestory.API.Config;
 using Vintagestory.API.MathTools;
@@ -43,18 +42,48 @@ namespace SignalsLink.src.signals.managedchute.transporting
         private static readonly Type PressType = typeof(BlockEntityFruitPress);
         private const BindingFlags Private = BindingFlags.Instance | BindingFlags.NonPublic;
 
-        private static readonly FieldInfo DryStackSizeField = PressType.GetField("dryStackSize", Private);
-        private static readonly FieldInfo CapacityField = PressType.GetField("juiceableLitresCapacity", Private);
-        private static readonly FieldInfo CompressAnimMetaField = PressType.GetField("compressAnimMeta", Private);
-        private static readonly FieldInfo ListenerIdField = PressType.GetField("listenerId", Private);
-        private static readonly FieldInfo SqueezeSoundPlayedField = PressType.GetField("squeezeSoundPlayed", Private);
-        private static readonly FieldInfo LastTransferHoursField = PressType.GetField("lastLiquidTransferTotalHours", Private);
-        private static readonly MethodInfo ConvertDryMashMethod = PressType.GetMethod("convertDryMash", Private);
-        private static readonly MethodInfo ServerTickMethod = PressType.GetMethod("onTick100msServer", Private);
-        private static readonly MethodInfo UpdateSqueezeRelMethod = PressType.GetMethod("updateSqueezeRel", Private);
+        private static FieldInfo Field<T>(string name)
+        {
+            var field = PressType.GetField(name, Private);
+            return field?.FieldType == typeof(T) && !field.IsStatic ? field : null;
+        }
 
-        // Presses whose squeeze this mod drives (see EnsureSqueezeDriver), with the listener id.
-        private static readonly ConditionalWeakTable<BlockEntityFruitPress, StrongBox<long>> drivers = new ConditionalWeakTable<BlockEntityFruitPress, StrongBox<long>>();
+        private static MethodInfo Method(string name, params Type[] parameters)
+        {
+            var method = PressType.GetMethod(name, Private, null, parameters, null);
+            return method?.ReturnType == typeof(void) ? method : null;
+        }
+
+        private static readonly FieldInfo DryStackSizeField = Field<int>("dryStackSize");
+        private static readonly FieldInfo CapacityField = Field<double>("juiceableLitresCapacity");
+        private static readonly FieldInfo CompressAnimMetaField = Field<AnimationMetaData>("compressAnimMeta");
+        private static readonly FieldInfo ListenerIdField = Field<long>("listenerId");
+        private static readonly FieldInfo SqueezeSoundPlayedField = Field<bool>("squeezeSoundPlayed");
+        private static readonly FieldInfo LastTransferHoursField = Field<double>("lastLiquidTransferTotalHours");
+        private static readonly MethodInfo ConvertDryMashMethod = Method("convertDryMash");
+        private static readonly MethodInfo ServerTickMethod = Method("onTick100msServer", typeof(float));
+        private static readonly MethodInfo UpdateSqueezeRelMethod = Method("updateSqueezeRel", typeof(RunningAnimation));
+
+        internal static bool CanDrive => CompressAnimMetaField != null && ListenerIdField != null
+            && SqueezeSoundPlayedField != null && LastTransferHoursField != null && ServerTickMethod != null
+            && UpdateSqueezeRelMethod != null;
+
+        internal static void CheckCompatibility(ILogger logger)
+        {
+            void Check(MemberInfo member, string name, string operations)
+            {
+                if (member == null) logger.Error("[SignalsLink] Incompatible BlockEntityFruitPress member {0}. Disabled: {1}.", name, operations);
+            }
+            Check(DryStackSizeField, "dryStackSize", "insertion and dry mash extraction");
+            Check(CapacityField, "juiceableLitresCapacity", "insertion");
+            Check(CompressAnimMetaField, "compressAnimMeta", "automatic pressing and release");
+            Check(ListenerIdField, "listenerId", "automatic pressing and release");
+            Check(SqueezeSoundPlayedField, "squeezeSoundPlayed", "automatic pressing");
+            Check(LastTransferHoursField, "lastLiquidTransferTotalHours", "automatic pressing");
+            Check(ServerTickMethod, "onTick100msServer", "automatic pressing");
+            Check(UpdateSqueezeRelMethod, "updateSqueezeRel", "automatic pressing");
+            Check(ConvertDryMashMethod, "convertDryMash", "dry mash extraction");
+        }
 
         public static double LitresLeft(ItemStack mash) => mash?.Attributes?.GetDouble(LitresLeftAttr) ?? 0;
         public static double LitresTransfered(ItemStack mash) => mash?.Attributes?.GetDouble(LitresTransferedAttr) ?? 0;
@@ -80,7 +109,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
 
         public static bool CanInsert(BlockEntityFruitPress press, ItemStack stack)
         {
-            if (press == null || stack == null || IsPressing(press)) return false;
+            if (DryStackSizeField == null || CapacityField == null || press == null || stack == null || IsPressing(press)) return false;
 
             JuiceableProperties props = press.getJuiceableProps(stack);
             if (props == null) return false;
@@ -174,7 +203,8 @@ namespace SignalsLink.src.signals.managedchute.transporting
         #region Take
 
         public static bool CanTake(BlockEntityFruitPress press)
-            => press != null && !IsPressing(press) && !press.MashSlot.Empty;
+            => press != null && !IsPressing(press) && !press.MashSlot.Empty
+                && (!IsPressedOut(press.MashSlot.Itemstack) || (ConvertDryMashMethod != null && DryStackSizeField != null));
 
         /// <summary>
         /// What a take would hand over, without touching the press: the wet mash as it is, or the
@@ -232,49 +262,38 @@ namespace SignalsLink.src.signals.managedchute.transporting
         #region Screw
 
         public static bool IsPressing(BlockEntityFruitPress press)
+            => press != null && press.CompressAnimActive;
+
+        internal static void DriveSqueeze(BlockEntityFruitPress press)
         {
-            if (press == null || !press.CompressAnimActive) return false;
-
-            // Asked every tick by devices around the press, so a press found screwed down after a
-            // reload gets its driver back.
-            EnsureSqueezeDriver(press);
-            return true;
-        }
-
-        /// <summary>
-        /// A player turning the screw holds the mouse button, and every step of that recomputes how
-        /// far the mash is squeezed (updateSqueezeRel: squeezeRel, screwPercent). The server tick
-        /// squeezes nothing until that has run. A device has no step, so this tick stands in for
-        /// it while the screw is down and stops itself once it is up or the mash is gone.
-        /// </summary>
-        private static void EnsureSqueezeDriver(BlockEntityFruitPress press)
-        {
-            if (press.Api is not ICoreServerAPI || UpdateSqueezeRelMethod == null) return;
-            if (drivers.TryGetValue(press, out _)) return;
-
-            StrongBox<long> id = new StrongBox<long>();
-            drivers.Add(press, id);
-            id.Value = press.RegisterGameTickListener(dt => DriveSqueeze(press, id), 50);
-        }
-
-        private static void DriveSqueeze(BlockEntityFruitPress press, StrongBox<long> id)
-        {
-            bool alive = press.Api?.World?.BlockAccessor?.GetBlockEntity(press.Pos) == press;
-            if (!alive || !press.CompressAnimActive || press.MashSlot.Empty)
-            {
-                press.UnregisterGameTickListener(id.Value);
-                drivers.Remove(press);
-                return;
-            }
-
             RunningAnimation anim = press.GetBehavior<BEBehaviorAnimatable>()?.animUtil?.animator?.GetAnimationState(CompressAnim);
             if (anim != null) UpdateSqueezeRelMethod.Invoke(press, new object[] { anim });
+        }
+
+        // Press blocks already reported as having no drive behavior, by block code.
+        private static readonly System.Collections.Generic.HashSet<string> missingDriveReported = new System.Collections.Generic.HashSet<string>();
+
+        /// <summary>
+        /// The drive comes from a JSON patch of the vanilla press. Where it did not land (another
+        /// mod replaced the block type, or brings a press of its own) `do press` cannot work; said
+        /// once per block code. Always false.
+        /// </summary>
+        private static bool ReportMissingDrive(BlockEntityFruitPress press)
+        {
+            string code = press.Block?.Code?.ToString() ?? "?";
+            if (missingDriveReported.Add(code))
+            {
+                press.Api?.Logger?.Error("[SignalsLink] Fruit press {0} has no SignalsLinkFruitPressDrive behavior (patch of game:blocktypes/wood/fruitpress.json did not apply). Disabled: automatic pressing.", code);
+            }
+            return false;
         }
 
         /// <summary>Turns the screw, as the player's first click does (packet ScrewStart). False when it already is.</summary>
         public static bool Press(BlockEntityFruitPress press)
         {
-            if (press == null || press.CompressAnimActive || press.Api is not ICoreServerAPI sapi) return false;
+            if (!CanDrive || press?.Api is not ICoreServerAPI sapi || press.CompressAnimActive) return false;
+            var drive = press.GetBehavior<FruitPressDrive>();
+            if (drive == null) return ReportMissingDrive(press);
             if (CompressAnimMetaField?.GetValue(press) is not AnimationMetaData meta) return false;
             BlockEntityAnimationUtil animUtil = press.GetBehavior<BEBehaviorAnimatable>()?.animUtil;
             if (animUtil == null) return false;
@@ -295,18 +314,20 @@ namespace SignalsLink.src.signals.managedchute.transporting
                 AnimationState = EnumFruitPressAnimState.ScrewStart,
                 AnimationSpeed = 0.5f
             });
-            EnsureSqueezeDriver(press);
+            drive.Start();
+            press.MarkDirty();
             return true;
         }
 
         /// <summary>Lets the screw back up (packet Unscrew). False when there is nothing to release.</summary>
         public static bool Release(BlockEntityFruitPress press)
         {
-            if (press == null || !press.CanUnscrew || press.Api is not ICoreServerAPI sapi) return false;
+            if (ListenerIdField == null || press == null || !press.CanUnscrew || press.Api is not ICoreServerAPI sapi) return false;
             if (CompressAnimMetaField?.GetValue(press) is not AnimationMetaData meta) return false;
             BlockEntityAnimationUtil animUtil = press.GetBehavior<BEBehaviorAnimatable>()?.animUtil;
             if (animUtil == null) return false;
 
+            press.GetBehavior<FruitPressDrive>()?.Stop();
             meta.AnimationSpeed = 1.5f;
             animUtil.StopAnimation(CompressAnim);
             sapi.Network.BroadcastBlockEntityPacket(press.Pos, 1001, new FruitPressAnimPacket

@@ -5,6 +5,7 @@ using SignalsLink.src.signals.blocksensor;
 using SignalsLink.src.signals.entitysensor;
 using SignalsLink.src.signals.hose;
 using SignalsLink.src.signals.managedchute;
+using SignalsLink.src.signals.managedchute.transporting;
 using SignalsLink.src.signals.paperConditions;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
@@ -35,6 +36,9 @@ namespace SignalsLink.src
             api.RegisterBlockBehaviorClass("BlockBehaviorLinkCover", typeof(SignalsLink.src.signals.link.BlockBehaviorLinkCover));
             api.RegisterCollectibleBehaviorClass("LinkCutterBehavior", typeof(SignalsLink.src.signals.link.LinkCutterBehavior));
             api.RegisterCollectibleBehaviorClass("WrenchActions", typeof(SignalsLink.src.signals.WrenchActionsBehavior));
+
+            api.RegisterBlockEntityBehaviorClass("SignalsLinkFruitPressDrive", typeof(FruitPressDrive));
+            if (api.Side == EnumAppSide.Server) FruitPressMash.CheckCompatibility(api.Logger);
 
             api.RegisterBlockClass("BlockSensor", typeof(BlockSensor));
             api.RegisterBlockClass("EntitySensor", typeof(EntitySensor));

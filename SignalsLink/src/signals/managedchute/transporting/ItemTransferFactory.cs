@@ -47,9 +47,10 @@ namespace SignalsLink.src.signals.managedchute.transporting
                     return Wrap(api, new PressMashToInventoryTransfer(api, mashSource, registeredTarget.View, outputPos, outputSlotSignal, conditionsEvaluator), registeredTarget);
                 }
 
-                IInventory from = registeredSource?.View ?? SourceInventory(blockAccess, inputPos);
+                ITransferEnd source = registeredSource ?? BucketSlotEnds.At(blockAccess, inputPos);
+                IInventory from = source?.View ?? (AutomationAccess.EntityAt(blockAccess, inputPos) as IBlockEntityContainer)?.Inventory;
                 if (from == null) return null; // never from the world
-                return Wrap(api, Wrap(api, new InventoryToInventoryTransfer(api, from, registeredTarget.View, outputPos, inputSlotSignal, outputSlotSignal, conditionsEvaluator), registeredTarget), registeredSource);
+                return Wrap(api, Wrap(api, new InventoryToInventoryTransfer(api, from, registeredTarget.View, outputPos, inputSlotSignal, outputSlotSignal, conditionsEvaluator), registeredTarget), source);
             }
 
             if (registeredSource != null)
@@ -126,14 +127,6 @@ namespace SignalsLink.src.signals.managedchute.transporting
         {
             if (transfer == null || end == null) return transfer;
             return new EndRefreshTransfer(api, transfer, end);
-        }
-
-        /// <summary>The inventory a plain source position offers: a bucket stand's slot or a container.</summary>
-        private static IInventory SourceInventory(IBlockAccessor blockAccess, BlockPos inputPos)
-        {
-            IBucketSlotEnd sourceEnd = BucketSlotEnds.At(blockAccess, inputPos);
-            if (sourceEnd != null) return sourceEnd.View;
-            return (AutomationAccess.EntityAt(blockAccess, inputPos) as IBlockEntityContainer)?.Inventory;
         }
 
         private static IItemTransfer CreateRouted(ICoreAPI api, BlockPos inputPos, BlockPos outputPos, byte inputSlotSignal, byte outputSlotSignal, PaperConditionsEvaluator conditionsEvaluator, IInventory inInv, bool inIsContainer)
