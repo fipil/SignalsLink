@@ -317,7 +317,7 @@ namespace SignalsLink.src.signals.sleeve
             }
 
             IItemTransfer transfer = ItemTransferFactory.CreateTransfer(
-                Api, farCargoPos, myCargoPos, 0, 0, ConditionsEvaluator, this);
+                Api, farCargoPos, myCargoPos, 0, 0, ConditionsEvaluator, this, Pos);
 
             if (trace)
             {
@@ -353,10 +353,10 @@ namespace SignalsLink.src.signals.sleeve
             ctx["targetBlockPos"] = myCargoPos;
             ctx["sourceBlockPos"] = farCargoPos;
 
-            IInventory target = TargetInventoryResolver.Resolve(Api, myCargoPos);
+            IInventory target = TargetInventoryResolver.Resolve(Api, myCargoPos, Pos);
             if (target != null) ctx["targetInventory"] = target;
 
-            IInventory source = TargetInventoryResolver.Resolve(Api, farCargoPos);
+            IInventory source = TargetInventoryResolver.Resolve(Api, farCargoPos, Pos);
             if (source != null)
             {
                 ctx["sourceInventory"] = source;
@@ -449,7 +449,7 @@ namespace SignalsLink.src.signals.sleeve
             // Output pin; the ManagedChute passes none, because it has no such pin.
             IItemTransfer transfer = farCargoPos == null
                 ? null
-                : ItemTransferFactory.CreateTransfer(Api, farCargoPos, myCargoPos, 0, 0, ConditionsEvaluator, this);
+                : ItemTransferFactory.CreateTransfer(Api, farCargoPos, myCargoPos, 0, 0, ConditionsEvaluator, this, Pos);
 
             bool moved = false;
             decimal movedTotal = 0;

@@ -24,9 +24,16 @@ namespace SignalsLink.src.signals.managedchute.transporting
         /// The end at <paramref name="pos"/> as an inventory, or null when there is nothing there
         /// that can be read at all.
         /// </summary>
-        public static IInventory Resolve(ICoreAPI api, BlockPos pos)
+        public static IInventory Resolve(ICoreAPI api, BlockPos pos) => Resolve(api, pos, null);
+
+        /// <summary>As above; <paramref name="devicePos"/> lets a registered end know who is asking.</summary>
+        public static IInventory Resolve(ICoreAPI api, BlockPos pos, BlockPos devicePos)
         {
             if (api?.World == null || pos == null) return null;
+
+            // An end another mod registered is read through its view, as a transfer would.
+            ITransferEnd registered = TransferEndRegistry.Find(api, pos, devicePos);
+            if (registered != null) return registered.View;
 
             // Ground storage first: a pile IS a container, but a device cares about the whole
             // column standing there, not about the one pile it happens to point at.

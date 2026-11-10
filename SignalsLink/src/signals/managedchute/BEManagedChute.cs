@@ -343,7 +343,7 @@ namespace SignalsLink.src.signals.managedchute
             if (transfer != null) return;
 
             // Zatím InputSlot/OutputSlot signál = 0 (default sloty)
-            transfer = ItemTransferFactory.CreateTransfer(Api, inputPos, outputPos, sourceSlot, targetSlot, ConditionsEvaluator, this);
+            transfer = ItemTransferFactory.CreateTransfer(Api, inputPos, outputPos, sourceSlot, targetSlot, ConditionsEvaluator, this, Pos);
 
             lastInputPos = inputPos;
             lastOutputPos = outputPos;

@@ -11,13 +11,17 @@ namespace SignalsLink.src.signals.managedchute.transporting
         /// Builds the transfer for a pair of positions. <paramref name="outputSink"/> is the host's
         /// Output pin; pass it only from a host that has one (the Damper), and paper conditions may
         /// then drive it with <c>output N</c>. Left null — as the ManagedChute leaves it — condition
-        /// resolution stays exactly as it has always been.
+        /// resolution stays exactly as it has always been. <paramref name="devicePos"/> is the
+        /// device itself; a registered end may need to know from which side it is approached.
         /// </summary>
-        public static IItemTransfer CreateTransfer(ICoreAPI api, BlockPos inputPos, BlockPos outputPos, byte inputSlotSignal, byte outputSlotSignal, PaperConditionsEvaluator conditionsEvaluator, IConditionOutputSink outputSink = null)
+        public static IItemTransfer CreateTransfer(ICoreAPI api, BlockPos inputPos, BlockPos outputPos, byte inputSlotSignal, byte outputSlotSignal, PaperConditionsEvaluator conditionsEvaluator, IConditionOutputSink outputSink = null, BlockPos devicePos = null)
         {
-            IItemTransfer transfer = CreateCore(api, inputPos, outputPos, inputSlotSignal, outputSlotSignal, conditionsEvaluator);
+            IItemTransfer transfer = CreateCore(api, inputPos, outputPos, inputSlotSignal, outputSlotSignal, conditionsEvaluator, devicePos);
 
-            switch (transfer is EndRefreshTransfer wrapped ? wrapped.Inner : transfer)
+            IItemTransfer inner = transfer;
+            while (inner is EndRefreshTransfer wrapped) inner = wrapped.Inner;
+
+            switch (inner)
             {
                 case InventorySourcedTransferBase inventorySourced: inventorySourced.OutputSink = outputSink; break;
                 case WorldToInventoryTransfer worldSourced: worldSourced.OutputSink = outputSink; break;
@@ -26,9 +30,28 @@ namespace SignalsLink.src.signals.managedchute.transporting
             return transfer;
         }
 
-        private static IItemTransfer CreateCore(ICoreAPI api, BlockPos inputPos, BlockPos outputPos, byte inputSlotSignal, byte outputSlotSignal, PaperConditionsEvaluator conditionsEvaluator)
+        private static IItemTransfer CreateCore(ICoreAPI api, BlockPos inputPos, BlockPos outputPos, byte inputSlotSignal, byte outputSlotSignal, PaperConditionsEvaluator conditionsEvaluator, BlockPos devicePos)
         {
             var blockAccess = api.World.BlockAccessor;
+
+            // Ends another mod offers through the registry come first: they claim their block
+            // explicitly, and are read and written through their view alone.
+            ITransferEnd registeredSource = TransferEndRegistry.Find(api, inputPos, devicePos);
+            ITransferEnd registeredTarget = TransferEndRegistry.Find(api, outputPos, devicePos);
+
+            if (registeredTarget != null)
+            {
+                IInventory from = registeredSource?.View ?? SourceInventory(blockAccess, inputPos);
+                if (from == null) return null; // never from the world
+                return Wrap(api, Wrap(api, new InventoryToInventoryTransfer(api, from, registeredTarget.View, outputPos, inputSlotSignal, outputSlotSignal, conditionsEvaluator), registeredTarget), registeredSource);
+            }
+
+            if (registeredSource != null)
+            {
+                var into = AutomationAccess.EntityAt(blockAccess, outputPos) as IBlockEntityContainer;
+                if (into?.Inventory == null) return null;
+                return Wrap(api, new InventoryToInventoryTransfer(api, registeredSource.View, into.Inventory, outputPos, inputSlotSignal, outputSlotSignal, conditionsEvaluator), registeredSource);
+            }
 
             var beIn = AutomationAccess.EntityAt(blockAccess, inputPos) as IBlockEntityContainer;
 
@@ -69,10 +92,18 @@ namespace SignalsLink.src.signals.managedchute.transporting
             return Wrap(api, transfer, sourceEnd);
         }
 
-        private static IItemTransfer Wrap(ICoreAPI api, IItemTransfer transfer, IBucketSlotEnd sourceEnd)
+        private static IItemTransfer Wrap(ICoreAPI api, IItemTransfer transfer, ITransferEnd end)
         {
-            if (transfer == null || sourceEnd == null) return transfer;
-            return new EndRefreshTransfer(api, transfer, sourceEnd);
+            if (transfer == null || end == null) return transfer;
+            return new EndRefreshTransfer(api, transfer, end);
+        }
+
+        /// <summary>The inventory a plain source position offers: a bucket stand's slot or a container.</summary>
+        private static IInventory SourceInventory(IBlockAccessor blockAccess, BlockPos inputPos)
+        {
+            IBucketSlotEnd sourceEnd = BucketSlotEnds.At(blockAccess, inputPos);
+            if (sourceEnd != null) return sourceEnd.View;
+            return (AutomationAccess.EntityAt(blockAccess, inputPos) as IBlockEntityContainer)?.Inventory;
         }
 
         private static IItemTransfer CreateRouted(ICoreAPI api, BlockPos inputPos, BlockPos outputPos, byte inputSlotSignal, byte outputSlotSignal, PaperConditionsEvaluator conditionsEvaluator, IInventory inInv, bool inIsContainer)

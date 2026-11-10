@@ -499,7 +499,7 @@ namespace SignalsLink.src.signals.manageddock
             {
                 case TransferRoute.BetweenPlaces:
                 {
-                    IItemTransfer transfer = ItemTransferFactory.CreateTransfer(Api, source.Pos, target.Pos, 0, 0, evaluator);
+                    IItemTransfer transfer = ItemTransferFactory.CreateTransfer(Api, source.Pos, target.Pos, 0, 0, evaluator, null, Pos);
                     Imply(transfer, target);
 
                     return transfer;

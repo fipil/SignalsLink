@@ -3,17 +3,17 @@ using Vintagestory.API.Common;
 namespace SignalsLink.src.signals.managedchute.transporting
 {
     /// <summary>
-    /// Wraps a transfer whose source is a bucket stand: after a successful move the stand is told,
-    /// so its block redraws and a cleared condenser spout loses its ghost bucket on clients.
+    /// Wraps a transfer with an end that must be told after a move (a bucket stand, a registered
+    /// end): the block then persists and redraws, a cleared condenser spout loses its ghost bucket.
     /// </summary>
     public sealed class EndRefreshTransfer : IItemTransfer
     {
         private readonly ICoreAPI api;
-        private readonly IBucketSlotEnd end;
+        private readonly ITransferEnd end;
 
         public IItemTransfer Inner { get; }
 
-        public EndRefreshTransfer(ICoreAPI api, IItemTransfer inner, IBucketSlotEnd end)
+        public EndRefreshTransfer(ICoreAPI api, IItemTransfer inner, ITransferEnd end)
         {
             this.api = api;
             Inner = inner;

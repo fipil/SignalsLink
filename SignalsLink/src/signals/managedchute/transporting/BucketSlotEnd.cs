@@ -10,18 +10,11 @@ namespace SignalsLink.src.signals.managedchute.transporting
     /// under the fruit press. To a device the block IS that slot - it never touches the other
     /// slots of the block entity (cooling water, mash), which have their own ways in.
     /// </summary>
-    public interface IBucketSlotEnd
+    public interface IBucketSlotEnd : ITransferEnd
     {
-        BlockPos Pos { get; }
         ItemSlot Slot { get; }
 
-        /// <summary>The slot as a one-slot inventory, for conditions and for taking out of.</summary>
-        IInventory View { get; }
-
         bool Accepts(ItemStack stack);
-
-        /// <summary>After a device changed the slot: redraw, and tell clients when it emptied.</summary>
-        void Changed(ICoreAPI api);
     }
 
     /// <summary>What may stand under the spout. Mirrors the vanilla interaction checks.</summary>
