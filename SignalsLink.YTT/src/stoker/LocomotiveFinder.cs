@@ -118,7 +118,28 @@ namespace SignalsLink.YTT.src.stoker
             return System.Math.Abs(vehicleY - deviceY) <= HeightTolerance + 0.5;
         }
 
-        private static bool HasEngine(Entity entity) => entity.GetBehavior(YttSurface.SteamBehavior) != null;
+        public static bool HasEngine(Entity entity) => entity?.GetBehavior(YttSurface.SteamBehavior) != null;
+
+        /// <summary>The convoy a vehicle belongs to: its head's id, or its own when it rides alone.</summary>
+        public static long ConvoyOf(Entity vehicle)
+        {
+            long head = TrainKeepTogether.HeadOf(vehicle);
+            return head != 0 ? head : vehicle?.EntityId ?? 0;
+        }
+
+        /// <summary>The loaded engine of a convoy, wherever in the train it rides; null when none is loaded.</summary>
+        public static Entity LocomotiveOfConvoy(IWorldAccessor world, long convoyHead)
+        {
+            if (world is not IServerWorldAccessor server || convoyHead == 0) return null;
+
+            foreach (Entity other in server.LoadedEntities.Values)
+            {
+                if (other?.Code?.Domain != TrainCargoHolderFinder.Domain || !HasEngine(other)) continue;
+                if (ConvoyOf(other) == convoyHead) return other;
+            }
+
+            return null;
+        }
 
         /// <summary>
         /// The engine of the same convoy, wherever in the train it rides. NOT through the head of

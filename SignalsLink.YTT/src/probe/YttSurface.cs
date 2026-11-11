@@ -133,6 +133,11 @@ namespace SignalsLink.YTT.src.probe
 
         public MethodInfo WhistleMethod { get; private set; }
 
+        // -------------------------------------------------------------- the train ticket
+
+        /// <summary>Stations and reach for the ticket; null until the engine was found.</summary>
+        public TaxiMembers Taxi { get; private set; }
+
         /// <summary>The whistle, when the behavior still offers it: a bool, no arguments.</summary>
         public static MethodInfo WhistleOn(Type behavior)
         {
@@ -410,6 +415,7 @@ namespace SignalsLink.YTT.src.probe
             Fire = FireMembers.On(controller);
             Throttle = ThrottleMembers.On(controller);
             WhistleMethod = WhistleOn(SteamBehaviorType);
+            Taxi = TaxiMembers.Probe(api, SteamBehaviorType.Assembly);
         }
 
         /// <summary>
@@ -475,6 +481,23 @@ namespace SignalsLink.YTT.src.probe
             {
                 api.Logger.Notification("[SignalsLink.YTT] a locomotive's power cannot be set on this version;"
                     + " the signalman still senses trains, its power command does nothing.");
+            }
+
+            if (CanReachEngine && Taxi?.CanListStations != true)
+            {
+                api.Logger.Notification("[SignalsLink.YTT] the station registry cannot be read on this version;"
+                    + " the train ticket does nothing.");
+            }
+            else if (CanReachEngine && !Taxi.CanJudgeReach)
+            {
+                api.Logger.Notification("[SignalsLink.YTT] which stations a train can reach cannot be told on this version;"
+                    + " the train ticket offers every station of the gauge.");
+            }
+
+            if (CanReachEngine && Taxi?.TimetableKeyConfirmed == false)
+            {
+                api.Logger.Warning("[SignalsLink.YTT] the timetable key could not be confirmed on this version;"
+                    + " the train ticket writes to '" + TaxiMembers.DefaultTimetableKey + "' and the conductor may not read it.");
             }
 
             if (CanReachEngine && !CanWhistle)

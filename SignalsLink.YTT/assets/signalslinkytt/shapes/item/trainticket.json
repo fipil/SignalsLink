@@ -1,0 +1,20 @@
+{
+  "textureWidth": 16,
+  "textureHeight": 32,
+  "textures": { "card": "signalslinkytt:item/trainticket" },
+  "elements": [
+    {
+      "name": "card",
+      "from": [4, 0.5, 7.88],
+      "to": [12, 15.5, 8.12],
+      "faces": {
+        "north": { "texture": "#card", "uv": [0, 0, 16, 32] },
+        "south": { "texture": "#card", "uv": [0, 0, 16, 32] },
+        "east":  { "texture": "#card", "uv": [0, 0, 0.25, 32] },
+        "west":  { "texture": "#card", "uv": [0, 0, 0.25, 32] },
+        "up":    { "texture": "#card", "uv": [0, 0, 16, 0.25] },
+        "down":  { "texture": "#card", "uv": [0, 0, 16, 0.25] }
+      }
+    }
+  ]
+}

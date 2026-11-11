@@ -4,8 +4,11 @@ using SignalsLink.YTT.src.dump;
 using SignalsLink.YTT.src.probe;
 using SignalsLink.YTT.src.signalman;
 using SignalsLink.YTT.src.stoker;
+using SignalsLink.YTT.src.taxi;
 using SignalsLink.YTT.src.train;
+using Vintagestory.API.Client;
 using Vintagestory.API.Common;
+using Vintagestory.API.Config;
 
 // A loose DLL has no modinfo.json beside it, so the game reads this instead. Must say the same
 // as the modinfo.json the zip carries.
@@ -43,7 +46,15 @@ namespace SignalsLink.YTT.src
         /// <summary>A locomotive's power and whistle, for the signalman. Null until the probe has passed; server only.</summary>
         public YttCommands Commands { get; private set; }
 
+        /// <summary>The other mod's stations, for the train ticket. Server only.</summary>
+        public YttStations Stations { get; private set; }
+
+        public const string TaxiChannel = "signalslinkytt-taxi";
+
         private TrainApproachWatch approach;
+        private TaxiDispatcher taxi;
+        private IClientNetworkChannel taxiClient;
+        private GuiDialogTrainTicket ticketDialog;
 
         /// <summary>
         /// The header vocabulary, on both sides. The client checks a paper's headers for the block
@@ -62,10 +73,43 @@ namespace SignalsLink.YTT.src
             api.RegisterBlockEntityClass("BlockEntityStoker", typeof(BEStoker));
             api.RegisterBlockClass("Signalman", typeof(BlockSignalman));
             api.RegisterBlockEntityClass("BlockEntitySignalman", typeof(BESignalman));
+            api.RegisterItemClass("ItemTrainTicket", typeof(ItemTrainTicket));
 
             if (!api.ModLoader.IsModEnabled(YttModId)) return;
 
             api.ModLoader.GetModSystem<CargoHolderRegistry>()?.Register(new TrainCargoHolderFinder());
+        }
+
+        public override void StartClientSide(ICoreClientAPI api)
+        {
+            base.StartClientSide(api);
+
+            taxiClient = api.Network.RegisterChannel(TaxiChannel)
+                .RegisterMessageType<TaxiOpenRequest>()
+                .RegisterMessageType<TaxiStationsPacket>()
+                .RegisterMessageType<TaxiOrderPacket>()
+                .RegisterMessageType<TaxiStopPacket>()
+                .SetMessageHandler<TaxiStationsPacket>(packet => OnTaxiStations(api, packet));
+        }
+
+        /// <summary>The ticket was used on this client: ask the server what this train can do.</summary>
+        public void RequestTaxi() => taxiClient?.SendPacket(new TaxiOpenRequest());
+
+        private void OnTaxiStations(ICoreClientAPI api, TaxiStationsPacket packet)
+        {
+            if (packet == null) return;
+
+            if (!string.IsNullOrEmpty(packet.Error))
+            {
+                api.TriggerIngameError(this, "ticket-" + packet.Error, Lang.Get("signalslinkytt:ticket-error-" + packet.Error));
+                return;
+            }
+
+            ticketDialog ??= new GuiDialogTrainTicket(api,
+                order => taxiClient?.SendPacket(order),
+                stop => taxiClient?.SendPacket(stop));
+
+            ticketDialog.Show(packet);
         }
 
         public override void StartServerSide(Vintagestory.API.Server.ICoreServerAPI api)
@@ -95,6 +139,23 @@ namespace SignalsLink.YTT.src
             // Independent of cargo too: tending a fire needs the engine, not the wagons.
             Fire = new YttFire(Surface, api.Logger);
             Commands = new YttCommands(Surface, api.Logger);
+            Stations = new YttStations(Surface, api.Logger);
+
+            // The ticket writes the conductor's timetable under whatever key YTT names today.
+            if (Surface.Taxi != null) Timetable.Key = Surface.Taxi.TimetableKey;
+
+            Vintagestory.API.Server.IServerNetworkChannel taxiServer = api.Network.RegisterChannel(TaxiChannel)
+                .RegisterMessageType<TaxiOpenRequest>()
+                .RegisterMessageType<TaxiStationsPacket>()
+                .RegisterMessageType<TaxiOrderPacket>()
+                .RegisterMessageType<TaxiStopPacket>();
+
+            taxi = new TaxiDispatcher(api, Fire, Stations, taxiServer);
+            taxiServer
+                .SetMessageHandler<TaxiOpenRequest>(taxi.Open)
+                .SetMessageHandler<TaxiOrderPacket>(taxi.Order)
+                .SetMessageHandler<TaxiStopPacket>(taxi.StopHere);
+            taxi.Start();
 
             // Independent of cargo: seeing a train coming needs the simulation, not the wagons.
             ArrivalSourceRegistry arrivals = api.ModLoader.GetModSystem<ArrivalSourceRegistry>();
@@ -126,6 +187,8 @@ namespace SignalsLink.YTT.src
         public override void Dispose()
         {
             approach?.Stop();
+            taxi?.Stop();
+            ticketDialog?.TryClose();
             base.Dispose();
         }
 

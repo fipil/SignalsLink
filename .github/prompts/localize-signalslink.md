@@ -67,6 +67,10 @@ Slovníček pro mody Signals Tubes (signalstubes) a Signals Machines (signalsmac
 * „Hasák“ je herní nástroj wrench: anglicky „wrench“, v ostatních jazycích název, kterým ho hra pojmenovává.
 * Herní bloky, které zařízení obsluhují: „lis na ovoce“ = „fruit press“, jeho „náplň“ = „mash“, „šroub“ = „screw“; „kotel“ (na destilaci) = „boiler“; „kondenzátor“ = „condenser“, jeho „výpust“ = „spout“. V ostatních jazycích použij názvy, kterými tyto bloky pojmenovává hra. Akce `do press`, `do release` a podmínky `isPressing`, `firepitReady` jsou klíčová slova papíru a zůstávají anglicky; atribut `juiceableLitresLeft` se nepřekládá.
 
+* „Topič“ (blok u koleje, zatápí a hasí kotel lokomotivy) = „Stoker“: obsluha kotle parní lokomotivy, nikdy „Fireman“ ani „Firefighter“; v ostatních jazycích slovo pro topiče/kuriče lokomotivy (de „Heizer“, pl „Palacz“, ru „Кочегар“), ne pro hasiče.
+* „Hradlař“ (destička u koleje, hlásí vlak a dává mu pokyny) = „Signalman“: železničář v hradle, nikdy nic s modem Signals; v ostatních jazycích místní označení pro obsluhu hradla/stavědla (de „Blockwärter“, pl „Nastawniczy“, sk „Hradlár“).
+* „Jízdenka“ = „Train Ticket“ (vlakové taxi); „strojvůdce“ ve vlaku je hmyzák z YTT = „conductor“ („conductor locust“), ne „driver“.
+
 Výstup:
 - Vrať JSON ve stejném tvaru jako items:
 {

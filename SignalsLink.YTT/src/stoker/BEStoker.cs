@@ -145,6 +145,14 @@ namespace SignalsLink.YTT.src.stoker
                 return;
             }
 
+            // A train ordered with a ticket is the ticket's business: a stoker told to keep the
+            // boiler out would put out every fire the ticket lights, for water, every second.
+            if (taxi.TaxiJob.Exists(locomotive))
+            {
+                Report(output, "taxi");
+                return;
+            }
+
             StokerCommand command = StokerRules.CommandFor(inputSignal);
             string reason;
 
@@ -174,54 +182,15 @@ namespace SignalsLink.YTT.src.stoker
         /// </summary>
         private string TryIgnite(YttFire fire, Entity locomotive)
         {
-            ItemSlot fuel = fire.FuelSlotOf(locomotive);
-            if (fuel == null || fuel.Empty) return "nofuel";
+            string result = FireKeeping.TryIgnite(fire, locomotive, () => FindIgnitionSource(fire), Api.World,
+                Pos.ToVec3d().Add(0.5, 0.5, 0.5));
 
-            ItemSlot lighter = FindIgnitionSource(fire);
-            if (lighter == null) return "noigniter";
-
-            fire.Ignite(locomotive);
-
-            if (fire.IsBurning(locomotive) != true) return "failed";
-
-            Wear(lighter);
-            return "lit";
+            if (result == "lit") MarkDirty();
+            return result;
         }
 
-        /// <summary>
-        /// Puts the boiler out at the price of the Extinguish button in the locomotive's own
-        /// dialog: a litre of water per hundred degrees, out of the LOCOMOTIVE's water, and not
-        /// at all when there is not enough. The other mod's own path cannot be called - it needs
-        /// a real player - so the price is taken here and the fire put out for free afterwards.
-        /// </summary>
-        private string TryExtinguish(YttFire fire, Entity locomotive)
-        {
-            double temperature = fire.TemperatureOf(locomotive) ?? 0;
-            ItemSlot water = fire.WaterSlotOf(locomotive);
-
-            double itemsPerLitre = 1;
-            if (water?.Itemstack != null)
-            {
-                WaterTightContainableProps props = BlockLiquidContainerBase.GetContainableProps(water.Itemstack);
-                if (props != null && props.ItemsPerLitre > 0) itemsPerLitre = props.ItemsPerLitre;
-            }
-
-            int needed = StokerRules.WaterItemsFor(temperature, itemsPerLitre);
-
-            if (needed > 0)
-            {
-                if (water == null || water.Empty || water.StackSize < needed) return "nowater";
-
-                water.TakeOut(needed);
-                water.MarkDirty();
-
-                // The engine saves nothing by itself; the water is gone, so say so now.
-                fire.Save(locomotive);
-            }
-
-            fire.Extinguish(locomotive);
-            return "quenched";
-        }
+        /// <summary>Water from the LOCOMOTIVE's boiler, as the button in its dialog takes it. See FireKeeping.</summary>
+        private string TryExtinguish(YttFire fire, Entity locomotive) => FireKeeping.TryExtinguish(fire, locomotive);
 
         private ItemSlot FindIgnitionSource(YttFire fire)
         {
@@ -232,31 +201,6 @@ namespace SignalsLink.YTT.src.stoker
             }
 
             return null;
-        }
-
-        /// <summary>
-        /// One use off the firestarter. Only things with a durability wear; a torch is free.
-        ///
-        /// NOT left to the game to destroy: DamageItem tolerates a null entity, but DestroyItem
-        /// reads the entity's position and selection box, and a stoker has no entity - it would
-        /// light nineteen times and crash the server on the twentieth.
-        /// </summary>
-        private void Wear(ItemSlot slot)
-        {
-            ItemStack stack = slot.Itemstack;
-            CollectibleObject collectible = stack?.Collectible;
-            if (collectible == null || collectible.GetMaxDurability(stack) <= 0) return;
-
-            collectible.DamageItem(Api.World, null, slot, 1, destroyOnZeroDurability: false);
-
-            if (slot.Itemstack != null && collectible.GetRemainingDurability(slot.Itemstack) <= 0)
-            {
-                slot.Itemstack = null;
-                Api.World.PlaySoundAt(new AssetLocation("game:sounds/effect/toolbreak"), Pos, 0, null, false, 12);
-            }
-
-            slot.MarkDirty();
-            MarkDirty();
         }
 
         private void Report(byte output, string reason)
