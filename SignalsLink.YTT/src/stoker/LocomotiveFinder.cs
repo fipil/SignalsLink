@@ -24,6 +24,9 @@ namespace SignalsLink.YTT.src.stoker
         /// <summary>Every vehicle on the watched block has stopped.</summary>
         public bool Standing { get; init; }
 
+        /// <summary>The vehicles on the watched block, nearest first. Never kept between ticks.</summary>
+        public IReadOnlyList<Entity> Vehicles { get; init; } = System.Array.Empty<Entity>();
+
         /// <summary>Why there is no locomotive, as a lang key suffix: notrain, noengine.</summary>
         public string Reason { get; init; }
     }
@@ -85,10 +88,10 @@ namespace SignalsLink.YTT.src.stoker
 
             if (locomotive == null)
             {
-                return new LocomotiveSighting { Present = true, ConvoyHead = head, Standing = still, Reason = "noengine" };
+                return new LocomotiveSighting { Present = true, ConvoyHead = head, Standing = still, Vehicles = covering, Reason = "noengine" };
             }
 
-            return new LocomotiveSighting { Present = true, ConvoyHead = head, Locomotive = locomotive, Standing = still };
+            return new LocomotiveSighting { Present = true, ConvoyHead = head, Locomotive = locomotive, Standing = still, Vehicles = covering };
         }
 
         /// <summary>

@@ -4,6 +4,14 @@
  "entityclass": "BlockEntitySignalman",
  "variantgroups": [
   {
+   "code": "mode",
+   "states": [
+    "both",
+    "right",
+    "left"
+   ]
+  },
+  {
    "code": "orientation",
    "states": [
     "north",
@@ -20,16 +28,16 @@
   }
  ],
  "attributes": {
-  "signalPins": 2,
+  "signalPins": 3,
   "reinforcable": true,
   "signalNodes": [
    {
     "index": 0,
     "name": "con-input",
-    "x1": 0.5625,
+    "x1": 0.6875,
     "y1": 0.078125,
     "z1": 0.71875,
-    "x2": 0.6875,
+    "x2": 0.8125,
     "y2": 0.328125,
     "z2": 0.84375,
     "rotateYbytype": {
@@ -41,10 +49,25 @@
    {
     "index": 1,
     "name": "con-output",
-    "x1": 0.3125,
+    "x1": 0.4375,
     "y1": 0.078125,
     "z1": 0.71875,
-    "x2": 0.4375,
+    "x2": 0.5625,
+    "y2": 0.328125,
+    "z2": 0.84375,
+    "rotateYbytype": {
+     "*-east-down": 270,
+     "*-south-down": 180,
+     "*-west-down": 90
+    }
+   },
+   {
+    "index": 2,
+    "name": "con-players",
+    "x1": 0.1875,
+    "y1": 0.078125,
+    "z1": 0.71875,
+    "x2": 0.3125,
     "y2": 0.328125,
     "z2": 0.84375,
     "rotateYbytype": {
@@ -84,11 +107,33 @@
       "index": 1,
       "isSource": true,
       "output": 0
+     },
+     {
+      "index": 2,
+      "isSource": true,
+      "output": 0
      }
     ]
    }
   }
  ],
+ "texturesByType": {
+  "*-both-*": {
+   "lid": {
+    "base": "block/signalman-lid-both"
+   }
+  },
+  "*-right-*": {
+   "lid": {
+    "base": "block/signalman-lid-right"
+   }
+  },
+  "*-left-*": {
+   "lid": {
+    "base": "block/signalman-lid-left"
+   }
+  }
+ },
  "shapeByType": {
   "*-north-down": {
    "base": "block/signalman"
@@ -109,10 +154,10 @@
  "blockmaterial": "Metal",
  "creativeinventory": {
   "general": [
-   "*-north-down"
+   "*-both-north-down"
   ],
   "signalslink": [
-   "*-north-down"
+   "*-both-north-down"
   ]
  },
  "drawtype": "json",

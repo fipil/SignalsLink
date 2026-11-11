@@ -8,5 +8,5 @@
 	},
 	"width": 3,
 	"height": 3,
-	"output": { "type": "block", "code": "signalslinkytt:signalman-north-down", "quantity": 1 }
+	"output": { "type": "block", "code": "signalslinkytt:signalman-both-north-down", "quantity": 1 }
 }

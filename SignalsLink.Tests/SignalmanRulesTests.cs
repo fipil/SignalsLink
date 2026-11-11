@@ -76,6 +76,113 @@ namespace SignalsLink.Tests
             Assert.True(memory.ShouldApply(41, 7));
         }
 
+
+        // ---------------------------------------------------------------- the mode
+
+        [Fact]
+        public void The_wrench_cycles_both_right_left()
+        {
+            Assert.Equal(SignalmanMode.Right, SignalmanRules.NextMode(SignalmanMode.Both));
+            Assert.Equal(SignalmanMode.Left, SignalmanRules.NextMode(SignalmanMode.Right));
+            Assert.Equal(SignalmanMode.Both, SignalmanRules.NextMode(SignalmanMode.Left));
+        }
+
+        [Fact]
+        public void A_mode_variant_reads_back_as_itself()
+        {
+            foreach (SignalmanMode mode in new[] { SignalmanMode.Both, SignalmanMode.Right, SignalmanMode.Left })
+            {
+                Assert.Equal(mode, SignalmanRules.ModeFor(SignalmanRules.VariantOf(mode)));
+            }
+
+            Assert.Equal(SignalmanMode.Both, SignalmanRules.ModeFor(null));
+        }
+
+        [Theory]
+        [InlineData(SignalmanMode.Both, TravelDirection.Right, true)]
+        [InlineData(SignalmanMode.Both, TravelDirection.Left, true)]
+        [InlineData(SignalmanMode.Both, TravelDirection.Unknown, true)]
+        [InlineData(SignalmanMode.Right, TravelDirection.Right, true)]
+        [InlineData(SignalmanMode.Right, TravelDirection.Left, false)]
+        [InlineData(SignalmanMode.Right, TravelDirection.Unknown, false)]
+        [InlineData(SignalmanMode.Left, TravelDirection.Left, true)]
+        [InlineData(SignalmanMode.Left, TravelDirection.Right, false)]
+        [InlineData(SignalmanMode.Left, TravelDirection.Unknown, false)]
+        public void A_one_way_mode_takes_only_trains_it_can_place(SignalmanMode mode, TravelDirection direction, bool expected)
+        {
+            Assert.Equal(expected, SignalmanRules.ModeMatches(mode, direction));
+        }
+
+        [Fact]
+        public void A_centimetre_is_not_a_direction()
+        {
+            Assert.Equal(TravelDirection.Unknown, SignalmanRules.DirectionOf(0.005));
+            Assert.Equal(TravelDirection.Right, SignalmanRules.DirectionOf(0.3));
+            Assert.Equal(TravelDirection.Left, SignalmanRules.DirectionOf(-0.3));
+        }
+
+        [Fact]
+        public void The_players_pin_stops_at_fifteen()
+        {
+            Assert.Equal(0, SignalmanRules.PlayersOutput(0));
+            Assert.Equal(3, SignalmanRules.PlayersOutput(3));
+            Assert.Equal(15, SignalmanRules.PlayersOutput(40));
+        }
+
+        // ---------------------------------------------------------------- which way it went
+
+        [Fact]
+        public void A_train_seen_moving_keeps_its_direction_while_it_stands()
+        {
+            TravelDirections directions = new TravelDirections();
+
+            Assert.Equal(TravelDirection.Unknown, directions.Observe(7, new[] { (1L, 10.0) }, 0));
+            Assert.Equal(TravelDirection.Right, directions.Observe(7, new[] { (1L, 11.0) }, 250));
+            Assert.Equal(TravelDirection.Right, directions.Observe(7, new[] { (1L, 11.0) }, 500));
+            Assert.Equal(TravelDirection.Right, directions.Observe(7, new[] { (1L, 11.0) }, 750));
+        }
+
+        [Fact]
+        public void A_train_first_seen_standing_has_no_direction()
+        {
+            TravelDirections directions = new TravelDirections();
+
+            directions.Observe(7, new[] { (1L, 10.0) }, 0);
+            Assert.Equal(TravelDirection.Unknown, directions.Observe(7, new[] { (1L, 10.0) }, 250));
+        }
+
+        [Fact]
+        public void Reversing_changes_the_direction()
+        {
+            TravelDirections directions = new TravelDirections();
+
+            directions.Observe(7, new[] { (1L, 10.0) }, 0);
+            directions.Observe(7, new[] { (1L, 11.0) }, 250);
+            Assert.Equal(TravelDirection.Left, directions.Observe(7, new[] { (1L, 10.5) }, 500));
+        }
+
+        [Fact]
+        public void A_train_gone_long_enough_is_forgotten()
+        {
+            TravelDirections directions = new TravelDirections();
+
+            directions.Observe(7, new[] { (1L, 10.0) }, 0);
+            directions.Observe(7, new[] { (1L, 11.0) }, 250);
+            directions.Forget(250 + TravelDirections.MemoryMs);
+
+            Assert.Equal(TravelDirection.Unknown, directions.Observe(7, new[] { (1L, 11.0) }, 250 + TravelDirections.MemoryMs));
+        }
+
+        [Fact]
+        public void Two_looks_in_the_same_tick_do_not_count_as_movement()
+        {
+            TravelDirections directions = new TravelDirections();
+
+            directions.Observe(7, new[] { (1L, 10.0) }, 0);
+            directions.Observe(7, new[] { (1L, 11.0) }, 250);
+            Assert.Equal(TravelDirection.Right, directions.Observe(7, new[] { (1L, 9.0) }, 250));
+        }
+
         // ---------------------------------------------------------------- the probe
 
         private sealed class ConfigLikeToday

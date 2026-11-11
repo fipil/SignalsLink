@@ -17,9 +17,35 @@ namespace SignalsLink.YTT.src.signalman
 
         private ItemStack Idle(IWorldAccessor world)
         {
-            Block idle = world.GetBlock(CodeWithVariants(new[] { "orientation", "side" }, new[] { "north", "down" }));
+            Block idle = world.GetBlock(CodeWithVariants(
+                new[] { "mode", "orientation", "side" }, new[] { "both", "north", "down" }));
 
             return new ItemStack(idle ?? this);
+        }
+
+        private static bool IsWrench(ItemSlot slot)
+        {
+            AssetLocation code = slot?.Itemstack?.Collectible?.Code;
+
+            return code != null && code.Path.StartsWith("wrench", System.StringComparison.Ordinal);
+        }
+
+        /// <summary>A pin is a wire; a wrench turns the mode. The block gets the click before the item in hand.</summary>
+        public override bool OnBlockInteractStart(IWorldAccessor world, IPlayer byPlayer, BlockSelection blockSel)
+        {
+            if (blockSel?.Position == null || blockSel.SelectionBoxIndex < PinBoxes)
+            {
+                return base.OnBlockInteractStart(world, byPlayer, blockSel);
+            }
+
+            if (IsWrench(byPlayer?.InventoryManager?.ActiveHotbarSlot)
+                && world.BlockAccessor.GetBlockEntity(blockSel.Position) is BESignalman signalman)
+            {
+                if (world.Side == EnumAppSide.Server) signalman.CycleMode();
+                return true;
+            }
+
+            return base.OnBlockInteractStart(world, byPlayer, blockSel);
         }
 
         /// <summary>
