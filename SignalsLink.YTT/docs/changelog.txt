@@ -1,0 +1,10 @@
+1.1.0
+Tweak: New block Stoker: lights and puts out the boiler of a standing locomotive on signal (Input 0/1/2), Output says whether it burns. Reach set with a wrench. See the handbook.
+Tweak: New block Signalman: reports the train on the rail in front of it (none/moving/standing) and the players aboard; Input sets the locomotive's power (1-10) or whistles (15). Wrench cycles the direction mode. See the handbook.
+Tweak: New item Train Taxi Ticket: orders a conductor-driven train to a reachable station and brings it back to its timetable afterwards. See the handbook.
+Tweak: The ticket used off a train calls the nearest fit train (conductor, passenger car, nobody aboard, fuel; loaded or off-screen) to a station within 30 blocks; limit TaxiSummonMaxBlocks in signalslink.json. See the handbook.
+Tweak: The new blocks show a ghost preview and turn by where you aim when placing.
+Tweak: The startup log says which of the new abilities this version of Yang's Transport Tycoon allows; each stands down on its own.
+
+1.0.0 - published 2026-09-21
+First release: the Freight Dock loads and unloads trains, the Chunk Anchor wakes when a train approaches.

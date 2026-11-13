@@ -40,6 +40,33 @@ namespace SignalsLink.YTT.src.taxi
         [ProtoMember(4)] public bool Wait;
     }
 
+    /// <summary>Server to client: the ticket was used off a train; here is the station to summon to.</summary>
+    [ProtoContract]
+    public sealed class TaxiSummonOfferPacket
+    {
+        [ProtoMember(1)] public string StationName = "";
+        [ProtoMember(2)] public long Hash;
+        [ProtoMember(3)] public int Dimension;
+        [ProtoMember(4)] public int Gauge;
+
+        /// <summary>A summon of this player's is already under way.</summary>
+        [ProtoMember(5)] public bool HasSummon;
+
+        /// <summary>A lang key suffix when nothing can be summoned here; empty otherwise.</summary>
+        [ProtoMember(6)] public string Error = "";
+    }
+
+    /// <summary>Client to server: call a train to that station, or call the summon off.</summary>
+    [ProtoContract]
+    public sealed class TaxiSummonPacket
+    {
+        [ProtoMember(1)] public long Hash;
+        [ProtoMember(2)] public int Dimension;
+        [ProtoMember(3)] public int Gauge;
+        [ProtoMember(4)] public bool WaitForMe;
+        [ProtoMember(5)] public bool Cancel;
+    }
+
     /// <summary>Client to server: stop here (and wait, or not).</summary>
     [ProtoContract]
     public sealed class TaxiStopPacket

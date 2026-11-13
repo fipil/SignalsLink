@@ -5,18 +5,25 @@ using Vintagestory.API.Config;
 namespace SignalsLink.YTT.src.taxi
 {
     /// <summary>
-    /// The ticket's dialog: a switch to wait at the destination, the stations to pick from in
-    /// alphabetical order, and a button to go; during a ride two more, to stop here with or
+    /// The ticket's dialog: a switch to wait at the destination, the stations as a scrolling list
+    /// in alphabetical order, and a button to go; during a ride two more, to stop here with or
     /// without waiting. Escape or the cross closes it and nothing happens.
     /// </summary>
     public class GuiDialogTrainTicket : GuiDialog
     {
+        private const int Pad = 12;
+        private const int Width = 460;
+        private const int RowHeight = 28;
+        private const int VisibleRows = 10;
+        private const int ScrollbarWidth = 20;
+
         private readonly Action<TaxiOrderPacket> order;
         private readonly Action<TaxiStopPacket> stop;
 
         private TaxiStationsPacket data = new TaxiStationsPacket();
-        private int selected;
+        private int selected = -1;
         private bool wait;
+        private ElementBounds rows;
 
         public GuiDialogTrainTicket(ICoreClientAPI capi, Action<TaxiOrderPacket> order, Action<TaxiStopPacket> stop) : base(capi)
         {
@@ -31,7 +38,8 @@ namespace SignalsLink.YTT.src.taxi
         {
             data = packet ?? new TaxiStationsPacket();
             wait = data.ActiveWait;
-            selected = Math.Max(0, Array.IndexOf(data.Hashes, data.ActiveHash));
+            selected = data.HasRide ? Array.IndexOf(data.Hashes, data.ActiveHash) : -1;
+            scroll = -1;
 
             Compose();
             if (!IsOpened()) TryOpen();
@@ -39,38 +47,29 @@ namespace SignalsLink.YTT.src.taxi
 
         private void Compose()
         {
-            const int Pad = 12;
-            const int Width = 440;
             int top = 40;
+            int listWidth = Width - 2 * Pad - ScrollbarWidth - 4;
+            int listHeight = RowHeight * VisibleRows;
+            int count = Math.Max(1, data.Names.Length);
+            int contentHeight = Math.Max(listHeight, RowHeight * count);
 
             ElementBounds status = ElementBounds.Fixed(Pad, top, Width - 2 * Pad, 44);
             ElementBounds switchBounds = ElementBounds.Fixed(Pad, top + 54, 30, 22);
             ElementBounds switchLabel = ElementBounds.Fixed(Pad + 38, top + 57, Width - 2 * Pad - 38, 24);
             ElementBounds listLabel = ElementBounds.Fixed(Pad, top + 92, Width - 2 * Pad, 24);
-            ElementBounds list = ElementBounds.Fixed(Pad, top + 118, Width - 2 * Pad, 30);
-            ElementBounds go = ElementBounds.Fixed(Pad, top + 166, 120, 30);
-            ElementBounds stopHere = ElementBounds.Fixed(Pad + 130, top + 166, 130, 30);
-            ElementBounds stopWait = ElementBounds.Fixed(Pad + 270, top + 166, 146, 30);
-            ElementBounds inner = ElementBounds.Fixed(0, 0, Width, top + 210);
+            ElementBounds clip = ElementBounds.Fixed(Pad, top + 118, listWidth, listHeight);
+            ElementBounds scrollbar = ElementBounds.Fixed(Pad + listWidth + 4, top + 118, ScrollbarWidth, listHeight);
+            int buttons = top + 118 + listHeight + 16;
+            ElementBounds go = ElementBounds.Fixed(Pad, buttons, 120, 30);
+            ElementBounds stopHere = ElementBounds.Fixed(Pad + 130, buttons, 130, 30);
+            ElementBounds stopWait = ElementBounds.Fixed(Pad + 270, buttons, 166, 30);
+            ElementBounds inner = ElementBounds.Fixed(0, 0, Width, buttons + 44);
 
             ElementBounds outer = ElementStdBounds.AutosizedMainDialog.WithAlignment(EnumDialogArea.CenterMiddle);
             outer.BothSizing = ElementSizing.FitToChildren;
             outer.WithChildren(inner);
 
-            string[] values = new string[Math.Max(1, data.Names.Length)];
-            string[] names = new string[values.Length];
-
-            if (data.Names.Length == 0)
-            {
-                values[0] = "";
-                names[0] = Lang.Get("signalslinkytt:ticket-nostations");
-            }
-
-            for (int i = 0; i < data.Names.Length; i++)
-            {
-                values[i] = data.Hashes[i] + ":" + data.Dimensions[i];
-                names[i] = data.Names[i];
-            }
+            rows = ElementBounds.Fixed(0, 0, listWidth, contentHeight);
 
             GuiComposer composer = capi.Gui.CreateCompo("signalslinkytt-ticket", outer)
                 .AddShadedDialogBG(inner)
@@ -80,7 +79,37 @@ namespace SignalsLink.YTT.src.taxi
                     .AddSwitch(v => wait = v, switchBounds, "wait")
                     .AddStaticText(Lang.Get("signalslinkytt:ticket-wait"), CairoFont.WhiteSmallText(), switchLabel)
                     .AddStaticText(Lang.Get("signalslinkytt:ticket-pick"), CairoFont.WhiteSmallText(), listLabel)
-                    .AddDropDown(values, names, Math.Min(selected, values.Length - 1), (code, _) => selected = Math.Max(0, Array.IndexOf(values, code)), list, "stations")
+                    .AddInset(clip, 3)
+                    .BeginClip(clip)
+                        .BeginChildElements(rows);
+
+            if (data.Names.Length == 0)
+            {
+                composer.AddStaticText(Lang.Get("signalslinkytt:ticket-nostations"), CairoFont.WhiteSmallText(),
+                    ElementBounds.Fixed(6, 4, listWidth - 12, RowHeight));
+            }
+
+            // A plain list, not a column of buttons: left-aligned text, a stripe behind the chosen
+            // row, and an invisible button over each row to take the click.
+            CairoFont plain = CairoFont.WhiteSmallText();
+
+            for (int i = 0; i < data.Names.Length; i++)
+            {
+                int index = i;
+                ElementBounds row = ElementBounds.Fixed(0, i * RowHeight, listWidth, RowHeight);
+
+                if (i == selected) composer.AddRowHighlight(ElementBounds.Fixed(0, i * RowHeight, listWidth, RowHeight));
+
+                composer
+                    .AddStaticText(data.Names[i], plain, EnumTextOrientation.Left,
+                        ElementBounds.Fixed(8, i * RowHeight + 5, listWidth - 16, RowHeight))
+                    .AddSmallButton("", () => Select(index), row, EnumButtonStyle.None, EnumTextOrientation.Left, "row" + i);
+            }
+
+            composer
+                        .EndChildElements()
+                    .EndClip()
+                    .AddVerticalScrollbar(OnScroll, scrollbar, "scrollbar")
                     .AddSmallButton(Lang.Get("signalslinkytt:ticket-go"), OnGo, go);
 
             if (data.HasRide)
@@ -91,7 +120,41 @@ namespace SignalsLink.YTT.src.taxi
             }
 
             SingleComposer = composer.EndChildElements().Compose();
+
             SingleComposer.GetSwitch("wait").SetValue(wait);
+            SingleComposer.GetScrollbar("scrollbar").SetHeights(listHeight, contentHeight);
+
+            // Back where the list was, or to the current destination when it would be out of view.
+            float scrollTo = scroll;
+            if (scrollTo < 0 && selected > VisibleRows - 1) scrollTo = (selected - VisibleRows / 2) * RowHeight;
+
+            if (scrollTo > 0)
+            {
+                float value = Math.Min(Math.Max(0, contentHeight - listHeight), scrollTo);
+                SingleComposer.GetScrollbar("scrollbar").CurrentYPosition = value;
+                OnScroll(value);
+            }
+        }
+
+        /// <summary>Negative until the list has been scrolled: then the first compose picks the place.</summary>
+        private float scroll = -1;
+
+        /// <summary>A click on a row: remember it and redraw the list with that row highlighted.</summary>
+        private bool Select(int index)
+        {
+            selected = index;
+            scroll = SingleComposer?.GetScrollbar("scrollbar")?.CurrentYPosition ?? 0;
+            Compose();
+            return true;
+        }
+
+        private void OnScroll(float value)
+        {
+            if (rows == null) return;
+
+            scroll = value;
+            rows.fixedY = -value;
+            rows.CalcWorldBounds();
         }
 
         private string StatusText()
@@ -108,7 +171,7 @@ namespace SignalsLink.YTT.src.taxi
 
         private bool OnGo()
         {
-            if (data.Names.Length == 0 || selected < 0 || selected >= data.Hashes.Length) return true;
+            if (selected < 0 || selected >= data.Hashes.Length) return true;
 
             order?.Invoke(new TaxiOrderPacket
             {

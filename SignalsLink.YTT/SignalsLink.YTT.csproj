@@ -12,6 +12,10 @@
     than crashed into. See manageddock-design.md.
   -->
   <ItemGroup>
+    <Reference Include="cairo-sharp">
+      <HintPath>..\..\..\..\..\VintageStory\1.22\Lib\cairo-sharp.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="Newtonsoft.Json">
       <HintPath>..\..\..\..\..\VintageStory\1.22\Lib\Newtonsoft.Json.dll</HintPath>
     </Reference>

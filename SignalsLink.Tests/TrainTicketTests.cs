@@ -154,6 +154,52 @@ namespace SignalsLink.Tests
         }
 
         [Fact]
+        public void Only_a_train_on_its_way_back_is_free_to_be_called_again()
+        {
+            foreach (TaxiPhase phase in System.Enum.GetValues<TaxiPhase>())
+            {
+                Assert.Equal(phase == TaxiPhase.Returning, new TaxiJob { Phase = phase }.Free);
+            }
+        }
+
+        [Fact]
+        public void A_called_again_train_keeps_what_it_set_aside_and_forgets_the_rest()
+        {
+            TaxiJob job = new TaxiJob
+            {
+                Phase = TaxiPhase.Returning, Wait = true, Stopping = true, SavedBurning = false,
+                SavedTimetable = ConductorTimetable(2).GetTreeAttribute(Timetable.Key).Clone() as ITreeAttribute,
+                ReturnName = "Yard", OriginX = 7, HolderLeftAtMs = 5000, StuckSinceMs = 7, StuckReported = true, PickupAtMs = 9,
+            };
+
+            job.Reuse();
+
+            Assert.Equal(2, job.SavedTimetable.GetInt("count"));
+            Assert.False(job.SavedBurning);
+            Assert.Equal("Yard", job.ReturnName);
+            Assert.Equal(7, job.OriginX);
+            Assert.False(job.Wait);
+            Assert.False(job.Stopping);
+            Assert.Equal(-1, job.HolderLeftAtMs);
+            Assert.Equal(0, job.StuckSinceMs);
+            Assert.False(job.StuckReported);
+            Assert.Equal(0, job.PickupAtMs);
+        }
+
+        [Fact]
+        public void The_way_back_holds_a_second_less_so_it_reads_as_free()
+        {
+            TreeAttribute attributes = new TreeAttribute();
+            StationInfo stop = Station("Yard", 1);
+
+            Timetable.WriteSingle(attributes, stop);
+            Assert.Equal(Timetable.HoldSeconds, attributes.GetTreeAttribute(Timetable.Key).GetTreeAttribute("entry0").GetInt("timeElapsedSeconds"));
+
+            Timetable.WriteSingle(attributes, stop, Timetable.ReturnHoldSeconds);
+            Assert.Equal(Timetable.HoldSeconds - 1, attributes.GetTreeAttribute(Timetable.Key).GetTreeAttribute("entry0").GetInt("timeElapsedSeconds"));
+        }
+
+        [Fact]
         public void A_ride_with_no_timetable_before_has_none_to_restore()
         {
             TaxiJob job = new TaxiJob { SavedTimetable = null };

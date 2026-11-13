@@ -110,6 +110,30 @@ namespace SignalsLink.YTT.src.probe
 
         public bool CanResolveTarget => StationKeyZProperty != null;
 
+        // -------------------------------------------------------------- virtual trains (summoning)
+
+        /// <summary>
+        /// True when the vehicles of a virtual convoy can be read: what they are, whether a
+        /// conductor rides, how much fuel is left. Optional, out of the fingerprint: without it
+        /// the ticket summons loaded trains only.
+        /// </summary>
+        public bool CanReadVirtualTrains { get; private set; }
+
+        public FieldInfo ConvoyHeadKeyField { get; private set; }
+        public FieldInfo ConvoyOrphanedField { get; private set; }
+        public FieldInfo ConvoyVehiclesField { get; private set; }
+        public FieldInfo SnapshotEntityIdField { get; private set; }
+        public FieldInfo SnapshotCodeField { get; private set; }
+        public FieldInfo SnapshotGaugeField { get; private set; }
+        public FieldInfo SnapshotConductorField { get; private set; }
+        public FieldInfo SnapshotEngineField { get; private set; }
+        public FieldInfo SnapshotFuelSecondsField { get; private set; }
+        public FieldInfo SnapshotWaterSecondsField { get; private set; }
+        public FieldInfo SnapshotSpeedField { get; private set; }
+
+        /// <summary>TimetableRouteEntryPacket.TimeElapsedSeconds, to tell a taxi timetable apart.</summary>
+        public FieldInfo RouteHoldSecondsField { get; private set; }
+
         // -------------------------------------------------------------- the stoker
 
         /// <summary>
@@ -342,6 +366,46 @@ namespace SignalsLink.YTT.src.probe
             CanWatchApproach = true;
 
             LookAtResolvedTarget(automation);
+            LookAtVirtualVehicles(convoy, stop);
+        }
+
+        /// <summary>The vehicles of a virtual convoy, for summoning. Out of the fingerprint.</summary>
+        private void LookAtVirtualVehicles(Type convoy, Type routeEntry)
+        {
+            try
+            {
+                ConvoyHeadKeyField = FieldOf(convoy, "HeadKey", typeof(long));
+                ConvoyOrphanedField = FieldOf(convoy, "Orphaned", typeof(bool));
+                ConvoyVehiclesField = convoy.GetField("Vehicles", Anywhere);
+                RouteHoldSecondsField = FieldOf(routeEntry, "TimeElapsedSeconds", typeof(int));
+
+                if (ConvoyHeadKeyField == null || ConvoyOrphanedField == null || RouteHoldSecondsField == null
+                    || ConvoyVehiclesField == null || !IsList(ConvoyVehiclesField.FieldType)) return;
+
+                Type snapshot = ConvoyVehiclesField.FieldType.GetGenericArguments()[0];
+                SnapshotEntityIdField = FieldOf(snapshot, "EntityID", typeof(long));
+                SnapshotCodeField = FieldOf(snapshot, "Code", typeof(string));
+                SnapshotGaugeField = FieldOf(snapshot, "Gauge", typeof(byte));
+                SnapshotConductorField = FieldOf(snapshot, "HasConductorLocust", typeof(bool));
+                SnapshotEngineField = FieldOf(snapshot, "HasTractionEngine", typeof(bool));
+                SnapshotFuelSecondsField = FieldOf(snapshot, "FuelSeconds", typeof(double));
+                SnapshotWaterSecondsField = FieldOf(snapshot, "WaterSeconds", typeof(double));
+                SnapshotSpeedField = FieldOf(snapshot, "DriveSpeedPotentialBPS", typeof(double));
+
+                CanReadVirtualTrains = SnapshotEntityIdField != null && SnapshotCodeField != null && SnapshotGaugeField != null
+                    && SnapshotConductorField != null && SnapshotEngineField != null && SnapshotFuelSecondsField != null
+                    && SnapshotWaterSecondsField != null && SnapshotSpeedField != null;
+            }
+            catch (Exception)
+            {
+                CanReadVirtualTrains = false;
+            }
+        }
+
+        private static FieldInfo FieldOf(Type type, string name, Type expected)
+        {
+            FieldInfo found = type?.GetField(name, Anywhere);
+            return found != null && found.FieldType == expected ? found : null;
         }
 
         private void LookAtResolvedTarget(Type automation)

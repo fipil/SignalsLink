@@ -32,11 +32,14 @@ namespace SignalsLink.YTT.src.taxi
         /// <summary>A whole day: the single stop of a taxi ride is never "done with".</summary>
         public const int HoldSeconds = 24 * 60 * 60;
 
+        /// <summary>A second less on the way back, so an off-screen train on its return reads as free.</summary>
+        public const int ReturnHoldSeconds = HoldSeconds - 1;
+
         public static ITreeAttribute Snapshot(Entity locomotive) => Snapshot(locomotive?.Attributes);
 
         public static bool HasRoute(Entity locomotive) => Count(locomotive?.Attributes) > 0;
 
-        public static void WriteSingle(Entity locomotive, StationInfo stop) => WriteSingle(locomotive.Attributes, stop);
+        public static void WriteSingle(Entity locomotive, StationInfo stop, int holdSeconds = HoldSeconds) => WriteSingle(locomotive.Attributes, stop, holdSeconds);
 
         public static void Clear(Entity locomotive) => Clear(locomotive.Attributes);
 
@@ -70,7 +73,7 @@ namespace SignalsLink.YTT.src.taxi
         }
 
         /// <summary>A timetable of one stop: there, and stay. The conductor notices the serial.</summary>
-        public static void WriteSingle(ITreeAttribute attributes, StationInfo stop)
+        public static void WriteSingle(ITreeAttribute attributes, StationInfo stop, int holdSeconds = HoldSeconds)
         {
             ITreeAttribute root = attributes.GetOrAddTreeAttribute(Key);
             int oldCount = root.GetInt("count", 0);
@@ -86,7 +89,7 @@ namespace SignalsLink.YTT.src.taxi
             entry.SetInt("y", stop.Y);
             entry.SetInt("z", stop.Z);
             entry.SetInt("dim", stop.Dimension);
-            entry.SetInt("timeElapsedSeconds", HoldSeconds);
+            entry.SetInt("timeElapsedSeconds", holdSeconds);
             entry.SetInt("mileageLeftMinutes", 0);
             entry.SetBool("announceOnArrival", true);
             entry.SetBool("announceOnDeparture", false);

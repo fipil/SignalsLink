@@ -13,6 +13,15 @@ namespace SignalsLink.YTT.src.taxi
 
         /// <summary>Taking the train back to where the ride began.</summary>
         Returning = 3,
+
+        /// <summary>Called by a ticket off the train: on its way to the pickup station.</summary>
+        Summoned = 4,
+
+        /// <summary>At the pickup station, waiting for the one who called.</summary>
+        AtPickup = 5,
+
+        /// <summary>The caller is aboard; waiting for a destination from the ticket.</summary>
+        AwaitingDestination = 6,
     }
 
     /// <summary>
@@ -56,7 +65,34 @@ namespace SignalsLink.YTT.src.taxi
         public long StuckSinceMs;
         public bool StuckReported;
 
+        /// <summary>Summoning: the train waits at the pickup until the caller boards, however long.</summary>
+        public bool WaitForMe;
+
+        /// <summary>World clock when the summoned train reached the pickup; 0 before.</summary>
+        public long PickupAtMs;
+
         public bool HasReturnStation => !string.IsNullOrEmpty(ReturnName);
+
+        /// <summary>Nobody is served any more: on its way back the train may be called again.</summary>
+        public bool Free => Phase == TaxiPhase.Returning;
+
+        /// <summary>A job of a train that is free, or null: the train has none or is still serving.</summary>
+        public static TaxiJob LoadFree(Entity locomotive)
+        {
+            TaxiJob job = Load(locomotive);
+            return job != null && job.Free ? job : null;
+        }
+
+        /// <summary>Called again: what was set aside stays set aside, the rest starts afresh.</summary>
+        public void Reuse()
+        {
+            Wait = false;
+            Stopping = false;
+            HolderLeftAtMs = -1;
+            StuckSinceMs = 0;
+            StuckReported = false;
+            PickupAtMs = 0;
+        }
 
         public static bool Exists(Entity locomotive) => locomotive?.Attributes?.HasAttribute(Key) == true;
 
@@ -102,6 +138,8 @@ namespace SignalsLink.YTT.src.taxi
                 HolderLeftAtMs = tree.GetLong("holderLeftAt", -1),
                 StuckSinceMs = tree.GetLong("stuckSince"),
                 StuckReported = tree.GetBool("stuckReported"),
+                WaitForMe = tree.GetBool("waitForMe"),
+                PickupAtMs = tree.GetLong("pickupAt"),
             };
 
             return job;
@@ -133,6 +171,8 @@ namespace SignalsLink.YTT.src.taxi
             tree.SetLong("holderLeftAt", HolderLeftAtMs);
             tree.SetLong("stuckSince", StuckSinceMs);
             tree.SetBool("stuckReported", StuckReported);
+            tree.SetBool("waitForMe", WaitForMe);
+            tree.SetLong("pickupAt", PickupAtMs);
         }
 
         public StationInfo ReturnStation()

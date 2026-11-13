@@ -15,7 +15,7 @@ using Vintagestory.API.Config;
 [assembly: ModInfo("Signals Link YTT", "signalslinkytt",
     Description = "Lets the Signals Link freight dock load and unload the trains of Yang's Transport Tycoon.",
     Website = "",
-    Version = "1.0.0",
+    Version = "1.1.0",
     Authors = new[] { "fipil" }
 )]
 
@@ -89,7 +89,26 @@ namespace SignalsLink.YTT.src
                 .RegisterMessageType<TaxiStationsPacket>()
                 .RegisterMessageType<TaxiOrderPacket>()
                 .RegisterMessageType<TaxiStopPacket>()
-                .SetMessageHandler<TaxiStationsPacket>(packet => OnTaxiStations(api, packet));
+                .RegisterMessageType<TaxiSummonOfferPacket>()
+                .RegisterMessageType<TaxiSummonPacket>()
+                .SetMessageHandler<TaxiStationsPacket>(packet => OnTaxiStations(api, packet))
+                .SetMessageHandler<TaxiSummonOfferPacket>(packet => OnSummonOffer(api, packet));
+        }
+
+        private GuiDialogSummonTrain summonDialog;
+
+        private void OnSummonOffer(ICoreClientAPI api, TaxiSummonOfferPacket packet)
+        {
+            if (packet == null) return;
+
+            if (!string.IsNullOrEmpty(packet.Error))
+            {
+                api.TriggerIngameError(this, "ticket-" + packet.Error, Lang.Get("signalslinkytt:ticket-error-" + packet.Error));
+                return;
+            }
+
+            summonDialog ??= new GuiDialogSummonTrain(api, summon => taxiClient?.SendPacket(summon));
+            summonDialog.Show(packet);
         }
 
         /// <summary>The ticket was used on this client: ask the server what this train can do.</summary>
@@ -148,13 +167,16 @@ namespace SignalsLink.YTT.src
                 .RegisterMessageType<TaxiOpenRequest>()
                 .RegisterMessageType<TaxiStationsPacket>()
                 .RegisterMessageType<TaxiOrderPacket>()
-                .RegisterMessageType<TaxiStopPacket>();
+                .RegisterMessageType<TaxiStopPacket>()
+                .RegisterMessageType<TaxiSummonOfferPacket>()
+                .RegisterMessageType<TaxiSummonPacket>();
 
-            taxi = new TaxiDispatcher(api, Fire, Stations, taxiServer);
+            taxi = new TaxiDispatcher(api, Fire, Stations, new VirtualTrains(Surface, api.Logger), taxiServer);
             taxiServer
                 .SetMessageHandler<TaxiOpenRequest>(taxi.Open)
                 .SetMessageHandler<TaxiOrderPacket>(taxi.Order)
-                .SetMessageHandler<TaxiStopPacket>(taxi.StopHere);
+                .SetMessageHandler<TaxiStopPacket>(taxi.StopHere)
+                .SetMessageHandler<TaxiSummonPacket>(taxi.SummonTrain);
             taxi.Start();
 
             // Independent of cargo: seeing a train coming needs the simulation, not the wagons.
@@ -189,6 +211,7 @@ namespace SignalsLink.YTT.src
             approach?.Stop();
             taxi?.Stop();
             ticketDialog?.TryClose();
+            summonDialog?.TryClose();
             base.Dispose();
         }
 

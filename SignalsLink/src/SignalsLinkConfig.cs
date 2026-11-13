@@ -77,6 +77,14 @@ namespace SignalsLink.src
 
         public int AnchorApproachBlocks = 160;
 
+        [JsonProperty("TaxiSummonMaxBlocks-description")]
+        public string TaxiSummonMaxBlocksDescription =
+            "How far away, in blocks measured flat, a train may be for a train taxi ticket to summon "
+            + "it to a station (Signals Link YTT bridge). Keeps a ticket from calling a train from the "
+            + "other side of the world. 0 means no limit.";
+
+        public int TaxiSummonMaxBlocks = 2000;
+
         [JsonProperty("AnchorsEnabled-description")]
         public string AnchorsEnabledDescription =
             "Set to false to switch chunk anchors off on this server altogether. Placed anchors "
@@ -104,6 +112,7 @@ namespace SignalsLink.src
             if (AnchorColumnWeight < 0) { AnchorColumnWeight = 5; valid = false; }
             if (AnchorMaxColumns < 0) { AnchorMaxColumns = 64; valid = false; }
             if (AnchorApproachBlocks < 0) { AnchorApproachBlocks = 160; valid = false; }
+            if (TaxiSummonMaxBlocks < 0) { TaxiSummonMaxBlocks = 2000; valid = false; }
             return valid;
         }
     }
