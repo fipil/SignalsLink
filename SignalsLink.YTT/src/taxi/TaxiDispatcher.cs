@@ -336,6 +336,7 @@ namespace SignalsLink.YTT.src.taxi
 
             int limit = SignalsLink.src.SignalsLinkConfigLoader.Current?.TaxiSummonMaxBlocks ?? 2000;
             List<TrainCandidate> picked = SummonRules.Pick(candidates, station.X + 0.5, station.Z + 0.5, station.Dimension, station.Gauge, limit);
+            LogCandidates(station, candidates, picked);
 
             if (picked.Count == 0) { Message(player, "summon-none"); return; }
 
@@ -344,6 +345,22 @@ namespace SignalsLink.YTT.src.taxi
             summons[player.PlayerUID] = summon;
 
             TryNext(summon);
+        }
+
+        /// <summary>One debug line per train seen, so a "no suitable train" can be explained from the log.</summary>
+        private void LogCandidates(StationInfo station, List<TrainCandidate> candidates, List<TrainCandidate> picked)
+        {
+            api.Logger.Debug("[SignalsLink.YTT] taxi summon to {0} at {1},{2} (dim {3}, gauge {4}): {5} trains seen, {6} fit",
+                station.Name, station.X, station.Z, station.Dimension, station.Gauge, candidates.Count, picked.Count);
+
+            foreach (TrainCandidate train in candidates)
+            {
+                api.Logger.Debug("[SignalsLink.YTT]   head {0} {1} at {2:F0},{3:F0} dim {4} gauge {5} dist {6:F0}: car {7} conductor {8} engine {9} players {10} ride {11} stocked {12} -> {13}",
+                    train.Head, train.Virtual ? "virtual" : "loaded", train.X, train.Z, train.Dimension, train.Gauge,
+                    SummonRules.Distance(train.X, train.Z, station.X + 0.5, station.Z + 0.5),
+                    train.HasPassengerCar, train.HasConductor, train.HasEngine, train.HasPlayers, train.OnTaxiRide, train.HasFuelAndWater,
+                    picked.Contains(train) ? "fit" : "out");
+            }
         }
 
         /// <summary>Every loaded convoy as a candidate, in the given dimension.</summary>
@@ -419,8 +436,10 @@ namespace SignalsLink.YTT.src.taxi
                 if (!train.Virtual)
                 {
                     Entity locomotive = LocomotiveFinder.LocomotiveOfConvoy(api.World, train.Head);
-                    bool free = locomotive != null && (!TaxiJob.Exists(locomotive) || TaxiJob.LoadFree(locomotive) != null);
+                    bool free = Free(locomotive);
                     if (free && StartRide(summon, locomotive, train)) return;
+
+                    api.Logger.Debug("[SignalsLink.YTT]   head {0}: engine loaded {1}, free {2}; the ride did not start", train.Head, locomotive != null, free);
                     continue;
                 }
 
@@ -439,6 +458,12 @@ namespace SignalsLink.YTT.src.taxi
             ReleaseHeld(summon);
             summons.Remove(summon.PlayerUid);
             Message(summon.PlayerUid, "summon-none");
+        }
+
+        /// <summary>No ride, or one on its way back: the train may take a call.</summary>
+        private static bool Free(Entity locomotive)
+        {
+            return locomotive != null && (!TaxiJob.Exists(locomotive) || TaxiJob.LoadFree(locomotive) != null);
         }
 
         /// <summary>The train is loaded: give the conductor the pickup station and tell the caller.</summary>
@@ -531,7 +556,7 @@ namespace SignalsLink.YTT.src.taxi
                 {
                     Entity locomotive = LocomotiveFinder.LocomotiveOfConvoy(api.World, summon.Materialising.Head);
 
-                    if (locomotive != null && !TaxiJob.Exists(locomotive))
+                    if (Free(locomotive))
                     {
                         TrainCandidate train = summon.Materialising;
                         if (!StartRide(summon, locomotive, train)) { ReleaseHeld(summon); summon.Materialising = null; TryNext(summon); }

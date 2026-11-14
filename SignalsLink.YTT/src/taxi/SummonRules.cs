@@ -32,7 +32,7 @@ namespace SignalsLink.YTT.src.taxi
     public static class SummonRules
     {
         /// <summary>How far from the player a station may be to be summoned to.</summary>
-        public const double StationReach = 30;
+        public const double StationReach = 50;
 
         /// <summary>Virtual trains tried before giving up.</summary>
         public const int MaxAttempts = 3;
