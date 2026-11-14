@@ -9,6 +9,7 @@ namespace SignalsLink.src.signals.managedchute.transporting
         private const string OwnerKey = "signalslinkAutomaticPress";
         private bool automatic;
         private long listener;
+        private ItemStack checkedBucket;
 
         public FruitPressDrive(BlockEntity blockEntity) : base(blockEntity) { }
 
@@ -48,13 +49,29 @@ namespace SignalsLink.src.signals.managedchute.transporting
         {
             var press = (BlockEntityFruitPress)Blockentity;
             if (!FruitPressMash.IsPressing(press) || press.MashSlot.Empty) Stop();
-            else FruitPressMash.DriveSqueeze(press);
+            else
+            {
+                ItemStack bucket = press.BucketSlot.Itemstack;
+                if (!ReferenceEquals(bucket, checkedBucket))
+                {
+                    checkedBucket = bucket;
+                    // Vanilla can leave a typed stack of zero portions after a fractional pour.
+                    // Clear it when this run first encounters the bucket so a new juice can enter.
+                    if (bucket?.Collectible is BlockLiquidContainerBase container && container.GetContent(bucket) is { StackSize: 0 })
+                    {
+                        container.SetContent(bucket, null);
+                        press.MarkDirty(true);
+                    }
+                }
+                FruitPressMash.DriveSqueeze(press);
+            }
         }
 
         internal void Stop()
         {
             if (!automatic) return;
             automatic = false;
+            checkedBucket = null;
             if (listener != 0) Blockentity.UnregisterGameTickListener(listener);
             listener = 0;
             Blockentity.MarkDirty();

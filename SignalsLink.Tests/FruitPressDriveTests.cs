@@ -43,6 +43,48 @@ public class FruitPressDriveTests
         }
     }
 
+    [Theory]
+    [InlineData(0.001f, true)]
+    [InlineData(0.01f, false)]
+    public void Only_a_zero_portion_previous_juice_allows_the_next_batch(float lastPour, bool shouldFill)
+    {
+        var press = new PressFixture();
+        var bucket = new PressBucket(press.Api);
+        var vessel = new ItemStack(bucket);
+        press.BucketSlot.Itemstack = vessel;
+        var currant = new ItemStack(press.Currant, 500);
+        bucket.TryPutLiquid(vessel, currant, lastPour);
+        Assert.Equal(shouldFill ? 0 : 1, bucket.GetContent(vessel).StackSize);
+
+        var appleMash = new Item { Code = new AssetLocation("game:pressedmash-apple"),
+            Attributes = JsonObject.FromJson("""{"juiceableProperties":{"liquidStack":{"type":"item","code":"game:juiceportion-apple"}}}""") };
+        press.MashSlot.Itemstack = new ItemStack(appleMash);
+        press.MashSlot.Itemstack.Attributes.SetDouble("juiceableLitresLeft", 10);
+        Assert.True(FruitPressMash.Press(press));
+        press.Animator.GetAnimationState("compress").CurrentFrame = 8;
+        press.SqueezeTick(0.05f);
+        press.TotalHours = 0.1;
+        press.LiquidTick(0.025f);
+
+        Assert.Same(vessel, press.BucketSlot.Itemstack);
+        Assert.Equal(shouldFill, FruitPressMash.LitresTransfered(press.MashSlot.Itemstack) > 0);
+        var content = bucket.GetContent(vessel);
+        Assert.Equal(shouldFill ? "juiceportion-apple" : "juiceportion-redcurrant", content.Collectible.Code.Path);
+        if (shouldFill) Assert.True(content.StackSize > 0);
+        else Assert.Equal(1, content.StackSize);
+    }
+
+    private sealed class PressBucket : BlockLiquidContainerTopOpened
+    {
+        public PressBucket(ICoreAPI api)
+        {
+            this.api = api;
+            Code = new AssetLocation("game:woodbucket");
+        }
+
+        public override float CapacityLitres => 10;
+    }
+
     [Fact]
     public void Reading_a_manual_press_does_not_adopt_it_even_after_load()
     {
@@ -102,6 +144,7 @@ public class FruitPressDriveTests
 
     private sealed class PressFixture : BlockEntityFruitPress
     {
+        public readonly Item Currant = TestStacks.Liquid(new Item { ItemId = 243 }, "game:juiceportion-redcurrant").Item;
         public readonly FruitPressDrive Drive;
         public readonly ServerAnimator Animator;
         public Action<float> AfterInitialize;
@@ -112,11 +155,12 @@ public class FruitPressDriveTests
 
         public PressFixture()
         {
-            var juice = new Item { Code = new AssetLocation("game:juiceportion-apple") };
+            var juice = TestStacks.Liquid(new Item { ItemId = 240 }, "game:juiceportion-apple").Item;
             Api = Proxy.Make<ICoreServerAPI>((m, a) => m.Name switch
             {
                 "get_Side" => EnumAppSide.Server,
                 "get_TotalHours" => TotalHours,
+                "GetItem" when a[0] is int id && id == Currant.ItemId => Currant,
                 "GetItem" => juice,
                 _ => Proxy.Unhandled
             });
