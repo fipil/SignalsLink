@@ -103,7 +103,7 @@ namespace SignalsLink.YTT.src.taxi
                 composer
                     .AddStaticText(data.Names[i], plain, EnumTextOrientation.Left,
                         ElementBounds.Fixed(8, i * RowHeight + 5, listWidth - 16, RowHeight))
-                    .AddSmallButton("", () => Select(index), row, EnumButtonStyle.None, EnumTextOrientation.Left, "row" + i);
+                    .AddSmallButton("", () => Select(index), row, EnumButtonStyle.None, "row" + i);
             }
 
             composer
