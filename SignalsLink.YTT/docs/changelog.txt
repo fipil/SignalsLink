@@ -1,4 +1,4 @@
-1.1.0
+1.1.0 - published 2026-11-15 10:00
 Tweak: New block Stoker: lights and puts out the boiler of a standing locomotive on signal (Input 0/1/2), Output says whether it burns. Reach set with a wrench. See the handbook.
 Tweak: New block Signalman: reports the train on the rail in front of it (none/moving/standing) and the players aboard; Input sets the locomotive's power (1-10) or whistles (15). Wrench cycles the direction mode. See the handbook.
 Tweak: New item Train Taxi Ticket: orders a conductor-driven train to a reachable station and brings it back to its timetable afterwards. See the handbook.

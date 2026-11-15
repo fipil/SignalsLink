@@ -1,4 +1,4 @@
-1.1.1
+1.1.1 - published 2026-11-15 10:00
 Fixed: A chute or damper at a side block of a multiblock crate (Multiblock Crates mod) now keeps the crate to one kind of item, like at the main block. Before, it put anything in.
 Tweak: `target firepit` on the bottom block of a distillation boiler builds the firepit under it and then feeds logs while it holds less than six hours of fuel; the Igniter lights that firepit too.
 Tweak: The condenser and the bottom block of the fruit press are the bucket's place to a chute or damper: it sets a bucket down there and takes it away with its contents, with conditions on the liquid as when collecting from the ground. Nothing else goes into those blocks that way; the condenser's water still comes by hose.
