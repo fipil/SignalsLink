@@ -7,7 +7,8 @@ namespace SignalsLink.YTT.src.taxi
     /// <summary>
     /// The ticket's dialog: a switch to wait at the destination, the stations as a scrolling list
     /// in alphabetical order, and a button to go; during a ride two more, to stop here with or
-    /// without waiting. Escape or the cross closes it and nothing happens.
+    /// without waiting; on a train waiting for its holder one to let it go. Escape or the cross
+    /// closes it and nothing happens.
     /// </summary>
     public class GuiDialogTrainTicket : GuiDialog
     {
@@ -19,16 +20,18 @@ namespace SignalsLink.YTT.src.taxi
 
         private readonly Action<TaxiOrderPacket> order;
         private readonly Action<TaxiStopPacket> stop;
+        private readonly Action<TaxiReleasePacket> release;
 
         private TaxiStationsPacket data = new TaxiStationsPacket();
         private int selected = -1;
         private bool wait;
         private ElementBounds rows;
 
-        public GuiDialogTrainTicket(ICoreClientAPI capi, Action<TaxiOrderPacket> order, Action<TaxiStopPacket> stop) : base(capi)
+        public GuiDialogTrainTicket(ICoreClientAPI capi, Action<TaxiOrderPacket> order, Action<TaxiStopPacket> stop, Action<TaxiReleasePacket> release) : base(capi)
         {
             this.order = order;
             this.stop = stop;
+            this.release = release;
         }
 
         public override string ToggleKeyCombinationCode => null;
@@ -118,6 +121,10 @@ namespace SignalsLink.YTT.src.taxi
                     .AddSmallButton(Lang.Get("signalslinkytt:ticket-stop"), () => OnStop(false), stopHere)
                     .AddSmallButton(Lang.Get("signalslinkytt:ticket-stopwait"), () => OnStop(true), stopWait);
             }
+            else if (data.CanRelease)
+            {
+                composer.AddSmallButton(Lang.Get("signalslinkytt:ticket-release"), OnRelease, stopHere);
+            }
 
             SingleComposer = composer.EndChildElements().Compose();
 
@@ -188,6 +195,13 @@ namespace SignalsLink.YTT.src.taxi
         private bool OnStop(bool andWait)
         {
             stop?.Invoke(new TaxiStopPacket { LocomotiveId = data.LocomotiveId, Wait = andWait });
+            TryClose();
+            return true;
+        }
+
+        private bool OnRelease()
+        {
+            release?.Invoke(new TaxiReleasePacket { LocomotiveId = data.LocomotiveId });
             TryClose();
             return true;
         }

@@ -15,7 +15,7 @@ using Vintagestory.API.Config;
 [assembly: ModInfo("Signals Link YTT", "signalslinkytt",
     Description = "Lets the Signals Link freight dock load and unload the trains of Yang's Transport Tycoon.",
     Website = "",
-    Version = "1.1.0",
+    Version = "1.1.1",
     Authors = new[] { "fipil" }
 )]
 
@@ -91,6 +91,7 @@ namespace SignalsLink.YTT.src
                 .RegisterMessageType<TaxiStopPacket>()
                 .RegisterMessageType<TaxiSummonOfferPacket>()
                 .RegisterMessageType<TaxiSummonPacket>()
+                .RegisterMessageType<TaxiReleasePacket>()
                 .SetMessageHandler<TaxiStationsPacket>(packet => OnTaxiStations(api, packet))
                 .SetMessageHandler<TaxiSummonOfferPacket>(packet => OnSummonOffer(api, packet));
         }
@@ -107,7 +108,7 @@ namespace SignalsLink.YTT.src
                 return;
             }
 
-            summonDialog ??= new GuiDialogSummonTrain(api, summon => taxiClient?.SendPacket(summon));
+            summonDialog ??= new GuiDialogSummonTrain(api, summon => taxiClient?.SendPacket(summon), release => taxiClient?.SendPacket(release));
             summonDialog.Show(packet);
         }
 
@@ -126,7 +127,8 @@ namespace SignalsLink.YTT.src
 
             ticketDialog ??= new GuiDialogTrainTicket(api,
                 order => taxiClient?.SendPacket(order),
-                stop => taxiClient?.SendPacket(stop));
+                stop => taxiClient?.SendPacket(stop),
+                release => taxiClient?.SendPacket(release));
 
             ticketDialog.Show(packet);
         }
@@ -169,14 +171,16 @@ namespace SignalsLink.YTT.src
                 .RegisterMessageType<TaxiOrderPacket>()
                 .RegisterMessageType<TaxiStopPacket>()
                 .RegisterMessageType<TaxiSummonOfferPacket>()
-                .RegisterMessageType<TaxiSummonPacket>();
+                .RegisterMessageType<TaxiSummonPacket>()
+                .RegisterMessageType<TaxiReleasePacket>();
 
             taxi = new TaxiDispatcher(api, Fire, Stations, new VirtualTrains(Surface, api.Logger), taxiServer);
             taxiServer
                 .SetMessageHandler<TaxiOpenRequest>(taxi.Open)
                 .SetMessageHandler<TaxiOrderPacket>(taxi.Order)
                 .SetMessageHandler<TaxiStopPacket>(taxi.StopHere)
-                .SetMessageHandler<TaxiSummonPacket>(taxi.SummonTrain);
+                .SetMessageHandler<TaxiSummonPacket>(taxi.SummonTrain)
+                .SetMessageHandler<TaxiReleasePacket>(taxi.ReleaseTrain);
             taxi.Start();
 
             // Independent of cargo: seeing a train coming needs the simulation, not the wagons.

@@ -28,6 +28,9 @@ namespace SignalsLink.YTT.src.taxi
 
         /// <summary>A lang key suffix when the ticket cannot be used here; empty otherwise.</summary>
         [ProtoMember(10)] public string Error = "";
+
+        /// <summary>This player's train waits for them (or their destination) and may be let go.</summary>
+        [ProtoMember(11)] public bool CanRelease;
     }
 
     /// <summary>Client to server: take me there.</summary>
@@ -54,6 +57,10 @@ namespace SignalsLink.YTT.src.taxi
 
         /// <summary>A lang key suffix when nothing can be summoned here; empty otherwise.</summary>
         [ProtoMember(6)] public string Error = "";
+
+        /// <summary>A loaded train waiting for this player, to be let go from here; 0 when none.</summary>
+        [ProtoMember(7)] public long HeldLocomotiveId;
+        [ProtoMember(8)] public string HeldName = "";
     }
 
     /// <summary>Client to server: call a train to that station, or call the summon off.</summary>
@@ -65,6 +72,13 @@ namespace SignalsLink.YTT.src.taxi
         [ProtoMember(3)] public int Gauge;
         [ProtoMember(4)] public bool WaitForMe;
         [ProtoMember(5)] public bool Cancel;
+    }
+
+    /// <summary>Client to server: let my waiting train go.</summary>
+    [ProtoContract]
+    public sealed class TaxiReleasePacket
+    {
+        [ProtoMember(1)] public long LocomotiveId;
     }
 
     /// <summary>Client to server: stop here (and wait, or not).</summary>

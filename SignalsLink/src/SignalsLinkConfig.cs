@@ -85,6 +85,15 @@ namespace SignalsLink.src
 
         public int TaxiSummonMaxBlocks = 2000;
 
+        [JsonProperty("TaxiWaitMinutes-description")]
+        public string TaxiWaitMinutesDescription =
+            "How long, in real minutes, a train taxi waits for its ticket holder (Signals Link YTT "
+            + "bridge): at a destination with \"wait\", or at a pickup with \"wait for me\". Then it "
+            + "leaves as if the holder had got off, so a forgotten train does not block the line. "
+            + "0 means no limit.";
+
+        public int TaxiWaitMinutes = 5;
+
         [JsonProperty("AnchorsEnabled-description")]
         public string AnchorsEnabledDescription =
             "Set to false to switch chunk anchors off on this server altogether. Placed anchors "
@@ -113,6 +122,7 @@ namespace SignalsLink.src
             if (AnchorMaxColumns < 0) { AnchorMaxColumns = 64; valid = false; }
             if (AnchorApproachBlocks < 0) { AnchorApproachBlocks = 160; valid = false; }
             if (TaxiSummonMaxBlocks < 0) { TaxiSummonMaxBlocks = 2000; valid = false; }
+            if (TaxiWaitMinutes < 0) { TaxiWaitMinutes = 5; valid = false; }
             return valid;
         }
     }

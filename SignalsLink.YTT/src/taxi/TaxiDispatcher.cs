@@ -46,6 +46,11 @@ namespace SignalsLink.YTT.src.taxi
         private readonly Dictionary<string, Summon> summons = new Dictionary<string, Summon>();
         private long listener;
 
+        /// <summary>Stamped on a waiting train; a wait begun under another stamp did not survive a restart.</summary>
+        private readonly string session = Guid.NewGuid().ToString("N");
+
+        private static int WaitMinutes => SignalsLink.src.SignalsLinkConfigLoader.Current?.TaxiWaitMinutes ?? 5;
+
         private sealed class PendingReach
         {
             public string PlayerUid;
@@ -150,7 +155,7 @@ namespace SignalsLink.YTT.src.taxi
             }
 
             TaxiJob job = TaxiJob.Load(locomotive);
-            if (job != null && job.Phase != TaxiPhase.AwaitingDestination && job.Phase != TaxiPhase.AtPickup)
+            if (job != null && !job.Releasable)
             {
                 packet.HasRide = true;
                 packet.ActiveHash = unchecked((long)job.DestinationHash);
@@ -158,6 +163,7 @@ namespace SignalsLink.YTT.src.taxi
                 packet.ActiveName = job.DestinationName;
             }
 
+            packet.CanRelease = job != null && job.Releasable && job.HolderUid == player?.PlayerUID;
             return packet;
         }
 
@@ -208,20 +214,15 @@ namespace SignalsLink.YTT.src.taxi
             StationInfo destination = Find(locomotive, unchecked((ulong)order.Hash), order.Dimension);
             if (destination == null) { Message(player, "error-nostation"); return; }
 
-            TaxiJob job = TaxiJob.Load(locomotive);
+            TaxiJob job = TaxiJob.Load(locomotive) ?? NewJob(locomotive, seat.Head);
 
-            if (job == null)
+            // A cold boiler is lit at the passenger's expense, and only if it can be.
+            if (fire.IsBurning(locomotive) != true)
             {
-                job = NewJob(locomotive, seat.Head);
+                if (!fire.Available) { Message(player, "error-unavailable"); return; }
 
-                // A cold boiler is lit at the passenger's expense, and only if it can be.
-                if (!job.SavedBurning)
-                {
-                    if (!fire.Available) { Message(player, "error-unavailable"); return; }
-
-                    string lit = FireKeeping.TryIgnite(fire, locomotive, () => LighterOf(player), api.World, locomotive.Pos.XYZ);
-                    if (lit != "lit") { Message(player, "ignite-" + lit); return; }
-                }
+                string lit = FireKeeping.TryIgnite(fire, locomotive, () => LighterOf(player), api.World, locomotive.Pos.XYZ);
+                if (lit != "lit") { Message(player, "ignite-" + lit); return; }
             }
 
             job.DestinationName = destination.Name;
@@ -234,6 +235,7 @@ namespace SignalsLink.YTT.src.taxi
             job.HolderLeftAtMs = -1;
             job.StuckSinceMs = 0;
             job.StuckReported = false;
+            job.WaitingSinceMs = 0;
 
             Timetable.WriteSingle(locomotive, destination);
             job.Save(locomotive);
@@ -299,8 +301,16 @@ namespace SignalsLink.YTT.src.taxi
             TaxiSummonOfferPacket offer = new TaxiSummonOfferPacket { HasSummon = summons.ContainsKey(player.PlayerUID) };
             StationInfo station = NearestStation(player.Entity.Pos.X, player.Entity.Pos.Z, player.Entity.Pos.Dimension, SummonRules.StationReach, null);
 
-            if (station == null) offer.Error = "nostationnear";
-            else
+            Entity held = HeldBy(player.PlayerUID);
+            if (held != null)
+            {
+                offer.HeldLocomotiveId = held.EntityId;
+                offer.HeldName = TaxiJob.Load(held)?.DestinationName ?? "";
+            }
+
+            // No station near: nothing to call a train to, but a held train can still be let go.
+            if (station == null && held == null) offer.Error = "nostationnear";
+            else if (station != null)
             {
                 offer.StationName = station.Name;
                 offer.Hash = unchecked((long)station.NameHash);
@@ -309,6 +319,32 @@ namespace SignalsLink.YTT.src.taxi
             }
 
             channel?.SendPacket(offer, player);
+        }
+
+        /// <summary>The holder lets the train go, from aboard or from anywhere.</summary>
+        public void ReleaseTrain(IServerPlayer player, TaxiReleasePacket packet)
+        {
+            if (player == null || packet == null) return;
+
+            Entity locomotive = api.World.GetEntityById(packet.LocomotiveId);
+            TaxiJob job = locomotive == null ? null : TaxiJob.Load(locomotive);
+            if (job == null || !job.Releasable || job.HolderUid != player.PlayerUID) { Message(player, "error-noride"); return; }
+
+            Release(locomotive, job, "released");
+        }
+
+        /// <summary>The loaded locomotive waiting for this player, or null.</summary>
+        private Entity HeldBy(string playerUid)
+        {
+            foreach (Entity entity in api.World.LoadedEntities.Values)
+            {
+                if (entity?.Code?.Domain != TrainCargoHolderFinder.Domain || !LocomotiveFinder.HasEngine(entity)) continue;
+
+                TaxiJob job = TaxiJob.Load(entity);
+                if (job != null && job.Releasable && job.HolderUid == playerUid) return entity;
+            }
+
+            return null;
         }
 
         public void SummonTrain(IServerPlayer player, TaxiSummonPacket packet)
@@ -648,7 +684,7 @@ namespace SignalsLink.YTT.src.taxi
 
                     if (!arrived) { job.Save(locomotive); return; }
 
-                    if (job.Wait) { FinishWaiting(locomotive, job); return; }
+                    if (job.Wait) { EnterWaiting(locomotive, job, now); return; }
 
                     job.Phase = TaxiPhase.Alighting;
                     job.HolderLeftAtMs = -1;
@@ -686,7 +722,8 @@ namespace SignalsLink.YTT.src.taxi
                     job.PickupAtMs = now;
                     job.Save(locomotive);
                     ForgetSummonOf(job.HolderUid);
-                    Message(job.HolderUid, job.WaitForMe ? "summon-arrived-wait" : "summon-arrived", job.DestinationName);
+                    if (job.WaitForMe) Message(job.HolderUid, "summon-arrived-wait", job.DestinationName, WaitMinutes);
+                    else Message(job.HolderUid, "summon-arrived", job.DestinationName);
                     return;
 
                 case TaxiPhase.AtPickup:
@@ -700,7 +737,13 @@ namespace SignalsLink.YTT.src.taxi
                     }
 
                     if (job.PickupAtMs > now) job.PickupAtMs = now;
-                    if (!job.WaitForMe && now - job.PickupAtMs >= SummonRules.PickupGraceMs) { Depart(locomotive, job); return; }
+
+                    if (job.WaitForMe)
+                    {
+                        if (HolderGone(job)) { Depart(locomotive, job); return; }
+                        if (TaxiJob.WaitedOut(job.PickupAtMs, now, WaitMinutes)) { Message(job.HolderUid, "wait-over", WaitMinutes); Depart(locomotive, job); return; }
+                    }
+                    else if (now - job.PickupAtMs >= SummonRules.PickupGraceMs) { Depart(locomotive, job); return; }
 
                     job.Save(locomotive);
                     return;
@@ -711,6 +754,25 @@ namespace SignalsLink.YTT.src.taxi
                     else if (job.HolderLeftAtMs < 0 || job.HolderLeftAtMs > now) job.HolderLeftAtMs = now;
 
                     if (job.HolderLeftAtMs >= 0 && now - job.HolderLeftAtMs >= AlightGraceMs) { Depart(locomotive, job); return; }
+
+                    job.Save(locomotive);
+                    return;
+
+                case TaxiPhase.Waiting:
+                    // Held for the holder: aboard again, gone from the game, left waiting across a restart, or out of time.
+                    if (HolderAboard(job))
+                    {
+                        job.Phase = TaxiPhase.AwaitingDestination;
+                        job.HolderLeftAtMs = -1;
+                        job.Save(locomotive);
+                        Message(job.HolderUid, "summon-boarded");
+                        return;
+                    }
+
+                    if (HolderGone(job) || job.WaitingSession != session) { Release(locomotive, job, null); return; }
+
+                    if (job.WaitingSinceMs > now) job.WaitingSinceMs = now;
+                    if (TaxiJob.WaitedOut(job.WaitingSinceMs, now, WaitMinutes)) { Release(locomotive, job, "wait-over"); return; }
 
                     job.Save(locomotive);
                     return;
@@ -728,15 +790,48 @@ namespace SignalsLink.YTT.src.taxi
             Message(job.HolderUid, "stuck");
         }
 
-        /// <summary>Stay: the conductor gets his old timetable back, the boiler goes out.</summary>
-        private void FinishWaiting(Entity locomotive, TaxiJob job)
+        /// <summary>
+        /// Stay, held by the ticket: no timetable, so the conductor holds; the boiler out, so no
+        /// fuel burns. What was set aside stays set aside for the release.
+        /// </summary>
+        private void EnterWaiting(Entity locomotive, TaxiJob job, long now)
         {
-            Timetable.Restore(locomotive, job.SavedTimetable);
-            TaxiJob.Remove(locomotive);
-            ForgetSummonOf(job.HolderUid);
+            Timetable.Clear(locomotive);
+
+            job.Phase = TaxiPhase.Waiting;
+            job.Stopping = false;
+            job.HolderLeftAtMs = -1;
+            job.StuckSinceMs = 0;
+            job.StuckReported = false;
+            job.WaitingSinceMs = now;
+            job.WaitingSession = session;
+            job.Save(locomotive);
 
             string put = fire.Available ? FireKeeping.TryExtinguish(fire, locomotive) : "unavailable";
-            Message(job.HolderUid, put == "quenched" ? "waiting-done" : "nowater");
+            Message(job.HolderUid, put == "quenched" ? "waiting-done" : "nowater", WaitMinutes);
+        }
+
+        /// <summary>
+        /// The wait is over: the boiler is lit again at nobody's expense (the bridge put it out),
+        /// then the train leaves as after a ride. Without fuel it says so once and tries again
+        /// every second.
+        /// </summary>
+        private void Release(Entity locomotive, TaxiJob job, string why)
+        {
+            if (fire.Available && fire.IsBurning(locomotive) != true)
+            {
+                string lit = FireKeeping.TryIgniteFree(fire, locomotive);
+
+                if (lit != "lit")
+                {
+                    if (!job.StuckReported) { job.StuckReported = true; Message(job.HolderUid, "release-" + lit); }
+                    job.Save(locomotive);
+                    return;
+                }
+            }
+
+            if (why != null) Message(job.HolderUid, why, WaitMinutes);
+            Depart(locomotive, job);
         }
 
         /// <summary>
@@ -849,6 +944,9 @@ namespace SignalsLink.YTT.src.taxi
             return false;
         }
 
+        /// <summary>The holder is not in the game.</summary>
+        private bool HolderGone(TaxiJob job) => api.World.PlayerByUid(job.HolderUid) == null;
+
         private bool HolderAboard(TaxiJob job)
         {
             IMountableSeat mount = (api.World.PlayerByUid(job.HolderUid) as IServerPlayer)?.Entity?.MountedOn;
@@ -930,7 +1028,8 @@ namespace SignalsLink.YTT.src.taxi
 
         private void Message(IServerPlayer player, string key, params object[] args)
         {
-            player?.SendMessage(GlobalConstants.GeneralChatGroup, Lang.Get("signalslinkytt:ticket-" + key, args), EnumChatType.Notification);
+            // Server side: in the player's own language, not the server's.
+            player?.SendMessage(GlobalConstants.GeneralChatGroup, Lang.GetL(player.LanguageCode, "signalslinkytt:ticket-" + key, args), EnumChatType.Notification);
         }
 
         private void Message(string playerUid, string key, params object[] args)

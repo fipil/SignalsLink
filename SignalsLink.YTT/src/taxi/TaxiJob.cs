@@ -22,6 +22,9 @@ namespace SignalsLink.YTT.src.taxi
 
         /// <summary>The caller is aboard; waiting for a destination from the ticket.</summary>
         AwaitingDestination = 6,
+
+        /// <summary>Held by the ticket where the ride ended, boiler out: until the holder boards, releases it, calls it elsewhere, or the wait runs out.</summary>
+        Waiting = 7,
     }
 
     /// <summary>
@@ -71,10 +74,25 @@ namespace SignalsLink.YTT.src.taxi
         /// <summary>World clock when the summoned train reached the pickup; 0 before.</summary>
         public long PickupAtMs;
 
+        /// <summary>World clock when the train began waiting for its holder; 0 otherwise.</summary>
+        public long WaitingSinceMs;
+
+        /// <summary>The server run that put the train to waiting; a wait from an earlier run is over.</summary>
+        public string WaitingSession = "";
+
         public bool HasReturnStation => !string.IsNullOrEmpty(ReturnName);
 
-        /// <summary>Nobody is served any more: on its way back the train may be called again.</summary>
-        public bool Free => Phase == TaxiPhase.Returning;
+        /// <summary>Nobody is served right now: on its way back or waiting, the train may be called again.</summary>
+        public bool Free => Phase == TaxiPhase.Returning || Phase == TaxiPhase.Waiting;
+
+        /// <summary>The holder may let the train go: it waits for them, or for their destination.</summary>
+        public bool Releasable => Phase == TaxiPhase.Waiting || Phase == TaxiPhase.AwaitingDestination || Phase == TaxiPhase.AtPickup;
+
+        /// <summary>A wait that began at <paramref name="sinceMs"/> has run out; a limit of 0 never runs out.</summary>
+        public static bool WaitedOut(long sinceMs, long nowMs, int limitMinutes)
+        {
+            return limitMinutes > 0 && sinceMs > 0 && nowMs - sinceMs >= limitMinutes * 60000L;
+        }
 
         /// <summary>A job of a train that is free, or null: the train has none or is still serving.</summary>
         public static TaxiJob LoadFree(Entity locomotive)
@@ -92,6 +110,8 @@ namespace SignalsLink.YTT.src.taxi
             StuckSinceMs = 0;
             StuckReported = false;
             PickupAtMs = 0;
+            WaitingSinceMs = 0;
+            WaitingSession = "";
         }
 
         public static bool Exists(Entity locomotive) => locomotive?.Attributes?.HasAttribute(Key) == true;
@@ -140,6 +160,8 @@ namespace SignalsLink.YTT.src.taxi
                 StuckReported = tree.GetBool("stuckReported"),
                 WaitForMe = tree.GetBool("waitForMe"),
                 PickupAtMs = tree.GetLong("pickupAt"),
+                WaitingSinceMs = tree.GetLong("waitingSince"),
+                WaitingSession = tree.GetString("waitingSession", ""),
             };
 
             return job;
@@ -173,6 +195,8 @@ namespace SignalsLink.YTT.src.taxi
             tree.SetBool("stuckReported", StuckReported);
             tree.SetBool("waitForMe", WaitForMe);
             tree.SetLong("pickupAt", PickupAtMs);
+            tree.SetLong("waitingSince", WaitingSinceMs);
+            tree.SetString("waitingSession", WaitingSession ?? "");
         }
 
         public StationInfo ReturnStation()

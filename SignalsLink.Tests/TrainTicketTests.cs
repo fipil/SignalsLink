@@ -154,11 +154,11 @@ namespace SignalsLink.Tests
         }
 
         [Fact]
-        public void Only_a_train_on_its_way_back_is_free_to_be_called_again()
+        public void Only_a_train_on_its_way_back_or_waiting_is_free_to_be_called_again()
         {
             foreach (TaxiPhase phase in System.Enum.GetValues<TaxiPhase>())
             {
-                Assert.Equal(phase == TaxiPhase.Returning, new TaxiJob { Phase = phase }.Free);
+                Assert.Equal(phase == TaxiPhase.Returning || phase == TaxiPhase.Waiting, new TaxiJob { Phase = phase }.Free);
             }
         }
 
@@ -197,6 +197,47 @@ namespace SignalsLink.Tests
 
             Timetable.WriteSingle(attributes, stop, Timetable.ReturnHoldSeconds);
             Assert.Equal(Timetable.HoldSeconds - 1, attributes.GetTreeAttribute(Timetable.Key).GetTreeAttribute("entry0").GetInt("timeElapsedSeconds"));
+        }
+
+        [Fact]
+        public void A_waiting_train_is_free_to_be_called_and_may_be_let_go()
+        {
+            TaxiJob waiting = new TaxiJob { Phase = TaxiPhase.Waiting };
+
+            Assert.True(waiting.Free);
+            Assert.True(waiting.Releasable);
+            Assert.True(new TaxiJob { Phase = TaxiPhase.AwaitingDestination }.Releasable);
+            Assert.True(new TaxiJob { Phase = TaxiPhase.AtPickup }.Releasable);
+            Assert.False(new TaxiJob { Phase = TaxiPhase.Going }.Releasable);
+            Assert.False(new TaxiJob { Phase = TaxiPhase.Returning }.Releasable);
+        }
+
+        [Fact]
+        public void The_wait_runs_out_after_the_limit_and_never_with_none()
+        {
+            Assert.False(TaxiJob.WaitedOut(1000, 1000 + 5 * 60000 - 1, 5));
+            Assert.True(TaxiJob.WaitedOut(1000, 1000 + 5 * 60000, 5));
+            Assert.False(TaxiJob.WaitedOut(1000, long.MaxValue / 2, 0));
+            Assert.False(TaxiJob.WaitedOut(0, 10 * 60000, 5));
+        }
+
+        [Fact]
+        public void The_wait_round_trips_and_a_call_forgets_it()
+        {
+            TaxiJob job = new TaxiJob { Phase = TaxiPhase.Waiting, WaitingSinceMs = 4242, WaitingSession = "run-1" };
+
+            TreeAttribute tree = new TreeAttribute();
+            job.ToTree(tree);
+            TaxiJob back = TaxiJob.FromTree(tree);
+
+            Assert.Equal(TaxiPhase.Waiting, back.Phase);
+            Assert.Equal(4242, back.WaitingSinceMs);
+            Assert.Equal("run-1", back.WaitingSession);
+
+            back.Reuse();
+
+            Assert.Equal(0, back.WaitingSinceMs);
+            Assert.Equal("", back.WaitingSession);
         }
 
         [Fact]

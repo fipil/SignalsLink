@@ -34,6 +34,16 @@ namespace SignalsLink.YTT.src.stoker
             return "lit";
         }
 
+        /// <summary>Lights the boiler at nobody's expense: for a fire the bridge itself put out.</summary>
+        public static string TryIgniteFree(YttFire fire, Entity locomotive)
+        {
+            ItemSlot fuel = fire.FuelSlotOf(locomotive);
+            if (fuel == null || fuel.Empty) return "nofuel";
+
+            fire.Ignite(locomotive);
+            return fire.IsBurning(locomotive) == true ? "lit" : "failed";
+        }
+
         /// <summary>
         /// Puts the boiler out at the price of the Extinguish button in the locomotive's own
         /// dialog: a litre of water per hundred degrees, out of the LOCOMOTIVE's water, and not

@@ -1,3 +1,7 @@
+1.1.1
+Fixed: The ticket's chat messages come in the player's language, not the server's.
+Tweak: A ride with "wait" keeps the train held by the ticket, boiler out: board and pick the next destination, release it with the ticket from anywhere, or call it elsewhere. It waits TaxiWaitMinutes (signalslink.json, default 5), then leaves as after a ride; so does a train whose holder leaves the game, and one left waiting across a server restart. "Wait for me" at a pickup has the same limit. Needs Signals Link 1.1.2.
+
 1.1.0 - published 2026-11-15 10:00
 Tweak: New block Stoker: lights and puts out the boiler of a standing locomotive on signal (Input 0/1/2), Output says whether it burns. Reach set with a wrench. See the handbook.
 Tweak: New block Signalman: reports the train on the rail in front of it (none/moving/standing) and the players aboard; Input sets the locomotive's power (1-10) or whistles (15). Wrench cycles the direction mode. See the handbook.

@@ -91,39 +91,50 @@ namespace SignalsLink.src.signals.managedchute.transporting
             });
         }
 
+        /// <summary>
+        /// The hint usually outruns the block entity's own sync, so the redraw waits until the
+        /// client's bucket slot is empty too, and gives up after a while.
+        /// </summary>
         private void OnCleared(BucketSlotClearedPacket packet)
         {
-            BlockPos pos = new BlockPos(packet.X, packet.Y, packet.Z);
-            if (capi?.World?.BlockAccessor?.GetBlockEntity(pos) is not BlockEntityCondenser condenser) return;
-            if (!condenser.Inventory[1].Empty) return;
-
-            (BucketMeshField?.GetValue(condenser) as MeshData)?.Clear();
-            condenser.MarkDirty(true);
+            WhenSynced(new BlockPos(packet.X, packet.Y, packet.Z),
+                be => be is BlockEntityCondenser condenser && condenser.Inventory[1].Empty,
+                be => ClearBucket((BlockEntityCondenser)be));
         }
 
-        /// <summary>
-        /// The hint usually outruns the block entity's own sync, so the reload waits until the
-        /// client's mash slot shows the state the server described, and gives up after a while.
-        /// </summary>
         private void OnMashChanged(PressMashChangedPacket packet)
+        {
+            WhenSynced(new BlockPos(packet.X, packet.Y, packet.Z),
+                be => be is BlockEntityFruitPress press && Agrees(press, packet),
+                be => ReloadMash((BlockEntityFruitPress)be));
+        }
+
+        /// <summary>Runs <paramref name="redraw"/> once the block entity at pos passes <paramref name="synced"/>; gives up after ~3 s.</summary>
+        private void WhenSynced(BlockPos pos, System.Func<BlockEntity, bool> synced, System.Action<BlockEntity> redraw)
         {
             if (capi == null) return;
 
-            BlockPos pos = new BlockPos(packet.X, packet.Y, packet.Z);
             int tries = 0;
             long id = 0;
             id = capi.Event.RegisterGameTickListener(dt =>
             {
                 tries++;
-                if (capi.World?.BlockAccessor?.GetBlockEntity(pos) is BlockEntityFruitPress press && Agrees(press, packet))
+                BlockEntity be = capi.World?.BlockAccessor?.GetBlockEntity(pos);
+                if (be != null && synced(be))
                 {
-                    ReloadMash(press);
+                    redraw(be);
                     capi.Event.UnregisterGameTickListener(id);
                     return;
                 }
 
                 if (tries > 60) capi.Event.UnregisterGameTickListener(id);
             }, 50);
+        }
+
+        private static void ClearBucket(BlockEntityCondenser condenser)
+        {
+            (BucketMeshField?.GetValue(condenser) as MeshData)?.Clear();
+            condenser.MarkDirty(true);
         }
 
         private static bool Agrees(BlockEntityFruitPress press, PressMashChangedPacket packet)

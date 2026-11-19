@@ -151,6 +151,11 @@ namespace SignalsLink.src.signals.managedchute.transporting
 
             var beOut = AutomationAccess.EntityAt(blockAccess, outputPos) as IBlockEntityContainer;
 
+            // A bucket standing at the output is no item target: its one slot is for liquid, and
+            // vanilla guards it only in its own paths. Taken as a container, the next bucket of a
+            // stack would land inside the one just set down.
+            if (WorldToInventoryTransfer.IsPortablePlacedContainer(blockAccess, outputPos)) beOut = null;
+
             // Only carryable containers get moved as a whole block; a barrel or boiler on the input side
             // falls through to the regular inventory -> inventory transfer below.
             if (beOut?.Inventory != null && WorldToInventoryTransfer.IsPortablePlacedContainer(blockAccess, inputPos))

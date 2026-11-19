@@ -1,3 +1,9 @@
+1.1.2
+Fixed: A chute or damper setting down a stack of buckets no longer stuffs the rest of the stack into the bucket it just placed; a bucket on the ground takes no items.
+Fixed: A bucket a chute or damper took from the condenser no longer stays drawn on the client until the chunk reloads.
+Tweak: With OrekiWoof's Simple Immersive Beehive installed, a chute or damper works its hive: frames in, one per empty slot and nothing else, any frame out. The frame's state is its code (`*beehiveframe-filled`). Signals Link does not depend on that mod: it looks for the hive when loading and stands down with a line in the log when it is missing or looks different.
+Tweak: New setting TaxiWaitMinutes: how long a train taxi waits for its ticket holder (YTT bridge), default 5; 0 for no limit.
+
 1.1.1 - published 2026-11-15 10:00
 Fixed: A chute or damper at a side block of a multiblock crate (Multiblock Crates mod) now keeps the crate to one kind of item, like at the main block. Before, it put anything in.
 Tweak: `target firepit` on the bottom block of a distillation boiler builds the firepit under it and then feeds logs while it holds less than six hours of fuel; the Igniter lights that firepit too.
