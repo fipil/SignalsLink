@@ -1,4 +1,4 @@
-1.1.1
+1.1.1 - published 2026-11-19 19:46
 Fixed: The ticket's chat messages come in the player's language, not the server's.
 Tweak: A ride with "wait" keeps the train held by the ticket, boiler out: board and pick the next destination, release it with the ticket from anywhere, or call it elsewhere. It waits TaxiWaitMinutes (signalslink.json, default 5), then leaves as after a ride; so does a train whose holder leaves the game, and one left waiting across a server restart. "Wait for me" at a pickup has the same limit. Needs Signals Link 1.1.2.
 

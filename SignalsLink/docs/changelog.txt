@@ -1,4 +1,4 @@
-1.1.2
+1.1.2 - published 2026-11-19 19:46
 Fixed: A chute or damper setting down a stack of buckets no longer stuffs the rest of the stack into the bucket it just placed; a bucket on the ground takes no items.
 Fixed: A bucket a chute or damper took from the condenser no longer stays drawn on the client until the chunk reloads.
 Tweak: With OrekiWoof's Simple Immersive Beehive installed, a chute or damper works its hive: frames in, one per empty slot and nothing else, any frame out. The frame's state is its code (`*beehiveframe-filled`). Signals Link does not depend on that mod: it looks for the hive when loading and stands down with a line in the log when it is missing or looks different.
