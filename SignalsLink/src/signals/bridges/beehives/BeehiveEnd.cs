@@ -73,7 +73,14 @@ namespace SignalsLink.src.signals.bridges.beehives
             MaxSlotStackSize = 1;
         }
 
-        public void Sync() => itemstack = real.Itemstack;
+        // A copy, never the hive's own stack: a merge out of this slot subtracts from the mirror,
+        // and the difference is settled into the hive in OnItemSlotModified.
+        public void Sync()
+        {
+            // A stack of nothing is no frame; drop it so it never walks into a chest.
+            if (real.Itemstack != null && real.Itemstack.StackSize <= 0) { real.Itemstack = null; real.MarkDirty(); }
+            itemstack = real.Itemstack?.Clone();
+        }
 
         public static bool IsFrame(ItemStack stack)
         {
@@ -108,9 +115,18 @@ namespace SignalsLink.src.signals.bridges.beehives
 
         public override void OnItemSlotModified(ItemStack sinkStack)
         {
-            // A put landed in the mirror: carry it into the hive.
-            if (itemstack != null && real.Empty)
+            int now = itemstack?.StackSize ?? 0;
+            int before = real.StackSize;
+
+            if (now < before)
             {
+                // A merge took out of the mirror: take the same out of the hive.
+                real.TakeOut(before - now);
+                real.MarkDirty();
+            }
+            else if (itemstack != null && real.Empty)
+            {
+                // A put landed in the mirror: carry it into the hive.
                 real.Itemstack = itemstack;
                 real.MarkDirty();
             }

@@ -91,6 +91,33 @@ public class BeehiveEndTests
     }
 
     [Fact]
+    public void Frames_taken_one_by_one_join_the_stack_in_the_chest_and_leave_the_hive_truly_empty()
+    {
+        var hive = new FakeHive();
+        for (int i = 0; i < 3; i++) hive.Frames[i].Itemstack = Filled();
+        var chest = Chest(Filled());
+
+        for (int i = 0; i < 3; i++) Assert.Equal(1, OutOf(hive, chest, "*beehiveframe-filled").TryMove(Op()).MovedAmount);
+
+        Assert.Equal(4, chest[0].StackSize);
+        Assert.True(chest[1].Empty);
+        for (int i = 0; i < 3; i++) Assert.Null(hive.Frames[i].Itemstack);
+        Assert.False(OutOf(hive, chest, "*").TryMove(Op()).Success);
+    }
+
+    [Fact]
+    public void A_stack_of_nothing_in_the_hive_is_no_frame()
+    {
+        var hive = new FakeHive();
+        hive.Frames[0].Itemstack = Filled(0);
+        var chest = Chest();
+
+        Assert.False(OutOf(hive, chest, "*").TryMove(Op()).Success);
+        Assert.Null(hive.Frames[0].Itemstack);
+        Assert.True(chest[0].Empty);
+    }
+
+    [Fact]
     public void Frames_are_the_mods_own()
     {
         Assert.True(BeehiveSlot.IsFrame(Empty()));
